@@ -69,7 +69,8 @@ model Program {
   id          String        @id @default(cuid())
   title       String
   description String
-  category    String        // e.g. "1-on-1 Advanced Research", "Summer Camp"
+  category    String        // e.g. "Research", "Mentorship"
+  subCategory String?       // e.g. "1-on-1", "Group"
   status      String        @default("OPEN")
   startDate   DateTime?
   endDate     DateTime?

@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { Users, BookOpen, Settings, LayoutTemplate } from "lucide-react";
 
@@ -23,39 +21,39 @@ export default function AdminDashboard({ name }: { name: string }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+        <Link href="/dashboard/users" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer block">
           <div className="p-3 rounded-xl bg-blue-50 text-blue-600 w-fit mb-4">
             <Users className="h-6 w-6" />
           </div>
           <h3 className="text-lg font-bold text-gray-900">Manage Users</h3>
           <p className="text-sm text-gray-500 mt-1">View and edit student and parent accounts.</p>
-        </div>
+        </Link>
         
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+        <Link href="/dashboard/programs" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer block">
           <div className="p-3 rounded-xl bg-green-50 text-green-600 w-fit mb-4">
             <BookOpen className="h-6 w-6" />
           </div>
           <h3 className="text-lg font-bold text-gray-900">Programs</h3>
           <p className="text-sm text-gray-500 mt-1">Create or update research programs.</p>
-        </div>
+        </Link>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+        <Link href="/dashboard/cms" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer block">
           <div className="p-3 rounded-xl bg-purple-50 text-purple-600 w-fit mb-4">
             <LayoutTemplate className="h-6 w-6" />
           </div>
           <h3 className="text-lg font-bold text-gray-900">CMS</h3>
           <p className="text-sm text-gray-500 mt-1">Edit public website pages and articles.</p>
-        </div>
+        </Link>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+        <Link href="/dashboard/settings" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer block">
           <div className="p-3 rounded-xl bg-gray-100 text-gray-600 w-fit mb-4">
             <Settings className="h-6 w-6" />
           </div>
           <h3 className="text-lg font-bold text-gray-900">Settings</h3>
           <p className="text-sm text-gray-500 mt-1">Configure global portal settings.</p>
-        </div>
+        </Link>
       </div>
-      
+
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
            <h3 className="text-lg font-medium tracking-tight">Recent Activity Log</h3>

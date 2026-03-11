@@ -1,12 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Calendar, Clock, CheckCircle2, ChevronRight, User, MapPin } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, CheckCircle2, ChevronRight, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
-import { use } from "react";
+import { use, useState, useEffect } from "react";
+import { getProgramById } from "@/app/actions/programs";
+import { notFound } from "next/navigation";
 
 export default function ProgramDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
+  const [program, setProgram] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const data = await getProgramById(unwrappedParams.id);
+      if (!data) notFound();
+      setProgram(data);
+      setLoading(false);
+    }
+    load();
+  }, [unwrappedParams.id]);
+
+  if (loading) {
+     return <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center pt-32"><div className="w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div></div>;
+  }
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pb-32">
@@ -31,27 +49,27 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
               transition={{ duration: 0.6 }}
             >
               <div className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold text-blue-700 bg-blue-50 border border-blue-100 mb-6 uppercase tracking-wider">
-                Mentorship
+                {program.category}{program.subCategory ? ` - ${program.subCategory}` : ''}
               </div>
               <h1 className="text-5xl md:text-6xl font-black text-gray-900 tracking-tighter mb-6 leading-[1.1]">
-                1-on-1 Advanced <br/>Research
+                {program.title}
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed mb-8 font-medium">
-                A highly individualized, continuous program where students explore profound questions alongside top academic researchers. Designed for publishing-ready outcomes.
+                {program.description}
               </p>
               
               <div className="flex flex-wrap gap-4 mb-8">
                 <div className="flex items-center px-4 py-3 bg-gray-50 rounded-xl text-sm font-semibold text-gray-700 border border-gray-100 shadow-sm">
                   <Clock className="w-5 h-5 mr-3 text-blue-600" />
-                  12 Weeks Duration
+                  Intensive Program
                 </div>
                 <div className="flex items-center px-4 py-3 bg-gray-50 rounded-xl text-sm font-semibold text-gray-700 border border-gray-100 shadow-sm">
                   <Calendar className="w-5 h-5 mr-3 text-blue-600" />
-                  Flexible Start Date
+                  {program.startDate ? new Date(program.startDate).toLocaleDateString() : 'Flexible Start'}
                 </div>
                 <div className="flex items-center px-4 py-3 bg-gray-50 rounded-xl text-sm font-semibold text-gray-700 border border-gray-100 shadow-sm">
                   <MapPin className="w-5 h-5 mr-3 text-blue-600" />
-                  Remote / Hybrid
+                  Online / Seoul
                 </div>
               </div>
             </motion.div>
@@ -66,9 +84,12 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
               <div className="flex items-center justify-between mb-8 pb-8 border-b border-gray-100">
                 <div>
                   <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-1">Current Status</p>
-                  <p className="text-xl font-bold text-green-600 flex items-center">
-                    <span className="w-2.5 h-2.5 rounded-full bg-green-500 mr-3 animate-pulse"></span>
-                    Accepting Applications
+                  <p className={`text-xl font-bold flex items-center ${
+                    program.status === 'OPEN' ? 'text-green-600' : 
+                    program.status === 'CLOSED' ? 'text-gray-500' : 'text-blue-600'
+                  }`}>
+                    {program.status === 'OPEN' && <span className="w-2.5 h-2.5 rounded-full bg-green-500 mr-3 animate-pulse"></span>}
+                    {program.status === 'OPEN' ? 'Accepting Applications' : program.status === 'CLOSED' ? 'Closed' : 'Completed'}
                   </p>
                 </div>
               </div>
@@ -106,13 +127,8 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
             transition={{ duration: 0.5 }}
           >
             <h2 className="text-3xl font-bold text-gray-900 mb-8 tracking-tight">Program Overview</h2>
-            <div className="prose prose-lg prose-blue max-w-none text-gray-600 leading-relaxed font-medium">
-              <p>
-                The 1-on-1 Advanced Research Program is our flagship initiative designed for students who demonstrate exceptional curiosity and intellectual capability. This is not a standard tutoring session; it is a collaborative academic pursuit.
-              </p>
-              <p>
-                Students will be paired with a mentor who actively researches in their field of interest. Together, they will define a novel research question, establish a rigorous methodology, collect and analyze data, and ultimately draft a paper suitable for publication in high school or undergraduate research journals.
-              </p>
+            <div className="prose prose-lg prose-blue max-w-none text-gray-600 leading-relaxed font-medium whitespace-pre-line">
+              {program.description}
             </div>
           </motion.div>
 
