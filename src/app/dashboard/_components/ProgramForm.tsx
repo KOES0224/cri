@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createProgram, updateProgram } from "@/app/actions/programs";
 
@@ -23,6 +23,23 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [recentStartDates, setRecentStartDates] = useState<string[]>([]);
+  const [recentEndDates, setRecentEndDates] = useState<string[]>([]);
+
+  useEffect(() => {
+    const storedStarts = localStorage.getItem("recentStartDates");
+    if (storedStarts) setRecentStartDates(JSON.parse(storedStarts));
+    
+    const storedEnds = localStorage.getItem("recentEndDates");
+    if (storedEnds) setRecentEndDates(JSON.parse(storedEnds));
+  }, []);
+
+  const saveRecentDate = (key: string, dateStr: string, currentList: string[]) => {
+    if (!dateStr) return currentList;
+    const updatedList = [dateStr, ...currentList.filter(d => d !== dateStr)].slice(0, 3);
+    localStorage.setItem(key, JSON.stringify(updatedList));
+    return updatedList;
+  };
 
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
@@ -62,6 +79,13 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
       }
 
       if (result.success) {
+        if (formData.startDate) {
+          setRecentStartDates(prev => saveRecentDate("recentStartDates", formData.startDate, prev));
+        }
+        if (formData.endDate) {
+          setRecentEndDates(prev => saveRecentDate("recentEndDates", formData.endDate, prev));
+        }
+        
         if (onSuccess) onSuccess();
         router.refresh();
       } else {
@@ -173,6 +197,21 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
           />
+          {recentStartDates.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="text-xs text-gray-500 py-1">Recent:</span>
+              {recentStartDates.map(date => (
+                <button
+                  key={`start-${date}`}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, startDate: date })}
+                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+                >
+                  {date}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
@@ -183,6 +222,21 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
           />
+          {recentEndDates.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="text-xs text-gray-500 py-1">Recent:</span>
+              {recentEndDates.map(date => (
+                <button
+                  key={`end-${date}`}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, endDate: date })}
+                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+                >
+                  {date}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
