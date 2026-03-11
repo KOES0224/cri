@@ -1,0 +1,106 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String        @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String        @default("STUDENT")
+  accounts      Account[]
+  sessions      Session[]
+  applications  Application[]
+  messagesSent  Message[]     @relation("SentMessages")
+  messagesRecv  Message[]     @relation("ReceivedMessages")
+  
+  // Parent-Student Relationship
+  parentId      String?
+  parent        User?         @relation("ParentStudent", fields: [parentId], references: [id])
+  children      User[]        @relation("ParentStudent")
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Program {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  category    String        // e.g. "1-on-1 Advanced Research", "Summer Camp"
+  status      String        @default("OPEN")
+  startDate   DateTime?
+  endDate     DateTime?
+  applications Application[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  userId      String
+  programId   String
+  status      String            @default("PENDING")
+  content     String?           // For storing application responses/essays
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program     Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([userId, programId])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  content     String
+  read        Boolean  @default(false)
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+
