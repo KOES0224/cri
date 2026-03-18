@@ -16,24 +16,20 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_0%,#000_70%,transparent_100%)] mix-blend-overlay"></div>
       </div>
 
-      {/* Hero Section with Video Background */}
-      <section className="relative pt-40 pb-32 md:pt-56 md:pb-48 px-6 flex items-center justify-center z-10 min-h-screen overflow-hidden">
-        {/* Background Video */}
-        <div className="absolute inset-0 z-[-2]">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          >
-            {/* Replace with actual video path once provided */}
-            <source src="/hero-bg.mp4" type="video/mp4" />
-          </video>
+      {/* Hero Section with Animated Abstract Background */}
+      <section className="relative pt-40 pb-32 md:pt-56 md:pb-48 px-6 flex items-center justify-center z-10 min-h-screen overflow-hidden bg-gray-950">
+        
+        {/* Animated premium gradient mesh background */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] max-w-[800px] max-h-[800px] rounded-full bg-blue-600/30 blur-[100px] animate-pulse mix-blend-screen" style={{ animationDuration: '8s' }}></div>
+          <div className="absolute top-[10%] right-[-20%] w-[60vw] h-[60vw] max-w-[700px] max-h-[700px] rounded-full bg-indigo-500/20 blur-[120px] animate-pulse mix-blend-screen" style={{ animationDuration: '12s', animationDelay: '2s' }}></div>
+          <div className="absolute bottom-[-30%] left-[20%] w-[80vw] h-[80vw] max-w-[1000px] max-h-[1000px] rounded-full bg-purple-600/20 blur-[150px] animate-pulse mix-blend-screen" style={{ animationDuration: '15s', animationDelay: '1s' }}></div>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_0%,#000_70%,transparent_100%)]"></div>
         </div>
         
-        {/* Gradient Overlay for Text Readability */}
-        <div className="absolute inset-0 z-[-1] bg-gradient-to-b from-gray-950/90 via-black/80 to-black/95 backdrop-blur-[2px]"></div>
+        {/* Subtle grid texture overlay */}
+        <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
         
         <div className="max-w-5xl mx-auto text-center space-y-10">
           <motion.div 

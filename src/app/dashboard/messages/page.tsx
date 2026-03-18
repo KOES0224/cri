@@ -1,27 +1,19 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Send } from "lucide-react";
+import { Send } from "lucide-react";
+import StudentLayout from "../_components/StudentLayout";
 
 export default async function MessagesPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
-    redirect("/auth/login");
+  if (!session || session.user.role !== "STUDENT") {
+    redirect("/dashboard");
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 h-[calc(100vh-64px)] flex flex-col">
-      <div className="mb-6 shrink-0">
-        <Link href="/dashboard" className="text-sm font-medium text-gray-500 hover:text-gray-900 inline-flex items-center">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Dashboard
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mt-4">Messages</h1>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex-1 overflow-hidden flex flex-col md:flex-row min-h-0">
+    <StudentLayout>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row min-h-[600px] overflow-hidden">
         
         {/* Contact List */}
         <div className="w-full md:w-1/3 border-r border-gray-100 flex flex-col hidden md:flex">
@@ -113,6 +105,6 @@ export default async function MessagesPage() {
         </div>
 
       </div>
-    </div>
+    </StudentLayout>
   );
 }

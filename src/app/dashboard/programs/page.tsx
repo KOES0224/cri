@@ -3,8 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { getPrograms } from "@/app/actions/programs";
 import AdminProgramsList from "../_components/AdminProgramsList";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import AdminLayout from "../_components/AdminLayout";
 
 export default async function AdminProgramsPage() {
   const session = await getServerSession(authOptions);
@@ -16,16 +15,9 @@ export default async function AdminProgramsPage() {
   const initialPrograms: any = await getPrograms();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-10">
+    <AdminLayout>
       <div className="mb-8">
-        <Link 
-          href="/dashboard" 
-          className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Admin Dashboard
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
           Program Management
         </h1>
         <p className="mt-2 text-sm text-gray-500">
@@ -34,6 +26,6 @@ export default async function AdminProgramsPage() {
       </div>
 
       <AdminProgramsList initialPrograms={initialPrograms} />
-    </div>
+    </AdminLayout>
   );
 }

@@ -1,13 +1,26 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import KakaoProvider from "next-auth/providers/kakao";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+    KakaoProvider({
+      clientId: process.env.KAKAO_CLIENT_ID || "",
+      clientSecret: process.env.KAKAO_CLIENT_SECRET || "",
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "admin@cri.kr" },
+        email: { label: "Email", type: "email", placeholder: "user@example.com" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
@@ -15,41 +28,37 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Dummy dev check - In production, use bcrypt against a real hash
-        if (credentials.email === "admin@cri.kr" && credentials.password === "admin") {
-          return { id: "1", name: "Admin", email: "admin@cri.kr", role: "ADMIN" };
-        }
-        if (credentials.email === "parent@cri.kr" && credentials.password === "parent") {
-          return { id: "2", name: "Parent", email: "parent@cri.kr", role: "PARENT" };
-        }
-        if (credentials.email === "student@cri.kr" && credentials.password === "student") {
-          return { id: "3", name: "Student", email: "student@cri.kr", role: "STUDENT" };
-        }
-
-        // Try to find user in DB
         const user = await prisma.user.findUnique({
           where: { email: credentials.email }
         });
 
-        // Basic plaintext check for dev purposes since we haven't set up hashing
-        if (user && user.password === credentials.password) {
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role
-          };
+        if (!user || !user.password) {
+          return null;
         }
 
-        return null;
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) return null;
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        };
       }
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+        token.studentCode = (user as any).studentCode;
+      }
+      
+      if (trigger === "update" && session?.user) {
+        token.role = session.user.role;
+        token.studentCode = session.user.studentCode;
       }
       return token;
     },
@@ -57,6 +66,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.role = token.role as string;
         session.user.id = token.id as string;
+        (session.user as any).studentCode = token.studentCode as string | null;
       }
       return session;
     }

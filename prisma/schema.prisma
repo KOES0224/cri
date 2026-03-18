@@ -8,26 +8,30 @@ generator client {
 }
 
 model User {
-  id            String        @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String        @unique
+  email         String    @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  role          String        @default("STUDENT")
-  accounts      Account[]
-  sessions      Session[]
-  applications  Application[]
-  messagesSent  Message[]     @relation("SentMessages")
-  messagesRecv  Message[]     @relation("ReceivedMessages")
-  
-  // Parent-Student Relationship
-  parentId      String?
-  parent        User?         @relation("ParentStudent", fields: [parentId], references: [id])
-  children      User[]        @relation("ParentStudent")
+  role          String    @default("STUDENT") // STUDENT, PARENT, ADMIN
+  studentCode   String?   @unique // 8-digit random code
+  isAgency      Boolean   @default(false) // Hidden flag for parent accounts
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  accounts     Account[]
+  sessions     Session[]
+  applications Application[]
+  enrollments  Enrollment[]
+  messagesSent Message[]     @relation("SentMessages")
+  messagesRecv Message[]     @relation("ReceivedMessages")
+
+  // Parent-Student Relationship
+  parentId String?
+  parent   User?   @relation("ParentStudent", fields: [parentId], references: [id])
+  children User[]  @relation("ParentStudent")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
@@ -66,42 +70,99 @@ model VerificationToken {
 }
 
 model Program {
-  id          String        @id @default(cuid())
-  title       String
-  description String
-  category    String        // e.g. "Research", "Mentorship"
-  subCategory String?       // e.g. "1-on-1", "Group"
-  status      String        @default("OPEN")
-  startDate   DateTime?
-  endDate     DateTime?
+  id           String        @id @default(cuid())
+  title        String
+  description  String
+  category     String // e.g. "Research", "Mentorship"
+  subCategory  String? // e.g. "1-on-1", "Group"
+  status       String        @default("OPEN")
+  startDate    DateTime?
+  endDate      DateTime?
   applications Application[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  Enrollment   Enrollment[]
 }
 
 model Application {
-  id          String            @id @default(cuid())
-  userId      String
-  programId   String
-  status      String            @default("PENDING")
-  content     String?           // For storing application responses/essays
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  program     Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id               String   @id @default(cuid())
+  userId           String
+  programId        String
+  status           String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  step             Int      @default(1) // Visual indicator step
+  expectedWaitDays Int? // Expected remaining time
+  content          String? // For storing application responses/essays
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program          Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@unique([userId, programId])
 }
 
 model Message {
-  id          String   @id @default(cuid())
-  senderId    String
-  receiverId  String
-  content     String
-  read        Boolean  @default(false)
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  read       Boolean  @default(false)
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 }
 
+model Enrollment {
+  id                      String   @id @default(cuid())
+  userId                  String
+  programId               String
+  status                  String   @default("ONGOING") // ONGOING, PAST
+  midGrade                String?
+  finalGrade              String?
+  homeworkUrls            String? // JSON string or comma-separated URLs
+  recommendationRequested Boolean  @default(false)
+  recommendationCompleted Boolean  @default(false)
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program                 Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
+  @@unique([userId, programId])
+}
+
+model Lead {
+  id        String    @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  status    String    @default("NEW") // NEW, CONTACTED, MET, ENROLLED
+  notes     String?
+  deadline  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  excerpt     String?
+  content     String
+  category    String   @default("Uncategorized")
+  author      String   @default("CRI Editorial")
+  imageUrl    String?
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Professor {
+  id               String   @id @default(cuid())
+  name             String
+  role             String
+  university       String?
+  bio              String
+  imageUrl         String?
+  acceptingMentees Boolean  @default(true)
+  publications     Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

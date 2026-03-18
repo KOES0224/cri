@@ -2,58 +2,52 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { FileText, Clock, ExternalLink, BookOpen } from "lucide-react";
+import StudentLayout from "../_components/StudentLayout";
 
 export default async function ApplicationsPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
-    redirect("/auth/login");
+  if (!session || session.user.role !== "STUDENT") {
+    redirect("/dashboard");
   }
 
   // Normally we would fetch applications from Prisma here
   const applications: any[] = []; // Using empty array for mock UI
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="mb-6">
-        <Link href="/dashboard" className="text-sm font-medium text-gray-500 hover:text-gray-900 inline-flex items-center">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Dashboard
-        </Link>
+    <StudentLayout>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px]">
+        <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+           <div>
+             <h3 className="text-lg font-medium tracking-tight text-gray-900 flex items-center">
+               <FileText className="h-5 w-5 mr-2 text-orange-600" />
+               My Applications
+             </h3>
+             <p className="text-sm text-gray-500 mt-1">Track the status of your research program applications.</p>
+           </div>
+        </div>
+        
+        <div className="p-8">
+           {applications.length === 0 ? (
+             <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/30">
+                <Clock className="h-10 w-10 text-gray-300 mb-3" />
+                <p className="text-gray-900 font-medium">No Applications Yet</p>
+                <p className="text-sm text-gray-500 mt-1 max-w-sm mb-6">You haven't applied to any CRI research programs. Browse our offerings to find a mentor matching your interests.</p>
+                <Link href="/research" className="flex items-center px-6 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+                  Explore Programs
+                  <ExternalLink className="h-4 w-4 ml-2" />
+                </Link>
+             </div>
+           ) : (
+             <div className="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
+               <ul role="list" className="divide-y divide-gray-100">
+                 {/* List rendered here if applications array had items */}
+               </ul>
+             </div>
+           )}
+        </div>
       </div>
-      
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">My Applications</h1>
-          <p className="mt-1 text-sm text-gray-500">Track the status of your research program applications.</p>
-        </div>
-        <Link href="/research" className="bg-black text-white px-4 py-2 rounded-md font-medium hover:bg-gray-800 transition-colors">
-          Browse Programs
-        </Link>
-      </div>
-
-      {applications.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <BookOpen className="mx-auto h-12 w-12 text-gray-300" />
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No applications yet</h3>
-          <p className="mt-1 text-gray-500">Get started by browsing our available research programs.</p>
-          <div className="mt-6">
-            <Link href="/research" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
-              Find a Program
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
-          <ul role="list" className="divide-y divide-gray-100">
-            {/* List rendered here if applications array had items */}
-          </ul>
-        </div>
-      )}
-    </div>
+    </StudentLayout>
   );
 }
-
-// Needed because BookOpen wasn't imported in the mockup state above, adding it globally to this block
-import { BookOpen } from "lucide-react";
