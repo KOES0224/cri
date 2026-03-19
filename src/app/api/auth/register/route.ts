@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import * as z from "zod";
 
 function generateStudentCode() {
   return Math.floor(10000000 + Math.random() * 90000000).toString(); // 8 digit random string
@@ -9,15 +10,21 @@ function generateStudentCode() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, password, role } = body;
+    
+    const registerSchema = z.object({
+      name: z.string().min(2, "Name must be at least 2 characters"),
+      email: z.string().email("Invalid email address"),
+      password: z.string().min(6, "Password must be at least 6 characters"),
+      role: z.enum(["STUDENT", "PARENT"]),
+    });
 
-    if (!name || !email || !password || !role) {
-      return new NextResponse("Missing Info", { status: 400 });
+    const parsed = registerSchema.safeParse(body);
+    
+    if (!parsed.success) {
+      return new NextResponse("Validation Error: Invalid Input", { status: 400 });
     }
 
-    if (role !== "STUDENT" && role !== "PARENT") {
-      return new NextResponse("Invalid Role", { status: 400 });
-    }
+    const { name, email, password, role } = parsed.data;
 
     const existingUser = await prisma.user.findUnique({
       where: {

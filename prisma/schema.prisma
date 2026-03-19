@@ -51,6 +51,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -59,6 +60,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -98,6 +101,8 @@ model Application {
   updatedAt        DateTime @updatedAt
 
   @@unique([userId, programId])
+  @@index([userId])
+  @@index([programId])
 }
 
 model Message {
@@ -109,6 +114,9 @@ model Message {
   sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
 }
 
 model Enrollment {
@@ -127,6 +135,8 @@ model Enrollment {
   updatedAt               DateTime @updatedAt
 
   @@unique([userId, programId])
+  @@index([userId])
+  @@index([programId])
 }
 
 model Lead {

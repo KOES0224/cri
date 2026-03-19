@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { GraduationCap } from "lucide-react";
+import Image from "next/image";
 
 export default function SuccessPage() {
   return (
@@ -20,7 +21,7 @@ export default function SuccessPage() {
           ].map((student, i) => (
             <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all group">
               <div className="h-48 bg-gray-200 relative overflow-hidden">
-                <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${student.n}&backgroundColor=e2e8f0`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Student" />
+                <Image src={`https://api.dicebear.com/7.x/notionists/svg?seed=${student.n}&backgroundColor=e2e8f0`} className="object-cover group-hover:scale-105 transition-transform duration-500" alt="Student" fill />
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1">{student.n}</h3>

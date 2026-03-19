@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import Image from "next/image";
 
 type Post = {
   id: string;
@@ -38,7 +39,7 @@ export default function BlogClientPage({ posts }: { posts: Post[] }) {
               <motion.div key={post.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all group flex flex-col">
                 <div className="h-48 overflow-hidden relative bg-gray-100">
                   {post.imageUrl ? (
-                    <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <Image src={post.imageUrl} alt={post.title} className="object-cover group-hover:scale-105 transition-transform duration-500" fill />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-purple-50">
                        <span className="text-purple-200 font-bold block pb-[5%]">CRI</span>

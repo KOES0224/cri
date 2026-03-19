@@ -15,8 +15,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CRI | Research Program",
-  description: "CRI offers research programs for students, guided by top professors",
+  title: "CRI | Premium Research Programs for Students",
+  description: "CRI offers exceptional research programs for ambitious students, guided by Ivy League and top-tier university professors. Transform your curiosity into accepted publications.",
+  openGraph: {
+    title: "CRI | Premium Research Programs",
+    description: "Guided research programs with top university professors.",
+    url: "https://criglobal.org",
+    siteName: "CRI",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "CRI Global Research Institute",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CRI | Premium Research Programs",
+    description: "Guided research programs with top university professors.",
+    images: ["/opengraph-image.png"],
+  },
 };
 
 export default function RootLayout({

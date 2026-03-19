@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, CheckCircle2, ChevronRight, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { use, useState, useEffect } from "react";
 import { getProgramById } from "@/app/actions/programs";
 import { notFound } from "next/navigation";
@@ -176,7 +177,7 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
             <div className="space-y-6 relative z-10">
               <div className="flex items-center p-3 rounded-xl hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10">
                 <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mr-4 shrink-0 overflow-hidden">
-                   <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Sarah&backgroundColor=b6e3f4" alt="mentor" />
+                   <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=Sarah&backgroundColor=b6e3f4" alt="mentor" width={48} height={48} />
                 </div>
                 <div>
                   <p className="font-bold text-white text-sm">Dr. Sarah Chen</p>
@@ -185,7 +186,7 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <div className="flex items-center p-3 rounded-xl hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10">
                 <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mr-4 shrink-0 overflow-hidden">
-                   <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Elena&backgroundColor=ffd5dc" alt="mentor" />
+                   <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=Elena&backgroundColor=ffd5dc" alt="mentor" width={48} height={48} />
                 </div>
                 <div>
                   <p className="font-bold text-white text-sm">Dr. Elena Rodriguez</p>
