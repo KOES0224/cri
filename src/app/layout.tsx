@@ -22,14 +22,6 @@ export const metadata: Metadata = {
     description: "Guided research programs with top university professors.",
     url: "https://criglobal.org",
     siteName: "CRI",
-    images: [
-      {
-        url: "/opengraph-image.png",
-        width: 1200,
-        height: 630,
-        alt: "CRI Global Research Institute",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
@@ -37,7 +29,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "CRI | Premium Research Programs",
     description: "Guided research programs with top university professors.",
-    images: ["/opengraph-image.png"],
   },
 };
 
