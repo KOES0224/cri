@@ -44,6 +44,16 @@ export default function AdminCMSPage() {
             <p className="text-sm text-gray-500 mt-1 mb-4">Add or update researcher and mentor profiles.</p>
             <span className="text-sm font-medium text-green-600 flex items-center">Manage Directory <Edit3 className="w-3 h-3 ml-1" /></span>
          </Link>
+
+         {/* Edit Student Success */}
+         <Link href="/dashboard/cms/success" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-orange-300 transition-colors group">
+            <div className="p-3 rounded-xl bg-orange-50 text-orange-600 w-fit mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-award"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">Student Success</h3>
+            <p className="text-sm text-gray-500 mt-1 mb-4">Manage alumni success stories and acceptances.</p>
+            <span className="text-sm font-medium text-orange-600 flex items-center">Manage Stories <Edit3 className="w-3 h-3 ml-1" /></span>
+         </Link>
       </div>
     </AdminLayout>
   );

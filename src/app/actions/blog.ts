@@ -16,11 +16,13 @@ export async function getPosts() {
 
 export async function createPost(data: {
   title: string;
+  slug?: string;
   excerpt?: string | null;
   content: string;
   category?: string;
   author?: string;
   imageUrl?: string | null;
+  externalLink?: string | null;
   publishedAt?: Date | null;
 }) {
   try {
@@ -40,11 +42,13 @@ export async function updatePost(
   id: string,
   data: Partial<{
     title: string;
+    slug?: string;
     excerpt?: string | null;
     content: string;
     category?: string;
     author?: string;
     imageUrl?: string | null;
+    externalLink?: string | null;
     publishedAt?: Date | null;
   }>
 ) {

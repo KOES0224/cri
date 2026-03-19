@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createPost, updatePost } from "@/app/actions/blog";
+import { createSuccessStory, updateSuccessStory } from "@/app/actions/success";
 
-type PostFormProps = {
+type SuccessFormProps = {
   initialData?: {
     id: string;
     slug?: string | null;
-    title: string;
-    excerpt: string | null;
-    content: string;
-    category: string;
-    author: string;
+    name: string;
+    university: string;
+    major: string;
+    projectTitle: string;
+    description?: string | null;
     imageUrl?: string | null;
     externalLink?: string | null;
   };
@@ -20,19 +20,19 @@ type PostFormProps = {
   onCancel?: () => void;
 };
 
-export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormProps) {
+export default function SuccessStoryForm({ initialData, onSuccess, onCancel }: SuccessFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
-    title: initialData?.title || "",
+    name: initialData?.name || "",
     slug: initialData?.slug || "",
-    excerpt: initialData?.excerpt || "",
-    content: initialData?.content || "",
-    category: initialData?.category || "Uncategorized",
-    author: initialData?.author || "CRI Editorial",
+    university: initialData?.university || "",
+    major: initialData?.major || "",
+    projectTitle: initialData?.projectTitle || "",
+    description: initialData?.description || "",
     imageUrl: initialData?.imageUrl || "",
     externalLink: initialData?.externalLink || "",
   });
@@ -43,7 +43,7 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -64,31 +64,28 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
       }
 
       const payload = {
-        title: formData.title,
+        name: formData.name,
         slug: formData.slug || undefined,
-        excerpt: formData.excerpt,
-        content: formData.content,
-        category: formData.category,
-        author: formData.author,
+        university: formData.university,
+        major: formData.major,
+        projectTitle: formData.projectTitle,
+        description: formData.description || undefined,
         imageUrl: uploadedImageUrl || undefined,
         externalLink: formData.externalLink || undefined,
       };
 
       let result;
       if (initialData?.id) {
-        result = await updatePost(initialData.id, payload);
+        result = await updateSuccessStory(initialData.id, payload);
       } else {
-        result = await createPost({
-            ...payload,
-            publishedAt: new Date()
-        });
+        result = await createSuccessStory(payload);
       }
 
       if (result.success) {
         if (onSuccess) onSuccess();
         router.refresh();
       } else {
-        setError(result.error || "Failed to save post.");
+        setError(result.error || "Failed to save story.");
       }
     } catch (err) {
       setError("An unexpected error occurred.");
@@ -108,76 +105,78 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
             type="text"
             name="slug"
             required
-            placeholder="e.g. my-awesome-post"
+            placeholder="e.g. david-stanford"
             value={formData.slug}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Article Title *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Student Name *</label>
           <input
             type="text"
-            name="title"
+            name="name"
             required
-            value={formData.title}
+            placeholder="e.g. David Kim"
+            value={formData.name}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">University *</label>
+          <input
+            type="text"
+            name="university"
+            required
+            placeholder="e.g. Stanford University"
+            value={formData.university}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Major/Intended Major *</label>
+          <input
+            type="text"
+            name="major"
+            required
+            placeholder="e.g. Computer Science"
+            value={formData.major}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Short Excerpt</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Project Title *</label>
         <textarea
-          name="excerpt"
-          rows={2}
-          value={formData.excerpt}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Full Content *</label>
-        <textarea
-          name="content"
+          name="projectTitle"
           required
-          rows={8}
-          value={formData.content}
+          rows={2}
+          placeholder="e.g. AI Ethics in Modern Computation"
+          value={formData.projectTitle}
           onChange={handleChange}
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none font-mono text-sm"
-          placeholder="Use Markdown or plain text..."
+          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-          <input
-            type="text"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            placeholder="e.g. Research Spotlight"
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Author Name</label>
-          <input
-            type="text"
-            name="author"
-            value={formData.author}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none"
-          />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Detailed Description (Optional)</label>
+        <textarea
+          name="description"
+          rows={4}
+          placeholder="Details about their journey or the research paper..."
+          value={formData.description}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 pt-4 mt-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Hero Image Upload</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Profile/Hero Image</label>
           <input
             type="file"
             accept="image/*"
@@ -191,10 +190,10 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
           <input
             type="url"
             name="externalLink"
-            placeholder="https://example.com"
+            placeholder="https://example.com/paper-link"
             value={formData.externalLink}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
           />
         </div>
       </div>
@@ -204,7 +203,7 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
           >
             Cancel
           </button>
@@ -212,9 +211,9 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+          className="px-6 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 disabled:opacity-50"
         >
-          {loading ? "Saving..." : initialData ? "Update Article" : "Publish Article"}
+          {loading ? "Saving..." : initialData ? "Update Story" : "Publish Story"}
         </button>
       </div>
     </form>

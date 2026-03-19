@@ -7,6 +7,7 @@ import Image from "next/image";
 
 type Post = {
   id: string;
+  slug: string | null;
   title: string;
   excerpt: string | null;
   content: string;
@@ -61,7 +62,7 @@ export default function BlogClientPage({ posts }: { posts: Post[] }) {
                     <p className="text-gray-600 line-clamp-2 text-sm mb-4 leading-relaxed">{post.excerpt}</p>
                   )}
                   <div className="mt-auto pt-6 border-t border-gray-100">
-                    <Link href={`/blog/${post.id}`} className="inline-flex items-center text-sm font-bold text-blue-600 group-hover:text-blue-800 transition-colors">
+                    <Link href={`/blog/${post.slug || post.id}`} className="inline-flex items-center text-sm font-bold text-blue-600 group-hover:text-blue-800 transition-colors">
                       Read Article <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </div>

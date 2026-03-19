@@ -1,34 +1,49 @@
-"use client";
+"use server";
+import { prisma } from "@/lib/prisma";
 import { motion } from "framer-motion";
 import { GraduationCap } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+export default async function SuccessPage() {
+  const stories = await prisma.successStory.findMany({
+    orderBy: { createdAt: "desc" }
+  });
 
-export default function SuccessPage() {
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-32">
       <div className="max-w-7xl mx-auto px-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-20">
+        <div className="text-center mb-20">
           <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-6">Student Success</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">Meet our scholars who have transfromed their curiosity into accepted publications and elite university admissions.</p>
-        </motion.div>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">Meet our scholars who have transformed their curiosity into accepted publications and elite university admissions.</p>
+        </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { n: "David K.", u: "Stanford University", p: "Machine Learning applied to Climate Models" },
-            { n: "Sarah M.", u: "MIT", p: "Novel Biomarkers in Early Alzheimer's" },
-            { n: "Jin Y.", u: "Seoul National University", p: "Algorithmic Game Theory in Economics" },
-            { n: "Alice T.", u: "Oxford University", p: "Historical Linguistic Shifts in 19th Century" }
-          ].map((student, i) => (
-            <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all group">
-              <div className="h-48 bg-gray-200 relative overflow-hidden">
-                <Image src={`https://api.dicebear.com/7.x/notionists/svg?seed=${student.n}&backgroundColor=e2e8f0`} className="object-cover group-hover:scale-105 transition-transform duration-500" alt="Student" fill />
+          {stories.map((student: { id: string; name: string; imageUrl: string | null; university: string; major: string; projectTitle: string; externalLink: string | null }, i: number) => (
+            <div key={student.id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all group relative">
+              <div className="h-48 bg-gray-200 relative overflow-hidden flex items-center justify-center">
+                {student.imageUrl ? (
+                  <Image src={student.imageUrl} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.name} fill />
+                ) : (
+                  <Image src={`https://api.dicebear.com/7.x/notionists/svg?seed=${student.name}&backgroundColor=e2e8f0`} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.name} fill />
+                )}
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-bold mb-1">{student.n}</h3>
-                <p className="text-blue-600 font-semibold text-sm mb-4 flex items-center"><GraduationCap className="w-4 h-4 mr-1"/> {student.u}</p>
-                <p className="text-gray-500 text-sm leading-relaxed">Research Topic: {student.p}</p>
+                <h3 className="text-xl font-bold mb-1">{student.name}</h3>
+                <p className="text-blue-600 font-semibold text-sm mb-4 flex items-center"><GraduationCap className="w-4 h-4 mr-1"/> {student.university}</p>
+                <div className="mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Major</span>
+                  <p className="text-gray-900 font-medium text-sm">{student.major}</p>
+                </div>
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Research</span>
+                  <p className="text-gray-600 text-sm leading-relaxed">{student.projectTitle}</p>
+                </div>
+
+                {student.externalLink && (
+                  <Link href={student.externalLink} target="_blank" className="absolute inset-0 cursor-pointer" />
+                )}
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
