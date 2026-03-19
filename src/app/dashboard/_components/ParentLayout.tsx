@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, CreditCard, ArrowLeft, GraduationCap } from "lucide-react";
+import { Users, CreditCard, ArrowLeft, GraduationCap, UserCircle } from "lucide-react";
 
 export default async function ParentLayout({
   children,
@@ -32,9 +32,16 @@ export default async function ParentLayout({
             <span className="font-medium text-sm">Linked Students</span>
           </Link>
 
-          <Link href="/dashboard/billing" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-700 transition-colors group">
+          <Link href="/dashboard/billing" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-700 transition-colors group mb-4">
             <CreditCard className="h-5 w-5" />
             <span className="font-medium text-sm">Billing Integrations</span>
+          </Link>
+
+          <div className="h-px bg-gray-100 w-full mb-4"></div>
+
+          <Link href="/dashboard/profile" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors group">
+            <UserCircle className="h-5 w-5" />
+            <span className="font-medium text-sm">My Profile</span>
           </Link>
         </div>
       </aside>
