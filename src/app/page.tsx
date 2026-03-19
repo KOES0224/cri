@@ -19,13 +19,24 @@ export default function Home() {
       {/* Hero Section with Animated Abstract Background */}
       <section className="relative pt-40 pb-32 md:pt-56 md:pb-48 px-6 flex items-center justify-center z-10 min-h-screen overflow-hidden bg-gray-950">
         
-        {/* Animated premium gradient mesh background */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
-          <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] max-w-[800px] max-h-[800px] rounded-full bg-blue-600/30 blur-[100px] animate-pulse mix-blend-screen" style={{ animationDuration: '8s' }}></div>
-          <div className="absolute top-[10%] right-[-20%] w-[60vw] h-[60vw] max-w-[700px] max-h-[700px] rounded-full bg-indigo-500/20 blur-[120px] animate-pulse mix-blend-screen" style={{ animationDuration: '12s', animationDelay: '2s' }}></div>
-          <div className="absolute bottom-[-30%] left-[20%] w-[80vw] h-[80vw] max-w-[1000px] max-h-[1000px] rounded-full bg-purple-600/20 blur-[150px] animate-pulse mix-blend-screen" style={{ animationDuration: '15s', animationDelay: '1s' }}></div>
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+        {/* Video Background with Gradient Overlays */}
+        <div className="absolute inset-0 z-0 overflow-hidden bg-black">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            className="absolute inset-0 w-full h-full object-cover opacity-50"
+          >
+            <source src="/hero-bg.mp4" type="video/mp4" />
+          </video>
+          
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60 to-transparent z-10"></div>
+          
+          <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] max-w-[800px] max-h-[800px] rounded-full bg-blue-600/20 blur-[100px] animate-pulse mix-blend-screen z-20" style={{ animationDuration: '8s' }}></div>
+          <div className="absolute top-[10%] right-[-20%] w-[60vw] h-[60vw] max-w-[700px] max-h-[700px] rounded-full bg-indigo-500/20 blur-[120px] animate-pulse mix-blend-screen z-20" style={{ animationDuration: '12s', animationDelay: '2s' }}></div>
+          <div className="absolute bottom-[-30%] left-[20%] w-[80vw] h-[80vw] max-w-[1000px] max-h-[1000px] rounded-full bg-purple-600/10 blur-[150px] animate-pulse mix-blend-screen z-20" style={{ animationDuration: '15s', animationDelay: '1s' }}></div>
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_0%,#000_70%,transparent_100%)] z-20"></div>
         </div>
         
         {/* Subtle grid texture overlay */}
