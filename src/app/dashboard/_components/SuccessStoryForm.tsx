@@ -65,13 +65,13 @@ export default function SuccessStoryForm({ initialData, onSuccess, onCancel }: S
 
       const payload = {
         name: formData.name,
-        slug: formData.slug || undefined,
+        slug: formData.slug || null,
         university: formData.university,
         major: formData.major,
         projectTitle: formData.projectTitle,
-        description: formData.description || undefined,
-        imageUrl: uploadedImageUrl || undefined,
-        externalLink: formData.externalLink || undefined,
+        description: formData.description || null,
+        imageUrl: uploadedImageUrl || null,
+        externalLink: formData.externalLink || null,
       };
 
       let result;
@@ -87,8 +87,9 @@ export default function SuccessStoryForm({ initialData, onSuccess, onCancel }: S
       } else {
         setError(result.error || "Failed to save story.");
       }
-    } catch (err) {
-      setError("An unexpected error occurred.");
+    } catch (err: any) {
+      console.error("Form Submission Error:", err);
+      setError(err?.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }

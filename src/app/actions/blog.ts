@@ -16,7 +16,7 @@ export async function getPosts() {
 
 export async function createPost(data: {
   title: string;
-  slug?: string;
+  slug?: string | null;
   excerpt?: string | null;
   content: string;
   category?: string;
@@ -42,7 +42,7 @@ export async function updatePost(
   id: string,
   data: Partial<{
     title: string;
-    slug?: string;
+    slug?: string | null;
     excerpt?: string | null;
     content: string;
     category?: string;

@@ -65,13 +65,13 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
 
       const payload = {
         title: formData.title,
-        slug: formData.slug || undefined,
+        slug: formData.slug || null,
         excerpt: formData.excerpt,
         content: formData.content,
         category: formData.category,
         author: formData.author,
-        imageUrl: uploadedImageUrl || undefined,
-        externalLink: formData.externalLink || undefined,
+        imageUrl: uploadedImageUrl || null,
+        externalLink: formData.externalLink || null,
       };
 
       let result;
@@ -90,8 +90,9 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
       } else {
         setError(result.error || "Failed to save post.");
       }
-    } catch (err) {
-      setError("An unexpected error occurred.");
+    } catch (err: any) {
+      console.error("Form Submission Error:", err);
+      setError(err?.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }

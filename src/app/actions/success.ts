@@ -15,7 +15,7 @@ export async function getSuccessStories() {
 }
 
 export async function createSuccessStory(data: {
-  slug?: string;
+  slug?: string | null;
   name: string;
   university: string;
   major: string;
@@ -40,7 +40,7 @@ export async function createSuccessStory(data: {
 export async function updateSuccessStory(
   id: string,
   data: Partial<{
-    slug?: string;
+    slug?: string | null;
     name: string;
     university: string;
     major: string;
