@@ -126,24 +126,7 @@ export default function LoginPage() {
              Don't have an account? <Link href="/auth/register" className="font-medium text-black hover:underline">Sign up</Link>
           </div>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Demo Credentials</span>
-              </div>
-            </div>
 
-            <div className="mt-6 text-sm text-center text-gray-600 bg-gray-50 p-4 rounded-md border border-gray-200">
-              <div className="flex flex-col space-y-2 text-left w-max mx-auto">
-                 <p><span className="font-semibold text-gray-900 w-20 inline-block">Student:</span> student@cri.kr / student</p>
-                 <p><span className="font-semibold text-gray-900 w-20 inline-block">Parent:</span> parent@cri.kr / parent</p>
-                 <p><span className="font-semibold text-gray-900 w-20 inline-block">Admin:</span> admin@cri.kr / admin</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
