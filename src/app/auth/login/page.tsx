@@ -114,12 +114,7 @@ export default function LoginPage() {
               >
                 Sign in with Google
               </button>
-              <button
-                onClick={() => handleOAuthSignIn('kakao')}
-                className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-black bg-[#FEE500] hover:bg-[#FDD800] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FEE500] transition-colors"
-              >
-                Sign in with Kakao
-              </button>
+
           </div>
 
           <div className="mt-6 text-center text-sm text-gray-600">
