@@ -17,21 +17,21 @@ export default function Icon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(to bottom right, #2563EB, #4F46E5)',
+          background: '#030712', // Match footer bg-gray-950
           borderRadius: '56px',
         }}
       >
         <span
           style={{
-            color: 'white',
-            fontSize: 140,
+            color: '#FFFFFF', // Match white text
+            fontSize: 110,
             fontWeight: 900,
-            letterSpacing: '-0.14em',
-            marginTop: '10px', // Optical vertical alignment
-            marginLeft: '-8px', // Optical horizontal alignment for tight letter-spacing
+            letterSpacing: '-0.1em',
+            marginTop: '8px', 
+            marginLeft: '-6px', 
           }}
         >
-          CRI
+          CRI.
         </span>
       </div>
     ),

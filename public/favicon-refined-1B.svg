@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="orb2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="orbAcc" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <path d="M 65 25 A 28 28 0 1 0 65 75" fill="none" stroke="url(#orb2)" stroke-width="12" stroke-linecap="round" />
+  <circle cx="48" cy="50" r="8" fill="url(#orbAcc)" />
+  <circle cx="75" cy="50" r="10" fill="url(#orbAcc)" opacity="0.9" />
+</svg>
