@@ -17,7 +17,7 @@ export default function Home() {
       </div>
 
       {/* Hero Section with Animated Abstract Background */}
-      <section className="relative pt-40 pb-32 md:pt-56 md:pb-48 px-6 flex items-center justify-center z-10 min-h-screen overflow-hidden bg-gray-950">
+      <section className="group relative pt-40 pb-32 md:pt-56 md:pb-48 px-6 flex items-center justify-center z-10 min-h-screen overflow-hidden bg-gray-950">
         
         {/* Video Background with Gradient Overlays */}
         <div className="absolute inset-0 z-0 overflow-hidden bg-black">
@@ -40,9 +40,10 @@ export default function Home() {
         </div>
         
         {/* Subtle grid texture overlay */}
-        <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+        <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
         
-        <div className="max-w-5xl mx-auto text-center space-y-10">
+        {/* Text container fades out unless hovered (on desktop) */}
+        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10 transition-opacity duration-700 ease-in-out md:opacity-0 md:group-hover:opacity-100">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
