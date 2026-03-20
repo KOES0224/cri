@@ -165,12 +165,32 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
           </div>
         </div>
         {previewMode ? (
-          <div className="w-full px-4 py-4 min-h-[200px] max-h-[500px] overflow-y-auto border border-gray-200 rounded-lg bg-gray-50">
-            {formData.content ? (
-              <MarkdownRenderer content={formData.content} className="text-sm" />
-            ) : (
-              <p className="text-gray-400 text-sm italic">Nothing to preview yet...</p>
-            )}
+          <div className="w-full px-4 py-8 min-h-[400px] max-h-[800px] overflow-y-auto border border-gray-200 rounded-xl bg-[#FAFAFA] shadow-inner">
+            <div className="max-w-4xl mx-auto">
+              <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-6 leading-tight">
+                {formData.title || "Untitled Article"}
+              </h1>
+              
+              <div className="flex items-center gap-4 text-sm text-gray-500 mb-10 flex-wrap">
+                <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{formData.category || "Category"}</span>
+                <span className="font-medium">{formData.author || "Author"}</span>
+                <span>•</span>
+                <span>Just now</span>
+              </div>
+      
+              {(file || formData.imageUrl) && (
+                 <div className="relative w-full h-[300px] mb-12 rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-gray-200 shrink-0">
+                   {/* We use standard img tag instead of next/image to easily support local Blob URLs without config errors */}
+                   <img 
+                     src={file ? URL.createObjectURL(file) : formData.imageUrl} 
+                     alt="Hero Preview" 
+                     className="w-full h-full object-cover" 
+                   />
+                 </div>
+              )}
+      
+              <MarkdownRenderer content={formData.content || "Nothing to preview yet."} className="bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm" />
+            </div>
           </div>
         ) : (
           <textarea

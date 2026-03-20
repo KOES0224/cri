@@ -189,12 +189,34 @@ export default function SuccessStoryForm({ initialData, onSuccess, onCancel }: S
           </div>
         </div>
         {previewMode ? (
-          <div className="w-full px-4 py-4 min-h-[200px] max-h-[500px] overflow-y-auto border border-gray-200 rounded-lg bg-gray-50">
-            {formData.description ? (
-              <MarkdownRenderer content={formData.description} className="text-sm" />
-            ) : (
-              <p className="text-gray-400 text-sm italic">Nothing to preview yet...</p>
-            )}
+          <div className="w-full px-4 py-8 min-h-[400px] max-h-[800px] overflow-y-auto border border-gray-200 rounded-xl bg-[#FAFAFA] shadow-inner mb-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex flex-col md:flex-row gap-8 items-start mb-12">
+                {(file || formData.imageUrl) ? (
+                   <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden shadow-sm border border-gray-100 shrink-0 bg-gray-200">
+                     <img src={file ? URL.createObjectURL(file) : formData.imageUrl} alt="Profile" className="w-full h-full object-cover" />
+                   </div>
+                ) : (
+                   <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden shadow-sm border border-gray-100 shrink-0 flex items-center justify-center bg-gray-200">
+                     <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${formData.name}&backgroundColor=e2e8f0`} alt="Avatar" className="w-full h-full object-cover" />
+                   </div>
+                )}
+                
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-4 leading-tight">{formData.name || "Student Name"}</h1>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-6">
+                    <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{formData.university || "University"}</span>
+                    <span className="font-medium bg-gray-100 px-3 py-1 rounded-full text-gray-700">Major: {formData.major || "Major"}</span>
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-3">Research Profile</h2>
+                  <p className="text-gray-600 font-medium leading-relaxed bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    {formData.projectTitle || "Project Title"}
+                  </p>
+                </div>
+              </div>
+
+              <MarkdownRenderer content={formData.description || "Nothing to preview yet."} className="bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm" />
+            </div>
           </div>
         ) : (
           <textarea
