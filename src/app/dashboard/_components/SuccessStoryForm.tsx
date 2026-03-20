@@ -58,7 +58,10 @@ export default function SuccessStoryForm({ initialData, onSuccess, onCancel }: S
         const fileData = new FormData();
         fileData.append("file", file);
         const res = await fetch("/api/upload", { method: "POST", body: fileData });
-        if (!res.ok) throw new Error("Image upload failed");
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || "Image upload failed");
+        }
         const blob = await res.json();
         uploadedImageUrl = blob.url;
       }
