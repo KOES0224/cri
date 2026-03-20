@@ -1,7 +1,7 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { motion } from "framer-motion";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 export default async function SuccessPage() {
@@ -18,32 +18,34 @@ export default async function SuccessPage() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stories.map((student: { id: string; name: string; imageUrl: string | null; university: string; major: string; projectTitle: string; externalLink: string | null }, i: number) => (
-            <div key={student.id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all group relative">
-              <div className="h-48 bg-gray-200 relative overflow-hidden flex items-center justify-center">
+          {stories.map((student: { id: string; slug: string; name: string; imageUrl: string | null; university: string; major: string; projectTitle: string; externalLink: string | null }, i: number) => (
+            <Link href={`/success/${student.slug || student.id}`} key={student.id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all group flex flex-col relative h-full">
+              <div className="h-48 bg-gray-200 relative items-center justify-center shrink-0">
                 {student.imageUrl ? (
                   <Image src={student.imageUrl} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.name} fill unoptimized={true} />
                 ) : (
                   <Image src={`https://api.dicebear.com/7.x/notionists/svg?seed=${student.name}&backgroundColor=e2e8f0`} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.name} fill unoptimized={true} />
                 )}
               </div>
-              <div className="p-6">
+              <div className="p-6 flex-1 flex flex-col">
                 <h3 className="text-xl font-bold mb-1">{student.name}</h3>
                 <p className="text-blue-600 font-semibold text-sm mb-4 flex items-center"><GraduationCap className="w-4 h-4 mr-1"/> {student.university}</p>
                 <div className="mb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Major</span>
                   <p className="text-gray-900 font-medium text-sm">{student.major}</p>
                 </div>
-                <div>
+                <div className="flex-1">
                   <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Research</span>
                   <p className="text-gray-600 text-sm leading-relaxed">{student.projectTitle}</p>
                 </div>
-
-                {student.externalLink && (
-                  <Link href={student.externalLink} target="_blank" className="absolute inset-0 cursor-pointer" />
-                )}
+                
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="inline-flex items-center text-sm font-bold text-blue-600 group-hover:text-blue-800 transition-colors">
+                    Read Story <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
