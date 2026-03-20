@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getSiteContent, saveSiteContent } from "@/app/actions/siteContent";
 import { Save, Image as ImageIcon } from "lucide-react";
+import AdminLayout from "../../_components/AdminLayout";
+import { getSiteContent, saveSiteContent } from "@/app/actions/siteContent";
 
 export default function LandingCMSPage() {
   const router = useRouter();
@@ -84,11 +85,12 @@ export default function LandingCMSPage() {
     }
   };
 
-  if (loading) return <div className="p-8">Loading CMS settings...</div>;
+  if (loading) return <AdminLayout><div className="p-8">Loading CMS settings...</div></AdminLayout>;
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8 flex justify-between items-center">
+    <AdminLayout>
+      <div className="max-w-4xl mx-auto pb-12">
+        <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Landing Page Settings</h1>
           <p className="text-gray-600">Update the text and images that appear on the public portal front page.</p>
@@ -261,6 +263,7 @@ export default function LandingCMSPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
