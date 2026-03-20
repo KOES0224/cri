@@ -14,8 +14,7 @@ export default function LandingClientForm() {
 
   // Define keys for the landing page with defaults matching the live site
   const [formData, setFormData] = useState({
-    landing_hero_title: "Interests Taken",
-    landing_hero_title_highlight: "Seriously.",
+    landing_hero_title: "Interests Taken\\nSeriously.",
     landing_hero_subtitle: "CRI is a guided research environment where genuine interests are developed into academic work that can be examined, defended, and evaluated.",
     landing_hero_image: "",
     landing_stat1_number: "100%",
@@ -119,23 +118,14 @@ export default function LandingClientForm() {
           </h2>
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Hero Headline (White text)</label>
-              <input
-                type="text"
+              <label className="block text-sm font-bold text-gray-700 mb-2">Hero Headline</label>
+              <textarea
                 name="landing_hero_title"
+                rows={2}
                 value={formData.landing_hero_title}
                 onChange={handleChange}
-                placeholder="e.g. Interests Taken"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none font-medium mb-3"
-              />
-              <label className="block text-sm font-bold text-purple-600 mb-2">Hero Headline (Gradient Highlight)</label>
-              <input
-                type="text"
-                name="landing_hero_title_highlight"
-                value={formData.landing_hero_title_highlight}
-                onChange={handleChange}
-                placeholder="e.g. Seriously."
-                className="w-full px-4 py-3 bg-gray-50 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all outline-none font-medium text-purple-700"
+                placeholder="e.g. Interests Taken\nSeriously."
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none font-medium text-lg leading-relaxed whitespace-pre-line"
               />
             </div>
             <div>
