@@ -83,13 +83,11 @@ export default function HomeClient({ content }: { content: Record<string, string
             transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
             className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[1.1] drop-shadow-2xl"
           >
-            {content.landing_hero_title ? (
-              <>{content.landing_hero_title}</>
-            ) : (
-              <>Interests Taken <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
-                Seriously.
-              </span></>
+            {content.landing_hero_title || "Interests Taken"} <br className="hidden md:block" />
+            {(content.landing_hero_title_highlight || !content.landing_hero_title) && (
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 block mt-2 md:mt-0 md:inline">
+                {content.landing_hero_title_highlight || "Seriously."}
+              </span>
             )}
           </motion.h1>
           
