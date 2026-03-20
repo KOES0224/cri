@@ -81,11 +81,14 @@ export default function HomeClient({ content }: { content: Record<string, string
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
-            className="text-6xl md:text-8xl font-black tracking-tighter leading-[1.1] drop-shadow-2xl whitespace-pre-line"
+            className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[1.1] drop-shadow-2xl"
           >
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 drop-shadow-sm">
-              {content.landing_hero_title || "Interests Taken\nSeriously."}
-            </span>
+            {content.landing_hero_title || "Interests Taken"} <br className="hidden md:block" />
+            {(content.landing_hero_title_highlight || !content.landing_hero_title) && (
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 block mt-2 md:mt-0 md:inline">
+                {content.landing_hero_title_highlight || "Seriously."}
+              </span>
+            )}
           </motion.h1>
           
           <motion.p 
