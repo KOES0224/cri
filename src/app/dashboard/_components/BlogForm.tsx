@@ -208,14 +208,19 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-          <input
-            type="text"
+          <select
             name="category"
             value={formData.category}
             onChange={handleChange}
-            placeholder="e.g. Research Spotlight"
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none"
-          />
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none bg-white"
+          >
+            <option value="Research Spotlight">Research Spotlight</option>
+            <option value="Institute News">Institute News</option>
+            <option value="Student Success">Student Success</option>
+            <option value="Admissions Guide">Admissions Guide</option>
+            <option value="Scholarly Advice">Scholarly Advice</option>
+            <option value="Uncategorized">Uncategorized</option>
+          </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Author Name</label>
