@@ -12,18 +12,18 @@ export default function LandingCMSPage() {
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
-  // Define keys for the landing page
+  // Define keys for the landing page with defaults matching the live site
   const [formData, setFormData] = useState({
-    landing_hero_title: "",
-    landing_hero_subtitle: "",
+    landing_hero_title: "Interests Taken Seriously.",
+    landing_hero_subtitle: "CRI is a guided research environment where genuine interests are developed into academic work that can be examined, defended, and evaluated.",
     landing_hero_image: "",
-    landing_stat1_number: "",
-    landing_stat1_label: "",
-    landing_stat2_number: "",
-    landing_stat2_label: "",
-    landing_stat3_number: "",
-    landing_stat3_label: "",
-    landing_footer_cta: "",
+    landing_stat1_number: "100%",
+    landing_stat1_label: "Admissions Success",
+    landing_stat2_number: "#1",
+    landing_stat2_label: "Research Institute",
+    landing_stat3_number: "50+",
+    landing_stat3_label: "Ivy Mentors",
+    landing_footer_cta: "Building the next generation of academic contributors.",
   });
 
   useEffect(() => {
