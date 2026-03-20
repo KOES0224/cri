@@ -145,14 +145,22 @@ export default function LandingCMSPage() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Background Image</label>
               
               <div className="flex gap-6 items-start">
-                {/* Image Preview Window */}
+                {/* Media Preview Window */}
                 <div className="relative w-48 h-32 rounded-xl border border-gray-200 bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
                    {(file || formData.landing_hero_image) ? (
-                     <img 
-                       src={file ? URL.createObjectURL(file) : formData.landing_hero_image} 
-                       alt="Hero Background Preview" 
-                       className="w-full h-full object-cover" 
-                     />
+                     (file?.type === 'video/mp4' || (!file && formData.landing_hero_image.endsWith('.mp4'))) ? (
+                       <video 
+                         src={file ? URL.createObjectURL(file) : formData.landing_hero_image} 
+                         className="w-full h-full object-cover" 
+                         muted loop autoPlay playsInline 
+                       />
+                     ) : (
+                       <img 
+                         src={file ? URL.createObjectURL(file) : formData.landing_hero_image} 
+                         alt="Hero Background Preview" 
+                         className="w-full h-full object-cover" 
+                       />
+                     )
                    ) : (
                      <ImageIcon className="w-8 h-8 text-gray-400" />
                    )}
@@ -161,11 +169,11 @@ export default function LandingCMSPage() {
                 <div className="flex-1">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,video/mp4"
                     onChange={handleFileChange}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none mb-2"
                   />
-                  <p className="text-xs text-gray-500">Upload a high quality panoramic image. Recommended size: 2400x1200px. It will automatically be darkened to make the white text readable.</p>
+                  <p className="text-xs text-gray-500">Upload a high quality panoramic image or .mp4 video. It will automatically be darkened to make the white text readable.</p>
                 </div>
               </div>
             </div>

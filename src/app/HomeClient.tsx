@@ -22,11 +22,23 @@ export default function HomeClient({ content }: { content: Record<string, string
         {/* Video Background with Gradient Overlays */}
         <div className="absolute inset-0 z-0 overflow-hidden bg-black">
           {content.landing_hero_image ? (
-            <img 
-              src={content.landing_hero_image} 
-              alt="Hero Background" 
-              className="absolute inset-0 w-full h-full object-cover opacity-50"
-            />
+            content.landing_hero_image.endsWith('.mp4') ? (
+              <video 
+                autoPlay 
+                loop 
+                muted 
+                playsInline 
+                className="absolute inset-0 w-full h-full object-cover opacity-50"
+              >
+                <source src={content.landing_hero_image} type="video/mp4" />
+              </video>
+            ) : (
+              <img 
+                src={content.landing_hero_image} 
+                alt="Hero Background" 
+                className="absolute inset-0 w-full h-full object-cover opacity-50"
+              />
+            )
           ) : (
             <video 
               autoPlay 
