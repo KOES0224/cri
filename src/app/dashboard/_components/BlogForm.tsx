@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPost, updatePost } from "@/app/actions/blog";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 type PostFormProps = {
   initialData?: {
@@ -25,6 +26,7 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [previewMode, setPreviewMode] = useState(false);
 
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
@@ -143,16 +145,44 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Full Content *</label>
-        <textarea
-          name="content"
-          required
-          rows={8}
-          value={formData.content}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none font-mono text-sm"
-          placeholder="Use Markdown or plain text..."
-        />
+        <div className="flex justify-between items-center mb-1">
+          <label className="block text-sm font-medium text-gray-700">Full Content *</label>
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              type="button"
+              onClick={() => setPreviewMode(false)}
+              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${!previewMode ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              Write
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewMode(true)}
+              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${previewMode ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              Preview
+            </button>
+          </div>
+        </div>
+        {previewMode ? (
+          <div className="w-full px-4 py-4 min-h-[200px] max-h-[500px] overflow-y-auto border border-gray-200 rounded-lg bg-gray-50">
+            {formData.content ? (
+              <MarkdownRenderer content={formData.content} className="text-sm" />
+            ) : (
+              <p className="text-gray-400 text-sm italic">Nothing to preview yet...</p>
+            )}
+          </div>
+        ) : (
+          <textarea
+            name="content"
+            required
+            rows={8}
+            value={formData.content}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none font-mono text-sm"
+            placeholder="Use Markdown or plain text..."
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

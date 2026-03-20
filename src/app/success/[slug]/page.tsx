@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink, GraduationCap } from "lucide-react";
 import { format } from "date-fns";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 export default async function SuccessStoryPage({ params }: { params: { slug: string } }) {
   let story = await prisma.successStory.findUnique({
@@ -55,12 +56,7 @@ export default async function SuccessStoryPage({ params }: { params: { slug: str
         </div>
 
         {story.description && (
-          <div className="prose prose-lg prose-blue max-w-none text-gray-700 font-medium leading-relaxed bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm mt-12">
-             <h3 className="text-2xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4">The Journey</h3>
-             {story.description.split('\n').map((line, i) => (
-               line.trim() ? <p key={i}>{line}</p> : <br key={i} />
-             ))}
-          </div>
+             <MarkdownRenderer content={story.description} className="bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm mt-12" />
         )}
 
         {story.externalLink && (

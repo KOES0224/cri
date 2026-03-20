@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
   // Query db prioritizing custom slug, fallback to cuid ID
@@ -41,11 +42,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
            </div>
         )}
 
-        <div className="prose prose-lg prose-blue max-w-none text-gray-700 font-medium leading-relaxed">
-           {post.content.split('\n').map((line, i) => (
-             line.trim() ? <p key={i}>{line}</p> : <br key={i} />
-           ))}
-        </div>
+        <MarkdownRenderer content={post.content} className="bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm mt-8" />
 
         {post.externalLink && (
            <div className="mt-16 pt-8 border-t border-gray-200">
