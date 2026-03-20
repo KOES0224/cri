@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, BookOpen, Settings, LayoutTemplate, ArrowLeft, UserCircle } from "lucide-react";
+import { Users, BookOpen, Settings, LayoutTemplate, ArrowLeft, UserCircle, PhoneCall } from "lucide-react";
 
 export default async function AdminDashboardLayout({
   children,
@@ -30,6 +30,11 @@ export default async function AdminDashboardLayout({
           <Link href="/dashboard/users" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors group">
             <Users className="h-5 w-5" />
             <span className="font-medium text-sm">Users</span>
+          </Link>
+          
+          <Link href="/dashboard/leads" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-rose-50 hover:text-rose-700 transition-colors group">
+            <PhoneCall className="h-5 w-5" />
+            <span className="font-medium text-sm">Sales CRM</span>
           </Link>
           
           <Link href="/dashboard/programs" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-700 transition-colors group">

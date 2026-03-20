@@ -1,16 +1,34 @@
 "use client";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { submitContactForm } from "@/app/actions/contact";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 export default function ContactPage() {
+  const { data: session, status: authStatus } = useSession();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     message: "",
   });
+
+  // Pre-fill form when session loads
+  useEffect(() => {
+    if (session?.user) {
+      const nameParts = session.user.name?.split(" ") || [""];
+      setFormData({
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || "",
+        email: session.user.email || "",
+        message: "",
+      });
+    }
+  }, [session]);
+
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -64,7 +82,23 @@ export default function ContactPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="bg-white p-10 rounded-[2rem] border border-gray-100 shadow-[0_20px_40px_rgb(0,0,0,0.04)]">
-          {status === "success" ? (
+          
+          {authStatus === "loading" ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : authStatus === "unauthenticated" ? (
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Mail className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-2xl font-bold mb-4">Sign in to send an inquiry</h3>
+              <p className="text-gray-500 mb-8">To ensure the highest quality of service, we require users to authenticate before contacting our admissions board.</p>
+              <Link href="/auth/login?callbackUrl=/contact" className="inline-flex w-full justify-center items-center py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors">
+                Sign In or Create Account
+              </Link>
+            </div>
+          ) : status === "success" ? (
             <div className="text-center py-12">
               <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Mail className="w-10 h-10 text-green-500" />
@@ -87,20 +121,20 @@ export default function ContactPage() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
-                    <input required name="firstName" value={formData.firstName} onChange={handleChange} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                    <input required disabled name="firstName" value={formData.firstName} onChange={handleChange} type="text" className="w-full px-4 py-3 bg-gray-50/50 text-gray-500 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-not-allowed" />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
-                    <input name="lastName" value={formData.lastName} onChange={handleChange} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                    <input name="lastName" disabled value={formData.lastName} onChange={handleChange} type="text" className="w-full px-4 py-3 bg-gray-50/50 text-gray-500 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-not-allowed" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                  <input required name="email" value={formData.email} onChange={handleChange} type="email" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                  <input required disabled name="email" value={formData.email} onChange={handleChange} type="email" className="w-full px-4 py-3 bg-gray-50/50 text-gray-500 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-not-allowed" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">How can we help?</label>
-                  <textarea required name="message" value={formData.message} onChange={handleChange} rows={4} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"></textarea>
+                  <textarea required name="message" value={formData.message} onChange={handleChange} rows={4} placeholder="Type your detailed inquiry here..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"></textarea>
                 </div>
                 <button disabled={status === "loading"} type="submit" className="w-full py-4 text-white bg-black hover:bg-gray-900 font-bold rounded-xl transition-all shadow-md disabled:opacity-70 flex justify-center items-center">
                   {status === "loading" ? "Submitting..." : "Submit Message"}

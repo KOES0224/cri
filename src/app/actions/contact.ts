@@ -1,6 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function submitContactForm(data: {
   firstName: string;
@@ -12,11 +14,17 @@ export async function submitContactForm(data: {
     return { success: false, error: "Please fill in all required fields." };
   }
 
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user || !session.user.email) {
+    return { success: false, error: "You must be signed in to submit an inquiry." };
+  }
+
   try {
     const fullName = `${data.firstName} ${data.lastName}`.trim();
 
     await prisma.lead.create({
       data: {
+        userId: session.user.id, // Link to the authenticated user
         name: fullName,
         email: data.email,
         notes: data.message,
