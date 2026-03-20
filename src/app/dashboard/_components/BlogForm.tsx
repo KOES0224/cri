@@ -33,7 +33,7 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
     slug: initialData?.slug || "",
     excerpt: initialData?.excerpt || "",
     content: initialData?.content || "",
-    category: initialData?.category || "Uncategorized",
+    category: initialData?.category || "Success Stories",
     author: initialData?.author || "CRI Editorial",
     imageUrl: initialData?.imageUrl || "",
     externalLink: initialData?.externalLink || "",
@@ -214,12 +214,11 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none bg-white"
           >
-            <option value="Research Spotlight">Research Spotlight</option>
-            <option value="Institute News">Institute News</option>
-            <option value="Student Success">Student Success</option>
-            <option value="Admissions Guide">Admissions Guide</option>
-            <option value="Scholarly Advice">Scholarly Advice</option>
-            <option value="Uncategorized">Uncategorized</option>
+            <option value="Success Stories">Success Stories</option>
+            <option value="University News">University News</option>
+            <option value="Study Abroad">Study Abroad</option>
+            <option value="Admissions Strategy">Admissions Strategy</option>
+            <option value="CRI Announcements">CRI Announcements</option>
           </select>
         </div>
         <div>
