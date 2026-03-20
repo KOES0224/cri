@@ -22,9 +22,9 @@ export default async function SuccessPage() {
             <div key={student.id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all group relative">
               <div className="h-48 bg-gray-200 relative overflow-hidden flex items-center justify-center">
                 {student.imageUrl ? (
-                  <Image src={student.imageUrl} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.name} fill />
+                  <Image src={student.imageUrl} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.name} fill unoptimized={true} />
                 ) : (
-                  <Image src={`https://api.dicebear.com/7.x/notionists/svg?seed=${student.name}&backgroundColor=e2e8f0`} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.name} fill />
+                  <Image src={`https://api.dicebear.com/7.x/notionists/svg?seed=${student.name}&backgroundColor=e2e8f0`} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.name} fill unoptimized={true} />
                 )}
               </div>
               <div className="p-6">

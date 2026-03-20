@@ -37,7 +37,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
         {post.imageUrl && (
            <div className="relative w-full h-[400px] mb-12 rounded-3xl overflow-hidden shadow-sm border border-gray-100">
-             <Image src={post.imageUrl} alt={post.title} fill className="object-cover" />
+             <Image src={post.imageUrl} alt={post.title} fill className="object-cover" unoptimized={true} />
            </div>
         )}
 
