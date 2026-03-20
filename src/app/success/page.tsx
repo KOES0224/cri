@@ -1,4 +1,3 @@
-"use server";
 import { prisma } from "@/lib/prisma";
 import { motion } from "framer-motion";
 import { GraduationCap, ArrowRight } from "lucide-react";

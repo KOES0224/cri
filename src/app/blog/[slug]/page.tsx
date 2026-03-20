@@ -6,15 +6,17 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  
   // Query db prioritizing custom slug, fallback to cuid ID
   let post = await prisma.post.findUnique({
-    where: { slug: params.slug }
+    where: { slug: slug }
   });
 
   if (!post) {
     post = await prisma.post.findUnique({
-      where: { id: params.slug }
+      where: { id: slug }
     });
   }
 

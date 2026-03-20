@@ -6,14 +6,16 @@ import { ArrowLeft, ExternalLink, GraduationCap } from "lucide-react";
 import { format } from "date-fns";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 
-export default async function SuccessStoryPage({ params }: { params: { slug: string } }) {
+export default async function SuccessStoryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  
   let story = await prisma.successStory.findUnique({
-    where: { slug: params.slug }
+    where: { slug: slug }
   });
 
   if (!story) {
     story = await prisma.successStory.findUnique({
-      where: { id: params.slug }
+      where: { id: slug }
     });
   }
 
