@@ -16,7 +16,7 @@ export default function AdminCMSPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
          {/* Edit Landing Page */}
-         <Link href="/" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-300 transition-colors group">
+         <Link href="/dashboard/cms/landing" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-300 transition-colors group">
             <div className="p-3 rounded-xl bg-blue-50 text-blue-600 w-fit mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
               <LayoutTemplate className="h-6 w-6" />
             </div>
