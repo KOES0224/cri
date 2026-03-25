@@ -47,10 +47,23 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      if (user) {
-        token.role = user.role;
-        token.id = user.id;
-        token.studentCode = (user as any).studentCode;
+      // 'user' is only defined strictly on the initial sign-in moment.
+      // We query the database once here to guarantee OAuth and Credentials 
+      // both instantly receive the exact live `role` and `studentCode`.
+      if (user && user.email) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email },
+          select: { id: true, role: true, studentCode: true }
+        });
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.studentCode = dbUser.studentCode;
+        } else {
+          token.id = user.id;
+          token.role = "STUDENT"; // Safe default
+        }
       }
       
       if (trigger === "update" && session?.user) {
