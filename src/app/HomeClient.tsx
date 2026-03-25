@@ -74,7 +74,7 @@ export default function HomeClient({ content }: { content: Record<string, string
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
             </span>
-            Applications open for 2026 Seoul Research Program
+            {content.landing_pill_badge || "Applications open for 2026 Seoul Research Program"}
           </motion.div>
           
           <motion.h1 

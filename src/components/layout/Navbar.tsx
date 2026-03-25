@@ -11,7 +11,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const isDarkHero = ["/", "/research", "/intern", "/projects"].includes(pathname);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,11 +21,11 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navTextClass = isHome && !scrolled 
+  const navTextClass = isDarkHero && !scrolled 
     ? "text-gray-200 hover:text-white" 
     : "text-gray-600 hover:text-black";
   
-  const logoClass = isHome && !scrolled
+  const logoClass = isDarkHero && !scrolled
     ? "text-white"
     : "bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600";
 

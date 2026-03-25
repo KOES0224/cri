@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Save, Image as ImageIcon } from "lucide-react";
+import { Save, Image as ImageIcon, Layout, Microscope, Rocket, Briefcase } from "lucide-react";
 import { getSiteContent, saveSiteContent } from "@/app/actions/siteContent";
 
 export default function LandingClientForm() {
@@ -11,9 +11,11 @@ export default function LandingClientForm() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [activeTab, setActiveTab] = useState<"Landing" | "Research" | "Projects" | "Internships">("Landing");
 
-  // Define keys for the landing page with defaults matching the live site
   const [formData, setFormData] = useState({
+    // Landing
+    landing_pill_badge: "Elite Curriculum Portals",
     landing_hero_title: "Interests Taken",
     landing_hero_title_highlight: "Seriously.",
     landing_hero_subtitle: "CRI is a guided research environment where genuine interests are developed into academic work that can be examined, defended, and evaluated.",
@@ -25,12 +27,30 @@ export default function LandingClientForm() {
     landing_stat3_number: "50+",
     landing_stat3_label: "Ivy Mentors",
     landing_footer_cta: "Building the next generation of academic contributors.",
+    
+    // Research
+    research_pill_badge: "Elite Curriculum Portals",
+    research_hero_title: "Pioneering",
+    research_hero_highlight: "Research",
+    research_hero_subtitle: "Select a research environment below to explore available specializations, esteemed mentors, and active applications.",
+    
+    // Projects
+    projects_pill_badge: "Student Portfolios",
+    projects_hero_title: "Ideas Turned Into",
+    projects_hero_highlight: "Impact",
+    projects_hero_subtitle: "Explore personal endeavors, collaborative group work, and rigorous competition preparation led entirely by our scholars.",
+    
+    // Internships
+    intern_pill_badge: "CRI Scholar Network",
+    intern_hero_title: "Elite",
+    intern_hero_highlight: "Internships",
+    intern_hero_subtitle: "Exclusive access to industry and laboratory internships for qualified CRI scholars. Bridge the gap between academic theory and real-world impact.",
   });
 
   useEffect(() => {
     async function fetchContent() {
       const res = await getSiteContent("landing");
-      if (res.success && res.data) {
+      if (res.success && Object.keys(res.data).length > 0) {
         setFormData(prev => ({
           ...prev,
           ...res.data
@@ -70,8 +90,8 @@ export default function LandingClientForm() {
 
       const res = await saveSiteContent("landing", finalData);
       if (res.success) {
-        setMessage("Landing page content saved successfully!");
-        setFile(null); // Clear pending file as it's now uploaded
+        setMessage("Public pages content saved successfully!");
+        setFile(null);
         router.refresh();
       } else {
         setMessage("Error saving content.");
@@ -87,17 +107,24 @@ export default function LandingClientForm() {
 
   if (loading) return <div className="p-8">Loading CMS settings...</div>;
 
+  const tabs = [
+    { id: "Landing", icon: Layout },
+    { id: "Research", icon: Microscope },
+    { id: "Projects", icon: Rocket },
+    { id: "Internships", icon: Briefcase },
+  ] as const;
+
   return (
-      <div className="max-w-4xl mx-auto pb-12">
-        <div className="mb-8 flex justify-between items-center">
+    <div className="max-w-4xl mx-auto pb-12">
+      <div className="mb-8 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Landing Page Settings</h1>
-          <p className="text-gray-600">Update the text and images that appear on the public portal front page.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Public Pages Settings</h1>
+          <p className="text-gray-600">Manage the hero content and taglines across all primary landing pages.</p>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors disabled:opacity-50"
+          className="flex items-center px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors disabled:opacity-50 shrink-0"
         >
           <Save className="w-5 h-5 mr-2" />
           {saving ? "Saving..." : "Save Changes"}
@@ -105,180 +132,195 @@ export default function LandingClientForm() {
       </div>
 
       {message && (
-        <div className={`p-4 mb-6 rounded-lg font-medium \${message.includes('Error') || message.includes('Failed') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+        <div className={`p-4 mb-6 rounded-lg font-medium ${message.includes('Error') || message.includes('Failed') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
           {message}
         </div>
       )}
 
-      <div className="space-y-8">
-        {/* Section: Hero */}
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-            <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mr-3 text-sm">1</span>
-            Hero Section
-          </h2>
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Hero Headline (White text)</label>
-              <input
-                type="text"
-                name="landing_hero_title"
-                value={formData.landing_hero_title}
-                onChange={handleChange}
-                placeholder="e.g. Interests Taken"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none font-medium mb-3"
-              />
-              <label className="block text-sm font-bold text-purple-600 mb-2">Hero Headline (Gradient Highlight)</label>
-              <input
-                type="text"
-                name="landing_hero_title_highlight"
-                value={formData.landing_hero_title_highlight}
-                onChange={handleChange}
-                placeholder="e.g. Seriously."
-                className="w-full px-4 py-3 bg-gray-50 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all outline-none font-medium text-purple-700"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Hero Subheadline</label>
-              <textarea
-                name="landing_hero_subtitle"
-                rows={3}
-                value={formData.landing_hero_subtitle}
-                onChange={handleChange}
-                placeholder="e.g. Join the most prestigious research institute..."
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Background Image</label>
-              
-              <div className="flex gap-6 items-start">
-                {/* Media Preview Window */}
-                <div className="relative w-48 h-32 rounded-xl border border-gray-200 bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
-                   {(file || formData.landing_hero_image) ? (
-                     (file?.type === 'video/mp4' || (!file && formData.landing_hero_image.endsWith('.mp4'))) ? (
-                       <video 
-                         src={file ? URL.createObjectURL(file) : formData.landing_hero_image} 
-                         className="w-full h-full object-cover" 
-                         muted loop autoPlay playsInline 
-                       />
-                     ) : (
-                       <img 
-                         src={file ? URL.createObjectURL(file) : formData.landing_hero_image} 
-                         alt="Hero Background Preview" 
-                         className="w-full h-full object-cover" 
-                       />
-                     )
-                   ) : (
-                     <ImageIcon className="w-8 h-8 text-gray-400" />
-                   )}
-                </div>
+      {/* Tabs */}
+      <div className="flex space-x-2 mb-8 bg-gray-100 p-1.5 rounded-2xl overflow-x-auto">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
+              activeTab === tab.id 
+                ? "bg-white text-gray-900 shadow-sm" 
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+            }`}
+          >
+            <tab.icon className={`w-4 h-4 mr-2 ${activeTab === tab.id ? "text-blue-600" : "text-gray-400"}`} />
+            {tab.id}
+          </button>
+        ))}
+      </div>
 
-                <div className="flex-1">
+      <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+        
+        {/* LANDING TAB */}
+        {activeTab === "Landing" && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-100 pb-4">Landing Page Setup</h2>
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Starred Pill Badge</label>
+                <input
+                  type="text"
+                  name="landing_pill_badge"
+                  value={formData.landing_pill_badge}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-medium mb-3"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Headline (White text)</label>
                   <input
-                    type="file"
-                    accept="image/*,video/mp4"
-                    onChange={handleFileChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none mb-2"
+                    type="text"
+                    name="landing_hero_title"
+                    value={formData.landing_hero_title}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-medium"
                   />
-                  <p className="text-xs text-gray-500">Upload a high quality panoramic image or .mp4 video. It will automatically be darkened to make the white text readable.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-purple-600 mb-2">Headline (Highlight text)</label>
+                  <input
+                    type="text"
+                    name="landing_hero_title_highlight"
+                    value={formData.landing_hero_title_highlight}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-50 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none font-medium text-purple-700"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Subheadline</label>
+                <textarea
+                  name="landing_hero_subtitle"
+                  rows={3}
+                  value={formData.landing_hero_subtitle}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Background Image/Video</label>
+                <div className="flex gap-6 items-start">
+                  <div className="relative w-48 h-32 rounded-xl border border-gray-200 bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                     {(file || formData.landing_hero_image) ? (
+                       (file?.type === 'video/mp4' || (!file && formData.landing_hero_image.endsWith('.mp4'))) ? (
+                         <video src={file ? URL.createObjectURL(file) : formData.landing_hero_image} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                       ) : (
+                         <img src={file ? URL.createObjectURL(file) : formData.landing_hero_image} className="w-full h-full object-cover" />
+                       )
+                     ) : (
+                       <ImageIcon className="w-8 h-8 text-gray-400" />
+                     )}
+                  </div>
+                  <div className="flex-1">
+                    <input type="file" accept="image/*,video/mp4" onChange={handleFileChange} className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 mb-2" />
+                    <p className="text-xs text-gray-500">Upload a background media file. Automatically darkened for text readability.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-8 border-t border-gray-100">
+                <h3 className="font-bold text-gray-900 mb-4">Highlight Statistics</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <input name="landing_stat1_number" value={formData.landing_stat1_number} onChange={handleChange} className="w-full p-2 bg-white border border-gray-200 rounded-lg font-black text-center mb-2" />
+                    <input name="landing_stat1_label" value={formData.landing_stat1_label} onChange={handleChange} className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs text-center" />
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <input name="landing_stat2_number" value={formData.landing_stat2_number} onChange={handleChange} className="w-full p-2 bg-white border border-gray-200 rounded-lg font-black text-center mb-2" />
+                    <input name="landing_stat2_label" value={formData.landing_stat2_label} onChange={handleChange} className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs text-center" />
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <input name="landing_stat3_number" value={formData.landing_stat3_number} onChange={handleChange} className="w-full p-2 bg-white border border-gray-200 rounded-lg font-black text-center mb-2" />
+                    <input name="landing_stat3_label" value={formData.landing_stat3_label} onChange={handleChange} className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs text-center" />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Section: Statistics */}
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-            <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mr-3 text-sm">2</span>
-            Highlight Statistics
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Stat 1 */}
-            <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
-              <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Stat Block 1</label>
-              <input
-                type="text"
-                name="landing_stat1_number"
-                value={formData.landing_stat1_number}
-                onChange={handleChange}
-                placeholder="e.g. 100%"
-                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-lg font-black text-center mb-3"
-              />
-              <input
-                type="text"
-                name="landing_stat1_label"
-                value={formData.landing_stat1_label}
-                onChange={handleChange}
-                placeholder="e.g. Top 20 Admissions"
-                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-center"
-              />
-            </div>
-            {/* Stat 2 */}
-            <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
-              <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Stat Block 2</label>
-              <input
-                type="text"
-                name="landing_stat2_number"
-                value={formData.landing_stat2_number}
-                onChange={handleChange}
-                placeholder="e.g. #1"
-                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-lg font-black text-center mb-3"
-              />
-              <input
-                type="text"
-                name="landing_stat2_label"
-                value={formData.landing_stat2_label}
-                onChange={handleChange}
-                placeholder="e.g. Research Institute"
-                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-center"
-              />
-            </div>
-            {/* Stat 3 */}
-            <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
-              <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Stat Block 3</label>
-              <input
-                type="text"
-                name="landing_stat3_number"
-                value={formData.landing_stat3_number}
-                onChange={handleChange}
-                placeholder="e.g. 50+"
-                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-lg font-black text-center mb-3"
-              />
-              <input
-                type="text"
-                name="landing_stat3_label"
-                value={formData.landing_stat3_label}
-                onChange={handleChange}
-                placeholder="e.g. Ivy League Mentors"
-                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-center"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Section: Footer CTA */}
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-            <span className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mr-3 text-sm">3</span>
-            Call to Action (Bottom)
-          </h2>
-          <div className="space-y-5">
+        {/* RESEARCH TAB */}
+        {activeTab === "Research" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-100 pb-4">Research Page Hero</h2>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Footer Headline</label>
-              <input
-                type="text"
-                name="landing_footer_cta"
-                value={formData.landing_footer_cta}
-                onChange={handleChange}
-                placeholder="e.g. Ready to begin your research journey?"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none font-medium"
-              />
+              <label className="block text-sm font-bold text-gray-700 mb-2">Starred Pill Badge</label>
+              <input type="text" name="research_pill_badge" value={formData.research_pill_badge} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-medium" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Headline (White text)</label>
+                <input type="text" name="research_hero_title" value={formData.research_hero_title} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-medium" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-blue-600 mb-2">Headline (Highlight text)</label>
+                <input type="text" name="research_hero_highlight" value={formData.research_hero_highlight} onChange={handleChange} className="w-full px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl font-medium text-blue-700" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Subheadline</label>
+              <textarea name="research_hero_subtitle" rows={3} value={formData.research_hero_subtitle} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
             </div>
           </div>
-        </div>
+        )}
+
+        {/* PROJECTS TAB */}
+        {activeTab === "Projects" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-100 pb-4">Projects Page Hero</h2>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Starred Pill Badge</label>
+              <input type="text" name="projects_pill_badge" value={formData.projects_pill_badge} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-medium" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Headline (White text)</label>
+                <input type="text" name="projects_hero_title" value={formData.projects_hero_title} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-medium" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-purple-600 mb-2">Headline (Highlight text)</label>
+                <input type="text" name="projects_hero_highlight" value={formData.projects_hero_highlight} onChange={handleChange} className="w-full px-4 py-3 bg-purple-50 border border-purple-200 rounded-xl font-medium text-purple-700" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Subheadline</label>
+              <textarea name="projects_hero_subtitle" rows={3} value={formData.projects_hero_subtitle} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+            </div>
+          </div>
+        )}
+
+        {/* INTERNSHIPS TAB */}
+        {activeTab === "Internships" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-100 pb-4">Internships Page Hero</h2>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Starred Pill Badge</label>
+              <input type="text" name="intern_pill_badge" value={formData.intern_pill_badge} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-medium" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Headline (White text)</label>
+                <input type="text" name="intern_hero_title" value={formData.intern_hero_title} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-medium" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-emerald-600 mb-2">Headline (Highlight text)</label>
+                <input type="text" name="intern_hero_highlight" value={formData.intern_hero_highlight} onChange={handleChange} className="w-full px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl font-medium text-emerald-700" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Subheadline</label>
+              <textarea name="intern_hero_subtitle" rows={3} value={formData.intern_hero_subtitle} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+            </div>
+          </div>
+        )}
+
       </div>
-      </div>
+    </div>
   );
 }
