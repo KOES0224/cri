@@ -120,17 +120,17 @@ export default function HomeClient({ content }: { content: Record<string, string
       {/* Statistics Section (Managed by CMS) */}
       <section className="relative z-20 -mt-16 md:-mt-24 px-6 max-w-6xl mx-auto">
         <div className="bg-white rounded-[2rem] p-8 md:p-12 shadow-2xl border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
-          <div className="flex-1 text-center w-full pt-4 md:pt-0">
-            <h3 className="text-5xl md:text-6xl font-black text-gray-900 mb-2">{content.landing_stat1_number || "100%"}</h3>
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">{content.landing_stat1_label || "Admissions Success"}</p>
+          <div className="flex-1 text-center w-full pt-4 md:pt-0 flex flex-col items-center justify-start">
+            <h3 className="text-5xl md:text-6xl font-black text-gray-900 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat1_number || "100%"}</h3>
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs md:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{content.landing_stat1_label || "Admissions Success"}</p>
           </div>
-          <div className="flex-1 text-center w-full pt-8 md:pt-0">
-            <h3 className="text-5xl md:text-6xl font-black text-blue-600 mb-2">{content.landing_stat2_number || "#1"}</h3>
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">{content.landing_stat2_label || "Research Institute"}</p>
+          <div className="flex-1 text-center w-full pt-8 md:pt-0 flex flex-col items-center justify-start">
+            <h3 className="text-5xl md:text-6xl font-black text-blue-600 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat2_number || "#1"}</h3>
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs md:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{content.landing_stat2_label || "Research Institute"}</p>
           </div>
-          <div className="flex-1 text-center w-full pt-8 md:pt-0">
-            <h3 className="text-5xl md:text-6xl font-black text-purple-600 mb-2">{content.landing_stat3_number || "50+"}</h3>
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">{content.landing_stat3_label || "Ivy Mentors"}</p>
+          <div className="flex-1 text-center w-full pt-8 md:pt-0 flex flex-col items-center justify-start">
+            <h3 className="text-5xl md:text-6xl font-black text-purple-600 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat3_number || "50+"}</h3>
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs md:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{content.landing_stat3_label || "Ivy Mentors"}</p>
           </div>
         </div>
       </section>
