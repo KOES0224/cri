@@ -34,24 +34,24 @@ export default function StudentDashboard({
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
-          <div className="p-3 rounded-xl bg-orange-50 text-orange-600 mr-4">
+        <Link href="/dashboard/applications" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center hover:border-orange-200 hover:shadow-md transition-all group">
+          <div className="p-3 rounded-xl bg-orange-50 text-orange-600 mr-4 group-hover:bg-orange-100 transition-colors">
             <Clock className="h-6 w-6" />
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Pending Apps</p>
             <p className="text-2xl font-bold text-gray-900">{pendingApps}</p>
           </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
-          <div className="p-3 rounded-xl bg-green-50 text-green-600 mr-4">
+        </Link>
+        <Link href="/dashboard/my-programs" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center hover:border-green-200 hover:shadow-md transition-all group">
+          <div className="p-3 rounded-xl bg-green-50 text-green-600 mr-4 group-hover:bg-green-100 transition-colors">
             <BookOpen className="h-6 w-6" />
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Active Programs</p>
             <p className="text-2xl font-bold text-gray-900">{activePrograms}</p>
           </div>
-        </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

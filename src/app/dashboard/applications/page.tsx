@@ -51,8 +51,8 @@ export default async function ApplicationsPage() {
                    <li key={app.id} className="p-6">
                      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
                        <div>
-                         <h4 className="text-lg font-bold text-gray-900">{app.program.title}</h4>
-                         <p className="text-sm text-gray-500 mt-1">Submitted on {new Date(app.createdAt).toLocaleDateString()}</p>
+                         <h4 className="text-lg font-bold text-gray-900">{app.program?.title || "Application"}</h4>
+                         <p className="text-sm text-gray-500 mt-1">Submitted on {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : "Unknown Date"}</p>
                        </div>
                        <div className="mt-4 md:mt-0">
                          {app.status === 'ACCEPTED' && (
