@@ -126,8 +126,12 @@ export async function getAvailableContacts() {
   }));
 
   // Also include Admins automatically so students can always reach support
+  // PER USER REQUEST: Limit Admin visibility exclusively to "support@cri.kr"
   const admins = await prisma.user.findMany({
-    where: { role: "ADMIN" },
+    where: { 
+      role: "ADMIN",
+      email: "support@cri.kr"
+    },
     select: { id: true, name: true, image: true, role: true }
   });
 

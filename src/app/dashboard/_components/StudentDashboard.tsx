@@ -33,7 +33,7 @@ export default function StudentDashboard({
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
           <div className="p-3 rounded-xl bg-orange-50 text-orange-600 mr-4">
             <Clock className="h-6 w-6" />
@@ -50,15 +50,6 @@ export default function StudentDashboard({
           <div>
             <p className="text-sm font-medium text-gray-500">Active Programs</p>
             <p className="text-2xl font-bold text-gray-900">{activePrograms}</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
-          <div className="p-3 rounded-xl bg-blue-50 text-blue-600 mr-4">
-            <MessageSquare className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Unread Messages</p>
-            <p className="text-2xl font-bold text-gray-900">{unreadCount}</p>
           </div>
         </div>
       </div>

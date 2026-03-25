@@ -2,8 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, Clock, ExternalLink, BookOpen } from "lucide-react";
+import { FileText, Clock, ExternalLink, CheckCircle2, ChevronRight, XCircle, AlertCircle } from "lucide-react";
 import StudentLayout from "../_components/StudentLayout";
+import { prisma } from "@/lib/prisma";
 
 export default async function ApplicationsPage() {
   const session = await getServerSession(authOptions);
@@ -12,8 +13,12 @@ export default async function ApplicationsPage() {
     redirect("/dashboard");
   }
 
-  // Normally we would fetch applications from Prisma here
-  const applications: any[] = []; // Using empty array for mock UI
+  // Fetch applications from Prisma natively
+  const applications = await prisma.application.findMany({
+    where: { userId: session.user.id },
+    include: { program: true },
+    orderBy: { createdAt: 'desc' }
+  });
 
   return (
     <StudentLayout>
@@ -42,7 +47,45 @@ export default async function ApplicationsPage() {
            ) : (
              <div className="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
                <ul role="list" className="divide-y divide-gray-100">
-                 {/* List rendered here if applications array had items */}
+                 {applications.map((app) => (
+                   <li key={app.id} className="p-6">
+                     <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                       <div>
+                         <h4 className="text-lg font-bold text-gray-900">{app.program.title}</h4>
+                         <p className="text-sm text-gray-500 mt-1">Submitted on {new Date(app.createdAt).toLocaleDateString()}</p>
+                       </div>
+                       <div className="mt-4 md:mt-0">
+                         {app.status === 'ACCEPTED' && (
+                           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                             <CheckCircle2 className="w-4 h-4 mr-1.5" /> Enrolled
+                           </span>
+                         )}
+                         {app.status === 'REJECTED' && (
+                           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                             <XCircle className="w-4 h-4 mr-1.5" /> Declined
+                           </span>
+                         )}
+                         {app.status === 'PENDING' && (
+                           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                             <AlertCircle className="w-4 h-4 mr-1.5" /> Under Review
+                           </span>
+                         )}
+                       </div>
+                     </div>
+
+                     {/* Visual Tracker */}
+                     <div className="relative pt-4">
+                       <div className="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-gray-100">
+                         <div style={{ width: app.status === 'ACCEPTED' ? '100%' : app.status === 'REJECTED' ? '100%' : `${(app.step / 3) * 100}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500 ${app.status === 'ACCEPTED' ? 'bg-green-500' : app.status === 'REJECTED' ? 'bg-red-500' : 'bg-blue-600'}`}></div>
+                       </div>
+                       <div className="flex justify-between text-xs font-medium text-gray-500 uppercase tracking-wide px-1">
+                          <span className={`${app.step >= 1 ? 'text-blue-600 font-bold' : ''}`}>Received</span>
+                          <span className={`text-center ${app.step >= 2 ? 'text-blue-600 font-bold' : ''}`}>Interview</span>
+                          <span className={`text-right ${app.status === 'ACCEPTED' ? 'text-green-600 font-bold' : app.status === 'REJECTED' ? 'text-red-600 font-bold' : app.step >= 3 ? 'text-blue-600 font-bold' : ''}`}>Decision</span>
+                       </div>
+                     </div>
+                   </li>
+                 ))}
                </ul>
              </div>
            )}

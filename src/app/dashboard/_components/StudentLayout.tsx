@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, MessageSquare, UserCircle, ArrowLeft, Send } from "lucide-react";
+import { FileText, MessageSquare, UserCircle, ArrowLeft, Send, BookOpen } from "lucide-react";
 import { getGlobalUnreadCount } from "@/app/actions/messages";
 
 export default async function StudentLayout({
@@ -33,6 +33,11 @@ export default async function StudentLayout({
           <Link href="/dashboard/applications" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700 transition-colors group">
             <FileText className="h-5 w-5" />
             <span className="font-medium text-sm">My Applications</span>
+          </Link>
+          
+          <Link href="/dashboard/my-programs" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-700 transition-colors group">
+            <BookOpen className="h-5 w-5" />
+            <span className="font-medium text-sm">Active Programs</span>
           </Link>
           
           <Link href="/dashboard/messages" className="flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors group">
