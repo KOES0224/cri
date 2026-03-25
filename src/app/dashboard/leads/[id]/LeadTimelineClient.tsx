@@ -2,14 +2,24 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { CheckCircle2, MessageSquare, Tag, Send } from "lucide-react";
-import { updateLeadStatus, addLeadNote } from "@/app/actions/crm";
+import { CheckCircle2, MessageSquare, Tag, Send, Bell } from "lucide-react";
+import { updateLeadStatus, addLeadNote, scheduleNotification } from "@/app/actions/crm";
 
 export default function LeadTimelineClient({ lead }: { lead: any }) {
   const [status, setStatus] = useState(lead.status);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  
+  // Tabs State
+  const [activeTab, setActiveTab] = useState<"note" | "alarm">("note");
+  
+  // Note State
   const [noteContent, setNoteContent] = useState("");
   const [submittingNote, setSubmittingNote] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
+  
+  // Alarm State
+  const [alarmMessage, setAlarmMessage] = useState("");
+  const [alarmDate, setAlarmDate] = useState("");
+  const [submittingAlarm, setSubmittingAlarm] = useState(false);
 
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === status) return;
@@ -32,6 +42,24 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
     
     setSubmittingNote(false);
   };
+  
+  const handleSetAlarm = async () => {
+    if (!alarmMessage.trim() || !alarmDate) return;
+    setSubmittingAlarm(true);
+    
+    // Convert YYYY-MM-DD to a standard local Date
+    const parsedDate = new Date(alarmDate);
+    const localDate = new Date(parsedDate.getTime() + parsedDate.getTimezoneOffset() * 60000);
+    
+    const res = await scheduleNotification(lead.id, alarmMessage, localDate);
+    if (res.success) {
+      setAlarmMessage("");
+      setAlarmDate("");
+      setActiveTab("note"); // Swap back to note tab
+    }
+    
+    setSubmittingAlarm(false);
+  };
 
   const STATUS_OPTIONS = ["NEW", "CONTACTED", "MET", "WAITLISTED", "ENROLLED", "REJECTED"];
 
@@ -41,7 +69,9 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
       {/* Activity Header & Status Bar */}
       <div className="p-6 border-b border-gray-100 bg-gray-50/50">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h2 className="text-xl font-bold text-gray-900">CRM Timeline</h2>
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            CRM Timeline
+          </h2>
           
           <div className="flex items-center gap-3 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
             <span className="text-sm font-bold text-gray-500 ml-2">Pipeline Stage:</span>
@@ -69,38 +99,50 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
       <div className="flex-1 overflow-y-auto p-6 bg-gray-50/30">
         <div className="relative border-l-2 border-dashed border-gray-200 ml-4 space-y-8 pb-4">
           
-          {/* Base Creation Entry */}
-          <div className="relative pl-8">
-            <span className="absolute -left-[17px] bg-white p-1 rounded-full border-2 border-gray-200">
-              <CheckCircle2 className="w-5 h-5 text-gray-400" />
-            </span>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-gray-900">Lead Created</span>
-              <span className="text-xs text-gray-500 mt-1">{format(new Date(lead.createdAt), 'PPpp')}</span>
-              <span className="text-sm text-gray-600 mt-2 bg-gray-100 self-start px-3 py-1.5 rounded-lg border border-gray-200">
-                Data recorded successfully.
-              </span>
-            </div>
-          </div>
-
+          {/* Active Alarms Feed */}
+          {lead.notifications?.filter((n: any) => !n.isRead).length > 0 && (
+             <div className="mb-6 space-y-3">
+               {lead.notifications.filter((n: any) => !n.isRead).map((alarm: any) => (
+                 <div key={alarm.id} className="relative pl-8 animate-in fly-in">
+                   <span className="absolute -left-[17px] bg-rose-50 p-1.5 rounded-full border border-rose-200 z-10 shadow-sm">
+                     <Bell className="w-4 h-4 text-rose-600 animate-pulse" />
+                   </span>
+                   <div className="flex flex-col bg-rose-50 border border-rose-200 p-4 rounded-xl shadow-sm">
+                     <div className="flex items-center justify-between">
+                       <span className="text-sm font-bold text-rose-900 flex items-center">
+                         <Bell className="w-3.5 h-3.5 mr-1.5 opacity-70" />
+                         Scheduled Alarm: {format(new Date(alarm.dueDate), 'PPP')}
+                       </span>
+                       <span className="text-xs font-bold text-rose-600 bg-white border border-rose-100 px-2.5 py-1 rounded-full shadow-sm">
+                         Pending
+                       </span>
+                     </div>
+                     <span className="text-rose-800 text-sm mt-3 font-medium bg-white/50 p-3 rounded-lg border border-rose-100/50">{alarm.message}</span>
+                     <span className="text-xs text-rose-500 mt-3 font-semibold">Scheduled by {alarm.adminName}</span>
+                   </div>
+                 </div>
+               ))}
+             </div>
+          )}
+          
           {/* Dynamic Feed */}
           {lead.activities?.slice().reverse().map((activity: any) => (
             <div key={activity.id} className="relative pl-8 animate-in fade-in slide-in-from-bottom-2">
-              <span className="absolute -left-[17px] bg-white p-1 rounded-full border-2 border-blue-200">
+              <span className={`absolute -left-[17px] bg-white p-1.5 rounded-full border-2 shadow-sm ${activity.action === "STATUS_CHANGE" ? 'border-purple-200' : 'border-blue-200'}`}>
                 {activity.action === "STATUS_CHANGE" ? (
-                  <Tag className="w-5 h-5 text-blue-500" />
+                  <Tag className="w-4 h-4 text-purple-500" />
                 ) : (
-                  <MessageSquare className="w-5 h-5 text-green-500" />
+                  <MessageSquare className="w-4 h-4 text-blue-500" />
                 )}
               </span>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-gray-900">{activity.adminName}</span>
-                  <span className="text-xs text-gray-500">• {format(new Date(activity.createdAt), 'PPpp')}</span>
+                  <span className="text-xs font-semibold text-gray-400">• {format(new Date(activity.createdAt), 'PPpp')}</span>
                 </div>
                 
                 {activity.action === "STATUS_CHANGE" ? (
-                  <div className="mt-2 flex items-center text-sm font-medium text-blue-800 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 self-start">
+                  <div className="mt-2 flex items-center text-sm font-bold text-purple-800 bg-purple-50 px-3 py-2 rounded-lg border border-purple-100 self-start shadow-sm">
                     {activity.content}
                   </div>
                 ) : (
@@ -112,29 +154,97 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
             </div>
           ))}
 
+          {/* Base Creation Entry */}
+          <div className="relative pl-8">
+            <span className="absolute -left-[17px] bg-white p-1 rounded-full border-2 border-gray-200 shadow-sm">
+              <CheckCircle2 className="w-4 h-4 text-gray-400" />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-gray-900">Lead Genesis</span>
+              <span className="text-xs font-semibold text-gray-400 mt-1">{format(new Date(lead.createdAt), 'PPpp')}</span>
+              <span className="text-sm font-bold text-gray-500 mt-2 bg-gray-100/80 self-start px-3 py-1.5 rounded-lg border border-gray-200">
+                Initial data generated.
+              </span>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      {/* Input Composer Footer */}
-      <div className="p-4 border-t border-gray-200 bg-white">
-        <div className="flex items-start gap-3">
-          <div className="flex-1">
-            <textarea
-              rows={2}
-              value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
-              placeholder="Record a call summary, draft an email reply, or leave a note..."
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm resize-none whitespace-pre-wrap"
-            />
-          </div>
-          <button
-            onClick={handleAddNote}
-            disabled={submittingNote || !noteContent.trim()}
-            className="px-5 py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center shadow-md"
-          >
-            <Send className="w-4 h-4 mr-2" />
-            Post
-          </button>
+      {/* Input Composer Footer with Tabs */}
+      <div className="border-t border-gray-200 bg-gray-50/50">
+        <div className="flex border-b border-gray-200 px-4 pt-2 gap-2">
+           <button 
+             onClick={() => setActiveTab("note")}
+             className={`px-5 py-3 text-sm font-bold flex items-center transition-all rounded-t-xl ${activeTab === 'note' ? 'bg-white text-blue-600 border border-gray-200 border-b-white' : 'text-gray-500 hover:bg-gray-100 border border-transparent'}`}
+             style={{ marginBottom: activeTab === 'note' ? '-1px' : '0' }}
+           >
+             <MessageSquare className="w-4 h-4 mr-2" /> Call Log / Note
+           </button>
+           <button 
+             onClick={() => setActiveTab("alarm")}
+             className={`px-5 py-3 text-sm font-bold flex items-center transition-all rounded-t-xl ${activeTab === 'alarm' ? 'bg-white text-rose-600 border border-gray-200 border-b-white shadow-sm' : 'text-gray-500 hover:bg-gray-100 border border-transparent'}`}
+             style={{ marginBottom: activeTab === 'alarm' ? '-1px' : '0' }}
+           >
+             <Bell className="w-4 h-4 mr-2" /> Notify Me
+           </button>
+        </div>
+        
+        <div className="p-4 bg-white relative z-10 transition-all">
+          {activeTab === "note" ? (
+             <div className="flex items-start gap-3">
+               <div className="flex-1">
+                 <textarea
+                   rows={2}
+                   value={noteContent}
+                   onChange={(e) => setNoteContent(e.target.value)}
+                   placeholder="Record a call summary, draft an email reply, or leave an internal note..."
+                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium resize-none whitespace-pre-wrap transition-shadow"
+                 />
+               </div>
+               <button
+                 onClick={handleAddNote}
+                 disabled={submittingNote || !noteContent.trim()}
+                 className="px-6 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center shadow-lg shadow-blue-600/20"
+               >
+                 <Send className="w-4 h-4 mr-2" />
+                 Post
+               </button>
+             </div>
+          ) : (
+             <div className="flex flex-col gap-3">
+                <div className="flex flex-col md:flex-row items-center gap-3">
+                   <div className="w-full md:flex-1">
+                     <input
+                       type="text"
+                       value={alarmMessage}
+                       onChange={(e) => setAlarmMessage(e.target.value)}
+                       placeholder="e.g. Call back regarding summer early decision program..."
+                       className="w-full px-4 py-3 bg-rose-50/30 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none text-sm font-medium transition-shadow"
+                     />
+                   </div>
+                   <input
+                     type="date"
+                     value={alarmDate}
+                     min={new Date().toISOString().split('T')[0]}
+                     onChange={(e) => setAlarmDate(e.target.value)}
+                     className="w-full md:w-auto px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none text-sm font-bold text-gray-700 transition-shadow"
+                   />
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                   <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                     This will post a log indicating the scheduled alarm
+                   </span>
+                   <button
+                     onClick={handleSetAlarm}
+                     disabled={submittingAlarm || !alarmMessage.trim() || !alarmDate}
+                     className="px-6 py-2.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all disabled:opacity-50 flex items-center shadow-lg shadow-rose-600/20"
+                   >
+                     <Bell className="w-4 h-4 mr-2 border border-rose-400/50 rounded bg-rose-500" /> Schedule Alarm
+                   </button>
+                </div>
+             </div>
+          )}
         </div>
       </div>
 

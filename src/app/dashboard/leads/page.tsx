@@ -5,7 +5,8 @@ import { getLeads } from "@/app/actions/crm";
 import AdminLayout from "../_components/AdminLayout";
 import Link from "next/link";
 import { format } from "date-fns";
-import { PhoneCall, Search, MoreHorizontal, User } from "lucide-react";
+import { PhoneCall, Search, MoreHorizontal, User, Plus } from "lucide-react";
+import CreateLeadModal from "./CreateLeadModal";
 
 export default async function AdminLeadsPage() {
   const session = await getServerSession(authOptions);
@@ -40,6 +41,7 @@ export default async function AdminLeadsPage() {
             Track potential customers, manage inquiries, and view interaction history.
           </p>
         </div>
+        <CreateLeadModal />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

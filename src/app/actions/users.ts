@@ -28,6 +28,20 @@ export async function updateUserRole(userId: string, activeRole: string) {
   }
 }
 
+export async function updateUserAgency(userId: string, isAgency: boolean, agencyName: string | null) {
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { isAgency, agencyName },
+    });
+    revalidatePath("/dashboard/users");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update user agency details:", error);
+    return { success: false, error: "Failed to update agency status." };
+  }
+}
+
 export async function deleteUser(userId: string) {
   try {
     await prisma.user.delete({

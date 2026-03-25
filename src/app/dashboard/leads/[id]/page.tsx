@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Phone, Calendar, Clock, User, FileText } from "lucide-react";
 import { format } from "date-fns";
 import LeadTimelineClient from "./LeadTimelineClient";
+import LeadDetailsClient from "./LeadDetailsClient";
 
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -39,48 +40,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         
         {/* Left Column: Details & Original Message */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-              <User className="w-5 h-5 mr-2 text-rose-500" />
-              Contact Details
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Full Name</div>
-                <div className="font-medium text-gray-900">{lead.name}</div>
-              </div>
-              
-              <div>
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Email Address</div>
-                <div className="font-medium text-gray-900 flex items-center">
-                  <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                  {lead.email ? (
-                    <a href={`mailto:${lead.email}`} className="text-blue-600 hover:underline">{lead.email}</a>
-                  ) : "-"}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Phone Number</div>
-                <div className="font-medium text-gray-900 flex items-center">
-                  <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                  {lead.phone || "No phone provided"}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Account Link</div>
-                {lead.user ? (
-                  <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium">
-                    <User className="w-4 h-4 mr-1.5" /> Registered User
-                  </div>
-                ) : (
-                  <span className="text-gray-500 text-sm italic">Guest / Manual Entry</span>
-                )}
-              </div>
-            </div>
-          </div>
+          <LeadDetailsClient initialLead={lead} />
 
           {lead.notes && (
             <div className="bg-orange-50 rounded-2xl border border-orange-100 p-6 relative overflow-hidden">

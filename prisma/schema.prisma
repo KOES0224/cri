@@ -17,6 +17,7 @@ model User {
   role          String    @default("STUDENT") // STUDENT, PARENT, ADMIN
   studentCode   String?   @unique // 8-digit random code
   isAgency      Boolean   @default(false) // Hidden flag for parent accounts
+  agencyName    String?   // Name of the Agency if isAgency is true
 
   accounts     Account[]
   sessions     Session[]
@@ -146,14 +147,24 @@ model Lead {
   name      String
   email     String?
   phone     String?
-  status    String    @default("NEW") // NEW, CONTACTED, MET, ENROLLED, WAITLISTED, REJECTED
-  notes     String?   // Initial inquiry message
-  deadline  DateTime?
+  status      String    @default("NEW") // NEW, CONTACTED, MET, ENROLLED, WAITLISTED, REJECTED
+  
+  // Rich CRM Profile Fields
+  age         Int?
+  interest    String?
+  institution String?
+  agencyName  String?
+  parentName  String?
+  kakaoId     String?
+
+  notes       String?   // Initial inquiry message
+  deadline    DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  user       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  activities LeadActivity[]
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  activities    LeadActivity[]
+  notifications Notification[]
 }
 
 model LeadActivity {
@@ -165,6 +176,22 @@ model LeadActivity {
   createdAt DateTime @default(now())
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  leadId    String
+  adminName String?  // The admin who created the notification
+  message   String
+  dueDate   DateTime
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([dueDate])
+  @@index([leadId])
 }
 
 model Post {
