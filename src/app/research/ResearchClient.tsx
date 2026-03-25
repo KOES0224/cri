@@ -14,7 +14,7 @@ export default function ResearchClient({ content }: { content: Record<string, st
       description: "A highly immersive, in-person intensive held over the summer in Seoul. Work closely with leading academics in an interactive lab-style environment. Limited cohort size.",
       features: ["In-person lab interactions", "Daily intensive seminars", "Local symposium presentations"],
       href: "/research/seoul",
-      imageUrl: "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=2069&auto=format&fit=crop",
+      imageUrl: content.research_seoul_image || "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=2069&auto=format&fit=crop",
       highlight: false,
       color: "purple",
       colorMap: {
@@ -34,7 +34,7 @@ export default function ResearchClient({ content }: { content: Record<string, st
       description: "An accelerated virtual program designed to bridge the academic year. Develop a research abstract into a full methodology over the winter break.",
       features: ["Remote flexibility", "Structured milestone tracking", "Collaborative seminars"],
       href: "/research/winter",
-      imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop",
+      imageUrl: content.research_winter_image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop",
       highlight: false,
       color: "indigo",
       colorMap: {
@@ -54,6 +54,7 @@ export default function ResearchClient({ content }: { content: Record<string, st
       description: "Our most exclusive offering. Work directly with a professor or senior researcher on a highly specialized topic of your choosing over 10 to 12 weeks.",
       features: ["Dedicated PhD mentor", "Personalized syllabus", "Publish-ready capstone"],
       href: "/research/1-on-1",
+      imageUrl: content.research_1on1_image || "https://images.unsplash.com/photo-1576086213369-97a306d36557?q=80&w=2080&auto=format&fit=crop",
       highlight: true,
       color: "blue",
       colorMap: {

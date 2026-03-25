@@ -10,7 +10,7 @@ export default function LandingClientForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<Record<string, File>>({});
   const [activeTab, setActiveTab] = useState<"Landing" | "Research" | "Projects" | "Internships">("Landing");
 
   const [formData, setFormData] = useState({
@@ -33,6 +33,9 @@ export default function LandingClientForm() {
     research_hero_title: "Pioneering",
     research_hero_highlight: "Research",
     research_hero_subtitle: "Select a research environment below to explore available specializations, esteemed mentors, and active applications.",
+    research_seoul_image: "",
+    research_winter_image: "",
+    research_1on1_image: "",
     
     // Projects
     projects_pill_badge: "Student Portfolios",
@@ -45,6 +48,9 @@ export default function LandingClientForm() {
     intern_hero_title: "Elite",
     intern_hero_highlight: "Internships",
     intern_hero_subtitle: "Exclusive access to industry and laboratory internships for qualified CRI scholars. Bridge the gap between academic theory and real-world impact.",
+    intern_pillar1_image: "",
+    intern_pillar2_image: "",
+    intern_pillar3_image: "",
   });
 
   useEffect(() => {
@@ -65,9 +71,9 @@ export default function LandingClientForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      setFiles({ ...files, [key]: e.target.files[0] });
     }
   };
 
@@ -76,22 +82,24 @@ export default function LandingClientForm() {
     setMessage("");
 
     try {
-      let finalData = { ...formData };
+      let finalData: any = { ...formData };
 
-      // Upload image if selected
-      if (file) {
-        const fileData = new FormData();
-        fileData.append("file", file);
-        const res = await fetch("/api/upload", { method: "POST", body: fileData });
-        if (!res.ok) throw new Error("Image upload failed");
-        const blob = await res.json();
-        finalData.landing_hero_image = blob.url;
+      // Upload images if selected
+      for (const [key, selectedFile] of Object.entries(files)) {
+        if (selectedFile) {
+          const fileData = new FormData();
+          fileData.append("file", selectedFile);
+          const res = await fetch("/api/upload", { method: "POST", body: fileData });
+          if (!res.ok) throw new Error(`Image upload failed for ${key}`);
+          const blob = await res.json();
+          finalData[key] = blob.url;
+        }
       }
 
       const res = await saveSiteContent("landing", finalData);
       if (res.success) {
         setMessage("Public pages content saved successfully!");
-        setFile(null);
+        setFiles({});
         router.refresh();
       } else {
         setMessage("Error saving content.");
@@ -208,18 +216,18 @@ export default function LandingClientForm() {
                 <label className="block text-sm font-bold text-gray-700 mb-2">Background Image/Video</label>
                 <div className="flex gap-6 items-start">
                   <div className="relative w-48 h-32 rounded-xl border border-gray-200 bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
-                     {(file || formData.landing_hero_image) ? (
-                       (file?.type === 'video/mp4' || (!file && formData.landing_hero_image.endsWith('.mp4'))) ? (
-                         <video src={file ? URL.createObjectURL(file) : formData.landing_hero_image} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                     {(files['landing_hero_image'] || formData.landing_hero_image) ? (
+                       (files['landing_hero_image']?.type === 'video/mp4' || (!files['landing_hero_image'] && formData.landing_hero_image.endsWith('.mp4'))) ? (
+                         <video src={files['landing_hero_image'] ? URL.createObjectURL(files['landing_hero_image']) : formData.landing_hero_image} className="w-full h-full object-cover" muted loop autoPlay playsInline />
                        ) : (
-                         <img src={file ? URL.createObjectURL(file) : formData.landing_hero_image} className="w-full h-full object-cover" />
+                         <img src={files['landing_hero_image'] ? URL.createObjectURL(files['landing_hero_image']) : formData.landing_hero_image} className="w-full h-full object-cover" />
                        )
                      ) : (
                        <ImageIcon className="w-8 h-8 text-gray-400" />
                      )}
                   </div>
                   <div className="flex-1">
-                    <input type="file" accept="image/*,video/mp4" onChange={handleFileChange} className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 mb-2" />
+                    <input type="file" accept="image/*,video/mp4" onChange={(e) => handleFileChange(e, 'landing_hero_image')} className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 mb-2" />
                     <p className="text-xs text-gray-500">Upload a background media file. Automatically darkened for text readability.</p>
                   </div>
                 </div>
@@ -266,6 +274,34 @@ export default function LandingClientForm() {
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Subheadline</label>
               <textarea name="research_hero_subtitle" rows={3} value={formData.research_hero_subtitle} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+            </div>
+            
+            <div className="pt-8 border-t border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Program Hub Thumbnails</h3>
+              <div className="space-y-6">
+                {[
+                  { label: "Seoul Research Summer Camp", key: "research_seoul_image" },
+                  { label: "Winter Online Research", key: "research_winter_image" },
+                  { label: "1-on-1 Advanced Research", key: "research_1on1_image" },
+                ].map(item => (
+                  <div key={item.key} className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                    <label className="block text-sm font-bold text-gray-700 mb-3">{item.label}</label>
+                    <div className="flex flex-col sm:flex-row gap-6 items-start">
+                      <div className="relative w-48 h-32 rounded-xl border border-gray-200 bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
+                        {(files[item.key] || formData[item.key as keyof typeof formData]) ? (
+                          <img src={files[item.key] ? URL.createObjectURL(files[item.key]) : (formData[item.key as keyof typeof formData] as string)} className="w-full h-full object-cover" />
+                        ) : (
+                          <ImageIcon className="w-8 h-8 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 w-full">
+                        <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, item.key)} className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white mb-2" />
+                        <p className="text-xs text-gray-500">Upload 4:3 aspect ratio premium photography.</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -316,6 +352,34 @@ export default function LandingClientForm() {
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Subheadline</label>
               <textarea name="intern_hero_subtitle" rows={3} value={formData.intern_hero_subtitle} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+            </div>
+
+            <div className="pt-8 border-t border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Value Proposition Pillars (Backgrounds)</h3>
+              <div className="grid grid-cols-1 gap-6">
+                {[
+                  { label: "Unrivaled Network Pillar", key: "intern_pillar1_image" },
+                  { label: "Tailored Paths Pillar", key: "intern_pillar2_image" },
+                  { label: "Tangible Impact Pillar", key: "intern_pillar3_image" },
+                ].map(item => (
+                  <div key={item.key} className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                    <label className="block text-sm font-bold text-gray-700 mb-3">{item.label}</label>
+                    <div className="flex flex-col sm:flex-row gap-6 items-start">
+                      <div className="relative w-48 h-32 rounded-xl border border-gray-200 bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
+                        {(files[item.key] || formData[item.key as keyof typeof formData]) ? (
+                          <img src={files[item.key] ? URL.createObjectURL(files[item.key]) : (formData[item.key as keyof typeof formData] as string)} className="w-full h-full object-cover" />
+                        ) : (
+                          <ImageIcon className="w-8 h-8 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 w-full">
+                        <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, item.key)} className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white mb-2" />
+                        <p className="text-xs text-gray-500">Background photography for the flex-grow pillar.</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

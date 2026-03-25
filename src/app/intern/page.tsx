@@ -71,7 +71,7 @@ export default async function InternPage() {
             <div className="flex-1 bg-white rounded-[2.5rem] p-8 md:p-10 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:flex-[1.4] transition-[flex] duration-700 ease-out flex flex-col justify-start min-h-[400px] lg:min-h-[480px]">
               {/* Image Underlay with Gradient Fade */}
               <div className="absolute inset-0 z-0">
-                <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-80 group-hover:scale-105 transition-all duration-1000" alt="Global Network" />
+                <img src={content.intern_pillar1_image || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop"} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-80 group-hover:scale-105 transition-all duration-1000" alt="Global Network" />
                 <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent"></div>
               </div>
               
@@ -87,7 +87,7 @@ export default async function InternPage() {
             <div className="flex-1 bg-gray-900 text-white rounded-[2.5rem] p-8 md:p-10 border border-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] relative overflow-hidden group hover:flex-[1.4] transition-[flex] duration-700 ease-out flex flex-col justify-start min-h-[400px] lg:min-h-[480px]">
               {/* Image Underlay with Gradient Fade */}
               <div className="absolute inset-0 z-0">
-                <img src="https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-60 group-hover:scale-105 transition-all duration-1000 mix-blend-screen" alt="Tailored Paths" />
+                <img src={content.intern_pillar2_image || "https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=800&auto=format&fit=crop"} className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-60 group-hover:scale-105 transition-all duration-1000 mix-blend-screen" alt="Tailored Paths" />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/90 to-transparent"></div>
               </div>
               
@@ -103,7 +103,7 @@ export default async function InternPage() {
             <div className="flex-1 bg-white rounded-[2.5rem] p-8 md:p-10 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:flex-[1.4] transition-[flex] duration-700 ease-out flex flex-col justify-start min-h-[400px] lg:min-h-[480px]">
               {/* Image Underlay with Gradient Fade */}
               <div className="absolute inset-0 z-0">
-                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-80 group-hover:scale-105 transition-all duration-1000" alt="Tangible Impact" />
+                <img src={content.intern_pillar3_image || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop"} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-80 group-hover:scale-105 transition-all duration-1000" alt="Tangible Impact" />
                 <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent"></div>
               </div>
               
