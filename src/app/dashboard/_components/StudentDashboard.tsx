@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { FileText, MessageSquare, BookOpen, Clock } from "lucide-react";
 
-export default function StudentDashboard({ name }: { name: string }) {
+export default function StudentDashboard({ 
+  name, 
+  unreadCount, 
+  activePrograms, 
+  pendingApps 
+}: { 
+  name: string;
+  unreadCount: number;
+  activePrograms: number;
+  pendingApps: number;
+}) {
   return (
     <>
       <div className="mb-8 flex md:flex-row flex-col justify-between items-start md:items-center">
@@ -30,7 +40,7 @@ export default function StudentDashboard({ name }: { name: string }) {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Pending Apps</p>
-            <p className="text-2xl font-bold text-gray-900">0</p>
+            <p className="text-2xl font-bold text-gray-900">{pendingApps}</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
@@ -39,7 +49,7 @@ export default function StudentDashboard({ name }: { name: string }) {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Active Programs</p>
-            <p className="text-2xl font-bold text-gray-900">0</p>
+            <p className="text-2xl font-bold text-gray-900">{activePrograms}</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
@@ -48,7 +58,7 @@ export default function StudentDashboard({ name }: { name: string }) {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Unread Messages</p>
-            <p className="text-2xl font-bold text-gray-900">0</p>
+            <p className="text-2xl font-bold text-gray-900">{unreadCount}</p>
           </div>
         </div>
       </div>
@@ -85,7 +95,16 @@ export default function StudentDashboard({ name }: { name: string }) {
             </Link>
           </div>
           <div className="p-6 text-center text-gray-500 text-sm">
-            <p>No new messages right now.</p>
+            {unreadCount > 0 ? (
+              <div className="flex flex-col items-center justify-center space-y-3 animate-in fade-in">
+                <p className="font-semibold text-gray-900">You have {unreadCount} unread message{unreadCount > 1 ? 's' : ''}!</p>
+                <Link href="/dashboard/messages" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition">
+                  Open Inbox
+                </Link>
+              </div>
+            ) : (
+              <p>No new messages right now.</p>
+            )}
           </div>
         </section>
       </div>
