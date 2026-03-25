@@ -85,7 +85,7 @@ export default function StudentDashboard({ name }: { name: string }) {
             </Link>
           </div>
           <div className="p-6 text-center text-gray-500 text-sm">
-            <p>No new messages from professors right now.</p>
+            <p>No new messages right now.</p>
           </div>
         </section>
       </div>

@@ -5,11 +5,13 @@ import { useSession, signOut } from "next-auth/react";
 import { Menu, X, ArrowRight, UserCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { getGlobalUnreadCount } from "@/app/actions/messages";
 
 export default function Navbar() {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [globalUnread, setGlobalUnread] = useState(0);
   const pathname = usePathname();
   const isDarkHero = ["/", "/research", "/intern", "/projects"].includes(pathname);
 
@@ -18,8 +20,20 @@ export default function Navbar() {
       setScrolled(window.scrollY > 20);
     };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+
+    // Fetch notifications if logged in
+    let isMounted = true;
+    if (session?.user) {
+      getGlobalUnreadCount().then(count => {
+        if (isMounted) setGlobalUnread(count);
+      });
+    }
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      isMounted = false;
+    };
+  }, [session]);
 
   const navTextClass = isDarkHero && !scrolled 
     ? "text-gray-200 hover:text-white" 
@@ -64,8 +78,14 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-4">
             {session ? (
               <div className="flex items-center space-x-3 bg-gray-50/80 backdrop-blur-md rounded-full p-1 pr-4 border border-gray-200">
-                <Link href="/dashboard" className="flex items-center justify-center h-8 w-8 rounded-full bg-white shadow-sm border border-gray-100 text-blue-600 hover-lift click-press">
+                <Link href="/dashboard" className="relative flex items-center justify-center h-8 w-8 rounded-full bg-white shadow-sm border border-gray-100 text-blue-600 hover:ring-2 hover:ring-blue-100 transition-all">
                   <UserCircle className="w-5 h-5" />
+                  {globalUnread > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-600 border-2 border-white"></span>
+                    </span>
+                  )}
                 </Link>
                 <Link href="/dashboard" className="text-sm font-semibold text-gray-700 hover:text-black transition-colors">
                   Dashboard

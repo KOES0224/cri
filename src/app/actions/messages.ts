@@ -37,6 +37,22 @@ export async function checkHasActiveEnrollments() {
 }
 
 /**
+ * Returns the TOTAL number of unread messages for the logged-in user.
+ */
+export async function getGlobalUnreadCount() {
+  const session = await requireAuth();
+  
+  const count = await prisma.message.count({
+    where: {
+      receiverId: session.user.id,
+      read: false
+    }
+  });
+
+  return count;
+}
+
+/**
  * Peer Discovery:
  * Returns a list of users the current student is allowed to message.
  * - Students can only message other students who share the exact same Program ID.
@@ -45,12 +61,30 @@ export async function checkHasActiveEnrollments() {
 export async function getAvailableContacts() {
   const session = await requireAuth();
 
+  // Helper to fetch unread counts mapped by senderId
+  const unreadMessagesData = await prisma.message.groupBy({
+    by: ['senderId'],
+    where: {
+      receiverId: session.user.id,
+      read: false
+    },
+    _count: {
+      id: true
+    }
+  });
+
+  const unreadMap = new Map();
+  unreadMessagesData.forEach(entry => {
+    unreadMap.set(entry.senderId, entry._count.id);
+  });
+
   // 1. Admins see everyone (For scalability, limit this or add search later. For now, pull all)
   if (session.user.role === "ADMIN") {
-    return prisma.user.findMany({
+    const allUsers = await prisma.user.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true, image: true, role: true }
     });
+    return allUsers.map(u => ({ ...u, unreadCount: unreadMap.get(u.id) || 0 }));
   }
 
   // 2. Students & Parents logic
@@ -86,7 +120,10 @@ export async function getAvailableContacts() {
     }
   }
   
-  let peers = Array.from(uniquePeersMap.values());
+  let peers = Array.from(uniquePeersMap.values()).map((p: any) => ({
+    ...p,
+    unreadCount: unreadMap.get(p.id) || 0
+  }));
 
   // Also include Admins automatically so students can always reach support
   const admins = await prisma.user.findMany({
@@ -94,7 +131,12 @@ export async function getAvailableContacts() {
     select: { id: true, name: true, image: true, role: true }
   });
 
-  return [...admins, ...peers];
+  const processedAdmins = admins.map(a => ({
+    ...a,
+    unreadCount: unreadMap.get(a.id) || 0
+  }));
+
+  return [...processedAdmins, ...peers];
 }
 
 /**

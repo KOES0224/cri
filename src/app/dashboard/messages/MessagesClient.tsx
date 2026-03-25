@@ -10,6 +10,7 @@ type User = {
   name: string | null;
   image: string | null;
   role: string;
+  unreadCount?: number;
 };
 
 type Message = {
@@ -102,18 +103,25 @@ export default function MessagesClient({ contacts, currentUserId }: { contacts: 
             <div 
               key={contact.id}
               onClick={() => setActiveContact(contact)}
-              className={`p-4 border-b border-gray-50 cursor-pointer transition-all ${activeContact?.id === contact.id ? 'bg-blue-50/50 border-l-4 border-l-blue-600' : 'hover:bg-gray-50/80 border-l-4 border-l-transparent'}`}
+              className={`p-4 border-b border-gray-50 cursor-pointer transition-all ${activeContact?.id === contact.id ? 'bg-gray-100 shadow-inner' : 'hover:bg-gray-50/80'}`}
             >
-              <div className="flex items-center">
-                <div className={`h-12 w-12 rounded-full flex items-center justify-center font-bold text-lg mr-4 shadow-sm ${contact.role === 'ADMIN' ? 'bg-rose-100 text-rose-700' : 'bg-gray-100 text-gray-600'}`}>
-                  {contact.name?.charAt(0) || "U"}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center min-w-0 pr-2">
+                  <div className={`h-11 w-11 rounded-full flex shrink-0 items-center justify-center font-bold text-lg mr-3 shadow-sm ${contact.role === 'ADMIN' ? 'bg-rose-100 text-rose-700' : 'bg-white text-gray-600 border border-gray-200'}`}>
+                    {contact.name?.charAt(0) || "U"}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 text-sm truncate">{contact.name}</p>
+                    <p className={`text-xs mt-1 font-medium truncate flex items-center ${contact.role === 'ADMIN' ? 'text-rose-600' : 'text-gray-500'}`}>
+                      {contact.role === "ADMIN" ? "CRI Support" : "Class Peer"}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 text-sm truncate">{contact.name}</p>
-                  <p className={`text-xs mt-1 font-medium truncate ${contact.role === 'ADMIN' ? 'text-rose-600' : 'text-gray-500'}`}>
-                    {contact.role === "ADMIN" ? "CRI Support" : "Class Peer"}
-                  </p>
-                </div>
+                {contact.unreadCount && contact.unreadCount > 0 ? (
+                  <div className="h-5 min-w-[20px] rounded-full bg-red-500 text-white flex items-center justify-center text-[11px] font-bold px-1.5 shrink-0 shadow-sm animate-in zoom-in">
+                    {contact.unreadCount}
+                  </div>
+                ) : null}
               </div>
             </div>
           ))}
