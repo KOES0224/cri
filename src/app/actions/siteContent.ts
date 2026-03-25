@@ -26,10 +26,11 @@ export async function saveSiteContent(page: string, data: Record<string, string>
   try {
     // We will upsert each key provided.
     const promises = Object.entries(data).map(([key, value]) => {
+      const safeValue = typeof value === 'string' ? value : String(value || "");
       return prisma.siteContent.upsert({
         where: { key },
-        update: { value },
-        create: { key, value, page, type: "text" },
+        update: { value: safeValue },
+        create: { key, value: safeValue, page, type: "text" },
       });
     });
 

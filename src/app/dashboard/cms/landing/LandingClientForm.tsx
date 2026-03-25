@@ -90,7 +90,12 @@ export default function LandingClientForm() {
           const fileData = new FormData();
           fileData.append("file", selectedFile);
           const res = await fetch("/api/upload", { method: "POST", body: fileData });
-          if (!res.ok) throw new Error(`Image upload failed for ${key}`);
+          
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Upload failed for ${key}: ${errorText.substring(0,100)} (File might be too large - limit is 4MB)`);
+          }
+          
           const blob = await res.json();
           finalData[key] = blob.url;
         }
@@ -102,11 +107,11 @@ export default function LandingClientForm() {
         setFiles({});
         router.refresh();
       } else {
-        setMessage("Error saving content.");
+        throw new Error(res.error || "Error saving content to database.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setMessage("Failed to upload image or save data.");
+      setMessage(`Save failed: ${err.message || "Unknown error occurred"}`);
     } finally {
       setSaving(false);
       setTimeout(() => setMessage(""), 3000);
