@@ -45,7 +45,7 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
     description: initialData?.description || "",
-    category: initialData?.category || "Research",
+    category: initialData?.category || "Summer Camp",
     subCategory: initialData?.subCategory || "",
     status: initialData?.status || "OPEN",
     tuition: initialData?.tuition || "",
@@ -133,46 +133,32 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Main Category *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Program Category *</label>
           <select
             name="category"
             value={formData.category}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none font-medium"
           >
-            <option value="Research">Research</option>
-            <option value="Mentorship">Mentorship</option>
-            <option value="Internship">Internship</option>
-            <option value="Camp">Camp</option>
+            <option value="Summer Camp">Summer Camp (Seoul)</option>
+            <option value="Winter Online">Winter Online</option>
+            <option value="Projects">Projects</option>
+            <option value="Competitions">Competitions</option>
+            <option value="Internship">Interns / Internships</option>
             <option value="Other">Other</option>
           </select>
         </div>
 
         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-1">Program Type / Variation</label>
-           {formData.category === "Research" ? (
-             <select
-              name="subCategory"
-              value={formData.subCategory}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-             >
-              <option value="">Select Specific Program...</option>
-              <option value="1-on-1 (With Professor)">1-on-1 Advanced Research (With Professor)</option>
-              <option value="1-on-1 (With Mentor)">1-on-1 Advanced Research (With Mentor)</option>
-              <option value="Seoul Research Summer Camp">Seoul Research Program (Summer Camp)</option>
-              <option value="Winter Online Research">Winter Online Research</option>
-             </select>
-           ) : (
-             <input
-              type="text"
-              name="subCategory"
-              value={formData.subCategory}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-              placeholder="e.g. 1-on-1, Group"
-             />
-           )}
+           <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory / Variation (Optional)</label>
+           <input
+            type="text"
+            name="subCategory"
+            value={formData.subCategory}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+            placeholder="e.g. Group, Advanced"
+           />
         </div>
         
         <div>

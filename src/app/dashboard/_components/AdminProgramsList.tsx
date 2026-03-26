@@ -25,23 +25,29 @@ export default function AdminProgramsList({ initialPrograms }: { initialPrograms
   const [isCreating, setIsCreating] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
 
+  const TABS = ["Summer Camp", "Winter Online", "Projects", "Competitions", "Interns", "Archive & Mock"];
+
   const mockTitles = ["Advanced Cognitive Psychology Research", "Sustainable Urban Design Project", "Global FinTech Internship"];
   
   const getProgramTab = (program: Program) => {
-    if (!program.subCategory || program.title.toLowerCase().includes("mock") || program.title.toLowerCase().includes("test") || mockTitles.includes(program.title)) {
-      return "Uncategorized & Mock";
+    const title = program.title.toLowerCase();
+    const cat = program.category.toLowerCase();
+    const sub = program.subCategory?.toLowerCase() || "";
+
+    if (title.includes("mock") || title.includes("test") || mockTitles.includes(program.title)) {
+      return "Archive & Mock";
     }
-    if (program.category.toLowerCase() === 'seoul') return 'Seoul Research';
-    if (program.category.toLowerCase() === 'winter') return 'Winter Research';
-    return program.category;
+
+    if (cat === 'summer camp' || cat === 'seoul' || cat === 'camp' || sub.includes('summer') || sub.includes('seoul')) return "Summer Camp";
+    if (cat === 'winter online' || cat === 'winter' || sub.includes('winter')) return "Winter Online";
+    if (cat.includes('project')) return "Projects";
+    if (cat.includes('competition')) return "Competitions";
+    if (cat.includes('intern')) return "Interns";
+    
+    return "Archive & Mock";
   };
 
-  const allTabs = Array.from(new Set(initialPrograms.map(getProgramTab)));
-  const sortedTabs = allTabs.filter(t => t !== "Uncategorized & Mock").sort();
-  if (allTabs.includes("Uncategorized & Mock")) sortedTabs.push("Uncategorized & Mock");
-  if (sortedTabs.length === 0) sortedTabs.push("Programs");
-
-  const [activeTab, setActiveTab] = useState<string>(sortedTabs.includes("Seoul Research") ? "Seoul Research" : sortedTabs[0]);
+  const [activeTab, setActiveTab] = useState<string>("Summer Camp");
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this program?")) {
@@ -88,7 +94,7 @@ export default function AdminProgramsList({ initialPrograms }: { initialPrograms
          </div>
          
          <div className="flex bg-gray-100 p-1 rounded-xl overflow-x-auto w-full md:w-auto md:max-w-md lg:max-w-2xl">
-           {sortedTabs.map((tab) => (
+           {TABS.map((tab) => (
              <button
                key={tab}
                onClick={() => setActiveTab(tab)}
