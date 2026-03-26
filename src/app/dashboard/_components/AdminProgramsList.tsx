@@ -25,6 +25,24 @@ export default function AdminProgramsList({ initialPrograms }: { initialPrograms
   const [isCreating, setIsCreating] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
 
+  const mockTitles = ["Advanced Cognitive Psychology Research", "Sustainable Urban Design Project", "Global FinTech Internship"];
+  
+  const getProgramTab = (program: Program) => {
+    if (!program.subCategory || program.title.toLowerCase().includes("mock") || program.title.toLowerCase().includes("test") || mockTitles.includes(program.title)) {
+      return "Uncategorized & Mock";
+    }
+    if (program.category.toLowerCase() === 'seoul') return 'Seoul Research';
+    if (program.category.toLowerCase() === 'winter') return 'Winter Research';
+    return program.category;
+  };
+
+  const allTabs = Array.from(new Set(initialPrograms.map(getProgramTab)));
+  const sortedTabs = allTabs.filter(t => t !== "Uncategorized & Mock").sort();
+  if (allTabs.includes("Uncategorized & Mock")) sortedTabs.push("Uncategorized & Mock");
+  if (sortedTabs.length === 0) sortedTabs.push("Programs");
+
+  const [activeTab, setActiveTab] = useState<string>(sortedTabs.includes("Seoul Research") ? "Seoul Research" : sortedTabs[0]);
+
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this program?")) {
       const result = await deleteProgram(id);
@@ -55,24 +73,6 @@ export default function AdminProgramsList({ initialPrograms }: { initialPrograms
       </div>
     );
   }
-
-  const mockTitles = ["Advanced Cognitive Psychology Research", "Sustainable Urban Design Project", "Global FinTech Internship"];
-  
-  const getProgramTab = (program: Program) => {
-    if (!program.subCategory || program.title.toLowerCase().includes("mock") || program.title.toLowerCase().includes("test") || mockTitles.includes(program.title)) {
-      return "Uncategorized & Mock";
-    }
-    if (program.category.toLowerCase() === 'seoul') return 'Seoul Research';
-    if (program.category.toLowerCase() === 'winter') return 'Winter Research';
-    return program.category;
-  };
-
-  const allTabs = Array.from(new Set(initialPrograms.map(getProgramTab)));
-  const sortedTabs = allTabs.filter(t => t !== "Uncategorized & Mock").sort();
-  if (allTabs.includes("Uncategorized & Mock")) sortedTabs.push("Uncategorized & Mock");
-  if (sortedTabs.length === 0) sortedTabs.push("Programs");
-
-  const [activeTab, setActiveTab] = useState<string>(sortedTabs.includes("Seoul Research") ? "Seoul Research" : sortedTabs[0]);
 
   const filteredPrograms = initialPrograms.filter((p) => getProgramTab(p) === activeTab);
 
