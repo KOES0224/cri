@@ -80,6 +80,8 @@ model Program {
   description  String
   category     String // e.g. "Research", "Mentorship"
   subCategory  String? // e.g. "1-on-1", "Group"
+  tuition      Int?
+  order        Int           @default(0)
   status       String        @default("OPEN")
   startDate    DateTime?
   endDate      DateTime?

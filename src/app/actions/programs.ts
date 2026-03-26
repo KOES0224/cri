@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 export async function getPrograms() {
   try {
     return await prisma.program.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
   } catch (error) {
     console.error("Failed to fetch programs:", error);
@@ -30,6 +30,7 @@ export async function createProgram(data: {
   description: string;
   category: string;
   subCategory?: string | null;
+  tuition?: number | null;
   status: string;
   startDate?: Date;
   endDate?: Date;
@@ -54,6 +55,7 @@ export async function updateProgram(
     description: string;
     category: string;
     subCategory?: string | null;
+    tuition?: number | null;
     status: string;
     startDate?: Date;
     endDate?: Date;
@@ -84,5 +86,20 @@ export async function deleteProgram(id: string) {
   } catch (error) {
     console.error("Failed to delete program:", error);
     return { success: false, error: "Failed to delete program." };
+  }
+}
+
+export async function updateProgramOrder(id: string, order: number) {
+  try {
+    const program = await prisma.program.update({
+      where: { id },
+      data: { order },
+    });
+    revalidatePath("/dashboard");
+    revalidatePath("/research");
+    return { success: true, program };
+  } catch (error) {
+    console.error("Failed to update program order:", error);
+    return { success: false, error: "Failed to update program order." };
   }
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { PlusCircle, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Briefcase } from "lucide-react";
 import ProgramForm from "./ProgramForm";
-import { deleteProgram } from "@/app/actions/programs";
+import { deleteProgram, updateProgramOrder } from "@/app/actions/programs";
 import { useRouter } from "next/navigation";
 
 type Program = {
@@ -12,6 +12,8 @@ type Program = {
   description: string;
   category: string;
   subCategory: string | null;
+  tuition: number | null;
+  order: number;
   status: string;
   startDate: Date | null;
   endDate: Date | null;
@@ -54,13 +56,56 @@ export default function AdminProgramsList({ initialPrograms }: { initialPrograms
     );
   }
 
+  const mockTitles = ["Advanced Cognitive Psychology Research", "Sustainable Urban Design Project", "Global FinTech Internship"];
+  
+  const getProgramTab = (program: Program) => {
+    if (!program.subCategory || program.title.toLowerCase().includes("mock") || program.title.toLowerCase().includes("test") || mockTitles.includes(program.title)) {
+      return "Uncategorized & Mock";
+    }
+    if (program.category.toLowerCase() === 'seoul') return 'Seoul Research';
+    if (program.category.toLowerCase() === 'winter') return 'Winter Research';
+    return program.category;
+  };
+
+  const allTabs = Array.from(new Set(initialPrograms.map(getProgramTab)));
+  const sortedTabs = allTabs.filter(t => t !== "Uncategorized & Mock").sort();
+  if (allTabs.includes("Uncategorized & Mock")) sortedTabs.push("Uncategorized & Mock");
+  if (sortedTabs.length === 0) sortedTabs.push("Programs");
+
+  const [activeTab, setActiveTab] = useState<string>(sortedTabs.includes("Seoul Research") ? "Seoul Research" : sortedTabs[0]);
+
+  const filteredPrograms = initialPrograms.filter((p) => getProgramTab(p) === activeTab);
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">Manage Programs</h2>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px] relative">
+      <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+         <div className="flex-shrink-0">
+           <h3 className="text-lg font-medium tracking-tight text-gray-900 flex items-center">
+             <Briefcase className="h-5 w-5 mr-2 text-blue-600" />
+             Programs ({filteredPrograms.length})
+           </h3>
+           <p className="text-sm text-gray-500 mt-1">Manage and segment available programs.</p>
+         </div>
+         
+         <div className="flex bg-gray-100 p-1 rounded-xl overflow-x-auto w-full md:w-auto md:max-w-md lg:max-w-2xl">
+           {sortedTabs.map((tab) => (
+             <button
+               key={tab}
+               onClick={() => setActiveTab(tab)}
+               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                 activeTab === tab
+                   ? "bg-white text-gray-900 shadow"
+                   : "text-gray-500 hover:text-gray-700"
+               }`}
+             >
+               {tab}
+             </button>
+           ))}
+         </div>
+
         <button
           onClick={() => setIsCreating(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm shrink-0"
         >
           <PlusCircle className="w-4 h-4" />
           New Program
@@ -74,19 +119,20 @@ export default function AdminProgramsList({ initialPrograms }: { initialPrograms
               <th className="px-6 py-4 font-medium">Title</th>
               <th className="px-6 py-4 font-medium hidden md:table-cell">Category</th>
               <th className="px-6 py-4 font-medium">Status</th>
+              <th className="px-6 py-4 font-medium w-24">Order</th>
               <th className="px-6 py-4 font-medium hidden lg:table-cell">Start Date</th>
               <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {initialPrograms.length === 0 ? (
+            {filteredPrograms.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                  No programs found. Create your first one!
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  No programs found in this tab.
                 </td>
               </tr>
             ) : (
-              initialPrograms.map((program) => (
+              filteredPrograms.map((program) => (
                 <tr key={program.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 font-medium text-gray-900">{program.title}</td>
                   <td className="px-6 py-4 text-gray-500 hidden md:table-cell">{program.category}</td>
@@ -98,6 +144,20 @@ export default function AdminProgramsList({ initialPrograms }: { initialPrograms
                     }`}>
                       {program.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <input 
+                      type="number" 
+                      defaultValue={program.order} 
+                      onBlur={async (e) => {
+                        const newVal = parseInt(e.target.value);
+                        if (newVal !== program.order && !isNaN(newVal)) {
+                          const res = await updateProgramOrder(program.id, newVal);
+                          if (res.success) router.refresh();
+                        }
+                      }}
+                      className="w-16 px-2 py-1 border border-gray-200 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                    />
                   </td>
                   <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">
                     {program.startDate ? new Date(program.startDate).toLocaleDateString() : 'TBD'}

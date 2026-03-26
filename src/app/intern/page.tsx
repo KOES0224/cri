@@ -21,7 +21,7 @@ export default async function InternPage() {
   // Fetch internships from the database where category is "Internship"
   const dbPrograms = await prisma.program.findMany({
     where: { category: "Internship" },
-    orderBy: { createdAt: "desc" }
+    orderBy: [{ order: "asc" }, { createdAt: "desc" }]
   });
 
   const programs = dbPrograms.map(p => ({

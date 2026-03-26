@@ -112,10 +112,18 @@ export default function ResearchProgramsClient({
                  </p>
                  
                  <div className="pt-6 border-t border-gray-50 mt-auto flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                    <div className="text-sm font-medium text-gray-500 flex items-center bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                       <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                       {program.startDate ? format(new Date(program.startDate), 'MMM d, yyyy') : 'TBA'}
-                       {program.endDate ? ` - ${format(new Date(program.endDate), 'MMM d, yyyy')}` : ''}
+                    <div className="flex flex-col gap-2">
+                      <div className="text-sm font-medium text-gray-500 flex items-center bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 w-fit">
+                         <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                         {program.startDate ? format(new Date(program.startDate), 'MMM d, yyyy') : 'TBA'}
+                         {program.endDate ? ` - ${format(new Date(program.endDate), 'MMM d, yyyy')}` : ''}
+                      </div>
+                      {program.tuition && (
+                        <div className="text-sm font-bold text-gray-900 flex items-center bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 w-fit">
+                           <span className="text-emerald-600 font-black mr-2">$</span>
+                           {program.tuition.toLocaleString()} USD
+                        </div>
+                      )}
                     </div>
                     
                     <Link href={`/research/program/${program.id}`} className="w-full sm:w-auto h-11 px-6 rounded-xl bg-gray-900 white text-white text-sm font-bold hover:bg-black transition-colors inline-flex items-center justify-center group/btn shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 shrink-0">

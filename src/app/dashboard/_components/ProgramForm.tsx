@@ -12,6 +12,7 @@ type ProgramFormProps = {
     category: string;
     subCategory?: string | null;
     status: string;
+    tuition?: number | null;
     startDate?: Date | null;
     endDate?: Date | null;
   };
@@ -47,6 +48,7 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
     category: initialData?.category || "Research",
     subCategory: initialData?.subCategory || "",
     status: initialData?.status || "OPEN",
+    tuition: initialData?.tuition || "",
     startDate: initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : "",
     endDate: initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "",
   });
@@ -66,6 +68,7 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
         description: formData.description,
         category: formData.category,
         subCategory: formData.subCategory,
+        tuition: formData.tuition ? Number(formData.tuition) : null,
         status: formData.status,
         startDate: formData.startDate ? new Date(formData.startDate) : undefined,
         endDate: formData.endDate ? new Date(formData.endDate) : undefined,
@@ -184,6 +187,20 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
             <option value="CLOSED">Closed / Upcoming</option>
             <option value="COMPLETED">Completed</option>
           </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tuition (USD)</label>
+          <input
+            type="number"
+            name="tuition"
+            value={formData.tuition}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+            placeholder="e.g. 8580"
+          />
         </div>
       </div>
 
