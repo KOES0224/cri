@@ -19,7 +19,8 @@ export default function Navbar() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
-    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Execute immediately on mount to secure exact scroll position
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     // Fetch notifications if logged in
     let isMounted = true;
@@ -36,8 +37,8 @@ export default function Navbar() {
   }, [session]);
 
   const navTextClass = isDarkHero && !scrolled 
-    ? "text-gray-200 hover:text-white" 
-    : "text-gray-600 hover:text-black";
+    ? "text-white/90 hover:text-white transform-gpu" 
+    : "text-gray-600 hover:text-black transform-gpu";
   
   const logoClass = isDarkHero && !scrolled
     ? "text-white"
