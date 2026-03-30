@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { FileText, MessageSquare, BookOpen, Clock, Calendar, ChevronRight, X } from "lucide-react";
 
 export default function StudentDashboard({ 
   name, 
   unreadCount, 
   activePrograms, 
+  totalApplications,
   pendingApplications,
   pendingAssignments,
   upcomingEvents
@@ -15,11 +17,21 @@ export default function StudentDashboard({
   name: string;
   unreadCount: number;
   activePrograms: number;
+  totalApplications: number;
   pendingApplications: any[];
   pendingAssignments: any[];
   upcomingEvents: any[];
 }) {
+  const searchParams = useSearchParams();
   const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
+  
+  useEffect(() => {
+    if (searchParams.get("pending") === "true") {
+      setIsPendingModalOpen(true);
+      window.history.replaceState(null, '', '/dashboard');
+    }
+  }, [searchParams]);
+
   const totalPending = pendingApplications.length + pendingAssignments.length;
   return (
     <>
@@ -40,7 +52,7 @@ export default function StudentDashboard({
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <button 
           onClick={() => setIsPendingModalOpen(true)}
           className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center hover:border-orange-200 hover:shadow-md transition-all group text-left w-full"
@@ -53,6 +65,17 @@ export default function StudentDashboard({
             <p className="text-2xl font-bold text-gray-900">{totalPending}</p>
           </div>
         </button>
+
+        <Link href="/dashboard/applications" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center hover:border-blue-200 hover:shadow-md transition-all group">
+          <div className="p-3 rounded-xl bg-blue-50 text-blue-600 mr-4 group-hover:bg-blue-100 transition-colors">
+            <FileText className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">My Applications</p>
+            <p className="text-2xl font-bold text-gray-900">{totalApplications}</p>
+          </div>
+        </Link>
+
         <Link href="/dashboard/my-programs" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center hover:border-green-200 hover:shadow-md transition-all group">
           <div className="p-3 rounded-xl bg-green-50 text-green-600 mr-4 group-hover:bg-green-100 transition-colors">
             <BookOpen className="h-6 w-6" />

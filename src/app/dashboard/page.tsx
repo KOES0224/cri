@@ -5,6 +5,7 @@ import StudentDashboard from "./_components/StudentDashboard";
 import ParentDashboard from "./_components/ParentDashboard";
 import AdminDashboard from "./_components/AdminDashboard";
 import { prisma } from "@/lib/prisma";
+import { Suspense } from "react";
 import { getGlobalUnreadCount } from "@/app/actions/messages";
 
 export default async function DashboardPage() {
@@ -21,6 +22,7 @@ export default async function DashboardPage() {
 
   let unreadCount = 0;
   let activePrograms = 0;
+  let totalApplications = 0;
   let pendingApplicationsData: any = [];
   let pendingAssignmentsData: any = [];
   let upcomingEventsData: any = [];
@@ -28,6 +30,11 @@ export default async function DashboardPage() {
   if (isStudent) {
     unreadCount = await getGlobalUnreadCount();
     
+    // Total Applications
+    totalApplications = await prisma.application.count({
+      where: { userId: session.user.id }
+    });
+
     // Programs count (ONGOING and ACCEPTED)
     activePrograms = await prisma.enrollment.count({
       where: { 
@@ -68,14 +75,17 @@ export default async function DashboardPage() {
       {role === "ADMIN" && <AdminDashboard name={name} />}
       {role === "PARENT" && <ParentDashboard name={name} />}
       {isStudent && (
-        <StudentDashboard 
-          name={name} 
-          unreadCount={unreadCount}
-          activePrograms={activePrograms}
-          pendingApplications={pendingApplicationsData}
-          pendingAssignments={pendingAssignmentsData}
-          upcomingEvents={upcomingEventsData}
-        />
+        <Suspense fallback={<div>Loading dashboard overview...</div>}>
+          <StudentDashboard 
+            name={name} 
+            unreadCount={unreadCount}
+            activePrograms={activePrograms}
+            totalApplications={totalApplications}
+            pendingApplications={pendingApplicationsData}
+            pendingAssignments={pendingAssignmentsData}
+            upcomingEvents={upcomingEventsData}
+          />
+        </Suspense>
       )}
     </div>
   );

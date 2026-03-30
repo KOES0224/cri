@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, MessageSquare, UserCircle, ArrowLeft, Send, BookOpen } from "lucide-react";
+import { FileText, MessageSquare, UserCircle, ArrowLeft, Send, BookOpen, Clock } from "lucide-react";
 import { getGlobalUnreadCount } from "@/app/actions/messages";
 
 export default async function StudentLayout({
@@ -29,6 +29,11 @@ export default async function StudentLayout({
           </Link>
 
           <div className="h-px bg-gray-100 w-full mb-4"></div>
+
+          <Link href="/dashboard?pending=true" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-yellow-50 hover:text-yellow-700 transition-colors group">
+            <Clock className="h-5 w-5" />
+            <span className="font-medium text-sm">Pending Tasks</span>
+          </Link>
 
           <Link href="/dashboard/applications" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700 transition-colors group">
             <FileText className="h-5 w-5" />
