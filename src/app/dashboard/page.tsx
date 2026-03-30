@@ -21,15 +21,45 @@ export default async function DashboardPage() {
 
   let unreadCount = 0;
   let activePrograms = 0;
-  let pendingApps = 0;
+  let pendingApplicationsData: any = [];
+  let pendingAssignmentsData: any = [];
+  let upcomingEventsData: any = [];
 
   if (isStudent) {
     unreadCount = await getGlobalUnreadCount();
+    
+    // Programs count (ONGOING and ACCEPTED)
     activePrograms = await prisma.enrollment.count({
-      where: { userId: session.user.id, status: "ONGOING" }
+      where: { 
+        userId: session.user.id, 
+        status: { in: ["ONGOING", "ACCEPTED"] } 
+      }
     });
-    pendingApps = await prisma.application.count({
-      where: { userId: session.user.id, status: "PENDING" }
+
+    // Pending applications
+    pendingApplicationsData = await prisma.application.findMany({
+      where: { userId: session.user.id, status: "PENDING" },
+      include: { program: true },
+      orderBy: { createdAt: 'desc' },
+      take: 5
+    });
+
+    // Pending assignments
+    pendingAssignmentsData = await prisma.assignmentSubmission.findMany({
+      where: { userId: session.user.id, status: "PENDING" },
+      include: { assignment: { include: { program: true } } },
+      orderBy: { assignment: { dueDate: 'asc' } },
+      take: 5
+    });
+
+    // Upcoming events
+    upcomingEventsData = await prisma.post.findMany({
+      where: { 
+        category: "Events",
+        eventDate: { gte: new Date() }
+      },
+      orderBy: { eventDate: 'asc' },
+      take: 3
     });
   }
 
@@ -42,7 +72,9 @@ export default async function DashboardPage() {
           name={name} 
           unreadCount={unreadCount}
           activePrograms={activePrograms}
-          pendingApps={pendingApps}
+          pendingApplications={pendingApplicationsData}
+          pendingAssignments={pendingAssignmentsData}
+          upcomingEvents={upcomingEventsData}
         />
       )}
     </div>

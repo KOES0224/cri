@@ -29,22 +29,22 @@ export default async function AdminDashboardLayout({
 
           <Link href="/dashboard/users" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors group">
             <Users className="h-5 w-5" />
-            <span className="font-medium text-sm">Users</span>
+            <span className="font-medium text-sm">User Management</span>
           </Link>
           
           <Link href="/dashboard/leads" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-rose-50 hover:text-rose-700 transition-colors group">
             <PhoneCall className="h-5 w-5" />
-            <span className="font-medium text-sm">Sales CRM</span>
+            <span className="font-medium text-sm">Lead Management</span>
           </Link>
           
           <Link href="/dashboard/programs" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-700 transition-colors group">
             <BookOpen className="h-5 w-5" />
-            <span className="font-medium text-sm">Programs</span>
+            <span className="font-medium text-sm">Program Management</span>
           </Link>
 
           <Link href="/dashboard/cms" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-purple-50 hover:text-purple-700 transition-colors group">
             <LayoutTemplate className="h-5 w-5" />
-            <span className="font-medium text-sm">CMS</span>
+            <span className="font-medium text-sm">Content Management</span>
           </Link>
 
           <Link href="/dashboard/settings" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors group">

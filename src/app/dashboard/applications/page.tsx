@@ -16,7 +16,10 @@ export default async function ApplicationsPage() {
   // Fetch applications from Prisma natively
   const applications = await prisma.application.findMany({
     where: { userId: session.user.id },
-    include: { program: true },
+    include: { 
+      program: true,
+      steps: { orderBy: { order: 'asc' } }
+    },
     orderBy: { createdAt: 'desc' }
   });
 
@@ -73,16 +76,63 @@ export default async function ApplicationsPage() {
                        </div>
                      </div>
 
-                     {/* Visual Tracker */}
-                     <div className="relative pt-4">
-                       <div className="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-gray-100">
-                         <div style={{ width: app.status === 'ACCEPTED' ? '100%' : app.status === 'REJECTED' ? '100%' : `${(app.step / 3) * 100}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500 ${app.status === 'ACCEPTED' ? 'bg-green-500' : app.status === 'REJECTED' ? 'bg-red-500' : 'bg-blue-600'}`}></div>
-                       </div>
-                       <div className="flex justify-between text-xs font-medium text-gray-500 uppercase tracking-wide px-1">
-                          <span className={`${app.step >= 1 ? 'text-blue-600 font-bold' : ''}`}>Received</span>
-                          <span className={`text-center ${app.step >= 2 ? 'text-blue-600 font-bold' : ''}`}>Interview</span>
-                          <span className={`text-right ${app.status === 'ACCEPTED' ? 'text-green-600 font-bold' : app.status === 'REJECTED' ? 'text-red-600 font-bold' : app.step >= 3 ? 'text-blue-600 font-bold' : ''}`}>Decision</span>
-                       </div>
+                     {/* Visual Tracker / Application Timeline */}
+                     <div className="mt-8">
+                       {app.steps && app.steps.length > 0 ? (
+                         <div className="relative border-l-2 border-gray-100 ml-3 space-y-6 pb-2">
+                           {app.steps.map((step: any, idx: number) => {
+                              const isCompleted = step.status === 'COMPLETED';
+                              const isInProgress = step.status === 'IN_PROGRESS';
+                              const isWaived = step.status === 'WAIVED';
+                              
+                              return (
+                                <div key={step.id} className="relative pl-6">
+                                  {isCompleted ? (
+                                    <div className="absolute -left-[11px] top-1 h-5 w-5 rounded-full bg-green-500 border-4 border-white flex items-center justify-center">
+                                      <CheckCircle2 className="w-3 h-3 text-white" />
+                                    </div>
+                                  ) : isInProgress ? (
+                                    <div className="absolute -left-[11px] top-1 h-5 w-5 rounded-full bg-blue-500 border-4 border-white flex items-center justify-center">
+                                      <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                    </div>
+                                  ) : isWaived ? (
+                                    <div className="absolute -left-[11px] top-1 h-5 w-5 rounded-full bg-gray-300 border-4 border-white flex items-center justify-center" />
+                                  ) : (
+                                    <div className="absolute -left-[11px] top-1 h-5 w-5 rounded-full bg-gray-100 border-4 border-white flex items-center justify-center" />
+                                  )}
+                                  
+                                  <div>
+                                    <h5 className={`text-sm font-bold ${isCompleted ? 'text-gray-900' : isInProgress ? 'text-blue-700' : isWaived ? 'text-gray-500 line-through' : 'text-gray-500'}`}>
+                                      {step.title}
+                                    </h5>
+                                    {step.description && (
+                                      <p className="text-xs text-gray-500 mt-1">{step.description}</p>
+                                    )}
+                                    <div className="flex items-center space-x-2 mt-1.5">
+                                      <span className={`text-[11px] font-semibold uppercase tracking-wider ${isCompleted ? 'text-green-600' : isInProgress ? 'text-blue-600' : isWaived ? 'text-gray-400' : 'text-gray-400'}`}>
+                                        {isCompleted ? 'Completed' : isInProgress ? 'In Progress' : isWaived ? 'Waived' : 'Upcoming'}
+                                      </span>
+                                      {step.date && (
+                                        <span className="text-[11px] text-gray-400">· {new Date(step.date).toLocaleDateString()}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                           })}
+                         </div>
+                       ) : (
+                         <div className="relative pt-4">
+                           <div className="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-gray-100">
+                             <div style={{ width: app.status === 'ACCEPTED' ? '100%' : app.status === 'REJECTED' ? '100%' : `${(app.step / 3) * 100}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500 ${app.status === 'ACCEPTED' ? 'bg-green-500' : app.status === 'REJECTED' ? 'bg-red-500' : 'bg-blue-600'}`}></div>
+                           </div>
+                           <div className="flex justify-between text-xs font-medium text-gray-500 uppercase tracking-wide px-1">
+                              <span className={`${app.step >= 1 ? 'text-blue-600 font-bold' : ''}`}>Received</span>
+                              <span className={`text-center ${app.step >= 2 ? 'text-blue-600 font-bold' : ''}`}>Interview</span>
+                              <span className={`text-right ${app.status === 'ACCEPTED' ? 'text-green-600 font-bold' : app.status === 'REJECTED' ? 'text-red-600 font-bold' : app.step >= 3 ? 'text-blue-600 font-bold' : ''}`}>Decision</span>
+                           </div>
+                         </div>
+                       )}
                      </div>
                    </li>
                  ))}

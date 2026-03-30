@@ -30,7 +30,7 @@ export default async function AdminDashboard({ name }: { name: string }) {
           <div className="p-3 rounded-xl bg-blue-50 text-blue-600 w-fit mb-4">
             <Users className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900">Manage Users</h3>
+          <h3 className="text-lg font-bold text-gray-900">User Management</h3>
           <p className="text-sm text-gray-500 mt-1">View and edit student and parent accounts.</p>
         </Link>
         
@@ -38,7 +38,7 @@ export default async function AdminDashboard({ name }: { name: string }) {
           <div className="p-3 rounded-xl bg-green-50 text-green-600 w-fit mb-4">
             <BookOpen className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900">Programs</h3>
+          <h3 className="text-lg font-bold text-gray-900">Program Management</h3>
           <p className="text-sm text-gray-500 mt-1">Create or update research programs.</p>
         </Link>
 
@@ -46,7 +46,7 @@ export default async function AdminDashboard({ name }: { name: string }) {
           <div className="p-3 rounded-xl bg-purple-50 text-purple-600 w-fit mb-4">
             <LayoutTemplate className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900">CMS</h3>
+          <h3 className="text-lg font-bold text-gray-900">Content Management</h3>
           <p className="text-sm text-gray-500 mt-1">Edit public website pages and articles.</p>
         </Link>
 

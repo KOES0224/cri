@@ -37,7 +37,7 @@ export default async function StudentLayout({
           
           <Link href="/dashboard/my-programs" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-700 transition-colors group">
             <BookOpen className="h-5 w-5" />
-            <span className="font-medium text-sm">Active Programs</span>
+            <span className="font-medium text-sm">My Programs</span>
           </Link>
           
           <Link href="/dashboard/messages" className="flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors group">
