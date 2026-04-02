@@ -7,9 +7,10 @@ import { format } from "date-fns";
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
 
-export default async function ProgramDetailsPage({ params }: { params: { id: string } }) {
+export default async function ProgramDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const program = await prisma.program.findUnique({
-    where: { id: params.id }
+    where: { id: resolvedParams.id }
   });
 
   if (!program) {

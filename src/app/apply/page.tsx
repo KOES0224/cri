@@ -6,14 +6,15 @@ import ApplyClient from "./ApplyClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function ApplyPage({ searchParams }: { searchParams: { programId?: string } }) {
+export default async function ApplyPage({ searchParams }: { searchParams: Promise<{ programId?: string }> }) {
+  const resolvedParams = await searchParams;
+  const programId = resolvedParams.programId;
+
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect(`/auth/login?callbackUrl=${encodeURIComponent(`/apply?programId=${searchParams.programId || ""}`)}`);
+    redirect(`/auth/login?callbackUrl=${encodeURIComponent(`/apply?programId=${programId || ""}`)}`);
   }
-
-  const programId = searchParams.programId;
 
   if (!programId) {
     redirect("/research");

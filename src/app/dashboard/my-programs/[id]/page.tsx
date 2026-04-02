@@ -6,7 +6,8 @@ import { ArrowLeft, BookOpen, Clock, CheckCircle, ExternalLink, GraduationCap } 
 import StudentLayout from "../../_components/StudentLayout";
 import { prisma } from "@/lib/prisma";
 
-export default async function ProgramDetailPage({ params }: { params: { id: string } }) {
+export default async function ProgramDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "STUDENT") {
@@ -15,7 +16,7 @@ export default async function ProgramDetailPage({ params }: { params: { id: stri
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { 
-      id: params.id,
+      id: resolvedParams.id,
       userId: session.user.id
     },
     include: { 
