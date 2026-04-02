@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 export async function getProfessors() {
   try {
     return await prisma.professor.findMany({
+      include: { programs: true },
       orderBy: { createdAt: "desc" },
     });
   } catch (error) {
@@ -22,10 +23,17 @@ export async function createProfessor(data: {
   imageUrl?: string | null;
   acceptingMentees?: boolean;
   publications?: number;
+  programIds?: string[];
 }) {
+  const { programIds, ...rest } = data;
   try {
     const prof = await prisma.professor.create({
-      data,
+      data: {
+        ...rest,
+        programs: {
+          connect: programIds?.map(id => ({ id })) || []
+        }
+      },
     });
     revalidatePath("/dashboard/cms/professors");
     revalidatePath("/professors");
@@ -46,12 +54,19 @@ export async function updateProfessor(
     imageUrl?: string | null;
     acceptingMentees?: boolean;
     publications?: number;
+    programIds?: string[];
   }>
 ) {
+  const { programIds, ...rest } = data;
   try {
     const prof = await prisma.professor.update({
       where: { id },
-      data,
+      data: {
+        ...rest,
+        programs: programIds ? {
+          set: programIds.map(pid => ({ id: pid }))
+        } : undefined
+      },
     });
     revalidatePath("/dashboard/cms/professors");
     revalidatePath("/professors");

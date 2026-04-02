@@ -6,6 +6,7 @@ import AdminLayout from "../../_components/AdminLayout";
 import AdminProfessorList from "../../_components/AdminProfessorList";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 
 export default async function AdminProfessorPage() {
   const session = await getServerSession(authOptions);
@@ -15,6 +16,7 @@ export default async function AdminProfessorPage() {
   }
 
   const initialProfessors = await getProfessors();
+  const programs = await prisma.program.findMany({ select: { id: true, title: true }});
 
   return (
     <AdminLayout>
@@ -31,7 +33,7 @@ export default async function AdminProfessorPage() {
         </p>
       </div>
 
-      <AdminProfessorList initialProfessors={initialProfessors} />
+      <AdminProfessorList initialProfessors={initialProfessors as any} programs={programs} />
     </AdminLayout>
   );
 }

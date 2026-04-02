@@ -21,7 +21,13 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
   }
 
   const program = await prisma.program.findUnique({
-    where: { id: programId }
+    where: { id: programId },
+    include: {
+      professors: {
+        where: { acceptingMentees: true },
+        select: { id: true, name: true, university: true, role: true }
+      }
+    }
   });
 
   if (!program) {

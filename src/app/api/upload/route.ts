@@ -6,8 +6,8 @@ import { authOptions } from "@/lib/auth";
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
-      return new NextResponse("Unauthorized. You must be logged in as an admin.", { status: 401 });
+    if (!session) {
+      return new NextResponse("Unauthorized. You must be logged in.", { status: 401 });
     }
 
     const form = await request.formData();

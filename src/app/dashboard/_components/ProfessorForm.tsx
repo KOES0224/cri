@@ -13,12 +13,14 @@ type ProfessorFormProps = {
     bio: string;
     acceptingMentees: boolean;
     publications: number;
+    programs?: { id: string; title: string }[];
   };
+  programs: { id: string; title: string }[];
   onSuccess?: () => void;
   onCancel?: () => void;
 };
 
-export default function ProfessorForm({ initialData, onSuccess, onCancel }: ProfessorFormProps) {
+export default function ProfessorForm({ initialData, programs, onSuccess, onCancel }: ProfessorFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,11 +32,21 @@ export default function ProfessorForm({ initialData, onSuccess, onCancel }: Prof
     bio: initialData?.bio || "",
     acceptingMentees: initialData?.acceptingMentees ?? true,
     publications: initialData?.publications || 0,
+    programIds: initialData?.programs?.map(p => p.id) || ([] as string[]),
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
+  };
+
+  const handleProgramToggle = (programId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      programIds: prev.programIds.includes(programId) 
+        ? prev.programIds.filter(id => id !== programId)
+        : [...prev.programIds, programId]
+    }));
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,6 +66,7 @@ export default function ProfessorForm({ initialData, onSuccess, onCancel }: Prof
         bio: formData.bio,
         acceptingMentees: formData.acceptingMentees,
         publications: formData.publications,
+        programIds: formData.programIds,
       };
 
       let result;
@@ -129,6 +142,41 @@ export default function ProfessorForm({ initialData, onSuccess, onCancel }: Prof
           onChange={handleChange}
           className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 transition-all outline-none"
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Number of Publications</label>
+          <input
+            type="number"
+            name="publications"
+            min="0"
+            value={formData.publications}
+            onChange={handleNumberChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 transition-all outline-none"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Programs</label>
+        <div className="flex flex-wrap gap-2">
+           {programs.map(prog => (
+             <button
+               key={prog.id}
+               type="button"
+               onClick={() => handleProgramToggle(prog.id)}
+               className={`px-3 py-1.5 text-xs font-bold rounded-full transition-colors border ${
+                 formData.programIds.includes(prog.id) 
+                   ? "bg-green-100 text-green-800 border-green-200"
+                   : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+               }`}
+             >
+               {prog.title}
+             </button>
+           ))}
+           {programs.length === 0 && <span className="text-sm text-gray-400">No programs available</span>}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">

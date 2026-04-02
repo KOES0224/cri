@@ -5,7 +5,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
-export async function submitApplication(programId: string, content: string) {
+export async function submitApplication(
+  programId: string, 
+  content: string // We will store the entire stringified JSON payload in 'content'
+) {
   const session = await getServerSession(authOptions);
   
   if (!session || !session.user || !session.user.id) {

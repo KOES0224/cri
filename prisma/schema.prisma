@@ -91,6 +91,7 @@ model Program {
   updatedAt    DateTime       @updatedAt
   Enrollment   Enrollment[]
   assignments  Assignment[]
+  professors   Professor[]    @relation("ProgramProfessors")
 }
 
 model Application {
@@ -292,6 +293,7 @@ model Professor {
   publications     Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  programs         Program[] @relation("ProgramProfessors")
 }
 
 model SiteContent {

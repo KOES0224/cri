@@ -15,9 +15,16 @@ type Professor = {
   acceptingMentees: boolean;
   publications: number;
   createdAt: Date;
+  programs?: { id: string; title: string }[];
 };
 
-export default function AdminProfessorList({ initialProfessors }: { initialProfessors: Professor[] }) {
+export default function AdminProfessorList({ 
+  initialProfessors, 
+  programs 
+}: { 
+  initialProfessors: Professor[], 
+  programs: { id: string; title: string }[] 
+}) {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
   const [editingProfessor, setEditingProfessor] = useState<Professor | null>(null);
@@ -46,6 +53,7 @@ export default function AdminProfessorList({ initialProfessors }: { initialProfe
         </h3>
         <ProfessorForm 
           initialData={editingProfessor || undefined} 
+          programs={programs}
           onSuccess={closeForm} 
           onCancel={closeForm} 
         />
