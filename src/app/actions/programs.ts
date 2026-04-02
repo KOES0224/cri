@@ -7,6 +7,9 @@ export async function getPrograms() {
   try {
     return await prisma.program.findMany({
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      include: {
+        professors: { select: { id: true, name: true } }
+      }
     });
   } catch (error) {
     console.error("Failed to fetch programs:", error);
@@ -34,10 +37,15 @@ export async function createProgram(data: {
   status: string;
   startDate?: Date;
   endDate?: Date;
+  professorIds?: string[];
 }) {
+  const { professorIds, ...rest } = data;
   try {
     const program = await prisma.program.create({
-      data,
+      data: {
+        ...rest,
+        professors: professorIds ? { connect: professorIds.map((id) => ({ id })) } : undefined,
+      },
     });
     revalidatePath("/dashboard");
     revalidatePath("/research");
@@ -59,12 +67,17 @@ export async function updateProgram(
     status: string;
     startDate?: Date;
     endDate?: Date;
+    professorIds?: string[];
   }>
 ) {
+  const { professorIds, ...rest } = data;
   try {
     const program = await prisma.program.update({
       where: { id },
-      data,
+      data: {
+        ...rest,
+        professors: professorIds ? { set: professorIds.map((id) => ({ id })) } : undefined,
+      },
     });
     revalidatePath("/dashboard");
     revalidatePath("/research");

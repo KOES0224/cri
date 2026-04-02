@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import ProfessorForm from "./ProfessorForm";
 import { deleteProfessor } from "@/app/actions/professors";
@@ -45,6 +45,32 @@ export default function AdminProfessorList({
     setEditingProfessor(null);
   };
 
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setIsImporting(true);
+    
+    // Using dynamic import of the action to avoid circular deps if any
+    const { importProfessors } = await import("@/app/actions/importProfessors");
+    
+    const formData = new FormData();
+    formData.append("file", e.target.files[0]);
+
+    const result = await importProfessors(formData);
+    
+    setIsImporting(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    if (result.success) {
+      alert(result.message);
+      router.refresh();
+    } else {
+      alert("Import failed: " + result.error);
+    }
+  };
+
   if (isCreating || editingProfessor) {
     return (
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -63,15 +89,31 @@ export default function AdminProfessorList({
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px]">
-      <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+      <div className="px-6 py-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-50/50 gap-4">
         <h2 className="text-xl font-bold text-gray-900">Manage Faculty</h2>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Add Professor
-        </button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept=".xlsx, .xls, .csv" 
+            onChange={handleImport}
+          />
+          <button
+            disabled={isImporting}
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 sm:flex-none flex justify-center items-center gap-2 bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
+          >
+            {isImporting ? "Importing..." : "Bulk Import (Excel)"}
+          </button>
+          <button
+            onClick={() => setIsCreating(true)}
+            className="flex-1 sm:flex-none flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Add Professor
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

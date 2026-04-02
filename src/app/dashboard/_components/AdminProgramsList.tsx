@@ -18,9 +18,10 @@ type Program = {
   startDate: Date | null;
   endDate: Date | null;
   createdAt: Date;
+  professors?: { id: string; name: string }[];
 };
 
-export default function AdminProgramsList({ initialPrograms }: { initialPrograms: Program[] }) {
+export default function AdminProgramsList({ initialPrograms, professors = [] }: { initialPrograms: Program[], professors?: { id: string; name: string }[] }) {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
@@ -73,6 +74,7 @@ export default function AdminProgramsList({ initialPrograms }: { initialPrograms
         </h3>
         <ProgramForm 
           initialData={editingProgram || undefined} 
+          professors={professors}
           onSuccess={closeForm} 
           onCancel={closeForm} 
         />

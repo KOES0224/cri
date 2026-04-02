@@ -291,6 +291,14 @@ model Professor {
   imageUrl         String?
   acceptingMentees Boolean  @default(true)
   publications     Int      @default(0)
+  
+  // Curriculum specific fields natively attached to the Professor
+  courseTitle       String?
+  courseDescription String?
+  teachingHoursProf String?
+  teachingHoursTA   String?
+  courseSchedule    String?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   programs         Program[] @relation("ProgramProfessors")

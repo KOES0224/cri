@@ -24,6 +24,11 @@ export async function createProfessor(data: {
   acceptingMentees?: boolean;
   publications?: number;
   programIds?: string[];
+  courseTitle?: string | null;
+  courseDescription?: string | null;
+  teachingHoursProf?: string | null;
+  teachingHoursTA?: string | null;
+  courseSchedule?: string | null;
 }) {
   const { programIds, ...rest } = data;
   try {
@@ -55,6 +60,11 @@ export async function updateProfessor(
     acceptingMentees?: boolean;
     publications?: number;
     programIds?: string[];
+    courseTitle?: string | null;
+    courseDescription?: string | null;
+    teachingHoursProf?: string | null;
+    teachingHoursTA?: string | null;
+    courseSchedule?: string | null;
   }>
 ) {
   const { programIds, ...rest } = data;

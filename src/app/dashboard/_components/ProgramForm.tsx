@@ -15,12 +15,14 @@ type ProgramFormProps = {
     tuition?: number | null;
     startDate?: Date | null;
     endDate?: Date | null;
+    professors?: { id: string; name: string }[];
   };
+  professors?: { id: string; name: string }[];
   onSuccess?: () => void;
   onCancel?: () => void;
 };
 
-export default function ProgramForm({ initialData, onSuccess, onCancel }: ProgramFormProps) {
+export default function ProgramForm({ initialData, professors = [], onSuccess, onCancel }: ProgramFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -51,10 +53,20 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
     tuition: initialData?.tuition || "",
     startDate: initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : "",
     endDate: initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "",
+    professorIds: initialData?.professors?.map(p => p.id) || ([] as string[]),
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleProfessorToggle = (profId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      professorIds: prev.professorIds.includes(profId) 
+        ? prev.professorIds.filter(id => id !== profId)
+        : [...prev.professorIds, profId]
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,6 +84,7 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
         status: formData.status,
         startDate: formData.startDate ? new Date(formData.startDate) : undefined,
         endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+        professorIds: formData.professorIds,
       };
 
       let result;
@@ -240,6 +253,27 @@ export default function ProgramForm({ initialData, onSuccess, onCancel }: Progra
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="pt-4 border-t border-gray-100">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Professors (Research Programs)</label>
+        <div className="flex flex-wrap gap-2">
+           {professors.map(prof => (
+             <button
+               key={prof.id}
+               type="button"
+               onClick={() => handleProfessorToggle(prof.id)}
+               className={`px-3 py-1.5 text-xs font-bold rounded-full transition-colors border ${
+                 formData.professorIds.includes(prof.id) 
+                   ? "bg-blue-100 text-blue-800 border-blue-200"
+                   : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+               }`}
+             >
+               {prof.name}
+             </button>
+           ))}
+           {professors.length === 0 && <span className="text-sm text-gray-400">No professors available</span>}
         </div>
       </div>
 

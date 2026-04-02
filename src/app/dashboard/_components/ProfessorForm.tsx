@@ -14,6 +14,11 @@ type ProfessorFormProps = {
     acceptingMentees: boolean;
     publications: number;
     programs?: { id: string; title: string }[];
+    courseTitle?: string | null;
+    courseDescription?: string | null;
+    teachingHoursProf?: string | null;
+    teachingHoursTA?: string | null;
+    courseSchedule?: string | null;
   };
   programs: { id: string; title: string }[];
   onSuccess?: () => void;
@@ -33,6 +38,11 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
     acceptingMentees: initialData?.acceptingMentees ?? true,
     publications: initialData?.publications || 0,
     programIds: initialData?.programs?.map(p => p.id) || ([] as string[]),
+    courseTitle: initialData?.courseTitle || "",
+    courseDescription: initialData?.courseDescription || "",
+    teachingHoursProf: initialData?.teachingHoursProf || "",
+    teachingHoursTA: initialData?.teachingHoursTA || "",
+    courseSchedule: initialData?.courseSchedule || "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -67,6 +77,11 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
         acceptingMentees: formData.acceptingMentees,
         publications: formData.publications,
         programIds: formData.programIds,
+        courseTitle: formData.courseTitle || null,
+        courseDescription: formData.courseDescription || null,
+        teachingHoursProf: formData.teachingHoursProf || null,
+        teachingHoursTA: formData.teachingHoursTA || null,
+        courseSchedule: formData.courseSchedule || null,
       };
 
       let result;
@@ -144,20 +159,6 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Number of Publications</label>
-          <input
-            type="number"
-            name="publications"
-            min="0"
-            value={formData.publications}
-            onChange={handleNumberChange}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 transition-all outline-none"
-          />
-        </div>
-      </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Programs</label>
         <div className="flex flex-wrap gap-2">
@@ -176,6 +177,36 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
              </button>
            ))}
            {programs.length === 0 && <span className="text-sm text-gray-400">No programs available</span>}
+        </div>
+      </div>
+
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-4 my-2">
+        <h4 className="font-bold text-gray-900">Curriculum / Course Details (Optional)</h4>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
+          <input type="text" name="courseTitle" value={formData.courseTitle} onChange={handleChange} placeholder="e.g. Intro to Machine Learning" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Course Description / Syllabus</label>
+          <textarea name="courseDescription" rows={3} value={formData.courseDescription} onChange={handleChange} placeholder="Brief syllabus or learning outcomes..." className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Professor Teaching Hours</label>
+            <input type="text" name="teachingHoursProf" value={formData.teachingHoursProf} onChange={handleChange} placeholder="e.g. 5 hours/week" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">TA Teaching Hours</label>
+            <input type="text" name="teachingHoursTA" value={formData.teachingHoursTA} onChange={handleChange} placeholder="e.g. 10 hours/week" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Course Schedule</label>
+          <input type="text" name="courseSchedule" value={formData.courseSchedule} onChange={handleChange} placeholder="e.g. Mondays & Wednesdays 5PM - 7PM EST" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
         </div>
       </div>
 

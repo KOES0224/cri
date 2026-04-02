@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getPrograms } from "@/app/actions/programs";
+import { getProfessors } from "@/app/actions/professors";
 import AdminProgramsList from "../_components/AdminProgramsList";
 import AdminLayout from "../_components/AdminLayout";
 
@@ -13,6 +14,7 @@ export default async function AdminProgramsPage() {
   }
 
   const initialPrograms: any = await getPrograms();
+  const professors = await getProfessors();
 
   return (
     <AdminLayout>
@@ -25,7 +27,7 @@ export default async function AdminProgramsPage() {
         </p>
       </div>
 
-      <AdminProgramsList initialPrograms={initialPrograms} />
+      <AdminProgramsList initialPrograms={initialPrograms} professors={professors as any} />
     </AdminLayout>
   );
 }

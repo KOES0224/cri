@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 export default async function ProgramDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const program = await prisma.program.findUnique({
-    where: { id: resolvedParams.id }
+    where: { id: resolvedParams.id },
+    include: { professors: true }
   });
 
   if (!program) {
@@ -83,6 +84,60 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                        </div>
                     </div>
                  </div>
+
+                 {program.professors && program.professors.length > 0 && (
+                   <div className="space-y-8">
+                     <h3 className="text-3xl font-bold text-gray-900 mb-6">Course Curriculum</h3>
+                     {program.professors.map((prof: any) => (
+                       <div key={prof.id} className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-blue-100 shadow-md">
+                         <div className="flex items-center gap-4 mb-6">
+                           {prof.imageUrl ? (
+                             <img src={prof.imageUrl} alt={prof.name} className="w-16 h-16 rounded-full object-cover border-4 border-blue-50 shadow-sm" />
+                           ) : (
+                             <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl shadow-sm">
+                               {prof.name.charAt(0)}
+                             </div>
+                           )}
+                           <div>
+                             <h4 className="text-xl font-bold text-gray-900 leading-tight">{prof.courseTitle || 'Research Project Seminar'}</h4>
+                             <p className="text-sm text-blue-600 font-medium">Led by {prof.name} • {prof.role} at {prof.university || 'Affiliated Institution'}</p>
+                           </div>
+                         </div>
+                         
+                         {prof.courseDescription ? (
+                           <div className="prose prose-sm prose-gray max-w-none mb-8">
+                             <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{prof.courseDescription}</p>
+                           </div>
+                         ) : (
+                           <div className="prose prose-sm prose-gray max-w-none mb-8">
+                             <p className="text-gray-600 leading-relaxed">{prof.bio}</p>
+                           </div>
+                         )}
+
+                         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 border-t border-gray-100 pt-6 mt-6">
+                           {prof.teachingHoursProf && (
+                             <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex flex-col justify-center">
+                               <p className="text-xs font-bold text-blue-800 uppercase tracking-widest mb-1">Professor Hours</p>
+                               <p className="text-gray-900 font-semibold">{prof.teachingHoursProf}</p>
+                             </div>
+                           )}
+                           {prof.teachingHoursTA && (
+                             <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col justify-center">
+                               <p className="text-xs font-bold text-indigo-800 uppercase tracking-widest mb-1">TA Mentoring Hours</p>
+                               <p className="text-gray-900 font-semibold">{prof.teachingHoursTA}</p>
+                             </div>
+                           )}
+                           {prof.courseSchedule && (
+                             <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 flex flex-col justify-center">
+                               <p className="text-xs font-bold text-amber-800 uppercase tracking-widest mb-1">Schedule</p>
+                               <p className="text-gray-900 font-semibold">{prof.courseSchedule}</p>
+                             </div>
+                           )}
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 )}
               </div>
            </div>
            
