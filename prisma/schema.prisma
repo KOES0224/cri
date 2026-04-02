@@ -86,6 +86,7 @@ model Program {
   status       String         @default("OPEN")
   startDate    DateTime?
   endDate      DateTime?
+  content      String?        @db.Text
   applications Application[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt

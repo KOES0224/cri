@@ -37,6 +37,7 @@ export async function createProgram(data: {
   status: string;
   startDate?: Date;
   endDate?: Date;
+  content?: string | null;
   professorIds?: string[];
 }) {
   const { professorIds, ...rest } = data;
@@ -67,6 +68,7 @@ export async function updateProgram(
     status: string;
     startDate?: Date;
     endDate?: Date;
+    content?: string | null;
     professorIds?: string[];
   }>
 ) {

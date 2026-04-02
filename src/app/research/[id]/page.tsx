@@ -194,10 +194,6 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
                 </div>
               </div>
             </div>
-            
-            <Link href="/professors" className="mt-8 text-sm font-semibold text-white/70 hover:text-white flex items-center transition-colors relative z-10">
-              View all faculty <ChevronRight className="w-4 h-4 ml-1" />
-            </Link>
           </motion.div>
 
           <motion.div 

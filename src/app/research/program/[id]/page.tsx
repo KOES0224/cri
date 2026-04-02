@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, Users, MapPin, Tag, ChevronRight, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
@@ -84,6 +87,17 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                        </div>
                     </div>
                  </div>
+
+                 {program.content && (
+                   <div className="bg-white rounded-3xl p-8 md:p-12 border border-gray-100 shadow-sm mb-12 prose prose-lg prose-gray max-w-none prose-headings:font-black prose-headings:text-gray-900 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-img:rounded-2xl prose-img:shadow-sm prose-hr:border-gray-100 prose-table:border-collapse prose-th:bg-gray-50 prose-th:p-4 prose-td:p-4 prose-td:border-b prose-td:border-gray-100 prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50/50 prose-blockquote:p-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:font-medium text-gray-700">
+                     <ReactMarkdown 
+                       remarkPlugins={[remarkGfm]} 
+                       rehypePlugins={[rehypeRaw]}
+                     >
+                       {program.content}
+                     </ReactMarkdown>
+                   </div>
+                 )}
 
                  {program.professors && program.professors.length > 0 && (
                    <div className="space-y-8">

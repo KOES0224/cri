@@ -15,6 +15,7 @@ type ProgramFormProps = {
     tuition?: number | null;
     startDate?: Date | null;
     endDate?: Date | null;
+    content?: string | null;
     professors?: { id: string; name: string }[];
   };
   professors?: { id: string; name: string }[];
@@ -53,6 +54,7 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
     tuition: initialData?.tuition || "",
     startDate: initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : "",
     endDate: initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "",
+    content: initialData?.content || "",
     professorIds: initialData?.professors?.map(p => p.id) || ([] as string[]),
   });
 
@@ -84,6 +86,7 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
         status: formData.status,
         startDate: formData.startDate ? new Date(formData.startDate) : undefined,
         endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+        content: formData.content || null,
         professorIds: formData.professorIds,
       };
 
@@ -254,6 +257,19 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
             </div>
           )}
         </div>
+      </div>
+
+      <div className="pt-4 border-t border-gray-100">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Detailed Syllabus / Course Content (Markdown Supported)</label>
+        <p className="text-xs text-gray-500 mb-3">You can paste formatted markdown here to populate the detailed syllabus UI on the public page.</p>
+        <textarea
+          name="content"
+          rows={15}
+          value={formData.content}
+          onChange={handleChange}
+          placeholder="e.g. ## Program Objectives&#10;..."
+          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none font-mono text-sm leading-relaxed"
+        />
       </div>
 
       <div className="pt-4 border-t border-gray-100">
