@@ -27,13 +27,26 @@ for (const row of data) {
   ].filter(Boolean).join("\n\n");
   
   // Generate a dynamic course title based on research/keywords
+  const prefixes = [
+    "Frontiers in",
+    "Advanced Seminar:",
+    "Foundations of",
+    "Directed Research:",
+    "Advanced Studies in",
+    "Innovations in",
+    "Contemporary Topics in",
+    "Quantitative Analysis of",
+    "Explorations in"
+  ];
+  const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
   let generatedTitle = "Advanced Research Mentorship";
+  
   if (keywordsStr) {
     const firstKeyword = keywordsStr.split(",")[0].trim();
-    generatedTitle = `Advanced Research in ${firstKeyword}`;
+    generatedTitle = `${randomPrefix} ${firstKeyword}`;
   } else if (researchStr) {
     const firstArea = researchStr.split(",")[0].trim();
-    generatedTitle = `Advanced Topics in ${firstArea}`;
+    generatedTitle = `${randomPrefix} ${firstArea}`;
   }
 
   // Generate potential topics string

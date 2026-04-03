@@ -6,6 +6,8 @@ export const dynamic = "force-dynamic";
 
 export default async function OneOnOneResearchPage() {
   const programs = await prisma.program.findMany({
+    where: { category: "1-on-1" },
+    include: { professors: true },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }]
   });
 

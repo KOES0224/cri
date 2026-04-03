@@ -96,20 +96,50 @@ export default function ResearchProgramsClient({
                      </span>
                    )}
                    
-                   {program.subCategory && (
-                     <span className="text-xs font-semibold text-gray-400 border border-gray-100 px-2 py-1 rounded-md">
-                       {program.subCategory}
+                   {program.subCategory ? (
+                     <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                       Major: {program.subCategory}
+                     </span>
+                   ) : (
+                     <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                       Major: {program.category}
                      </span>
                    )}
                  </div>
                  
-                 <h3 className="text-2xl font-bold text-gray-900 mb-4 tracking-tight group-hover:text-blue-600 transition-colors">
+                 <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight group-hover:text-blue-600 transition-colors">
                    {program.title}
                  </h3>
                  
-                 <p className="text-gray-600 text-base leading-relaxed mb-8 flex-grow">
+                 {program.professors && program.professors.length > 0 && (
+                   <div className="mb-4 text-sm font-semibold text-gray-700">
+                     <div className="flex items-center gap-2">
+                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                       {program.professors[0].name}
+                       {program.professors[0].university && (
+                         <span className="text-gray-400 font-normal">| {program.professors[0].university}</span>
+                       )}
+                     </div>
+                   </div>
+                 )}
+
+                 <p className="text-gray-600 text-base leading-relaxed mb-6 flex-grow">
                    {program.description}
                  </p>
+
+                 {program.professors && program.professors.length > 0 && program.professors[0].potentialTopics && (
+                   <div className="mb-6 flex flex-wrap gap-2">
+                     {program.professors[0].potentialTopics.split('|').map((topic: string, idx: number) => {
+                       const t = topic.trim();
+                       if (!t || idx >= 3) return null;
+                       return (
+                         <span key={idx} className="text-[10px] font-bold text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-md uppercase tracking-wider">
+                           {t}
+                         </span>
+                       );
+                     })}
+                   </div>
+                 )}
                  
                  <div className="pt-6 border-t border-gray-50 mt-auto flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div className="flex flex-col gap-2">
