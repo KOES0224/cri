@@ -98,10 +98,15 @@ export default function ResearchProgramsClient({
                    
                    {(() => {
                      let majorText = program.subCategory;
-                     if (program.professors && program.professors.length > 0 && program.professors[0].potentialTopics) {
-                        const topics = program.professors[0].potentialTopics.split(/[|,]/);
-                        if (topics.length > 0 && topics[0].trim()) {
-                            majorText = topics[0].trim();
+                     if (program.professors && program.professors.length > 0) {
+                        const prof = program.professors[0];
+                        if (prof.relatedMajor) {
+                            majorText = prof.relatedMajor;
+                        } else if (prof.potentialTopics) {
+                            const topics = prof.potentialTopics.split(/[|,]/);
+                            if (topics.length > 0 && topics[0].trim()) {
+                                majorText = topics[0].trim();
+                            }
                         }
                      }
                      if (!majorText) return null;

@@ -18,6 +18,7 @@ type ProfessorFormProps = {
     courseDescription?: string | null;
     idealStudents?: string | null;
     potentialTopics?: string | null;
+    relatedMajor?: string | null;
   };
   programs: { id: string; title: string }[];
   onSuccess?: () => void;
@@ -42,6 +43,7 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
     courseDescription: initialData?.courseDescription || "",
     idealStudents: initialData?.idealStudents || "",
     potentialTopics: initialData?.potentialTopics || "",
+    relatedMajor: initialData?.relatedMajor || "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -80,6 +82,7 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
         courseDescription: formData.courseDescription || null,
         idealStudents: formData.idealStudents || null,
         potentialTopics: formData.potentialTopics || null,
+        relatedMajor: formData.relatedMajor || null,
       };
 
       let result;
@@ -142,6 +145,18 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
           onChange={handleChange}
           placeholder="e.g. Stanford University"
           className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 transition-all outline-none"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Related Major (Primary Field)</label>
+        <input
+          type="text"
+          name="relatedMajor"
+          value={formData.relatedMajor}
+          onChange={handleChange}
+          placeholder="e.g. Biomedical Engineering"
+          className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-green-500 transition-all outline-none"
         />
       </div>
 

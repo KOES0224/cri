@@ -39,13 +39,16 @@ for (const row of data) {
   ];
   const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
   let generatedTitle = "Advanced Research Mentorship";
+  let extractedMajor = "Interdisciplinary Studies";
   
   if (keywordsStr) {
     const firstKeyword = keywordsStr.split(",")[0].trim();
     generatedTitle = `${randomPrefix} ${firstKeyword}`;
+    extractedMajor = firstKeyword;
   } else if (researchStr) {
     const firstArea = researchStr.split(",")[0].trim();
     generatedTitle = `${randomPrefix} ${firstArea}`;
+    extractedMajor = firstArea;
   }
 
   // Generate potential topics string
@@ -55,6 +58,7 @@ for (const row of data) {
     "Name": profName.trim(),
     "Role": (row["Title"] || "").trim(),
     "University": (row["University"] || "").trim(),
+    "Major": extractedMajor,
     "Bio": bioParts.trim() || "-",
     "Course Title": generatedTitle,
     "Course Description": syllabusParts.trim(),

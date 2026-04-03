@@ -65,6 +65,7 @@ export async function importProfessors(formData: FormData) {
           courseDescription: courseDescription.toString().trim() || null,
           idealStudents: idealStudents.toString().trim() || null,
           potentialTopics: potentialTopics.toString().trim() || null,
+          relatedMajor: (rowData["Major"] || "").toString().trim() || null,
         }
       });
       successCount++;
