@@ -138,17 +138,22 @@ export default function ResearchProgramsClient({
                    {program.description}
                  </p>
 
-                 {program.professors && program.professors.length > 0 && program.professors[0].potentialTopics && (
+                 {program.professors && program.professors.length > 0 && (program.professors[0].keywords || program.professors[0].potentialTopics) && (
                    <div className="mb-6 flex flex-wrap gap-2">
-                     {program.professors[0].potentialTopics.split('|').map((topic: string, idx: number) => {
-                       const t = topic.trim();
-                       if (!t || idx >= 3) return null;
-                       return (
-                         <span key={idx} className="text-[10px] font-bold text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-md uppercase tracking-wider">
-                           {t}
-                         </span>
-                       );
-                     })}
+                     {(() => {
+                       const prof = program.professors[0];
+                       const sourceString = prof.keywords || prof.potentialTopics;
+                       if (!sourceString) return null;
+                       return sourceString.split(/[|,]/).map((topic: string, idx: number) => {
+                         const t = topic.trim();
+                         if (!t || idx >= 3) return null;
+                         return (
+                           <span key={idx} className="text-[10px] font-bold text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-md uppercase tracking-wider">
+                             {t}
+                           </span>
+                         );
+                       });
+                     })()}
                    </div>
                  )}
                  

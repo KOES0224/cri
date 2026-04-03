@@ -19,6 +19,7 @@ type ProfessorFormProps = {
     idealStudents?: string | null;
     potentialTopics?: string | null;
     relatedMajor?: string | null;
+    keywords?: string | null;
   };
   programs: { id: string; title: string }[];
   onSuccess?: () => void;
@@ -44,6 +45,7 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
     idealStudents: initialData?.idealStudents || "",
     potentialTopics: initialData?.potentialTopics || "",
     relatedMajor: initialData?.relatedMajor || "",
+    keywords: initialData?.keywords || "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -83,6 +85,7 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
         idealStudents: formData.idealStudents || null,
         potentialTopics: formData.potentialTopics || null,
         relatedMajor: formData.relatedMajor || null,
+        keywords: formData.keywords || null,
       };
 
       let result;
@@ -260,6 +263,11 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
             <label className="block text-sm font-medium text-gray-700 mb-1">Potential Topics</label>
             <textarea name="potentialTopics" rows={3} value={formData.potentialTopics} onChange={handleChange} placeholder="List of potential research areas..." className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm placeholder:text-gray-400" />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Keywords (Comma separated keywords for display)</label>
+          <textarea name="keywords" rows={2} value={formData.keywords} onChange={handleChange} placeholder="e.g. AI, Neuroscience, Hardware" className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm placeholder:text-gray-400" />
         </div>
 
         <div>

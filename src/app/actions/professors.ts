@@ -29,6 +29,7 @@ export async function createProfessor(data: {
   idealStudents?: string | null;
   potentialTopics?: string | null;
   relatedMajor?: string | null;
+  keywords?: string | null;
 }) {
   const { programIds, ...rest } = data;
   try {
@@ -65,6 +66,7 @@ export async function updateProfessor(
     idealStudents?: string | null;
     potentialTopics?: string | null;
     relatedMajor?: string | null;
+    keywords?: string | null;
   }>
 ) {
   const { programIds, ...rest } = data;
