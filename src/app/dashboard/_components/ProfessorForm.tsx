@@ -29,6 +29,7 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     role: initialData?.role || "",
@@ -156,24 +157,74 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Programs</label>
-        <div className="flex flex-wrap gap-2">
-           {programs.map(prog => (
-             <button
-               key={prog.id}
-               type="button"
-               onClick={() => handleProgramToggle(prog.id)}
-               className={`px-3 py-1.5 text-xs font-bold rounded-full transition-colors border ${
-                 formData.programIds.includes(prog.id) 
-                   ? "bg-green-100 text-green-800 border-green-200"
-                   : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
-               }`}
-             >
-               {prog.title}
-             </button>
-           ))}
-           {programs.length === 0 && <span className="text-sm text-gray-400">No programs available</span>}
+      <div className="pb-4 border-b border-gray-100 mt-2">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Research Programs</label>
+        
+        {/* Selected Programs Pills */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {formData.programIds.length === 0 && <span className="text-sm text-gray-400">No programs assigned</span>}
+          {formData.programIds.map(id => {
+            const prog = programs.find(p => p.id === id);
+            if (!prog) return null;
+            return (
+              <div key={prog.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-800 text-xs font-bold rounded-full border border-green-200">
+                <span>{prog.title}</span>
+                <button type="button" onClick={() => handleProgramToggle(prog.id)} className="hover:text-green-500 hover:bg-green-200 rounded-full w-4 h-4 flex items-center justify-center transition-colors ml-1">
+                  &times;
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search programs to assign..."
+            className="w-full px-4 py-2 border border-green-200 bg-green-50/50 rounded-lg focus:ring-2 focus:ring-green-500 focus:bg-white transition-all outline-none text-sm placeholder:text-gray-400"
+          />
+          
+          {/* Dropdown Results */}
+          {searchQuery.trim().length > 0 && (
+             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto overflow-hidden">
+               {(() => {
+                 const query = searchQuery.toLowerCase();
+                 const filtered = programs.filter(p => 
+                   p.title && p.title.toLowerCase().includes(query)
+                 );
+
+                 if (filtered.length === 0) {
+                   return <div className="p-4 text-sm text-gray-500 text-center">No matching programs found.</div>;
+                 }
+
+                 return filtered.map(prog => {
+                   const isSelected = formData.programIds.includes(prog.id);
+                   return (
+                     <button
+                       key={prog.id}
+                       type="button"
+                       onClick={() => {
+                         handleProgramToggle(prog.id);
+                         setSearchQuery(""); // Auto clear string on selection
+                       }}
+                       className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex justify-between items-center transition-colors ${isSelected ? 'bg-green-50/30' : ''}`}
+                     >
+                       <div className="font-bold text-gray-900 text-sm">
+                         {prog.title}
+                       </div>
+                       {isSelected ? (
+                         <span className="text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded">Added</span>
+                       ) : (
+                         <span className="text-gray-400 text-xs font-medium border border-gray-200 px-2 py-1 rounded">Add</span>
+                       )}
+                     </button>
+                   );
+                 });
+               })()}
+             </div>
+          )}
         </div>
       </div>
 
