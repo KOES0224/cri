@@ -12,10 +12,15 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [globalUnread, setGlobalUnread] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
-  const isDarkHero = ["/", "/research", "/intern", "/projects"].includes(pathname);
+  
+  // Safely check pathname without trailing slashes
+  const normalizedPath = pathname?.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+  const isDarkHero = ["/", "/research", "/intern", "/projects"].includes(normalizedPath);
 
   useEffect(() => {
+    setIsMounted(true); // Hydration safety
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
@@ -23,24 +28,25 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     // Fetch notifications if logged in
-    let isMounted = true;
+    let isActive = true;
     if (session?.user) {
       getGlobalUnreadCount().then(count => {
-        if (isMounted) setGlobalUnread(count);
+        if (isActive) setGlobalUnread(count);
       });
     }
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      isMounted = false;
+      isActive = false;
     };
   }, [session]);
 
-  const navTextClass = isDarkHero && !scrolled 
+  // We ensure consistent server/client initial render matching by default
+  const navTextClass = isDarkHero && (!isMounted || !scrolled)
     ? "text-white/90 hover:text-white transform-gpu" 
     : "text-gray-600 hover:text-black transform-gpu";
   
-  const logoClass = isDarkHero && !scrolled
+  const logoClass = isDarkHero && (!isMounted || !scrolled)
     ? "text-white"
     : "bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600";
 
@@ -111,10 +117,10 @@ export default function Navbar() {
             )}
           </div>
 
-          <div className="flex items-center md:hidden">
+          <div className="flex items-center lg:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 -mr-2 text-gray-600 hover:text-black focus:outline-none"
+              className={`p-2 -mr-2 focus:outline-none transition-colors ${isDarkHero && (!isMounted || !scrolled) ? 'text-white' : 'text-gray-600 hover:text-black'}`}
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
