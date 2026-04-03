@@ -38,6 +38,9 @@ export async function createProgram(data: {
   startDate?: Date;
   endDate?: Date;
   content?: string | null;
+  teachingHoursProf?: string | null;
+  teachingHoursTA?: string | null;
+  courseSchedule?: string | null;
   professorIds?: string[];
 }) {
   const { professorIds, ...rest } = data;
@@ -69,6 +72,9 @@ export async function updateProgram(
     startDate?: Date;
     endDate?: Date;
     content?: string | null;
+    teachingHoursProf?: string | null;
+    teachingHoursTA?: string | null;
+    courseSchedule?: string | null;
     professorIds?: string[];
   }>
 ) {

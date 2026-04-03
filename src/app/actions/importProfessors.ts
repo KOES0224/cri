@@ -50,9 +50,8 @@ export async function importProfessors(formData: FormData) {
       
       const courseTitle = rowData["Course Title"] || rowData["Course"] || "";
       const courseDescription = rowData["Course Description"] || rowData["Syllabus"] || "";
-      const teachingHoursProf = rowData["Prof Hours"] || rowData["Professor Teaching Hours"] || rowData["teachingHoursProf"] || "";
-      const teachingHoursTA = rowData["TA Hours"] || rowData["TA Teaching Hours"] || rowData["teachingHoursTA"] || "";
-      const courseSchedule = rowData["Schedule"] || rowData["Course Schedule"] || rowData["courseSchedule"] || "";
+      const idealStudents = rowData["Ideal Students"] || rowData["Ideal Student"] || "";
+      const potentialTopics = rowData["Potential Topics"] || rowData["Research Areas"] || rowData["Keywords"] || "";
 
       await prisma.professor.create({
         data: {
@@ -64,9 +63,8 @@ export async function importProfessors(formData: FormData) {
           publications: 0,
           courseTitle: courseTitle.toString().trim() || null,
           courseDescription: courseDescription.toString().trim() || null,
-          teachingHoursProf: teachingHoursProf.toString().trim() || null,
-          teachingHoursTA: teachingHoursTA.toString().trim() || null,
-          courseSchedule: courseSchedule.toString().trim() || null,
+          idealStudents: idealStudents.toString().trim() || null,
+          potentialTopics: potentialTopics.toString().trim() || null,
         }
       });
       successCount++;

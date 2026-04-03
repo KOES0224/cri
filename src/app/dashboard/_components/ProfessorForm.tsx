@@ -16,9 +16,8 @@ type ProfessorFormProps = {
     programs?: { id: string; title: string }[];
     courseTitle?: string | null;
     courseDescription?: string | null;
-    teachingHoursProf?: string | null;
-    teachingHoursTA?: string | null;
-    courseSchedule?: string | null;
+    idealStudents?: string | null;
+    potentialTopics?: string | null;
   };
   programs: { id: string; title: string }[];
   onSuccess?: () => void;
@@ -40,9 +39,8 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
     programIds: initialData?.programs?.map(p => p.id) || ([] as string[]),
     courseTitle: initialData?.courseTitle || "",
     courseDescription: initialData?.courseDescription || "",
-    teachingHoursProf: initialData?.teachingHoursProf || "",
-    teachingHoursTA: initialData?.teachingHoursTA || "",
-    courseSchedule: initialData?.courseSchedule || "",
+    idealStudents: initialData?.idealStudents || "",
+    potentialTopics: initialData?.potentialTopics || "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -79,9 +77,8 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
         programIds: formData.programIds,
         courseTitle: formData.courseTitle || null,
         courseDescription: formData.courseDescription || null,
-        teachingHoursProf: formData.teachingHoursProf || null,
-        teachingHoursTA: formData.teachingHoursTA || null,
-        courseSchedule: formData.courseSchedule || null,
+        idealStudents: formData.idealStudents || null,
+        potentialTopics: formData.potentialTopics || null,
       };
 
       let result;
@@ -188,25 +185,20 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
           <input type="text" name="courseTitle" value={formData.courseTitle} onChange={handleChange} placeholder="e.g. Intro to Machine Learning" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Ideal Students</label>
+            <textarea name="idealStudents" rows={3} value={formData.idealStudents} onChange={handleChange} placeholder="Target demographics or prerequisites..." className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm placeholder:text-gray-400" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Potential Topics</label>
+            <textarea name="potentialTopics" rows={3} value={formData.potentialTopics} onChange={handleChange} placeholder="List of potential research areas..." className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm placeholder:text-gray-400" />
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Course Description / Syllabus</label>
           <textarea name="courseDescription" rows={3} value={formData.courseDescription} onChange={handleChange} placeholder="Brief syllabus or learning outcomes..." className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Professor Teaching Hours</label>
-            <input type="text" name="teachingHoursProf" value={formData.teachingHoursProf} onChange={handleChange} placeholder="e.g. 5 hours/week" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">TA Teaching Hours</label>
-            <input type="text" name="teachingHoursTA" value={formData.teachingHoursTA} onChange={handleChange} placeholder="e.g. 10 hours/week" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Course Schedule</label>
-          <input type="text" name="courseSchedule" value={formData.courseSchedule} onChange={handleChange} placeholder="e.g. Mondays & Wednesdays 5PM - 7PM EST" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
         </div>
       </div>
 

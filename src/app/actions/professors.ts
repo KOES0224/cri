@@ -26,9 +26,8 @@ export async function createProfessor(data: {
   programIds?: string[];
   courseTitle?: string | null;
   courseDescription?: string | null;
-  teachingHoursProf?: string | null;
-  teachingHoursTA?: string | null;
-  courseSchedule?: string | null;
+  idealStudents?: string | null;
+  potentialTopics?: string | null;
 }) {
   const { programIds, ...rest } = data;
   try {
@@ -62,9 +61,8 @@ export async function updateProfessor(
     programIds?: string[];
     courseTitle?: string | null;
     courseDescription?: string | null;
-    teachingHoursProf?: string | null;
-    teachingHoursTA?: string | null;
-    courseSchedule?: string | null;
+    idealStudents?: string | null;
+    potentialTopics?: string | null;
   }>
 ) {
   const { programIds, ...rest } = data;

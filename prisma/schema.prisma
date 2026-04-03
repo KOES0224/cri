@@ -87,6 +87,11 @@ model Program {
   startDate    DateTime?
   endDate      DateTime?
   content      String?        @db.Text
+  
+  teachingHoursProf String?
+  teachingHoursTA   String?
+  courseSchedule    String?
+
   applications Application[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
@@ -296,9 +301,8 @@ model Professor {
   // Curriculum specific fields natively attached to the Professor
   courseTitle       String?
   courseDescription String?
-  teachingHoursProf String?
-  teachingHoursTA   String?
-  courseSchedule    String?
+  idealStudents     String?
+  potentialTopics   String?
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

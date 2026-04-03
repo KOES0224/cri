@@ -16,9 +16,12 @@ type ProgramFormProps = {
     startDate?: Date | null;
     endDate?: Date | null;
     content?: string | null;
+    teachingHoursProf?: string | null;
+    teachingHoursTA?: string | null;
+    courseSchedule?: string | null;
     professors?: { id: string; name: string }[];
   };
-  professors?: { id: string; name: string; role?: string; university?: string; bio?: string; courseTitle?: string; courseDescription?: string }[];
+  professors?: { id: string; name: string; role?: string; university?: string; bio?: string; courseTitle?: string; courseDescription?: string; idealStudents?: string; potentialTopics?: string }[];
   onSuccess?: () => void;
   onCancel?: () => void;
 };
@@ -56,6 +59,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
     startDate: initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : "",
     endDate: initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "",
     content: initialData?.content || "",
+    teachingHoursProf: initialData?.teachingHoursProf || "",
+    teachingHoursTA: initialData?.teachingHoursTA || "",
+    courseSchedule: initialData?.courseSchedule || "",
     professorIds: initialData?.professors?.map(p => p.id) || ([] as string[]),
   });
 
@@ -84,12 +90,18 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
           }
 
           if (shouldAutofill) {
+            const addedSyllabusParts = [
+              prof.courseDescription || prof.bio || "",
+              prof.idealStudents ? `\n\n### Ideal Students\n${prof.idealStudents}` : "",
+              prof.potentialTopics ? `\n\n### Potential Research Topics\n${prof.potentialTopics}` : ""
+            ].filter(Boolean).join("");
+
             return {
               ...prev,
               professorIds: newProfessorIds,
               title: prof.courseTitle || `Research Program with ${prof.name}`,
-              description: prof.bio || prev.description,
-              content: prof.courseDescription || prof.bio || prev.content
+              description: prof.bio ? prof.bio.substring(0, 300) + (prof.bio.length > 300 ? "..." : "") : prev.description,
+              content: addedSyllabusParts || prev.content
             };
           }
         }
@@ -118,6 +130,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
         startDate: formData.startDate ? new Date(formData.startDate) : undefined,
         endDate: formData.endDate ? new Date(formData.endDate) : undefined,
         content: formData.content || null,
+        teachingHoursProf: formData.teachingHoursProf || null,
+        teachingHoursTA: formData.teachingHoursTA || null,
+        courseSchedule: formData.courseSchedule || null,
         professorIds: formData.professorIds,
       };
 
@@ -369,6 +384,45 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Course Schedule</label>
+          <input
+            type="text"
+            name="courseSchedule"
+            value={formData.courseSchedule}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+            placeholder="e.g. Saturdays 10AM EST"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Professor Teaching Hours</label>
+          <input
+            type="text"
+            name="teachingHoursProf"
+            value={formData.teachingHoursProf}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+            placeholder="e.g. 10 hours"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">TA Teaching Hours</label>
+          <input
+            type="text"
+            name="teachingHoursTA"
+            value={formData.teachingHoursTA}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+            placeholder="e.g. 5 hours"
+          />
         </div>
       </div>
 
