@@ -284,7 +284,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none font-medium"
           >
-            <option value="Summer Camp">Summer Camp (Seoul)</option>
+            <option value="Research">Research (1-on-1)</option>
+            <option value="Summer Camp">Summer Camp (Global)</option>
+            <option value="Seoul Research Program">Seoul Research Program</option>
             <option value="Winter Online">Winter Online</option>
             <option value="Projects">Projects</option>
             <option value="Competitions">Competitions</option>

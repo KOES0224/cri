@@ -14,14 +14,18 @@ export default function ResearchProgramsClient({
   programs: any[], 
   title: string, 
   description: string,
-  categoryFilter: string
+  categoryFilter: string | string[]
 }) {
   const [activeTab, setActiveTab] = useState("ALL");
   
   // Filter programs based on the specific hub category, and then the active tab
   const filteredPrograms = programs.filter(p => {
     // First ensure it belongs to this hub's category
-    if (p.category !== categoryFilter) return false;
+    const matchesCategory = Array.isArray(categoryFilter)
+      ? categoryFilter.includes(p.category)
+      : p.category === categoryFilter;
+    
+    if (!matchesCategory) return false;
     
     // Then filter by active tab status
     if (activeTab === "ALL") return true;

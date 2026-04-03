@@ -6,7 +6,9 @@ export const dynamic = "force-dynamic";
 
 export default async function OneOnOneResearchPage() {
   const programs = await prisma.program.findMany({
-    where: { category: "1-on-1" },
+    where: { 
+      category: { in: ["1-on-1", "Research"] } 
+    },
     include: { professors: true },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }]
   });
@@ -16,7 +18,7 @@ export default async function OneOnOneResearchPage() {
       programs={programs}
       title="1-on-1 Advanced Mentorship"
       description="Work directly with a leading researcher to produce a publication-ready thesis over 12-24 weeks. Highly personalized and rigorous."
-      categoryFilter="1-on-1"
+      categoryFilter={["1-on-1", "Research"]}
     />
   );
 }

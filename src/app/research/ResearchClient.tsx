@@ -13,7 +13,7 @@ export default function ResearchClient({ content }: { content: Record<string, st
       icon: <Globe className="w-8 h-8 text-purple-500" />,
       description: "A highly immersive, 2-week onsite intensive held over the summer in major global hubs including Seoul and NYC. Work closely with leading academics in an interactive, collaborative environment.",
       features: ["2-week onsite intensive", "Daily intensive seminars", "Local symposium presentations"],
-      href: "/research/seoul",
+      href: "/research/summer-camp",
       imageUrl: content.research_seoul_image || "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=2069&auto=format&fit=crop",
       highlight: false,
       color: "purple",
