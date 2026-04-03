@@ -18,7 +18,7 @@ type ProgramFormProps = {
     content?: string | null;
     professors?: { id: string; name: string }[];
   };
-  professors?: { id: string; name: string; role?: string; university?: string; bio?: string; courseTitle?: string }[];
+  professors?: { id: string; name: string; role?: string; university?: string; bio?: string; courseTitle?: string; courseDescription?: string }[];
   onSuccess?: () => void;
   onCancel?: () => void;
 };
@@ -64,12 +64,42 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
   };
 
   const handleProfessorToggle = (profId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      professorIds: prev.professorIds.includes(profId) 
+    setFormData(prev => {
+      const isCurrentlyAssigned = prev.professorIds.includes(profId);
+      const newProfessorIds = isCurrentlyAssigned
         ? prev.professorIds.filter(id => id !== profId)
-        : [...prev.professorIds, profId]
-    }));
+        : [...prev.professorIds, profId];
+
+      if (!isCurrentlyAssigned) {
+        // We just added a professor. Auto-fill if fields are empty, or prompt to overwrite.
+        const prof = professors.find(p => p.id === profId);
+        if (prof) {
+          const hasExistingData = prev.title || prev.description || prev.content;
+          let shouldAutofill = true;
+          
+          if (hasExistingData) {
+            shouldAutofill = window.confirm(
+              `Would you like to auto-fill the program details (Title, Description, Syllabus) from ${prof.name}'s profile? This will overwrite your current inputs.`
+            );
+          }
+
+          if (shouldAutofill) {
+            return {
+              ...prev,
+              professorIds: newProfessorIds,
+              title: prof.courseTitle || `Research Program with ${prof.name}`,
+              description: prof.bio || prev.description,
+              content: prof.courseDescription || prof.bio || prev.content
+            };
+          }
+        }
+      }
+
+      return {
+        ...prev,
+        professorIds: newProfessorIds
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,6 +152,88 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
       
+      {/* Search Input for Professors - MOVED TO TOP */}
+      <div className="pb-4 border-b border-gray-100">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Assign Professor (Select to Auto-fill Details)</label>
+        
+        {/* Selected Professors Pills */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {formData.professorIds.length === 0 && <span className="text-sm text-gray-400">No professors assigned</span>}
+          {formData.professorIds.map(id => {
+            const prof = professors.find(p => p.id === id);
+            if (!prof) return null;
+            return (
+              <div key={prof.id} className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-800 text-xs font-bold rounded-full border border-blue-200">
+                <span>{prof.name}</span>
+                <button type="button" onClick={() => handleProfessorToggle(prof.id)} className="hover:text-blue-500 hover:bg-blue-200 rounded-full w-4 h-4 flex items-center justify-center transition-colors ml-1">
+                  &times;
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, role, university or field..."
+            className="w-full px-4 py-2 border border-blue-200 bg-blue-50/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none text-sm placeholder:text-gray-400"
+          />
+          
+          {/* Dropdown Results */}
+          {searchQuery.trim().length > 0 && (
+             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto overflow-hidden">
+               {(() => {
+                 const query = searchQuery.toLowerCase();
+                 const filtered = professors.filter(p => 
+                   (p.name && p.name.toLowerCase().includes(query)) ||
+                   (p.role && p.role.toLowerCase().includes(query)) ||
+                   (p.university && p.university.toLowerCase().includes(query)) ||
+                   (p.bio && p.bio.toLowerCase().includes(query)) ||
+                   (p.courseTitle && p.courseTitle.toLowerCase().includes(query))
+                 );
+
+                 if (filtered.length === 0) {
+                   return <div className="p-4 text-sm text-gray-500 text-center">No matching professors found.</div>;
+                 }
+
+                 return filtered.map(prof => {
+                   const isSelected = formData.professorIds.includes(prof.id);
+                   return (
+                     <button
+                       key={prof.id}
+                       type="button"
+                       onClick={() => {
+                         handleProfessorToggle(prof.id);
+                         setSearchQuery(""); // Auto clear string on selection for quick adding
+                       }}
+                       className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex justify-between items-center transition-colors ${isSelected ? 'bg-blue-50/30' : ''}`}
+                     >
+                       <div>
+                         <div className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                           {prof.name}
+                         </div>
+                         <div className="text-xs text-gray-500 font-medium truncate max-w-sm mt-0.5">
+                           {[prof.role, prof.university].filter(Boolean).join(" • ")}
+                         </div>
+                         {prof.courseTitle && <div className="text-xs text-blue-600 mt-0.5 truncate max-w-sm">Course: {prof.courseTitle}</div>}
+                       </div>
+                       {isSelected ? (
+                         <span className="text-blue-600 text-xs font-bold bg-blue-100 px-2 py-1 rounded">Added</span>
+                       ) : (
+                         <span className="text-gray-400 text-xs font-medium border border-gray-200 px-2 py-1 rounded">Add</span>
+                       )}
+                     </button>
+                   );
+                 });
+               })()}
+             </div>
+          )}
+        </div>
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Program Title *</label>
         <input
@@ -271,88 +383,6 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
           placeholder="e.g. ## Program Objectives&#10;..."
           className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none font-mono text-sm leading-relaxed"
         />
-      </div>
-
-      <div className="pt-4 border-t border-gray-100">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Professors ({formData.professorIds.length})</label>
-        
-        {/* Selected Professors Pills */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          {formData.professorIds.length === 0 && <span className="text-sm text-gray-400">No professors assigned</span>}
-          {formData.professorIds.map(id => {
-            const prof = professors.find(p => p.id === id);
-            if (!prof) return null;
-            return (
-              <div key={prof.id} className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-800 text-xs font-bold rounded-full border border-blue-200">
-                <span>{prof.name}</span>
-                <button type="button" onClick={() => handleProfessorToggle(prof.id)} className="hover:text-blue-500 hover:bg-blue-200 rounded-full w-4 h-4 flex items-center justify-center transition-colors ml-1">
-                  &times;
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Search Input for Professors */}
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, role, university or field..."
-            className="w-full px-4 py-2 border border-blue-200 bg-blue-50/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none text-sm placeholder:text-gray-400"
-          />
-          
-          {/* Dropdown Results */}
-          {searchQuery.trim().length > 0 && (
-             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto overflow-hidden">
-               {(() => {
-                 const query = searchQuery.toLowerCase();
-                 const filtered = professors.filter(p => 
-                   (p.name && p.name.toLowerCase().includes(query)) ||
-                   (p.role && p.role.toLowerCase().includes(query)) ||
-                   (p.university && p.university.toLowerCase().includes(query)) ||
-                   (p.bio && p.bio.toLowerCase().includes(query)) ||
-                   (p.courseTitle && p.courseTitle.toLowerCase().includes(query))
-                 );
-
-                 if (filtered.length === 0) {
-                   return <div className="p-4 text-sm text-gray-500 text-center">No matching professors found.</div>;
-                 }
-
-                 return filtered.map(prof => {
-                   const isSelected = formData.professorIds.includes(prof.id);
-                   return (
-                     <button
-                       key={prof.id}
-                       type="button"
-                       onClick={() => {
-                         handleProfessorToggle(prof.id);
-                         setSearchQuery(""); // Auto clear string on selection for quick adding
-                       }}
-                       className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex justify-between items-center transition-colors ${isSelected ? 'bg-blue-50/30' : ''}`}
-                     >
-                       <div>
-                         <div className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                           {prof.name}
-                         </div>
-                         <div className="text-xs text-gray-500 font-medium truncate max-w-sm mt-0.5">
-                           {[prof.role, prof.university].filter(Boolean).join(" • ")}
-                         </div>
-                         {prof.courseTitle && <div className="text-xs text-blue-600 mt-0.5 truncate max-w-sm">Course: {prof.courseTitle}</div>}
-                       </div>
-                       {isSelected ? (
-                         <span className="text-blue-600 text-xs font-bold bg-blue-100 px-2 py-1 rounded">Added</span>
-                       ) : (
-                         <span className="text-gray-400 text-xs font-medium border border-gray-200 px-2 py-1 rounded">Add</span>
-                       )}
-                     </button>
-                   );
-                 });
-               })()}
-             </div>
-          )}
-        </div>
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
