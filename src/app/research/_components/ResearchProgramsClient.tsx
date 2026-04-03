@@ -112,7 +112,7 @@ export default function ResearchProgramsClient({
                      if (!majorText) return null;
                      return (
                        <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-3 py-1 rounded-full uppercase tracking-wider max-w-[200px] truncate">
-                         Major: {majorText}
+                         {majorText}
                        </span>
                      );
                    })()}
@@ -173,7 +173,7 @@ export default function ResearchProgramsClient({
                     </div>
                     
                     <Link href={`/research/program/${program.id}`} className="w-full sm:w-auto h-11 px-6 rounded-xl bg-gray-900 white text-white text-sm font-bold hover:bg-black transition-colors inline-flex items-center justify-center group/btn shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 shrink-0">
-                      Apply Now
+                      Explore Program
                       <ChevronRight className="ml-2 h-4 w-4 text-gray-400 group-hover/btn:translate-x-1 group-hover/btn:text-white transition-all" />
                     </Link>
                  </div>

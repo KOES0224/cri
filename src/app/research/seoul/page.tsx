@@ -13,9 +13,9 @@ export default async function SeoulResearchPage() {
   return (
     <ResearchProgramsClient 
       programs={programs}
-      title="Seoul Summer Program"
-      description="An immersive 8-week intensive research camp based in Seoul, South Korea. Join a selective cohort of scholars."
-      categoryFilter="seoul"
+      title="Summer Camp"
+      description="An immersive 2-week onsite intensive research program held in major global hubs including Seoul, NYC, and more. Join a selective cohort of scholars."
+      categoryFilter="Seoul Camp"
     />
   );
 }

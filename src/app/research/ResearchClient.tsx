@@ -8,11 +8,11 @@ export default function ResearchClient({ content }: { content: Record<string, st
   const hubs = [
     {
       id: "seoul",
-      title: "Seoul Research Summer Camp",
-      subtitle: "Summer Camp Intensive",
+      title: "Onsite Summer Camp",
+      subtitle: "2-Week Global Intensive",
       icon: <Globe className="w-8 h-8 text-purple-500" />,
-      description: "A highly immersive, in-person intensive held over the summer in Seoul. Work closely with leading academics in an interactive lab-style environment. Limited cohort size.",
-      features: ["In-person lab interactions", "Daily intensive seminars", "Local symposium presentations"],
+      description: "A highly immersive, 2-week onsite intensive held over the summer in major global hubs including Seoul and NYC. Work closely with leading academics in an interactive, collaborative environment.",
+      features: ["2-week onsite intensive", "Daily intensive seminars", "Local symposium presentations"],
       href: "/research/seoul",
       imageUrl: content.research_seoul_image || "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=2069&auto=format&fit=crop",
       highlight: false,
