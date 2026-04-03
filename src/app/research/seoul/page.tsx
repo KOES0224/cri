@@ -15,7 +15,7 @@ export default async function SeoulResearchPage() {
       programs={programs}
       title="Summer Camp"
       description="An immersive 2-week onsite intensive research program held in major global hubs including Seoul, NYC, and more. Join a selective cohort of scholars."
-      categoryFilter="Seoul Camp"
+      categoryFilter="seoul"
     />
   );
 }
