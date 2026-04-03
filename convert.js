@@ -15,7 +15,6 @@ for (const row of data) {
   if (!profName || profName.trim() === "" || profName.includes("Faculty Introduction")) continue;
 
   const bioParts = [
-    row["Work Experience"] ? `Work Experience:\n${row["Work Experience"]}` : ""
   ].filter(Boolean).join("\n\n");
   
   const researchStr = row["Research Areas"] || "";

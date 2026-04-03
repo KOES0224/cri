@@ -96,15 +96,21 @@ export default function ResearchProgramsClient({
                      </span>
                    )}
                    
-                   {program.subCategory ? (
-                     <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                       Major: {program.subCategory}
-                     </span>
-                   ) : (
-                     <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                       Major: {program.category}
-                     </span>
-                   )}
+                   {(() => {
+                     let majorText = program.subCategory;
+                     if (program.professors && program.professors.length > 0 && program.professors[0].potentialTopics) {
+                        const topics = program.professors[0].potentialTopics.split(/[|,]/);
+                        if (topics.length > 0 && topics[0].trim()) {
+                            majorText = topics[0].trim();
+                        }
+                     }
+                     if (!majorText) return null;
+                     return (
+                       <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-3 py-1 rounded-full uppercase tracking-wider max-w-[200px] truncate">
+                         Major: {majorText}
+                       </span>
+                     );
+                   })()}
                  </div>
                  
                  <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight group-hover:text-blue-600 transition-colors">
