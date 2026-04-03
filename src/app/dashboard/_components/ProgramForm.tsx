@@ -18,7 +18,7 @@ type ProgramFormProps = {
     content?: string | null;
     professors?: { id: string; name: string }[];
   };
-  professors?: { id: string; name: string }[];
+  professors?: { id: string; name: string; role?: string; university?: string; bio?: string; courseTitle?: string }[];
   onSuccess?: () => void;
   onCancel?: () => void;
 };
@@ -29,6 +29,7 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
   const [error, setError] = useState("");
   const [recentStartDates, setRecentStartDates] = useState<string[]>([]);
   const [recentEndDates, setRecentEndDates] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const storedStarts = localStorage.getItem("recentStartDates");
@@ -273,23 +274,84 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
       </div>
 
       <div className="pt-4 border-t border-gray-100">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Professors (Research Programs)</label>
-        <div className="flex flex-wrap gap-2">
-           {professors.map(prof => (
-             <button
-               key={prof.id}
-               type="button"
-               onClick={() => handleProfessorToggle(prof.id)}
-               className={`px-3 py-1.5 text-xs font-bold rounded-full transition-colors border ${
-                 formData.professorIds.includes(prof.id) 
-                   ? "bg-blue-100 text-blue-800 border-blue-200"
-                   : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
-               }`}
-             >
-               {prof.name}
-             </button>
-           ))}
-           {professors.length === 0 && <span className="text-sm text-gray-400">No professors available</span>}
+        <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Professors ({formData.professorIds.length})</label>
+        
+        {/* Selected Professors Pills */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {formData.professorIds.length === 0 && <span className="text-sm text-gray-400">No professors assigned</span>}
+          {formData.professorIds.map(id => {
+            const prof = professors.find(p => p.id === id);
+            if (!prof) return null;
+            return (
+              <div key={prof.id} className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-800 text-xs font-bold rounded-full border border-blue-200">
+                <span>{prof.name}</span>
+                <button type="button" onClick={() => handleProfessorToggle(prof.id)} className="hover:text-blue-500 hover:bg-blue-200 rounded-full w-4 h-4 flex items-center justify-center transition-colors ml-1">
+                  &times;
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Search Input for Professors */}
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, role, university or field..."
+            className="w-full px-4 py-2 border border-blue-200 bg-blue-50/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none text-sm placeholder:text-gray-400"
+          />
+          
+          {/* Dropdown Results */}
+          {searchQuery.trim().length > 0 && (
+             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto overflow-hidden">
+               {(() => {
+                 const query = searchQuery.toLowerCase();
+                 const filtered = professors.filter(p => 
+                   (p.name && p.name.toLowerCase().includes(query)) ||
+                   (p.role && p.role.toLowerCase().includes(query)) ||
+                   (p.university && p.university.toLowerCase().includes(query)) ||
+                   (p.bio && p.bio.toLowerCase().includes(query)) ||
+                   (p.courseTitle && p.courseTitle.toLowerCase().includes(query))
+                 );
+
+                 if (filtered.length === 0) {
+                   return <div className="p-4 text-sm text-gray-500 text-center">No matching professors found.</div>;
+                 }
+
+                 return filtered.map(prof => {
+                   const isSelected = formData.professorIds.includes(prof.id);
+                   return (
+                     <button
+                       key={prof.id}
+                       type="button"
+                       onClick={() => {
+                         handleProfessorToggle(prof.id);
+                         setSearchQuery(""); // Auto clear string on selection for quick adding
+                       }}
+                       className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex justify-between items-center transition-colors ${isSelected ? 'bg-blue-50/30' : ''}`}
+                     >
+                       <div>
+                         <div className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                           {prof.name}
+                         </div>
+                         <div className="text-xs text-gray-500 font-medium truncate max-w-sm mt-0.5">
+                           {[prof.role, prof.university].filter(Boolean).join(" • ")}
+                         </div>
+                         {prof.courseTitle && <div className="text-xs text-blue-600 mt-0.5 truncate max-w-sm">Course: {prof.courseTitle}</div>}
+                       </div>
+                       {isSelected ? (
+                         <span className="text-blue-600 text-xs font-bold bg-blue-100 px-2 py-1 rounded">Added</span>
+                       ) : (
+                         <span className="text-gray-400 text-xs font-medium border border-gray-200 px-2 py-1 rounded">Add</span>
+                       )}
+                     </button>
+                   );
+                 });
+               })()}
+             </div>
+          )}
         </div>
       </div>
 
