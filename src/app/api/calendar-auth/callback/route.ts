@@ -9,8 +9,8 @@ export async function GET(req: Request) {
     return new NextResponse("Error: No code provided", { status: 400 });
   }
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET;
   const redirectUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/calendar-auth/callback`;
 
   const oauth2Client = new google.auth.OAuth2(
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
           <p>Please copy the Refresh Token below and paste it into your <b>.env</b> file.</p>
           
           <div style="background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 8px; margin-top: 20px; font-family: monospace; word-break: break-all;">
-            NEXT_PUBLIC_GOOGLE_REFRESH_TOKEN="${tokens.refresh_token || 'NO REFRESH TOKEN GENERATED. Make sure you revoked previous access.'}"
+            GOOGLE_CALENDAR_REFRESH_TOKEN="${tokens.refresh_token || 'NO REFRESH TOKEN GENERATED. Make sure you revoked previous access.'}"
           </div>
 
           <p style="margin-top: 20px; font-size: 14px; color: #475569;">

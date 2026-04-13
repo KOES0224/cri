@@ -222,14 +222,14 @@ export async function scheduleGoogleMeeting(leadId: string, title: string, start
   const session = await requireAdmin();
 
   // 1) Verify Google Cloud Credentials
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+  const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_CALENDAR_REFRESH_TOKEN;
 
   if (!clientId || !clientSecret || !refreshToken) {
     return { 
       success: false, 
-      error: "Google Calendar is not fully configured. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN are set." 
+      error: "Google Calendar is not fully configured. Please ensure GOOGLE_CALENDAR_CLIENT_ID, GOOGLE_CALENDAR_CLIENT_SECRET, and GOOGLE_CALENDAR_REFRESH_TOKEN are set." 
     };
   }
 
