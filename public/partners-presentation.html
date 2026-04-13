@@ -102,14 +102,14 @@ body {
 .section-title { font-size: 3.8rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 1.5rem 0; text-align: center; }
 .section-subtitle { font-size: 1.4rem; font-weight: 500; color: var(--text-secondary); margin: 0 0 4.5rem 0; text-align: center; line-height: 1.6; }
 
-/* --- Slide 2: Stories --- */
+/* --- Slide 2: Stories / General Glass Card --- */
 .slide-2 { background: radial-gradient(circle at top right, rgba(20,20,35,0.7), var(--bg-color) 60%); }
 .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; width: 100%; max-width: 1400px; }
 .glass-card { 
   background: rgba(15, 15, 18, 0.6); 
   border: 1px solid rgba(255,255,255,0.1); 
   border-radius: 28px; 
-  padding: 3.5rem 3rem; /* Increased padding */
+  padding: 3.5rem 3rem; 
   backdrop-filter: blur(25px); 
   -webkit-backdrop-filter: blur(25px);
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s; 
@@ -163,9 +163,7 @@ body {
 
 @media (max-width: 1200px) {
   .hero-title { font-size: 3.5rem; }
-  .card-grid { grid-template-columns: 1fr; gap: 2rem; }
-  .fw-grid { grid-template-columns: 1fr; gap: 2rem;}
-  .wf-steps { grid-template-columns: 1fr; gap: 2rem;}
+  .card-grid, .fw-grid, .wf-steps { grid-template-columns: 1fr; gap: 2rem; }
   .contact-container { flex-direction: column; border-radius: 30px; gap: 2.5rem; text-align: center; padding: 3rem;}
   .c-item { text-align: center; }
 }
@@ -175,83 +173,121 @@ body {
 
   <!-- Slide 1: Cover -->
   <section class="slide slide-1">
-    <div class="hero-label fade-up">Elite Research Co., Ltd.</div>
-    <h1 class="hero-title fade-up d-1">결과를 넘어,<br>세계적인 석학과 함께 증명하는<br><span class="gold-text">진정한 실력.</span></h1>
-    <p class="hero-subtitle fade-up d-2">최상위권 VIP를 위한 가장 독보적인 아카데믹 인프라 파트너십.</p>
+    <div class="hero-label fade-up">'진짜 연구'가 만드는 압도적 격차</div>
+    <h1 class="hero-title fade-up d-1">결과를 넘어,<br>세계적인 교수와 함께 증명하는<br><span class="gold-text">진정한 실력.</span></h1>
+    <p class="hero-subtitle fade-up d-2">가장 독보적인 프리미엄 아카데믹 인프라 파트너십.</p>
     
     <ul class="hero-points fade-up d-3">
-      <li><strong class="gold-highlight">250명 이상</strong>의 아이비리그 종신 교수진</li>
-      <li>멘토 매칭 및 퀄리티 컨트롤 <strong class="gold-highlight">100% 전담</strong></li>
-      <li>교수 직속 추천서 발급 <strong class="gold-highlight">98% 달성</strong></li>
+      <li><strong class="gold-highlight">250+</strong> Ivy League Tenured Professors</li>
+      <li>논문 통과 (Peer Review Pass Rate) <strong class="gold-highlight">99.2%</strong></li>
+      <li>진정성 있는 교수 직속 추천서 발급 <strong class="gold-highlight">100% 보장</strong></li>
     </ul>
   </section>
 
-  <!-- Slide 2: Track Record -->
+  <!-- Slide 2: Faculty -->
   <section class="slide slide-2">
-    <h2 class="section-title fade-up">스토리의 재발견.</h2>
-    <p class="section-subtitle fade-up d-1">단편적 한계를 넘어, 가장 강력한 카드로 진화한 아이비리그급 성공 스토리.</p>
+    <h2 class="section-title fade-up">압도적인 교수진.</h2>
+    <p class="section-subtitle fade-up d-1">'진짜 연구'가 만드는 최고 수준의 아카데믹 인프라.</p>
     
-    <div class="card-grid">
-      <div class="glass-card fade-up d-1">
-        <div class="card-eyebrow">Stanford & Oxford 합격</div>
-        <h3 class="gradient-text">봉사활동을<br>인지심리학 연구로</h3>
-        <p>현장에서의 단순한 연민을 '눈물이 사회적 지원에 미치는 영향'이라는 통계 연구로 발전시켜 <strong class="strong-highlight">옥스퍼드 교수 직속 추천서</strong>를 획득했습니다.</p>
+    <div class="card-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="glass-card fade-up d-1" style="padding: 2.5rem 2rem;">
+        <div class="card-eyebrow">Harvard Univ.</div>
+        <h3 class="gradient-text" style="font-size: 1.5rem;">Prof. Kurtis<br>Bio & Pre-Med</h3>
+        <p style="font-size: 1rem;">의료 및 바이오 저널 컨설팅과 임상 기전 연구를 전담하여 트랙 진학을 이끕니다.</p>
       </div>
-      <div class="glass-card fade-up d-2">
-        <div class="card-eyebrow">Harvard 전액 장학금</div>
-        <h3 class="gradient-text">개인적 아픔을<br>임상 약리학으로</h3>
-        <p>기존 스펙의 딜레마를 UCSF 교수와 함께 마취제를 자폐 치료제로 재창출하는 <strong class="strong-highlight">대학원급 기전 연구</strong>로 완벽하게 승화시켰습니다.</p>
+      <div class="glass-card fade-up d-2" style="padding: 2.5rem 2rem;">
+        <div class="card-eyebrow">Univ. of Chicago</div>
+        <h3 class="gradient-text" style="font-size: 1.5rem;">Prof. Haifang Xu<br>AI & Economics</h3>
+        <p style="font-size: 1rem;">인공지능, 데이터 사이언스 및 경제학 융합 연구를 통해 수요에 밀착 대응합니다.</p>
       </div>
-      <div class="glass-card fade-up d-3">
-        <div class="card-eyebrow">ISEF 국가대표 진출</div>
-        <h3 class="gradient-text">별을 보던 취미가<br>우주론 AI 역량으로</h3>
-        <p>단순한 천체 관측 취미를 더럼대 연구원과 함께 AI 은하 모델링으로 확장시켜 <strong class="strong-highlight">최고 권위 대회 출전권</strong>을 증명해 냈습니다.</p>
+      <div class="glass-card fade-up d-3" style="padding: 2.5rem 2rem;">
+        <div class="card-eyebrow">MIT</div>
+        <h3 class="gradient-text" style="font-size: 1.5rem;">Prof. K.S.<br>Business & Ent.</h3>
+        <p style="font-size: 1rem;">경영 모델링 및 실제 스타트업 경험을 적용한 실물 경제 기반 연구 프로젝트.</p>
+      </div>
+      <div class="glass-card fade-up d-4" style="padding: 2.5rem 2rem;">
+        <div class="card-eyebrow">Oxford Univ.</div>
+        <h3 class="gradient-text" style="font-size: 1.5rem;">Prof. Robin Murphy<br>Psychology</h3>
+        <p style="font-size: 1rem;">데이터 기반의 실증적 심리학 및 사회과학 연구 컨설팅으로 독보적인 스토리 구성.</p>
       </div>
     </div>
   </section>
 
-  <!-- Slide 3: Framework -->
+  <!-- Slide 3: References -->
+  <section class="slide slide-3" style="background: radial-gradient(circle at bottom center, rgba(10,20,30,0.8), var(--bg-color) 70%);">
+    <h2 class="section-title fade-up">2026 실제 레퍼런스.</h2>
+    <p class="section-subtitle fade-up d-1">단순 스펙을 넘어 최상위권의 압도적인 아웃풋으로 증명합니다.</p>
+    
+    <div class="card-grid" style="grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+      <div class="glass-card fade-up d-1" style="padding: 2.5rem;">
+        <h3 class="gradient-text" style="font-size: 1.6rem; margin-bottom: 1rem;">Stanford Sloan</h3>
+        <p style="font-size: 1.05rem;">Undergraduate session speaker 선정 및 합격 사례 등 최상위 성과 배출.</p>
+      </div>
+      <div class="glass-card fade-up d-2" style="padding: 2.5rem;">
+        <h3 class="gradient-text" style="font-size: 1.6rem; margin-bottom: 1rem;">Harvard Bio</h3>
+        <p style="font-size: 1.05rem;">단순한 포트폴리오를 넘어 실제 연구 결과물 서드파티 검증으로 장학금 획득.</p>
+      </div>
+      <div class="glass-card fade-up d-3" style="padding: 2.5rem;">
+        <h3 class="gradient-text" style="font-size: 1.6rem; margin-bottom: 1rem;">ISEF National Team</h3>
+        <p style="font-size: 1.05rem;">전문팀의 치밀한 지도를 통한 국제과학경진대회(ISEF) 진출.</p>
+      </div>
+      <div class="glass-card fade-up d-1" style="padding: 2.5rem;">
+        <h3 class="gradient-text" style="font-size: 1.6rem; margin-bottom: 1rem;">Oxford Interviews</h3>
+        <p style="font-size: 1.05rem;">Robin Murphy 교수진의 실증적 연구 경험을 인터뷰 무기로 활용.</p>
+      </div>
+      <div class="glass-card fade-up d-2" style="padding: 2.5rem;">
+        <h3 class="gradient-text" style="font-size: 1.6rem; margin-bottom: 1rem;">UC San Diego</h3>
+        <p style="font-size: 1.05rem;">대학 연계 캠프 내에서의 직속 학술 공동 연구 수행.</p>
+      </div>
+      <div class="glass-card fade-up d-3" style="padding: 2.5rem;">
+        <h3 class="gradient-text" style="font-size: 1.6rem; margin-bottom: 1rem;">Durham University</h3>
+        <p style="font-size: 1.05rem;">영국 최고 명문 더럼 대학교 리서치 장학생 발탁 등 영국 최상위 레퍼런스.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 4: Management System -->
   <section class="slide slide-3">
-    <h2 class="section-title fade-up">프리미엄 인프라 설계.</h2>
-    <p class="section-subtitle fade-up d-1">단순한 아웃소싱을 넘어, 아이비리그 사정관을 압도할 확장의 흐름을 제안합니다.</p>
+    <h2 class="section-title fade-up">차별화된 관리 시스템.</h2>
+    <p class="section-subtitle fade-up d-1">학생의 중도 포기를 원천 차단하는 3단계 관리 체계 (수료율 99.2%).</p>
     
     <div class="fw-grid">
       <div class="fw-item fade-up d-1">
         <div class="fw-num">Step 1</div>
-        <h4 class="fw-title">Core Research</h4>
-        <p class="fw-desc">해외 석학들의 서울 내한 프로젝트부터, 세계적 교수진 및 1:1 석박사 화상 연구까지 밀도 높은 연구 토대를 마련합니다.</p>
+        <h4 class="fw-title">Ivy League Faculty</h4>
+        <p class="fw-desc">최신 연구 트렌드 기반의 하이엔드 아카데믹 로직 및 주제를 직접 설계.</p>
       </div>
-      <div class="fw-milestone fade-up d-2">
+      <div class="fw-milestone fade-up d-2" style="padding: 3rem;">
          <div class="fw-num">Step 2</div>
-         <h4 class="fw-title">Milestone</h4>
-         <p class="fw-desc" style="color:#ffffff; font-weight:700; font-size:1.35rem; margin-top:2rem; line-height: 1.5;">논문 퍼블리쉬 완료 및<br><span style="color:var(--accent-color);">'지도 교수 직속 추천서' 발급 보장</span></p>
+         <h4 class="fw-title" style="font-size: 2rem;">Top-tier TAs</h4>
+         <p class="fw-desc" style="color:#ffffff; font-weight:400; font-size:1.15rem; margin-top:1.5rem; line-height: 1.7; word-break: keep-all;">명문대 출신 전담 TA의 밀착 지도로 <strong class="strong-highlight" style="color: var(--accent-color); background: rgba(0,0,0,0.5);">데이터 분석, 코딩, 실험</strong>을 완벽히 보조.</p>
       </div>
       <div class="fw-item fade-up d-3">
         <div class="fw-num">Step 3</div>
-        <h4 class="fw-title">Extension</h4>
-        <p class="fw-desc">완성된 논문을 활용한 맞춤형 웹서비스 구축, 특허 창업 및 글로벌 학술 대회 인턴십 등 <strong class="strong-highlight">진짜 임팩트(Real Impact)</strong>로 결합됩니다.</p>
+        <h4 class="fw-title">Coordinators</h4>
+        <p class="fw-desc">전담 매니저가 데드라인 준수, 학생 멘탈 케어 및 정기 리포팅 책임 완주.</p>
       </div>
     </div>
   </section>
 
-  <!-- Slide 4: Workflow & Guarantee -->
+  <!-- Slide 5: Workflow -->
   <section class="slide slide-4">
-    <h2 class="section-title fade-up">가장 완벽한 파트너.</h2>
-    <p class="section-subtitle fade-up d-1">원장님의 고유한 입시 통제력은 그대로 남겨두고 학술적 성과만을 무장하십시오.</p>
+    <h2 class="section-title fade-up">B2B 파트너십 워크플로우.</h2>
+    <p class="section-subtitle fade-up d-1">파트너의 고유한 입시 영역은 보장하며 완벽한 아카데믹 성과만을 납품합니다.</p>
 
     <div class="wf-container">
       <div class="wf-steps">
         <div class="wf-step fade-up d-1">
-          <h5>기획 및 역제안 플랫폼</h5>
-          <p>학생의 관심사 키워드만 전달해 주시면, 바로 상담에 띄울 수 있는 <strong class="strong-highlight">3가지 맞춤형 기획안</strong>을 역제안합니다.</p>
+          <h5>Step 1. 키워드 전달</h5>
+          <p>학생의 막연한 관심사(전공, 취미 등) 스케치만 전달해 주시면 파트너십이 시작됩니다.</p>
         </div>
         <div class="wf-step fade-up d-2">
-          <h5>유연한 상담 클로징 지원</h5>
-          <p>전달드린 기획안으로 <strong class="strong-highlight">파트너 직접 상담</strong>을 하시거나, 전문 디렉터의 동석(화상) 브리핑을 위탁하실 수 있습니다.</p>
+          <h5>Step 2. 무상 기획안 제안</h5>
+          <p>CRI 석학들이 이를 기반으로, 학부모 상담에 쓸 수 있는 <strong class="strong-highlight">맞춤 연구 기획안</strong>을 무상 제공합니다.</p>
         </div>
         <div class="wf-step fade-up d-3">
-          <h5>흔들리지 않는 신뢰 유지</h5>
-          <p>매월 발송되는 퀄리티 높은 <strong class="strong-highlight">영문 과정 리포트</strong>, 그리고 종료 시 납품되는 추천서 원본으로 학부모의 신뢰를 배가합니다.</p>
+          <h5>Step 3. 즉각적인 개시</h5>
+          <p>학부모 결제가 완료되면, <strong class="strong-highlight">교수-TA-코디네이터</strong> 전문 팀이 즉각 배치되어 시작됩니다.</p>
         </div>
       </div>
 
@@ -259,16 +295,16 @@ body {
         <div class="g-icon">✧</div>
         <div class="g-content">
           <h4>100% Non-Compete Guarantee (독점 영역 보호)</h4>
-          <p>CRI는 오직 순수한 <strong>'아카데믹 R&D'</strong>에만 몰두합니다. 원서 작성, 대학 선정 등 귀원 고유의 입시 영역은 어떠한 경우에도 침해하지 않습니다. 파트너의 의뢰인은 전적으로 파트너의 의탁을 통해 이루어집니다.</p>
+          <p>저희는 전통 방식의 단순 보여주기 스펙 쌓기가 아닌 <strong>진짜 아카데믹 역량(SAT 2400수준)</strong> 개발에 몰두합니다. 기존 학원의 원서 작업 및 진학 멘토링 역할은 절대 침해하지 않으며 완벽하게 보조합니다.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Slide 5: Contact -->
+  <!-- Slide 6: Contact -->
   <section class="slide slide-5">
     <h2 class="section-title fade-up">초가치 VIP를 위한 새로운 해답.</h2>
-    <p class="section-subtitle fade-up d-1" style="max-width: 650px; margin-left: auto; margin-right: auto; line-height: 1.7;">이번 주, 귀원의 초우량 고객을 완성할 맞춤형 기획안 샘플과 파트너 독점 베네핏을 단 15분의 미팅으로 직접 확인해 보세요.</p>
+    <p class="section-subtitle fade-up d-1" style="max-width: 650px; margin-left: auto; margin-right: auto; line-height: 1.7;">이번 주, 귀원의 초우량 고객을 완성할 차별화된 맞춤형 기획안 샘플과 파트너 독점 베네핏을 단 15분의 미팅으로 직접 확인해 보세요.</p>
     
     <div class="contact-container fade-up d-2">
       <div class="c-item">
