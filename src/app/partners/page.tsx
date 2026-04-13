@@ -1,26 +1,16 @@
-import HeroSection from "@/components/HeroSection";
-import CoreEngineSection from "@/components/CoreEngineSection";
-import TrackRecordSection from "@/components/TrackRecordSection";
-import PipelineSection from "@/components/PipelineSection";
-import EcosystemSection from "@/components/EcosystemSection";
-import WorkflowCTASection from "@/components/WorkflowCTASection";
+export const metadata = {
+  title: 'B2B Partnership | CRI Global',
+  description: 'Premium B2B Academic Infrastructure Partnership',
+};
 
-export default function Home() {
+export default function PartnersPage() {
   return (
-    <main className="w-full min-h-screen bg-deepNavy overflow-x-hidden pt-0 selection:bg-champagneGold selection:text-obsidianBlack">
-      <HeroSection />
-      <CoreEngineSection />
-      <TrackRecordSection />
-      <PipelineSection />
-      <EcosystemSection />
-      <WorkflowCTASection />
-      
-      {/* Footer */}
-      <footer className="w-full bg-obsidianBlack border-t border-white/5 py-8 text-center">
-        <p className="text-gray-600 text-sm font-sans tracking-widest">
-          © {new Date().getFullYear()} CRI GLOBAL. All Rights Reserved. Private B2B Partnership.
-        </p>
-      </footer>
-    </main>
+    <div className="fixed inset-0 z-[9999] bg-black">
+      <iframe
+        src="/partners-presentation.html"
+        className="w-full h-full border-none"
+        title="B2B Partnership Presentation"
+      />
+    </div>
   );
 }
