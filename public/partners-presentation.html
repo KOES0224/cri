@@ -100,6 +100,10 @@ body {
   -webkit-backdrop-filter: blur(25px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 1000;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fixed-nav.nav-hidden {
+  transform: translateY(-100%);
 }
 .nav-logo {
   font-size: 1.6rem;
@@ -116,11 +120,23 @@ body {
   padding: 0.7rem 1.6rem;
   border-radius: 30px;
   text-decoration: none;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .nav-cta:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(229, 195, 132, 0.3);
+}
+.nav-cta-outline {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border: 1px solid rgba(229, 195, 132, 0.5);
+}
+.nav-cta-outline:hover {
+  background: rgba(229, 195, 132, 0.1);
+  box-shadow: 0 4px 15px rgba(229, 195, 132, 0.2);
 }
 
 /* --- Slide 1: Cover --- */
@@ -231,7 +247,10 @@ body {
   <!-- Fixed Navbar -->
   <nav class="fixed-nav">
     <div class="nav-logo">CRI Global</div>
-    <a href="http://pf.kakao.com/_xhdzxln/chat" target="_blank" class="nav-cta">파트너십 문의</a>
+    <div style="display: flex; gap: 0.8rem;">
+      <a href="tel:02-6203-8999" class="nav-cta nav-cta-outline">전화 걸기</a>
+      <a href="http://pf.kakao.com/_xhdzxln/chat" target="_blank" class="nav-cta">파트너십 문의</a>
+    </div>
   </nav>
 
   <!-- Slide 1: Cover -->
@@ -278,7 +297,7 @@ body {
       <div class="glass-card fade-up d-3" style="padding: 2.5rem 1.5rem;">
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.8rem;">
           <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
-            <img src="https://mitsloan.mit.edu/sites/default/files/styles/profile_detail_headshot/public/profile-images/2026/02/22/profile-image-51591.png" onerror="this.src='https://ui-avatars.com/api/?name=Kit+Hickey&background=f3e5ab&color=050505'" style="width: 100%; height: 100%; object-fit: cover;" alt="Prof. Kit Hickey"/>
+            <img src="https://mitsloan.mit.edu/sites/default/files/styles/profile_detail_headshot/public/profile-images/2026/02/22/profile-image-51591.png.webp?h=7f412c8f&itok=K7NUFOQk" onerror="this.src='https://ui-avatars.com/api/?name=Kit+Hickey&background=f3e5ab&color=050505'" style="width: 100%; height: 100%; object-fit: cover;" alt="Prof. Kit Hickey"/>
           </div>
           <div class="card-eyebrow" style="margin-bottom: 0.5rem;">MIT</div>
           <h3 class="gradient-text" style="font-size: 1.4rem; margin: 0; line-height: 1.3;">Prof. Kit Hickey</h3>
@@ -487,6 +506,23 @@ body {
       }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
 
       document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+      // Scroll behavior for Navbar
+      const nav = document.querySelector('.fixed-nav');
+      let lastScrollY = document.body.scrollTop || document.documentElement.scrollTop;
+      
+      const handleScroll = (e) => {
+        const currentScrollY = e.target ? (e.target.scrollTop || window.scrollY || 0) : window.scrollY;
+        if (currentScrollY > lastScrollY && currentScrollY > 75) {
+          nav.classList.add('nav-hidden');
+        } else {
+          nav.classList.remove('nav-hidden');
+        }
+        lastScrollY = currentScrollY;
+      };
+
+      document.body.addEventListener('scroll', handleScroll);
+      window.addEventListener('scroll', handleScroll);
     });
   </script>
 </body>

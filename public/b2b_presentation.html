@@ -159,9 +159,67 @@ body {
 .c-item { display: flex; flex-direction: column; text-align: left; }
 .c-label { font-size: 0.95rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
 .c-value { font-size: 1.4rem; font-weight: 600; color: #fff;}
+.fine-footer { width: 100%; border-top: 1px solid rgba(255,255,255,0.05); padding: 1.5rem 0; font-size: 0.85rem; color: rgba(255,255,255,0.3); font-weight: 400; position: absolute; bottom: 0; left: 0; }
 .footer-logo { margin-top: 6rem; font-weight: 800; font-size: 1.6rem; letter-spacing: 0.15em; opacity: 0.5; }
 
+<style>
+/* --- Fixed Navbar --- */
+.fixed-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 75px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5vw;
+  background: rgba(5, 5, 5, 0.5);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 1000;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fixed-nav.nav-hidden {
+  transform: translateY(-100%);
+}
+.nav-logo {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #fff;
+  text-decoration: none;
+}
+.nav-cta {
+  background: var(--gold-gradient);
+  color: #050505;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.7rem 1.6rem;
+  border-radius: 30px;
+  text-decoration: none;
+  transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(229, 195, 132, 0.3);
+}
+.nav-cta-outline {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border: 1px solid rgba(229, 195, 132, 0.5);
+}
+.nav-cta-outline:hover {
+  background: rgba(229, 195, 132, 0.1);
+  box-shadow: 0 4px 15px rgba(229, 195, 132, 0.2);
+}
+
 @media (max-width: 1200px) {
+  .fixed-nav { padding: 0 1.5rem; }
   .hero-title { font-size: 3.5rem; }
   .card-grid { grid-template-columns: 1fr; gap: 2rem; }
   .fw-grid { grid-template-columns: 1fr; gap: 2rem;}
@@ -173,8 +231,17 @@ body {
 </head>
 <body>
 
+  <!-- Fixed Navbar -->
+  <nav class="fixed-nav">
+    <div class="nav-logo">CRI Global</div>
+    <div style="display: flex; gap: 0.8rem;">
+      <a href="tel:02-6203-8999" class="nav-cta nav-cta-outline">전화 걸기</a>
+      <a href="http://pf.kakao.com/_xhdzxln/chat" target="_blank" class="nav-cta">Contact</a>
+    </div>
+  </nav>
+
   <!-- Slide 1: Cover -->
-  <section class="slide slide-1">
+  <section class="slide slide-1" style="padding-top: 8rem;">
     <div class="hero-label fade-up">Elite Research Co., Ltd.</div>
     <h1 class="hero-title fade-up d-1">결과를 넘어,<br>세계적인 석학과 함께 증명하는<br><span class="gold-text">진정한 실력.</span></h1>
     <p class="hero-subtitle fade-up d-2">최상위권 VIP를 위한 가장 독보적인 아카데믹 인프라 파트너십.</p>
@@ -285,7 +352,7 @@ body {
       </div>
     </div>
 
-    <div class="footer-logo fade-up d-3">CRI. Elite Research Co., Ltd.</div>
+    <div class="fine-footer fade-up d-3">&copy; 2026 CRI Global. All rights reserved.</div>
   </section>
 
   <script>
@@ -299,6 +366,23 @@ body {
       }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
 
       document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+      // Scroll behavior for Navbar
+      const nav = document.querySelector('.fixed-nav');
+      let lastScrollY = document.body.scrollTop || document.documentElement.scrollTop;
+      
+      const handleScroll = (e) => {
+        const currentScrollY = e.target ? (e.target.scrollTop || window.scrollY || 0) : window.scrollY;
+        if (currentScrollY > lastScrollY && currentScrollY > 75) {
+          nav.classList.add('nav-hidden');
+        } else {
+          nav.classList.remove('nav-hidden');
+        }
+        lastScrollY = currentScrollY;
+      };
+
+      document.body.addEventListener('scroll', handleScroll);
+      window.addEventListener('scroll', handleScroll);
     });
   </script>
 </body>

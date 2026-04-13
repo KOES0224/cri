@@ -81,9 +81,9 @@ export default function WorkflowCTASection() {
             </div>
 
             <p className="text-gray-300 text-base md:text-lg leading-relaxed mt-8 mb-12 max-w-md">
-              "원장님은 <span className="text-white font-bold">'입시 기획'</span>에, <br/>
-              CRI는 <span className="text-white font-bold">'학술 증거 생산'</span>에 집중합니다.<br/><br/>
-              철저한 역할 분담을 통해 귀원만의 <br/>독점적인 아카데믹 포트폴리오를 완성하십시오."
+              &quot;원장님은 <span className="text-white font-bold">&apos;입시 기획&apos;</span>에, <br/>
+              CRI는 <span className="text-white font-bold">&apos;학술 증거 생산&apos;</span>에 집중합니다.<br/><br/>
+              철저한 역할 분담을 통해 귀원만의 <br/>독점적인 아카데믹 포트폴리오를 완성하십시오.&quot;
             </p>
 
             {/* Kakao CTA Button */}
