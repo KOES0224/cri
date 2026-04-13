@@ -84,12 +84,52 @@ body {
   color: var(--accent-color);
 }
 
+/* --- Fixed Navbar --- */
+.fixed-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 75px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5vw;
+  background: rgba(5, 5, 5, 0.5);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 1000;
+}
+.nav-logo {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #fff;
+  text-decoration: none;
+}
+.nav-cta {
+  background: var(--gold-gradient);
+  color: #050505;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.7rem 1.6rem;
+  border-radius: 30px;
+  text-decoration: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.nav-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(229, 195, 132, 0.3);
+}
+
 /* --- Slide 1: Cover --- */
 .slide-1 {
   background: radial-gradient(circle at 50% 0%, rgba(15, 22, 35, 0.8), #000000 80%), url('/university_bg.png') center/cover no-repeat;
   background-attachment: fixed;
   align-items: center;
   text-align: center;
+  padding-top: 8rem; /* Offset for navbar */
 }
 .hero-label { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.15em; color: var(--text-secondary); margin-bottom: 2.5rem; text-transform: uppercase; }
 .hero-title { font-size: 4.8rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.25; margin: 0 0 1.5rem 0; text-shadow: 0 4px 25px rgba(0,0,0,0.8); }
@@ -159,7 +199,6 @@ body {
 .vs-legacy .vs-list li::before { content: '×'; margin-right: 18px; color: #ff8888; font-weight: 800; font-size: 1.5rem; line-height: 1; margin-top: 0.1rem;}
 .vs-cri .vs-list li::before { content: '✓'; margin-right: 18px; color: var(--accent-color); font-weight: 800; font-size: 1.4rem; line-height: 1.1; margin-top: 0.1rem;}
 
-
 /* --- Slide 5: Workflow --- */
 .slide-4 { background: var(--bg-color); }
 .wf-container { display: flex; flex-direction: column; width: 100%; max-width: 1200px; gap: 3.5rem; }
@@ -167,26 +206,17 @@ body {
 .wf-step { padding: 3rem 2.5rem; background: var(--bg-secondary); border-radius: 28px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
 .wf-step h5 { font-size: 1.6rem; margin: 0 0 1.5rem 0; font-weight: 800; color: #fff;}
 .wf-step p { font-size: 1.15rem; color: rgba(255,255,255,0.85); line-height: 1.7; margin: 0; word-break: keep-all; font-weight: 400;}
-.guarantee-box { 
-  background: linear-gradient(135deg, rgba(229, 195, 132, 0.15), rgba(0,0,0,0.8)); 
-  border: 1px solid rgba(229, 195, 132, 0.25); 
-  border-radius: 28px; 
-  padding: 3.5rem; 
-  display: flex; gap: 2.5rem; align-items: center; 
-}
-.g-icon { font-size: 3.5rem; line-height: 1; background: var(--gold-gradient); -webkit-background-clip: text; color: transparent; }
-.g-content h4 { font-size: 1.8rem; margin: 0 0 1rem 0; font-weight: 800; color: var(--accent-color); }
-.g-content p { font-size: 1.2rem; line-height: 1.7; color: rgba(255,255,255,0.95); margin: 0; font-weight: 400; word-break: keep-all; }
 
 /* --- Slide 6: Contact --- */
 .slide-5 { background: radial-gradient(circle at center, rgba(30,30,45,0.6), var(--bg-color) 70%); text-align: center; }
-.contact-container { margin-top: 2rem; display: inline-flex; gap: 5rem; padding: 3rem 5rem; background: rgba(255,255,255,0.06); border-radius: 100px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(25px); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
+.contact-container { margin-top: 2rem; display: inline-flex; gap: 5rem; padding: 3rem 5rem; background: rgba(255,255,255,0.06); border-radius: 100px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(25px); box-shadow: 0 15px 40px rgba(0,0,0,0.4); margin-bottom: 6rem; }
 .c-item { display: flex; flex-direction: column; text-align: left; }
 .c-label { font-size: 0.95rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
 .c-value { font-size: 1.4rem; font-weight: 600; color: #fff;}
-.footer-logo { margin-top: 6rem; font-weight: 800; font-size: 1.6rem; letter-spacing: 0.15em; opacity: 0.5; }
+.fine-footer { width: 100%; border-top: 1px solid rgba(255,255,255,0.05); padding: 1.5rem 0; font-size: 0.85rem; color: rgba(255,255,255,0.3); font-weight: 400; position: absolute; bottom: 0; left: 0; }
 
 @media (max-width: 1200px) {
+  .fixed-nav { padding: 0 1.5rem; }
   .section-title { font-size: 3.2rem; }
   .hero-title { font-size: 3.5rem; }
   .card-grid, .fw-grid, .wf-steps, .vs-grid { grid-template-columns: 1fr; gap: 2.5rem; }
@@ -197,6 +227,12 @@ body {
 </style>
 </head>
 <body>
+
+  <!-- Fixed Navbar -->
+  <nav class="fixed-nav">
+    <div class="nav-logo">CRI Global</div>
+    <a href="http://pf.kakao.com/_xhdzxln/chat" target="_blank" class="nav-cta">파트너십 문의</a>
+  </nav>
 
   <!-- Slide 1: Cover -->
   <section class="slide slide-1">
@@ -437,7 +473,7 @@ body {
       </div>
     </div>
 
-    <div class="footer-logo fade-up d-3">CRI. Elite Research 상표권 보호.</div>
+    <div class="fine-footer fade-up d-3">&copy; 2026 CRI Global. All rights reserved.</div>
   </section>
 
   <script>
