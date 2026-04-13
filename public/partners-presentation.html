@@ -126,13 +126,13 @@ body {
 /* --- Reference Quote Box --- */
 .ref-quote-box {
   background: rgba(255,255,255,0.04); 
-  padding: 1.2rem; 
-  border-radius: 12px; 
-  margin-bottom: 1.5rem; 
-  border-left: 3px solid var(--accent-color);
+  padding: 1.5rem; 
+  border-radius: 16px; 
+  margin-bottom: 2rem; 
+  border-left: 4px solid var(--accent-color);
 }
-.ref-quote-box strong { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem; display: block; }
-.ref-quote-box p { font-size: 1.05rem; font-style: italic; color: #fff; margin:0; line-height: 1.5; }
+.ref-quote-box strong { color: rgba(255,255,255,0.7); font-size: 0.95rem; margin-bottom: 0.8rem; display: block; font-weight: 600; }
+.ref-quote-box p { font-size: 1.1rem; font-style: italic; color: #fff; margin:0; line-height: 1.6; word-break: keep-all; }
 
 /* --- Slide 3: Framework --- */
 .slide-3 { background: radial-gradient(circle at bottom center, rgba(40,30,15,0.4), var(--bg-color) 70%); }
@@ -140,24 +140,24 @@ body {
 .fw-item { background: rgba(255,255,255,0.03); padding: 3rem; border-left: 2px solid var(--glass-border); border-radius: 20px; display: flex; flex-direction: column; justify-content: center; transition: border-color 0.3s; }
 .fw-item:hover { border-left-color: var(--accent-color); background: rgba(255,255,255,0.05); }
 .fw-num { font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 1.2rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-.fw-title { font-size: 1.8rem; font-weight: 800; margin: 0 0 1.2rem 0; color: #ffffff; }
-.fw-desc { font-size: 1.15rem; line-height: 1.7; color: rgba(255,255,255,0.85); font-weight: 400; word-break: keep-all; }
-.fw-milestone { background: rgba(229, 195, 132, 0.1); border-radius: 28px; border: 1px solid rgba(229, 195, 132, 0.3); padding: 4rem 3rem; text-align: center; box-shadow: 0 10px 40px rgba(229, 195, 132, 0.1); }
+.fw-title { font-size: 1.8rem; font-weight: 800; margin: 0 0 1.5rem 0; color: #ffffff; line-height: 1.3;}
+.fw-desc { font-size: 1.15rem; line-height: 1.8; color: rgba(255,255,255,0.85); font-weight: 400; word-break: keep-all; }
+.fw-milestone { background: rgba(229, 195, 132, 0.1); border-radius: 28px; border: 1px solid rgba(229, 195, 132, 0.3); padding: 4rem 3rem; display: flex; flex-direction: column; justify-content: center; text-align: center; box-shadow: 0 10px 40px rgba(229, 195, 132, 0.1); }
 .fw-milestone .fw-title { color: var(--accent-color); font-size: 2.2rem; }
 .fw-milestone:hover { border-color: rgba(229, 195, 132, 0.5); box-shadow: 0 15px 50px rgba(229, 195, 132, 0.15); }
 
 /* --- Slide 4: VS Grid --- */
 .vs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; width: 100%; max-width: 1200px; margin-bottom: 2rem; }
-.vs-col { padding: 3.5rem 3rem; border-radius: 28px; }
+.vs-col { padding: 4rem 3.5rem; border-radius: 28px; }
 .vs-legacy { background: rgba(255, 80, 80, 0.05); border: 1px solid rgba(255, 80, 80, 0.2); position: relative; }
-.vs-cri { background: linear-gradient(135deg, rgba(229, 195, 132, 0.15), rgba(0,0,0,0.8)); border: 1px solid var(--accent-color); box-shadow: 0 10px 40px rgba(229, 195, 132, 0.15); transform: scale(1.05); z-index: 2; position: relative; }
-.vs-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 2.5rem; text-align: center; letter-spacing: -0.02em; }
+.vs-cri { background: linear-gradient(135deg, rgba(229, 195, 132, 0.15), rgba(0,0,0,0.8)); border: 1px solid rgba(229, 195, 132, 0.4); box-shadow: 0 10px 40px rgba(229, 195, 132, 0.15); transform: scale(1.05); z-index: 2; position: relative; }
+.vs-title { font-size: 2rem; font-weight: 800; margin-bottom: 3rem; text-align: center; letter-spacing: -0.02em; }
 .vs-legacy .vs-title { color: #ff8888; }
-.vs-cri .vs-title { color: var(--accent-color); font-size: 2.2rem; }
+.vs-cri .vs-title { color: var(--accent-color); font-size: 2.4rem; }
 .vs-list { list-style: none; padding: 0; margin: 0; }
-.vs-list li { margin-bottom: 1.5rem; font-size: 1.15rem; line-height: 1.6; display: flex; align-items: flex-start; color: rgba(255,255,255,0.9); word-break: keep-all; font-weight: 400;}
-.vs-legacy .vs-list li::before { content: '×'; margin-right: 15px; color: #ff8888; font-weight: 800; font-size: 1.4rem; line-height: 1; }
-.vs-cri .vs-list li::before { content: '✓'; margin-right: 15px; color: var(--accent-color); font-weight: 800; font-size: 1.2rem; line-height: 1.2;}
+.vs-list li { margin-bottom: 2rem; font-size: 1.2rem; line-height: 1.7; display: flex; align-items: flex-start; color: rgba(255,255,255,0.9); word-break: keep-all; font-weight: 400;}
+.vs-legacy .vs-list li::before { content: '×'; margin-right: 18px; color: #ff8888; font-weight: 800; font-size: 1.5rem; line-height: 1; margin-top: 0.1rem;}
+.vs-cri .vs-list li::before { content: '✓'; margin-right: 18px; color: var(--accent-color); font-weight: 800; font-size: 1.4rem; line-height: 1.1; margin-top: 0.1rem;}
 
 
 /* --- Slide 5: Workflow --- */
@@ -165,8 +165,8 @@ body {
 .wf-container { display: flex; flex-direction: column; width: 100%; max-width: 1200px; gap: 3.5rem; }
 .wf-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
 .wf-step { padding: 3rem 2.5rem; background: var(--bg-secondary); border-radius: 28px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
-.wf-step h5 { font-size: 1.5rem; margin: 0 0 1.2rem 0; font-weight: 800; color: #fff;}
-.wf-step p { font-size: 1.1rem; color: rgba(255,255,255,0.85); line-height: 1.6; margin: 0; word-break: keep-all; font-weight: 400;}
+.wf-step h5 { font-size: 1.6rem; margin: 0 0 1.5rem 0; font-weight: 800; color: #fff;}
+.wf-step p { font-size: 1.15rem; color: rgba(255,255,255,0.85); line-height: 1.7; margin: 0; word-break: keep-all; font-weight: 400;}
 .guarantee-box { 
   background: linear-gradient(135deg, rgba(229, 195, 132, 0.15), rgba(0,0,0,0.8)); 
   border: 1px solid rgba(229, 195, 132, 0.25); 
@@ -187,8 +187,9 @@ body {
 .footer-logo { margin-top: 6rem; font-weight: 800; font-size: 1.6rem; letter-spacing: 0.15em; opacity: 0.5; }
 
 @media (max-width: 1200px) {
+  .section-title { font-size: 3.2rem; }
   .hero-title { font-size: 3.5rem; }
-  .card-grid, .fw-grid, .wf-steps, .vs-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .card-grid, .fw-grid, .wf-steps, .vs-grid { grid-template-columns: 1fr; gap: 2.5rem; }
   .vs-cri { transform: scale(1); }
   .contact-container { flex-direction: column; border-radius: 30px; gap: 2.5rem; text-align: center; padding: 3rem;}
   .c-item { text-align: center; }
@@ -200,8 +201,8 @@ body {
   <!-- Slide 1: Cover -->
   <section class="slide slide-1">
     <div class="hero-label fade-up">'진짜 연구'가 만드는 압도적 격차</div>
-    <h1 class="hero-title fade-up d-1">결과를 넘어,<br>세계적인 교수와 함께 증명하는<br><span class="gold-text">진정한 실력.</span></h1>
-    <p class="hero-subtitle fade-up d-2">가장 독보적인 프리미엄 아카데믹 인프라 파트너십.</p>
+    <h1 class="hero-title fade-up d-1" style="word-break: keep-all;">결과를 넘어,<br>세계적인 교수와 함께 증명하는<br><span class="gold-text">진정한 실력.</span></h1>
+    <p class="hero-subtitle fade-up d-2" style="word-break: keep-all;">가장 독보적인 프리미엄 아카데믹 인프라 파트너십.</p>
     
     <ul class="hero-points fade-up d-3">
       <li><strong class="gold-highlight">250+</strong> Ivy League Tenured Professors</li>
@@ -213,134 +214,158 @@ body {
   <!-- Slide 2: Faculty -->
   <section class="slide slide-2">
     <h2 class="section-title fade-up">압도적인 교수진.</h2>
-    <p class="section-subtitle fade-up d-1">'진짜 연구'가 만드는 최고 수준의 아카데믹 인프라.</p>
+    <p class="section-subtitle fade-up d-1" style="word-break: keep-all;">'진짜 연구'가 만드는 최고 수준의 아카데믹 인프라.</p>
     
     <div class="card-grid" style="grid-template-columns: repeat(4, 1fr);">
       <div class="glass-card fade-up d-1" style="padding: 2.5rem 1.5rem;">
-        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.2rem;">
-          <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.8rem;">
+          <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
             <img src="https://kuneslab.hsites.harvard.edu/sites/g/files/omnuum7446/files/styles/hwp_4_5__480x600/public/kuneslab/files/sam_kunes.rh_2-6-2-11.jpg" onerror="this.src='https://ui-avatars.com/api/?name=Sam+Kunes&background=f3e5ab&color=050505'" style="width: 100%; height: 100%; object-fit: cover;" alt="Prof. Sam Kunes"/>
           </div>
           <div class="card-eyebrow" style="margin-bottom: 0.5rem;">Harvard Univ.</div>
-          <h3 class="gradient-text" style="font-size: 1.4rem; margin: 0;">Prof. Sam Kunes</h3>
+          <h3 class="gradient-text" style="font-size: 1.4rem; margin: 0; line-height: 1.3;">Prof. Sam Kunes</h3>
         </div>
-        <p style="font-size: 1rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.2rem;"><strong class="gold-highlight">Bio & Pre-Med</strong><br>의료 및 바이오 저널 컨설팅과 임상 기전 연구 전담.</p>
+        <p style="font-size: 1.05rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; line-height: 1.6; word-break: keep-all;"><strong class="gold-highlight">Bio & Pre-Med</strong><br><br>의료 및 바이오 저널 컨설팅과<br>임상 기전 연구 전담.</p>
       </div>
 
       <div class="glass-card fade-up d-2" style="padding: 2.5rem 1.5rem;">
-        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.2rem;">
-          <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.8rem;">
+          <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
             <img src="https://www.haifeng-xu.com/files/haifeng.png" onerror="this.src='https://ui-avatars.com/api/?name=Haifeng+Xu&background=f3e5ab&color=050505'" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" alt="Prof. Haifeng Xu"/>
           </div>
           <div class="card-eyebrow" style="margin-bottom: 0.5rem;">Univ. of Chicago</div>
-          <h3 class="gradient-text" style="font-size: 1.4rem; margin: 0;">Prof. Haifeng Xu</h3>
+          <h3 class="gradient-text" style="font-size: 1.4rem; margin: 0; line-height: 1.3;">Prof. Haifeng Xu</h3>
         </div>
-        <p style="font-size: 1rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.2rem;"><strong class="gold-highlight">AI & Economics</strong><br>인공지능, 데이터 사이언스와 통계 분석 융합 연구 대응.</p>
+        <p style="font-size: 1.05rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; line-height: 1.6; word-break: keep-all;"><strong class="gold-highlight">AI & Economics</strong><br><br>인공지능, 데이터 사이언스와<br>통계 분석 융합 연구 대응.</p>
       </div>
 
       <div class="glass-card fade-up d-3" style="padding: 2.5rem 1.5rem;">
-        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.2rem;">
-          <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.8rem;">
+          <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
             <img src="https://mitsloan.mit.edu/sites/default/files/styles/profile_detail_headshot/public/profile-images/2026/02/22/profile-image-51591.png" onerror="this.src='https://ui-avatars.com/api/?name=Kit+Hickey&background=f3e5ab&color=050505'" style="width: 100%; height: 100%; object-fit: cover;" alt="Prof. Kit Hickey"/>
           </div>
           <div class="card-eyebrow" style="margin-bottom: 0.5rem;">MIT</div>
-          <h3 class="gradient-text" style="font-size: 1.4rem; margin: 0;">Prof. Kit Hickey</h3>
+          <h3 class="gradient-text" style="font-size: 1.4rem; margin: 0; line-height: 1.3;">Prof. Kit Hickey</h3>
         </div>
-        <p style="font-size: 1rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.2rem;"><strong class="gold-highlight">Business & Ent.</strong><br>경영 모델링 및 실물 경제 기반 테크 연구 프로젝트 주도.</p>
+        <p style="font-size: 1.05rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; line-height: 1.6; word-break: keep-all;"><strong class="gold-highlight">Business & Ent.</strong><br><br>경영 모델링 및 실물 경제 기반<br>테크 연구 프로젝트 주도.</p>
       </div>
 
       <div class="glass-card fade-up d-4" style="padding: 2.5rem 1.5rem;">
-        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.2rem;">
-          <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.8rem;">
+          <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
             <img src="https://www.psy.ox.ac.uk/people/robin-murphy/@@images/image" onerror="this.src='https://ui-avatars.com/api/?name=Robin+Murphy&background=f3e5ab&color=050505'" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" alt="Prof. Robin Murphy"/>
           </div>
           <div class="card-eyebrow" style="margin-bottom: 0.5rem;">Oxford Univ.</div>
-          <h3 class="gradient-text" style="font-size: 1.4rem; margin: 0;">Prof. Robin Murphy</h3>
+          <h3 class="gradient-text" style="font-size: 1.4rem; margin: 0; line-height: 1.3;">Prof. Robin Murphy</h3>
         </div>
-        <p style="font-size: 1rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.2rem;"><strong class="gold-highlight">Psychology</strong><br>데이터 기반의 실증적 심리학 및 사회과학 연구 컨설팅.</p>
+        <p style="font-size: 1.05rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; line-height: 1.6; word-break: keep-all;"><strong class="gold-highlight">Psychology</strong><br><br>데이터 기반의 실증적 심리학 및<br>사회과학 연구 컨설팅.</p>
       </div>
     </div>
   </section>
 
-  <!-- Slide 3: References (Verbatim from User) -->
+  <!-- Slide 3: References (Verbatim from User with Perfect Typography) -->
   <section class="slide slide-3" style="background: radial-gradient(circle at bottom center, rgba(10,20,30,0.8), var(--bg-color) 70%);">
-    <h2 class="section-title fade-up">단순한 기획을 넘어,<br>구축해 낸 2026 실제 레퍼런스</h2>
-    <p class="section-subtitle fade-up d-1" style="margin-bottom: 3.5rem;">가장 완벽히 증명된 최상위권 아카데믹 결과물입니다.</p>
+    <h2 class="section-title fade-up" style="line-height: 1.25; word-break: keep-all;">단순한 기획을 넘어,<br>구축해 낸 2026 실제 레퍼런스</h2>
+    <p class="section-subtitle fade-up d-1" style="margin-bottom: 3.5rem; word-break: keep-all;">가장 완벽히 증명된 최상위권 아카데믹 결과물입니다.</p>
     
     <div class="card-grid" style="grid-template-columns: repeat(3, 1fr);">
+      
       <!-- Ref 1 -->
-      <div class="glass-card fade-up d-1" style="padding: 3rem 2.5rem;">
+      <div class="glass-card fade-up d-1" style="padding: 3rem 2.5rem; display: flex; flex-direction: column;">
         <div class="card-eyebrow">스탠포드 & 옥스포드 합격</div>
-        <h3 class="gradient-text" style="font-size: 1.5rem; margin-bottom: 1.5rem;">비시민권자, 제주 NLCS</h3>
+        <h3 class="gradient-text" style="font-size: 1.55rem; margin-bottom: 2rem; line-height: 1.4; word-break: keep-all;">비시민권자,<br>제주 NLCS</h3>
         
         <div class="ref-quote-box">
           <strong>[기존 한계] 막연한 관심사</strong>
-          <p>“심리학이나 뇌과학 쪽에 관심은 있는데 아직 전공은 못 정했어요.”</p>
+          <p>“심리학이나 뇌과학 쪽에 관심은 있는데<br>아직 전공은 못 정했어요.”</p>
         </div>
-        <p style="line-height: 1.7;"><strong class="gold-highlight">[Oxford 인지심리학 Robin Murphy 교수의 학술 설계]</strong> ➔ 막연한 관심을 '통제된 심리 실험'으로 구체화. '눈물이 무기력함 인지와 사회적 지원 행동을 유발하는 기전'을 통계적으로 입증한 실증 논문 도출.</p>
+        
+        <div style="margin-top: auto; padding-top: 0.5rem;">
+          <strong class="gold-highlight" style="display: block; margin-bottom: 1.2rem; font-size: 1.1rem; line-height: 1.5; word-break: keep-all;">[Oxford 인지심리학 Robin Murphy 교수의 학술 설계]</strong>
+          <p style="line-height: 1.7; font-size: 1.05rem; word-break: keep-all;">➔ 막연한 관심을 <strong style="color:#ffffff;">'통제된 심리 실험'</strong>으로 구체화.<br><br>'눈물이 무기력함 인지와 사회적 지원 행동을 유발하는 기전'을 통계적으로 입증한 <strong style="color:#fff;">실증 논문 도출.</strong></p>
+        </div>
       </div>
 
       <!-- Ref 2 -->
-      <div class="glass-card fade-up d-2" style="padding: 3rem 2.5rem;">
+      <div class="glass-card fade-up d-2" style="padding: 3rem 2.5rem; display: flex; flex-direction: column;">
         <div class="card-eyebrow">하버드 바이오 전액 장학생</div>
-        <h3 class="gradient-text" style="font-size: 1.5rem; margin-bottom: 1.5rem;">스토리만 있음</h3>
+        <h3 class="gradient-text" style="font-size: 1.55rem; margin-bottom: 2rem; line-height: 1.4; word-break: keep-all;">스토리만 있음</h3>
         
         <div class="ref-quote-box">
           <strong>[기존 한계] 스토리만 있음</strong>
-          <p>“의대 지망생이고 가족 병력 스토리는 에세이로 기획했는데, 학술적으로 증명할 스펙이 없네요.”</p>
+          <p>“의대 지망생이고 가족 병력 스토리는 에세이로 기획했는데,<br>학술적으로 증명할 스펙이 없네요.”</p>
         </div>
-        <p style="line-height: 1.7;"><strong class="gold-highlight">[UCSF Jason Sello 교수의 실물 자산 구축]</strong> ➔ 랩실이 없어도 가능한 최고 수준의 'In-silico(컴퓨터 시뮬레이션 기반) 연구'로 전환. 에세이를 완벽히 증명하는 '자폐 스펙트럼(ASD) 치료제 재창출 분자 기전도' 학술 증거 구축.</p>
+        
+        <div style="margin-top: auto; padding-top: 0.5rem;">
+          <strong class="gold-highlight" style="display: block; margin-bottom: 1.2rem; font-size: 1.1rem; line-height: 1.5; word-break: keep-all;">[UCSF Jason Sello 교수의 실물 자산 구축]</strong>
+          <p style="line-height: 1.7; font-size: 1.05rem; word-break: keep-all;">➔ 랩실이 없어도 가능한 최고 수준의 <strong style="color:#ffffff;">'In-silico(컴퓨터 시뮬레이션 기반) 연구'</strong>로 전환.<br><br>에세이를 완벽히 증명하는 '자폐 스펙트럼(ASD) 치료제 재창출 분자 기전도' <strong style="color:#fff;">학술 증거 구축.</strong></p>
+        </div>
       </div>
 
       <!-- Ref 3 -->
-      <div class="glass-card fade-up d-3" style="padding: 3rem 2.5rem;">
+      <div class="glass-card fade-up d-3" style="padding: 3rem 2.5rem; display: flex; flex-direction: column;">
         <div class="card-eyebrow">ISEF 국가대표 진출</div>
-        <h3 class="gradient-text" style="font-size: 1.5rem; margin-bottom: 1.5rem;">융합 무기 부재</h3>
+        <h3 class="gradient-text" style="font-size: 1.55rem; margin-bottom: 2rem; line-height: 1.4; word-break: keep-all;">융합 무기 부재</h3>
         
         <div class="ref-quote-box">
           <strong>[기존 한계] 융합 무기 부재</strong>
-          <p>“KSEF 대회를 몇번 나갔는데 은상이 최대였어요. 진짜 대회에서 수상할 주제로 대회를 준비하고 싶어요.”</p>
+          <p>“KSEF 대회를 몇번 나갔는데 은상이 최대였어요.<br>진짜 대회에서 수상할 주제로 대회를 준비하고 싶어요.”</p>
         </div>
-        <p style="line-height: 1.7;"><strong class="gold-highlight">[영국 Durham 대학교 우주론 연구원의 로직 이식]</strong> ➔ 단순 코딩을 '천체물리학'과 결합하여 '슈퍼컴퓨터 데이터를 활용한 초기 우주 은하 예측 AI 알고리즘'이라는 융합 연구 결과 도출.</p>
+        
+        <div style="margin-top: auto; padding-top: 0.5rem;">
+          <strong class="gold-highlight" style="display: block; margin-bottom: 1.2rem; font-size: 1.1rem; line-height: 1.5; word-break: keep-all;">[영국 Durham 대학교 우주론 연구원의 로직 이식]</strong>
+          <p style="line-height: 1.7; font-size: 1.05rem; word-break: keep-all;">➔ 단순 코딩을 <strong style="color:#ffffff;">'천체물리학'</strong>과 결합하여,<br><br>'슈퍼컴퓨터 데이터를 활용한 초기 우주 은하 예측 AI 알고리즘'이라는 <strong style="color:#fff;">융합 연구 결과 도출.</strong></p>
+        </div>
       </div>
+
     </div>
   </section>
 
   <!-- Slide 4: Management System -->
   <section class="slide slide-3">
-    <h2 class="section-title fade-up">완주율 99.2%<br>차별화된 관리 시스템</h2>
-    <p class="section-subtitle fade-up d-1">학생의 역량 부족이나 이탈을 원천 차단하는 시스템</p>
+    <h2 class="section-title fade-up" style="line-height: 1.25; margin-bottom: 1.5rem; word-break: keep-all;">완주율 99.2%<br>차별화된 관리 시스템</h2>
+    <p class="section-subtitle fade-up d-1" style="word-break: keep-all;">학생의 역량 부족이나 이탈을 원천 차단하는 시스템</p>
     
     <div class="fw-grid">
       <div class="fw-item fade-up d-1">
         <div class="fw-num">Step 1</div>
-        <h4 class="fw-title">아이비리그 교수진</h4>
-        <p class="fw-desc" style="font-size: 1.05rem;"><strong class="gold-highlight">역할:</strong> 하이엔드 아카데믹 로직 및 연구 주제 설계<br><br><strong class="gold-highlight">디테일:</strong> 원장님의 초기 기획을 바탕으로, 연구 가설과 학술적 프레임워크를 교수님이 직접 1:1로 세팅합니다.</p>
+        <h4 class="fw-title" style="margin-bottom: 1.8rem;">아이비리그 교수진</h4>
+        <p class="fw-desc" style="font-size: 1.1rem;"><strong class="gold-highlight">역할:</strong> 하이엔드 아카데믹 로직 및 연구 주제 설계<br><br><br><strong class="gold-highlight">디테일:</strong> 원장님의 초기 기획을 바탕으로,<br>연구 가설과 학술적 프레임워크를<br>교수님이 직접 1:1로 세팅합니다.</p>
       </div>
+      
       <div class="fw-milestone fade-up d-2" style="padding: 3rem;">
          <div class="fw-num">Step 2</div>
-         <h4 class="fw-title" style="font-size: 1.8rem;">명문대 석/박사 전담 TA</h4>
-         <p class="fw-desc" style="color:#ffffff; font-weight:400; font-size:1.1rem; margin-top:1.5rem; line-height: 1.7; word-break: keep-all;"><strong style="color:var(--text-secondary);">역할: </strong>데이터 분석, 코딩, 실험 등 실무 밀착 튜터링<br><br><strong class="strong-highlight">디테일: </strong>전담 TA가 학생의 부족한 기술적 역량을 1:1로 가르치며, 논문 작성법 등을 직접 지도합니다.</p>
+         <h4 class="fw-title" style="font-size: 2rem; margin-bottom: 1.8rem; word-break: keep-all;">명문대 석/박사 전담 TA</h4>
+         <p class="fw-desc" style="color:#ffffff; font-weight:400; font-size:1.15rem; line-height: 1.8; word-break: keep-all;">
+           <strong style="color:var(--text-secondary);">역할: </strong>데이터 분석, 코딩, 실험 등<br>실무 밀착 튜터링<br><br><br>
+           <strong class="strong-highlight">디테일: </strong>전담 TA가 학생의 부족한 기술적 역량을<br>1:1로 밀착 튜터링하여 가르치며,<br>논문 작성법 등을 직접 지도합니다.
+         </p>
       </div>
+
       <div class="fw-item fade-up d-3">
         <div class="fw-num">Step 3</div>
-        <h4 class="fw-title" style="font-size: 1.5rem;">전담 아카데믹 코디네이터</h4>
-        <p class="fw-desc" style="font-size: 1.05rem;"><strong class="gold-highlight">역할:</strong> 데드라인 통제, 멘탈 케어 및 리포팅<br><br><strong class="gold-highlight">디테일:</strong> 중간에 개입하실 필요가 없습니다. 철저한 일정 관리와 멘탈 케어로 학생의 이탈을 방어하며, 상담용 리포트만 깔끔하게 제공드립니다.</p>
+        <h4 class="fw-title" style="font-size: 1.6rem; margin-bottom: 1.8rem; word-break: keep-all;">전담 아카데믹 코디네이터</h4>
+        <p class="fw-desc" style="font-size: 1.1rem;"><strong class="gold-highlight">역할:</strong> 데드라인 통제, 멘탈 케어 및 리포팅<br><br><br><strong class="gold-highlight">디테일:</strong> 원장님이 중간에 개입하실 필요가 없습니다.<br>철저한 일정 관리와 멘탈 케어로 이탈을 방어하며,<br>상담용 리포트만 깔끔하게 제공합니다.</p>
       </div>
     </div>
   </section>
 
   <!-- Slide 5: Comparison (VS Grid) -->
   <section class="slide slide-2" style="background: radial-gradient(circle at center, rgba(20,20,35,0.8), var(--bg-color) 70%);">
-    <h2 class="section-title fade-up">흔한 한 명이 될것인가<br>압도적 한 명이 될것인가</h2>
-    <p class="section-subtitle fade-up d-1">기존 캠프의 시공간적 한계를 파괴</p>
+    <h2 class="section-title fade-up" style="line-height: 1.25; word-break: keep-all;">흔한 한 명이 될것인가<br>압도적 한 명이 될것인가</h2>
+    <p class="section-subtitle fade-up d-1" style="margin-bottom: 4rem; word-break: keep-all;">기존 캠프의 시공간적 한계를 파괴</p>
     
     <div class="vs-grid">
       <!-- Legacy Column -->
       <div class="vs-col vs-legacy fade-up d-2">
-        <h3 class="vs-title">기존 썸머 캠프</h3>
+        <h3 class="vs-title" style="margin-bottom: 3rem;">기존 썸머 캠프</h3>
         <ul class="vs-list">
-          <li>방학 중 미국 출국 필수 → SAT/AP 학원 스케줄 단절 및 리스크 발생</li>
+          <li>
+            <div>
+              <strong style="display: block; margin-bottom: 0.5rem; color: #ffadad;">방학 중 미국 출국 필수</strong>
+              <span style="font-size: 1.05rem;">SAT/AP 학원 스케줄 단절 및 리스크 발생</span>
+            </div>
+          </li>
           <li>수십명과 함께 듣고 끝나는 1회성 참가</li>
           <li>캠프 종료와 함께 교수와 관계 단절</li>
         </ul>
@@ -348,11 +373,21 @@ body {
 
       <!-- CRI Column -->
       <div class="vs-col vs-cri fade-up d-3">
-        <div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:var(--gold-gradient); color:#000; padding:0.4rem 1.5rem; border-radius:20px; font-weight:800; font-size:0.9rem; letter-spacing:0.05em;">CRI</div>
-        <h3 class="vs-title" style="margin-top: 1rem;">CRI 아카데믹스</h3>
+        <div style="position:absolute; top:-16px; left:50%; transform:translateX(-50%); background:var(--gold-gradient); color:#000; padding:0.5rem 1.8rem; border-radius:30px; font-weight:800; font-size:1rem; letter-spacing:0.05em; box-shadow: 0 5px 15px rgba(229, 195, 132, 0.3);">CRI</div>
+        <h3 class="vs-title" style="margin-top: 1rem; margin-bottom: 3rem;">CRI 아카데믹스</h3>
         <ul class="vs-list">
-          <li>교수의 직접 방한 → SAT/AP 시험 준비와 EC의 완벽한 병행</li>
-          <li>논문 출판은 기본, 교수가 운영하는 실제 기업 인턴십 및 대회 참가로 이어지는 무한한 스펙 연쇄</li>
+          <li>
+            <div>
+              <strong style="display: block; margin-bottom: 0.5rem; color: #fff;">교수의 직접 방한</strong>
+              <span style="font-size: 1.05rem;">SAT/AP 시험 준비와 EC의 완벽한 병행</span>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong style="display: block; margin-bottom: 0.5rem; color: #fff;">무한한 스펙 연쇄</strong>
+              <span style="font-size: 1.05rem;">논문 출판은 기본, 교수가 운영하는 실제 기업 인턴십 및 대회 참가로 이어짐</span>
+            </div>
+          </li>
           <li>대학 지원 시 교수의 개인적인 추천서</li>
         </ul>
       </div>
@@ -361,22 +396,22 @@ body {
 
   <!-- Slide 6: Workflow -->
   <section class="slide slide-4">
-    <h2 class="section-title fade-up" style="font-size: 3rem;">학생들을 위한 맞춤형 연구 기획안 무상 제공</h2>
-    <p class="section-subtitle fade-up d-1">가장 안정적이고 강력한 B2B Workflow</p>
+    <h2 class="section-title fade-up" style="font-size: 3rem; line-height: 1.35; word-break: keep-all; margin-bottom: 1.5rem;">학생들을 위한 맞춤형 연구 기획안 무상 제공</h2>
+    <p class="section-subtitle fade-up d-1" style="margin-bottom: 4rem;">가장 안정적이고 강력한 B2B Workflow</p>
 
     <div class="wf-container">
       <div class="wf-steps">
         <div class="wf-step fade-up d-1">
-          <h5>Step 1. 키워드 전달</h5>
-          <p>학생의 막연한 관심사(전공, 취미 등) <strong class="gold-highlight">‘키워드'만</strong> 당사로 전달해 주세요.</p>
+          <h5 style="margin-bottom: 1.8rem; line-height: 1.4;">Step 1.<br>키워드 전달</h5>
+          <p>학생의 막연한 관심사(전공, 취미 등)<br><strong class="gold-highlight">‘키워드'만</strong> 당사로 전달해 주세요.</p>
         </div>
         <div class="wf-step fade-up d-2">
-          <h5>Step 2. 기획안 무상 수령</h5>
-          <p>CRI의 석학들이 이를 하이엔드 주제로 격상시킨 <strong class="strong-highlight">맞춤형 학술 기획안</strong>을 무상으로 제안해 드립니다.</p>
+          <h5 style="margin-bottom: 1.8rem; line-height: 1.4;">Step 2.<br>기획안 무상 수령</h5>
+          <p>CRI의 석학들이 이를 하이엔드 주제로 격상시킨 <strong class="strong-highlight">맞춤형 학술 기획안</strong>을<br>무상으로 제안해 드립니다.</p>
         </div>
         <div class="wf-step fade-up d-3">
-          <h5>Step 3. 학부모 클로징</h5>
-          <p>결제가 이루어지면, <strong class="gold-highlight">교수-TA-코디</strong>의 디렉팅이 바로 시작됩니다.</p>
+          <h5 style="margin-bottom: 1.8rem; line-height: 1.4;">Step 3.<br>학부모 클로징</h5>
+          <p>결제가 이루어지면,<br><strong class="gold-highlight">교수-TA-코디</strong>의 전문 디렉팅이<br>바로 시작됩니다.</p>
         </div>
       </div>
     </div>
@@ -384,8 +419,8 @@ body {
 
   <!-- Slide 7: Contact -->
   <section class="slide slide-5">
-    <h2 class="section-title fade-up">초가치 VIP를 위한 새로운 해답.</h2>
-    <p class="section-subtitle fade-up d-1" style="max-width: 650px; margin-left: auto; margin-right: auto; line-height: 1.7;">이번 주, 귀원의 초우량 고객을 완성할 차별화된 맞춤형 기획안 샘플과 파트너 독점 베네핏을 단 15분의 미팅으로 직접 확인해 보세요.</p>
+    <h2 class="section-title fade-up" style="word-break: keep-all;">초가치 VIP를 위한 새로운 해답.</h2>
+    <p class="section-subtitle fade-up d-1" style="max-width: 650px; margin-left: auto; margin-right: auto; line-height: 1.8; word-break: keep-all;">이번 주, 귀원의 초우량 고객을 완성할 차별화된 맞춤형 기획안 샘플과 파트너 독점 베네핏을 단 15분의 미팅으로 직접 확인해 보세요.</p>
     
     <div class="contact-container fade-up d-2">
       <div class="c-item">
@@ -398,7 +433,7 @@ body {
       </div>
       <div class="c-item">
         <div class="c-label">Headquarters Location</div>
-        <div class="c-value">서울시 강남구 논현로 153길 53</div>
+        <div class="c-value" style="font-size: 1.25rem;">서울시 강남구 논현로 153길 53</div>
       </div>
     </div>
 
