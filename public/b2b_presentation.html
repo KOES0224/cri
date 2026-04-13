@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B2B 파트너십 제안서 - CRI</title>
+<link href="https://fonts.googleapis.com/css2?family=Apple+SD+Gothic+Neo:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-color: #050505;
+  --bg-secondary: #0f0f12;
+  --text-primary: #ffffff;
+  --text-secondary: #c2c2c9;
+  --accent-color: #f3e5ab; /* Brightened Gold */
+  --accent-gradient: linear-gradient(135deg, #ffffff 0%, #b0b0b5 100%);
+  --gold-gradient: linear-gradient(135deg, #ffefba 0%, #d4af37 100%);
+  --glass-bg: rgba(255, 255, 255, 0.05); /* Slightly darker for contrast */
+  --glass-border: rgba(255, 255, 255, 0.12); /* More visible border */
+  --font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Inter", sans-serif;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0;
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  height: 100vh;
+  overflow-y: scroll;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animations */
+.fade-up { opacity: 0; transform: translateY(40px); transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1); }
+.fade-up.visible { opacity: 1; transform: translateY(0); }
+.d-1 { transition-delay: 0.15s; }
+.d-2 { transition-delay: 0.3s; }
+.d-3 { transition-delay: 0.45s; }
+.d-4 { transition-delay: 0.6s; }
+
+/* Grid Layouts & Spacing */
+.slide {
+  height: 100vh;
+  width: 100vw;
+  scroll-snap-align: start;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 5rem 10vw; /* Increased spacing */
+  overflow: hidden;
+}
+
+.gradient-text {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  color: transparent;
+  display: inline-block;
+  line-height: 1.35;
+}
+
+.gold-text {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  color: transparent;
+  display: inline-block;
+}
+
+.strong-highlight {
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+}
+
+.gold-highlight {
+  font-weight: 800;
+  color: var(--accent-color);
+}
+
+/* --- Slide 1: Cover --- */
+.slide-1 {
+  background: radial-gradient(circle at 50% 0%, rgba(15, 22, 35, 0.8), #000000 80%), url('/university_bg_1775546254175.png') center/cover no-repeat;
+  background-attachment: fixed;
+  align-items: center;
+  text-align: center;
+}
+.hero-label { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.15em; color: var(--text-secondary); margin-bottom: 2.5rem; text-transform: uppercase; }
+.hero-title { font-size: 4.8rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.25; margin: 0 0 1.5rem 0; text-shadow: 0 4px 25px rgba(0,0,0,0.8); }
+.hero-subtitle { font-size: 1.6rem; font-weight: 500; color: #d1d1d6; margin: 0 0 4rem 0; letter-spacing: -0.01em; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.hero-points { display: flex; gap: 2rem; list-style: none; padding: 0; margin: 0 0 4rem 0; justify-content: center; flex-wrap: wrap; }
+.hero-points li { font-size: 1.2rem; font-weight: 500; color: #ffffff; display: flex; align-items: center; background: rgba(255,255,255,0.08); padding: 1rem 1.8rem; border-radius: 40px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(15px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); letter-spacing: -0.01em;}
+.hero-points li::before { content: ''; margin-right: 12px; width: 6px; height: 6px; background: var(--accent-color); border-radius: 50%; box-shadow: 0 0 8px var(--accent-color); }
+
+/* --- Global Section Styles --- */
+.section-title { font-size: 3.8rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 1.5rem 0; text-align: center; }
+.section-subtitle { font-size: 1.4rem; font-weight: 500; color: var(--text-secondary); margin: 0 0 4.5rem 0; text-align: center; line-height: 1.6; }
+
+/* --- Slide 2: Stories --- */
+.slide-2 { background: radial-gradient(circle at top right, rgba(20,20,35,0.7), var(--bg-color) 60%); }
+.card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; width: 100%; max-width: 1400px; }
+.glass-card { 
+  background: rgba(15, 15, 18, 0.6); 
+  border: 1px solid rgba(255,255,255,0.1); 
+  border-radius: 28px; 
+  padding: 3.5rem 3rem; /* Increased padding */
+  backdrop-filter: blur(25px); 
+  -webkit-backdrop-filter: blur(25px);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s; 
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+.glass-card:hover { transform: translateY(-10px); box-shadow: 0 20px 50px rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.25); }
+.glass-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--gold-gradient); opacity: 0.8; }
+.card-eyebrow { font-size: 0.95rem; font-weight: 700; color: var(--accent-color); margin-bottom: 1.2rem; letter-spacing: 0.05em; text-transform: uppercase; background: rgba(229, 195, 132, 0.1); display: inline-block; padding: 0.4rem 1rem; border-radius: 20px; }
+.glass-card h3 { font-size: 1.8rem; font-weight: 800; line-height: 1.35; margin: 0 0 1.8rem 0; letter-spacing: -0.01em; color: #fff;}
+.glass-card p { font-size: 1.1rem; line-height: 1.7; color: rgba(255, 255, 255, 0.9); margin: 0; font-weight: 400; word-break: keep-all; }
+
+/* --- Slide 3: Framework --- */
+.slide-3 { background: radial-gradient(circle at bottom center, rgba(40,30,15,0.4), var(--bg-color) 70%); }
+.fw-grid { display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 3rem; width: 100%; max-width: 1300px; margin-bottom: 3.5rem; align-items: stretch; }
+.fw-item { background: rgba(255,255,255,0.03); padding: 3rem; border-left: 2px solid var(--glass-border); border-radius: 20px; display: flex; flex-direction: column; justify-content: center; transition: border-color 0.3s; }
+.fw-item:hover { border-left-color: var(--accent-color); background: rgba(255,255,255,0.05); }
+.fw-num { font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 1.2rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.fw-title { font-size: 1.8rem; font-weight: 800; margin: 0 0 1.2rem 0; color: #ffffff; }
+.fw-desc { font-size: 1.15rem; line-height: 1.7; color: rgba(255,255,255,0.85); font-weight: 400; word-break: keep-all; }
+.fw-milestone { background: rgba(229, 195, 132, 0.1); border-radius: 28px; border: 1px solid rgba(229, 195, 132, 0.3); padding: 4rem 3rem; text-align: center; box-shadow: 0 10px 40px rgba(229, 195, 132, 0.1); }
+.fw-milestone .fw-title { color: var(--accent-color); font-size: 2.2rem; }
+.fw-milestone:hover { border-color: rgba(229, 195, 132, 0.5); box-shadow: 0 15px 50px rgba(229, 195, 132, 0.15); }
+
+/* --- Slide 4: Workflow --- */
+.slide-4 { background: var(--bg-color); }
+.wf-container { display: flex; flex-direction: column; width: 100%; max-width: 1200px; gap: 3.5rem; }
+.wf-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
+.wf-step { padding: 3rem 2.5rem; background: var(--bg-secondary); border-radius: 28px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
+.wf-step h5 { font-size: 1.5rem; margin: 0 0 1.2rem 0; font-weight: 800; color: #fff;}
+.wf-step p { font-size: 1.1rem; color: rgba(255,255,255,0.85); line-height: 1.6; margin: 0; word-break: keep-all; font-weight: 400;}
+.guarantee-box { 
+  background: linear-gradient(135deg, rgba(229, 195, 132, 0.15), rgba(0,0,0,0.8)); 
+  border: 1px solid rgba(229, 195, 132, 0.25); 
+  border-radius: 28px; 
+  padding: 3.5rem; 
+  display: flex; gap: 2.5rem; align-items: center; 
+}
+.g-icon { font-size: 3.5rem; line-height: 1; background: var(--gold-gradient); -webkit-background-clip: text; color: transparent; }
+.g-content h4 { font-size: 1.8rem; margin: 0 0 1rem 0; font-weight: 800; color: var(--accent-color); }
+.g-content p { font-size: 1.2rem; line-height: 1.7; color: rgba(255,255,255,0.95); margin: 0; font-weight: 400; word-break: keep-all; }
+
+/* --- Slide 5: Contact --- */
+.slide-5 { background: radial-gradient(circle at center, rgba(30,30,45,0.6), var(--bg-color) 70%); text-align: center; }
+.contact-container { margin-top: 2rem; display: inline-flex; gap: 5rem; padding: 3rem 5rem; background: rgba(255,255,255,0.06); border-radius: 100px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(25px); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
+.c-item { display: flex; flex-direction: column; text-align: left; }
+.c-label { font-size: 0.95rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+.c-value { font-size: 1.4rem; font-weight: 600; color: #fff;}
+.footer-logo { margin-top: 6rem; font-weight: 800; font-size: 1.6rem; letter-spacing: 0.15em; opacity: 0.5; }
+
+@media (max-width: 1200px) {
+  .hero-title { font-size: 3.5rem; }
+  .card-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .fw-grid { grid-template-columns: 1fr; gap: 2rem;}
+  .wf-steps { grid-template-columns: 1fr; gap: 2rem;}
+  .contact-container { flex-direction: column; border-radius: 30px; gap: 2.5rem; text-align: center; padding: 3rem;}
+  .c-item { text-align: center; }
+}
+</style>
+</head>
+<body>
+
+  <!-- Slide 1: Cover -->
+  <section class="slide slide-1">
+    <div class="hero-label fade-up">Elite Research Co., Ltd.</div>
+    <h1 class="hero-title fade-up d-1">결과를 넘어,<br>세계적인 석학과 함께 증명하는<br><span class="gold-text">진정한 실력.</span></h1>
+    <p class="hero-subtitle fade-up d-2">최상위권 VIP를 위한 가장 독보적인 아카데믹 인프라 파트너십.</p>
+    
+    <ul class="hero-points fade-up d-3">
+      <li><strong class="gold-highlight">250명 이상</strong>의 아이비리그 종신 교수진</li>
+      <li>멘토 매칭 및 퀄리티 컨트롤 <strong class="gold-highlight">100% 전담</strong></li>
+      <li>교수 직속 추천서 발급 <strong class="gold-highlight">98% 달성</strong></li>
+    </ul>
+  </section>
+
+  <!-- Slide 2: Track Record -->
+  <section class="slide slide-2">
+    <h2 class="section-title fade-up">스토리의 재발견.</h2>
+    <p class="section-subtitle fade-up d-1">단편적 한계를 넘어, 가장 강력한 카드로 진화한 아이비리그급 성공 스토리.</p>
+    
+    <div class="card-grid">
+      <div class="glass-card fade-up d-1">
+        <div class="card-eyebrow">Stanford & Oxford 합격</div>
+        <h3 class="gradient-text">봉사활동을<br>인지심리학 연구로</h3>
+        <p>현장에서의 단순한 연민을 '눈물이 사회적 지원에 미치는 영향'이라는 통계 연구로 발전시켜 <strong class="strong-highlight">옥스퍼드 교수 직속 추천서</strong>를 획득했습니다.</p>
+      </div>
+      <div class="glass-card fade-up d-2">
+        <div class="card-eyebrow">Harvard 전액 장학금</div>
+        <h3 class="gradient-text">개인적 아픔을<br>임상 약리학으로</h3>
+        <p>기존 스펙의 딜레마를 UCSF 교수와 함께 마취제를 자폐 치료제로 재창출하는 <strong class="strong-highlight">대학원급 기전 연구</strong>로 완벽하게 승화시켰습니다.</p>
+      </div>
+      <div class="glass-card fade-up d-3">
+        <div class="card-eyebrow">ISEF 국가대표 진출</div>
+        <h3 class="gradient-text">별을 보던 취미가<br>우주론 AI 역량으로</h3>
+        <p>단순한 천체 관측 취미를 더럼대 연구원과 함께 AI 은하 모델링으로 확장시켜 <strong class="strong-highlight">최고 권위 대회 출전권</strong>을 증명해 냈습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 3: Framework -->
+  <section class="slide slide-3">
+    <h2 class="section-title fade-up">프리미엄 인프라 설계.</h2>
+    <p class="section-subtitle fade-up d-1">단순한 아웃소싱을 넘어, 아이비리그 사정관을 압도할 확장의 흐름을 제안합니다.</p>
+    
+    <div class="fw-grid">
+      <div class="fw-item fade-up d-1">
+        <div class="fw-num">Step 1</div>
+        <h4 class="fw-title">Core Research</h4>
+        <p class="fw-desc">해외 석학들의 서울 내한 프로젝트부터, 세계적 교수진 및 1:1 석박사 화상 연구까지 밀도 높은 연구 토대를 마련합니다.</p>
+      </div>
+      <div class="fw-milestone fade-up d-2">
+         <div class="fw-num">Step 2</div>
+         <h4 class="fw-title">Milestone</h4>
+         <p class="fw-desc" style="color:#ffffff; font-weight:700; font-size:1.35rem; margin-top:2rem; line-height: 1.5;">논문 퍼블리쉬 완료 및<br><span style="color:var(--accent-color);">'지도 교수 직속 추천서' 발급 보장</span></p>
+      </div>
+      <div class="fw-item fade-up d-3">
+        <div class="fw-num">Step 3</div>
+        <h4 class="fw-title">Extension</h4>
+        <p class="fw-desc">완성된 논문을 활용한 맞춤형 웹서비스 구축, 특허 창업 및 글로벌 학술 대회 인턴십 등 <strong class="strong-highlight">진짜 임팩트(Real Impact)</strong>로 결합됩니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 4: Workflow & Guarantee -->
+  <section class="slide slide-4">
+    <h2 class="section-title fade-up">가장 완벽한 파트너.</h2>
+    <p class="section-subtitle fade-up d-1">원장님의 고유한 입시 통제력은 그대로 남겨두고 학술적 성과만을 무장하십시오.</p>
+
+    <div class="wf-container">
+      <div class="wf-steps">
+        <div class="wf-step fade-up d-1">
+          <h5>기획 및 역제안 플랫폼</h5>
+          <p>학생의 관심사 키워드만 전달해 주시면, 바로 상담에 띄울 수 있는 <strong class="strong-highlight">3가지 맞춤형 기획안</strong>을 역제안합니다.</p>
+        </div>
+        <div class="wf-step fade-up d-2">
+          <h5>유연한 상담 클로징 지원</h5>
+          <p>전달드린 기획안으로 <strong class="strong-highlight">파트너 직접 상담</strong>을 하시거나, 전문 디렉터의 동석(화상) 브리핑을 위탁하실 수 있습니다.</p>
+        </div>
+        <div class="wf-step fade-up d-3">
+          <h5>흔들리지 않는 신뢰 유지</h5>
+          <p>매월 발송되는 퀄리티 높은 <strong class="strong-highlight">영문 과정 리포트</strong>, 그리고 종료 시 납품되는 추천서 원본으로 학부모의 신뢰를 배가합니다.</p>
+        </div>
+      </div>
+
+      <div class="guarantee-box fade-up d-4">
+        <div class="g-icon">✧</div>
+        <div class="g-content">
+          <h4>100% Non-Compete Guarantee (독점 영역 보호)</h4>
+          <p>CRI는 오직 순수한 <strong>'아카데믹 R&D'</strong>에만 몰두합니다. 원서 작성, 대학 선정 등 귀원 고유의 입시 영역은 어떠한 경우에도 침해하지 않습니다. 파트너의 의뢰인은 전적으로 파트너의 의탁을 통해 이루어집니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 5: Contact -->
+  <section class="slide slide-5">
+    <h2 class="section-title fade-up">초가치 VIP를 위한 새로운 해답.</h2>
+    <p class="section-subtitle fade-up d-1" style="max-width: 650px; margin-left: auto; margin-right: auto; line-height: 1.7;">이번 주, 귀원의 초우량 고객을 완성할 맞춤형 기획안 샘플과 파트너 독점 베네핏을 단 15분의 미팅으로 직접 확인해 보세요.</p>
+    
+    <div class="contact-container fade-up d-2">
+      <div class="c-item">
+        <div class="c-label">Email Address</div>
+        <div class="c-value">Admin@cri.kr</div>
+      </div>
+      <div class="c-item">
+        <div class="c-label">Phone Direct</div>
+        <div class="c-value">02-6203-8999</div>
+      </div>
+      <div class="c-item">
+        <div class="c-label">Headquarters Location</div>
+        <div class="c-value">서울시 강남구 논현로 153길 53</div>
+      </div>
+    </div>
+
+    <div class="footer-logo fade-up d-3">CRI. Elite Research Co., Ltd.</div>
+  </section>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+      document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+    });
+  </script>
+</body>
+</html>

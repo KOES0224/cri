@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { CheckCircle2, MessageSquare, Tag, Send, Bell } from "lucide-react";
-import { updateLeadStatus, addLeadNote, scheduleNotification } from "@/app/actions/crm";
+import { CheckCircle2, MessageSquare, Tag, Send, Bell, CalendarRange } from "lucide-react";
+import { updateLeadStatus, addLeadNote, scheduleNotification, scheduleGoogleMeeting } from "@/app/actions/crm";
 
 export default function LeadTimelineClient({ lead }: { lead: any }) {
   const [status, setStatus] = useState(lead.status);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   
   // Tabs State
-  const [activeTab, setActiveTab] = useState<"note" | "alarm">("note");
+  const [activeTab, setActiveTab] = useState<"note" | "alarm" | "meeting">("note");
   
   // Note State
   const [noteContent, setNoteContent] = useState("");
@@ -20,6 +20,13 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
   const [alarmMessage, setAlarmMessage] = useState("");
   const [alarmDate, setAlarmDate] = useState("");
   const [submittingAlarm, setSubmittingAlarm] = useState(false);
+
+  // Meeting State
+  const [meetingTitle, setMeetingTitle] = useState(`Meeting with ${lead.name}`);
+  const [meetingDate, setMeetingDate] = useState("");
+  const [meetingTime, setMeetingTime] = useState("");
+  const [meetingDuration, setMeetingDuration] = useState("30");
+  const [submittingMeeting, setSubmittingMeeting] = useState(false);
 
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === status) return;
@@ -59,6 +66,25 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
     }
     
     setSubmittingAlarm(false);
+  };
+
+  const handleScheduleMeeting = async () => {
+    if (!meetingTitle.trim() || !meetingDate || !meetingTime) return;
+    setSubmittingMeeting(true);
+
+    // Combine date and time
+    const startDateTime = new Date(`${meetingDate}T${meetingTime}`);
+    const duration = parseInt(meetingDuration, 10);
+
+    const res = await scheduleGoogleMeeting(lead.id, meetingTitle, startDateTime, duration, true);
+    
+    if (res.success) {
+      alert("Meeting scheduled successfully!");
+      setActiveTab("note");
+    } else {
+      alert(`Error creating meeting: ${res.error}`);
+    }
+    setSubmittingMeeting(false);
   };
 
   const STATUS_OPTIONS = ["NEW", "CONTACTED", "MET", "WAITLISTED", "ENROLLED", "REJECTED"];
@@ -188,6 +214,13 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
            >
              <Bell className="w-4 h-4 mr-2" /> Notify Me
            </button>
+           <button 
+             onClick={() => setActiveTab("meeting")}
+             className={`px-5 py-3 text-sm font-bold flex items-center transition-all rounded-t-xl ${activeTab === 'meeting' ? 'bg-white text-emerald-600 border border-gray-200 border-b-white shadow-sm' : 'text-gray-500 hover:bg-gray-100 border border-transparent'}`}
+             style={{ marginBottom: activeTab === 'meeting' ? '-1px' : '0' }}
+           >
+             <CalendarRange className="w-4 h-4 mr-2" /> Schedule Meeting
+           </button>
         </div>
         
         <div className="p-4 bg-white relative z-10 transition-all">
@@ -211,7 +244,7 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
                  Post
                </button>
              </div>
-          ) : (
+          ) : activeTab === "alarm" ? (
              <div className="flex flex-col gap-3">
                 <div className="flex flex-col md:flex-row items-center gap-3">
                    <div className="w-full md:flex-1">
@@ -240,7 +273,56 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
                      disabled={submittingAlarm || !alarmMessage.trim() || !alarmDate}
                      className="px-6 py-2.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all disabled:opacity-50 flex items-center shadow-lg shadow-rose-600/20"
                    >
-                     <Bell className="w-4 h-4 mr-2 border border-rose-400/50 rounded bg-rose-500" /> Schedule Alarm
+                     {submittingAlarm ? 'Scheduling...' : <><Bell className="w-4 h-4 mr-2 border border-rose-400/50 rounded bg-rose-500" /> Schedule Alarm</>}
+                   </button>
+                </div>
+             </div>
+          ) : (
+             <div className="flex flex-col gap-3">
+                <div className="flex flex-col md:flex-row items-center gap-3">
+                   <div className="w-full md:flex-1">
+                     <input
+                       type="text"
+                       value={meetingTitle}
+                       onChange={(e) => setMeetingTitle(e.target.value)}
+                       placeholder="Meeting Title"
+                       className="w-full px-4 py-3 bg-emerald-50/30 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-medium transition-shadow"
+                     />
+                   </div>
+                   <input
+                     type="date"
+                     value={meetingDate}
+                     min={new Date().toISOString().split('T')[0]}
+                     onChange={(e) => setMeetingDate(e.target.value)}
+                     className="w-full md:w-auto px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold text-gray-700 transition-shadow"
+                   />
+                   <input
+                     type="time"
+                     value={meetingTime}
+                     onChange={(e) => setMeetingTime(e.target.value)}
+                     className="w-full md:w-auto px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold text-gray-700 transition-shadow"
+                   />
+                   <select 
+                      value={meetingDuration}
+                      onChange={(e) => setMeetingDuration(e.target.value)}
+                      className="w-full md:w-auto px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold text-gray-700 transition-shadow"
+                   >
+                      <option value="15">15 min</option>
+                      <option value="30">30 min</option>
+                      <option value="45">45 min</option>
+                      <option value="60">60 min</option>
+                   </select>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                   <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                     This will add an event to Google Calendar automatically
+                   </span>
+                   <button
+                     onClick={handleScheduleMeeting}
+                     disabled={submittingMeeting || !meetingTitle.trim() || !meetingDate || !meetingTime}
+                     className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center shadow-lg shadow-emerald-600/20"
+                   >
+                     {submittingMeeting ? 'Creating...' : <><CalendarRange className="w-4 h-4 mr-2" /> Schedule Meeting</>}
                    </button>
                 </div>
              </div>

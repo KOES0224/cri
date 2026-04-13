@@ -213,3 +213,102 @@ export async function getRecentLeadActivities(limit: number = 15) {
     }
   });
 }
+
+// ----------------------------------------------------------------------
+// MEETING & CALENDAR ACTIONS
+// ----------------------------------------------------------------------
+
+export async function scheduleGoogleMeeting(leadId: string, title: string, startDateTime: Date, durationMinutes: number, generateZoom: boolean = false) {
+  const session = await requireAdmin();
+
+  // 1) Verify Google Cloud Credentials
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    return { 
+      success: false, 
+      error: "Google Calendar is not fully configured. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN are set." 
+    };
+  }
+
+  try {
+    // Dynamically import googleapis to keep the main bundle lighter if possible
+    const { google } = require('googleapis');
+    
+    // 2) Configure OAuth2 Auth
+    const auth = new google.auth.OAuth2(
+      clientId,
+      clientSecret
+    );
+    auth.setCredentials({ refresh_token: refreshToken });
+
+    // Assuming we drop it into the primary calendar of the authenticated user
+    const calendarId = "primary"; 
+    const calendar = google.calendar({ version: 'v3', auth });
+    
+    const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
+
+    // 3) Create Calendar Event Request Body
+    const eventBody: any = {
+      summary: title,
+      start: {
+        dateTime: startDateTime.toISOString(),
+      },
+      end: {
+        dateTime: endDateTime.toISOString(),
+      },
+    };
+
+    // If Zoom natively (or Google Meet) is desired:
+    // Adding Google Meet automatically requires conferenceData.
+    // If the user's workspace defaults to Zoom when Meet is requested, this might trigger it.
+    // However, Zoom API integration typically requires separate zoom credentials. For now, we request hangout/meet or leave to the calendar's default.
+    eventBody.conferenceData = {
+      createRequest: {
+        requestId: `req-${Date.now()}`,
+        conferenceSolutionKey: {
+          type: "hangoutsMeet" // We request standard meeting generation, which can be Zoom if the Workspace add-on enforces it, otherwise Google Meet.
+        }
+      }
+    };
+
+    // 4) Execute Insert
+    const response = await calendar.events.insert({
+      calendarId: calendarId,
+      requestBody: eventBody,
+      conferenceDataVersion: 1, // Needed to tell API we want to generate a meet link
+    });
+
+    const eventLink = response.data.htmlLink;
+    let conferenceLink = response.data.hangoutLink;
+    
+    // Check if Zoom URL is generated in location
+    if (response.data.location && response.data.location.includes('zoom.us')) {
+      conferenceLink = response.data.location;
+    } else if (response.data.conferenceData && response.data.conferenceData.entryPoints) {
+      const videoEntry = response.data.conferenceData.entryPoints.find((e: any) => e.entryPointType === 'video');
+      if (videoEntry) {
+        conferenceLink = videoEntry.uri;
+      }
+    }
+
+    // 5) Log the success into CRM Timeline
+    await prisma.leadActivity.create({
+      data: {
+        leadId,
+        action: "NOTE_ADDED",
+        adminName: session.user.name || "Admin",
+        content: `Scheduled a Calendar Meeting: "${title}" for ${startDateTime.toLocaleString()}.\nLink: ${conferenceLink || 'Check Calendar'}`
+      }
+    });
+
+    revalidatePath(`/dashboard/leads/${leadId}`);
+    return { success: true, eventLink, conferenceLink };
+  } catch (error: any) {
+    console.error("Calendar API Error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
