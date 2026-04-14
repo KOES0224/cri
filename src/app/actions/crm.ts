@@ -34,15 +34,25 @@ export async function createLead(name: string, email?: string) {
   if (!name.trim()) return { success: false, error: "Name is required" };
 
   try {
+    let linkedUserId = null;
+    if (email) {
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) linkedUserId = existingUser.id;
+    }
+
     const lead = await prisma.lead.create({
       data: {
         name,
         email: email || null,
+        userId: linkedUserId,
+        createdBy: session.user.id,
         activities: {
           create: {
             action: "NOTE_ADDED",
             adminName: session.user.name || "Admin",
-            content: "Lead manually created in CRM.",
+            content: linkedUserId 
+               ? "Lead manually created in CRM. Automatically linked to existing portal account via email." 
+               : "Lead manually created in CRM.",
           }
         }
       }
@@ -75,6 +85,12 @@ export async function getLeadDetails(id: string) {
 export async function updateLeadDetails(id: string, data: any) {
   const session = await requireAdmin();
   try {
+    let linkedUserId = undefined;
+    if (data.email) {
+      const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
+      if (existingUser) linkedUserId = existingUser.id;
+    }
+
     await prisma.lead.update({
       where: { id },
       data: {
@@ -87,6 +103,7 @@ export async function updateLeadDetails(id: string, data: any) {
         agencyName: data.agencyName,
         parentName: data.parentName,
         kakaoId: data.kakaoId,
+        ...(linkedUserId ? { userId: linkedUserId } : {}),
       }
     });
     revalidatePath(`/dashboard/leads/${id}`);
@@ -212,6 +229,61 @@ export async function getRecentLeadActivities(limit: number = 15) {
       }
     }
   });
+}
+
+// ----------------------------------------------------------------------
+// USER LINKING & DELETION
+// ----------------------------------------------------------------------
+
+export async function manuallyLinkLeadToUser(leadId: string, emailOrCode: string) {
+  const session = await requireAdmin();
+  
+  if (!emailOrCode.trim()) return { success: false, error: "Email or Student Code is required" };
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: emailOrCode },
+          { studentCode: emailOrCode }
+        ]
+      }
+    });
+
+    if (!user) return { success: false, error: "No user found matching that email or code." };
+
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        userId: user.id,
+        activities: {
+          create: {
+            action: "NOTE_ADDED",
+            adminName: session.user.name || "Admin",
+            content: `Manually linked Lead to User Account: ${user.name} (${user.email}).`,
+          }
+        }
+      }
+    });
+
+    revalidatePath(`/dashboard/leads/${leadId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteLead(leadId: string) {
+  await requireAdmin();
+  try {
+    await prisma.lead.delete({
+      where: { id: leadId }
+    });
+    revalidatePath("/dashboard/leads");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
 }
 
 // ----------------------------------------------------------------------

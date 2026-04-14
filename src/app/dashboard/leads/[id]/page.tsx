@@ -9,6 +9,8 @@ import { format } from "date-fns";
 import LeadTimelineClient from "./LeadTimelineClient";
 import LeadDetailsClient from "./LeadDetailsClient";
 
+import LeadHeaderActions from "./LeadHeaderActions";
+
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
 
@@ -26,14 +28,22 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
   return (
     <AdminLayout>
-      <div className="mb-8">
-        <Link href="/dashboard/leads" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to CRM Pipeline
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
-          Lead Record: {lead.name}
-        </h1>
+      <div className="mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div>
+          <Link href="/dashboard/leads" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to CRM Pipeline
+          </Link>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
+            Lead Record: {lead.name}
+          </h1>
+        </div>
+        
+        <LeadHeaderActions 
+          leadId={lead.id} 
+          linkedUser={lead.user} 
+          createdBy={lead.createdBy} 
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

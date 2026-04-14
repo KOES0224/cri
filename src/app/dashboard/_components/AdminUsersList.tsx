@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Trash2, UserCog, Mail, Briefcase } from "lucide-react";
 import { updateUserRole, deleteUser, updateUserAgency } from "@/app/actions/users";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type User = {
   id: string;
@@ -184,7 +185,17 @@ export default function AdminUsersList({ initialUsers }: { initialUsers: User[] 
                   <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right flex justify-end gap-2">
+                    {user.leads && user.leads.length > 0 && (
+                      <Link
+                        href={`/dashboard/leads/${user.leads[0].id}`}
+                        className="text-blue-500 hover:text-blue-700 transition-colors p-2 hover:bg-blue-50 rounded-lg flex items-center"
+                        title="View CRM Lead Profile"
+                      >
+                        <UserCog className="w-5 h-5 mr-1" />
+                        <span className="text-xs font-bold">CRM</span>
+                      </Link>
+                    )}
                     <button
                       onClick={() => handleDelete(user.id)}
                       disabled={loading === user.id}

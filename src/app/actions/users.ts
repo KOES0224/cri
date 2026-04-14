@@ -7,6 +7,11 @@ export async function getUsers() {
   try {
     return await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
+      include: {
+        leads: {
+          select: { id: true, name: true },
+        }
+      }
     });
   } catch (error) {
     console.error("Failed to fetch users:", error);

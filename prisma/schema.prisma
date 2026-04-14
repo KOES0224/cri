@@ -221,6 +221,7 @@ model Lead {
 
   notes       String?   // Initial inquiry message
   deadline    DateTime?
+  createdBy   String?   // Stores the Admin User ID who created this
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
