@@ -219,3 +219,36 @@ export async function scheduleUserGoogleMeeting(userId: string, title: string, s
     return { success: false, error: error.message };
   }
 }
+
+export async function getAdminApplicationsExportData() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session || session.user.role !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const applications = await prisma.application.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: { 
+            id: true, 
+            name: true, 
+            email: true, 
+            studentCode: true, 
+            activities: { orderBy: { createdAt: 'asc' } } 
+          }
+        },
+        program: {
+          select: { title: true, category: true }
+        }
+      }
+    });
+
+    return { success: true, data: applications };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+

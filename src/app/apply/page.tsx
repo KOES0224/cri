@@ -22,6 +22,15 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
 
   const program = await prisma.program.findUnique({
     where: { id: programId },
+  });
+
+  if (!program) {
+    redirect("/research");
+  }
+
+  // Fetch all programs in the same category to get all professors within that group
+  const relatedPrograms = await prisma.program.findMany({
+    where: { category: program.category },
     include: {
       professors: {
         where: { acceptingMentees: true },
@@ -30,9 +39,17 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
     }
   });
 
-  if (!program) {
-    redirect("/research");
-  }
+  const uniqueProfessorsMap = new Map();
+  relatedPrograms.forEach(p => {
+    p.professors.forEach(prof => {
+      uniqueProfessorsMap.set(prof.id, prof);
+    });
+  });
+
+  const programWithProfessors = {
+    ...program,
+    professors: Array.from(uniqueProfessorsMap.values())
+  };
   
   // Check if they already applied to this specific program
   const existing = await prisma.application.findUnique({
@@ -48,5 +65,5 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
     redirect("/dashboard/applications");
   }
 
-  return <ApplyClient program={program} user={session.user} />;
+  return <ApplyClient program={programWithProfessors} user={session.user} />;
 }

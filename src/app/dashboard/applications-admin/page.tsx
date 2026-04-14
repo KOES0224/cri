@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import AdminLayout from "../_components/AdminLayout";
 import { getAdminApplications } from "@/app/actions/adminApplications";
 import ApplicationsTable from "./ApplicationsTable";
+import ExportButton from "./ExportButton";
 import { ClipboardCheck } from "lucide-react";
 
 export default async function AdminApplicationsPage() {
@@ -18,14 +19,19 @@ export default async function AdminApplicationsPage() {
 
   return (
     <AdminLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
-          <ClipboardCheck className="h-8 w-8 text-orange-600 p-1.5 bg-orange-50 rounded-lg" />
-          Application Management
-        </h1>
-        <p className="mt-2 text-sm text-gray-500">
-          Review student applications, manage progression steps, and document activities.
-        </p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
+            <ClipboardCheck className="h-8 w-8 text-orange-600 p-1.5 bg-orange-50 rounded-lg" />
+            Application Management
+          </h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Review student applications, manage progression steps, and document activities.
+          </p>
+        </div>
+        <div>
+          <ExportButton />
+        </div>
       </div>
 
       <ApplicationsTable initialApplications={applications} />
