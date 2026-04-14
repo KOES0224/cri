@@ -65,7 +65,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-1">Email Us</h3>
-                <p className="text-gray-500">admissions@cri.kr</p>
+                <p className="text-gray-500">support@cri.kr</p>
               </div>
             </div>
             
@@ -75,7 +75,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-1">Visit Us (Seoul)</h3>
-                <p className="text-gray-500">1 Gwanak-ro, Gwanak-gu<br />Seoul, South Korea 08826</p>
+                <p className="text-gray-500">53, Nonhyeon-ro 153-gil<br />Gangnam-gu, Seoul, Republic of Korea</p>
               </div>
             </div>
           </div>
