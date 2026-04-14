@@ -243,7 +243,24 @@ body {
   .section-title { font-size: 2.2rem; }
   .section-subtitle { font-size: 1rem; margin-bottom: 3rem; }
   
-  .glass-card { padding: 2rem 1.5rem; }
+  /* Horizontal Swipe for Cards */
+  .card-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 1.2rem;
+    padding-bottom: 1.5rem;
+    width: 100vw;
+    margin-left: -5vw;
+    padding-left: 5vw;
+    padding-right: 5vw;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .card-grid::-webkit-scrollbar { display: none; }
+  
+  .glass-card { flex: 0 0 82%; scroll-snap-align: center; padding: 2.5rem 1.8rem; }
   .glass-card h3 { font-size: 1.5rem; }
   .glass-card p { font-size: 1rem; }
   

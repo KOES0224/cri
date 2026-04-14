@@ -160,7 +160,9 @@ body {
 
 /* --- Slide 2: Stories / General Glass Card --- */
 .slide-2 { background: radial-gradient(circle at top right, rgba(20,20,35,0.7), var(--bg-color) 60%); }
-.card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; width: 100%; max-width: 1400px; }
+.card-grid { display: grid; gap: 2.5rem; width: 100%; max-width: 1400px; }
+.card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.card-grid-4 { grid-template-columns: repeat(4, 1fr); }
 .glass-card { 
   background: rgba(15, 15, 18, 0.6); 
   border: 1px solid rgba(255,255,255,0.1); 
@@ -256,7 +258,24 @@ body {
   .section-title { font-size: 2.2rem; }
   .section-subtitle { font-size: 1rem; margin-bottom: 3rem; }
   
-  .glass-card { padding: 2rem 1.5rem; }
+  /* Horizontal Swipe for Cards */
+  .card-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 1.2rem;
+    padding-bottom: 1.5rem;
+    width: 100vw;
+    margin-left: -5vw;
+    padding-left: 5vw;
+    padding-right: 5vw;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .card-grid::-webkit-scrollbar { display: none; }
+  
+  .glass-card { flex: 0 0 82%; scroll-snap-align: center; padding: 2.5rem 1.8rem; }
   .glass-card h3 { font-size: 1.5rem; }
   .glass-card p { font-size: 1rem; }
   
@@ -307,8 +326,8 @@ body {
     <h2 class="section-title fade-up">압도적인 교수진.</h2>
     <p class="section-subtitle fade-up d-1" style="word-break: keep-all;">'진짜 연구'가 만드는 최고 수준의 아카데믹 인프라.</p>
     
-    <div class="card-grid" style="grid-template-columns: repeat(4, 1fr);">
-      <div class="glass-card fade-up d-1" style="padding: 2.5rem 1.5rem;">
+    <div class="card-grid card-grid-4">
+      <div class="glass-card fade-up d-1">
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.8rem;">
           <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
             <img src="https://kuneslab.hsites.harvard.edu/sites/g/files/omnuum7446/files/styles/hwp_4_5__480x600/public/kuneslab/files/sam_kunes.rh_2-6-2-11.jpg" onerror="this.src='https://ui-avatars.com/api/?name=Sam+Kunes&background=f3e5ab&color=050505'" style="width: 100%; height: 100%; object-fit: cover;" alt="Prof. Sam Kunes"/>
@@ -319,7 +338,7 @@ body {
         <p style="font-size: 1.05rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; line-height: 1.6; word-break: keep-all;"><strong class="gold-highlight">Bio & Pre-Med</strong><br><br>의료 및 바이오 저널 컨설팅과<br>임상 기전 연구 전담.</p>
       </div>
 
-      <div class="glass-card fade-up d-2" style="padding: 2.5rem 1.5rem;">
+      <div class="glass-card fade-up d-2">
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.8rem;">
           <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
             <img src="https://www.haifeng-xu.com/files/haifeng.png" onerror="this.src='https://ui-avatars.com/api/?name=Haifeng+Xu&background=f3e5ab&color=050505'" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" alt="Prof. Haifeng Xu"/>
@@ -330,7 +349,7 @@ body {
         <p style="font-size: 1.05rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; line-height: 1.6; word-break: keep-all;"><strong class="gold-highlight">AI & Economics</strong><br><br>인공지능, 데이터 사이언스와<br>통계 분석 융합 연구 대응.</p>
       </div>
 
-      <div class="glass-card fade-up d-3" style="padding: 2.5rem 1.5rem;">
+      <div class="glass-card fade-up d-3">
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.8rem;">
           <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
             <img src="https://mitsloan.mit.edu/sites/default/files/styles/profile_detail_headshot/public/profile-images/2026/02/22/profile-image-51591.png.webp?h=7f412c8f&itok=K7NUFOQk" onerror="this.src='https://ui-avatars.com/api/?name=Kit+Hickey&background=f3e5ab&color=050505'" style="width: 100%; height: 100%; object-fit: cover;" alt="Prof. Kit Hickey"/>
@@ -341,7 +360,7 @@ body {
         <p style="font-size: 1.05rem; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; line-height: 1.6; word-break: keep-all;"><strong class="gold-highlight">Business & Ent.</strong><br><br>경영 모델링 및 실물 경제 기반<br>테크 연구 프로젝트 주도.</p>
       </div>
 
-      <div class="glass-card fade-up d-4" style="padding: 2.5rem 1.5rem;">
+      <div class="glass-card fade-up d-4">
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.8rem;">
           <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(243, 229, 171, 0.2);">
             <img src="https://www.psy.ox.ac.uk/people/robin-murphy/@@images/image" onerror="this.src='https://ui-avatars.com/api/?name=Robin+Murphy&background=f3e5ab&color=050505'" style="width: 100%; height: 100%; object-fit: cover; object-position: top;" alt="Prof. Robin Murphy"/>
@@ -359,10 +378,10 @@ body {
     <h2 class="section-title fade-up" style="line-height: 1.25; word-break: keep-all;">단순한 기획을 넘어,<br>구축해 낸 2026 실제 레퍼런스</h2>
     <p class="section-subtitle fade-up d-1" style="margin-bottom: 3.5rem; word-break: keep-all;">가장 완벽히 증명된 최상위권 아카데믹 결과물입니다.</p>
     
-    <div class="card-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="card-grid card-grid-3">
       
       <!-- Ref 1 -->
-      <div class="glass-card fade-up d-1" style="padding: 3rem 2.5rem; display: flex; flex-direction: column;">
+      <div class="glass-card fade-up d-1" style="display: flex; flex-direction: column;">
         <div class="card-eyebrow">스탠포드 & 옥스포드 합격</div>
         <h3 class="gradient-text" style="font-size: 1.55rem; margin-bottom: 2rem; line-height: 1.4; word-break: keep-all;">비시민권자,<br>제주 NLCS</h3>
         
@@ -378,7 +397,7 @@ body {
       </div>
 
       <!-- Ref 2 -->
-      <div class="glass-card fade-up d-2" style="padding: 3rem 2.5rem; display: flex; flex-direction: column;">
+      <div class="glass-card fade-up d-2" style="display: flex; flex-direction: column;">
         <div class="card-eyebrow">하버드 바이오 전액 장학생</div>
         <h3 class="gradient-text" style="font-size: 1.55rem; margin-bottom: 2rem; line-height: 1.4; word-break: keep-all;">스토리만 있음</h3>
         
@@ -394,7 +413,7 @@ body {
       </div>
 
       <!-- Ref 3 -->
-      <div class="glass-card fade-up d-3" style="padding: 3rem 2.5rem; display: flex; flex-direction: column;">
+      <div class="glass-card fade-up d-3" style="display: flex; flex-direction: column;">
         <div class="card-eyebrow">ISEF 국가대표 진출</div>
         <h3 class="gradient-text" style="font-size: 1.55rem; margin-bottom: 2rem; line-height: 1.4; word-break: keep-all;">융합 무기 부재</h3>
         
