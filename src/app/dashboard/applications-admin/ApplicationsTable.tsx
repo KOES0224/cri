@@ -10,12 +10,14 @@ import {
   ChevronDown, 
   CheckCircle2, 
   XSquare, 
-  Send
+  Send,
+  Trash2
 } from "lucide-react";
 import { 
   updateApplicationStepStatus, 
   updateApplicationStatus, 
-  addUserComment 
+  addUserComment,
+  deleteApplication
 } from "@/app/actions/adminApplications";
 import { sendMessage } from "@/app/actions/messages";
 import { useRouter } from "next/navigation";
@@ -32,6 +34,17 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
   
   const [activeNotifyApp, setActiveNotifyApp] = useState<any>(null);
   const [notifyText, setNotifyText] = useState("");
+
+  const handleDelete = async (appId: string) => {
+    if (!confirm("Are you sure you want to permanently delete this application and all associated steps? This action cannot be undone.")) return;
+    setLoading(true);
+    const res = await deleteApplication(appId);
+    if (!res.success) {
+      alert("Failed to delete application: " + res.error);
+    }
+    setLoading(false);
+    router.refresh(); // Refresh the list
+  };
 
   const handleStatusChange = async (appId: string, newStatus: string) => {
     if (!confirm(`Are you sure you want to mark this application as ${newStatus}?`)) return;
@@ -185,6 +198,13 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
                          title="Notify Student"
                        >
                          <Send className="w-4 h-4" />
+                       </button>
+                       <button
+                         onClick={() => handleDelete(app.id)}
+                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                         title="Delete Application"
+                       >
+                         <Trash2 className="w-4 h-4" />
                        </button>
                     </td>
                   </tr>

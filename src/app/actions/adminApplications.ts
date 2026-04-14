@@ -283,3 +283,26 @@ export async function updateApplicationProcessingFields(
   }
 }
 
+/**
+ * Permanently delete an application from the database.
+ */
+export async function deleteApplication(applicationId: string) {
+  const session = await getServerSession(authOptions);
+  
+  if (!session || session.user.role !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    await prisma.application.delete({
+      where: { id: applicationId }
+    });
+    
+    revalidatePath("/dashboard/applications-admin");
+    revalidatePath("/dashboard/applications-admin/sheet");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to delete application" };
+  }
+}
+

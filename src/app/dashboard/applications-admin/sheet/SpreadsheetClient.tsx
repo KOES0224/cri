@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Download, Search, Filter } from "lucide-react";
-import { updateApplicationProcessingFields } from "@/app/actions/adminApplications";
+import { Download, Search, Filter, Trash2 } from "lucide-react";
+import { updateApplicationProcessingFields, deleteApplication } from "@/app/actions/adminApplications";
 import { format } from "date-fns";
 
 export default function SpreadsheetClient({ initialData }: { initialData: any[] }) {
@@ -45,6 +45,19 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
     
     // Save to DB
     await updateApplicationProcessingFields(appId, { [field]: value });
+  };
+
+  const handleDelete = async (appId: string) => {
+    if (!confirm("Are you sure you want to permanently delete this application? This action cannot be undone.")) return;
+    
+    // Optimistic remove
+    setData(prev => prev.filter(app => app.id !== appId));
+    
+    const res = await deleteApplication(appId);
+    if (!res.success) {
+      alert("Failed to delete application: " + res.error);
+      // Reverting would require re-fetching, simplest is to alert.
+    }
   };
 
   const handleExport = () => {
@@ -143,7 +156,8 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
           <table className="w-full text-left border-collapse whitespace-nowrap text-sm">
             <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-20">
               <tr>
-                <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200 sticky left-0 z-30 bg-gray-50">Applicant</th>
+                <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200 sticky left-0 z-30 bg-gray-50">Actions</th>
+                <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200 sticky left-[80px] z-30 bg-gray-50">Applicant</th>
                 <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200">Initial Program</th>
                 <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200 bg-yellow-50 min-w-[200px]">Final Enrolled Course</th>
                 <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200 bg-yellow-50 min-w-[140px]">Pipeline Stage</th>
@@ -166,7 +180,16 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
                 return (
                   <tr key={app.id} className="hover:bg-blue-50/30 group transition-colors">
                     {/* Fixed Columns */}
-                    <td className="px-4 py-2 border-r border-gray-200 sticky left-0 z-10 bg-white group-hover:bg-blue-50/50">
+                    <td className="px-2 py-2 border-r border-gray-200 sticky left-0 z-10 bg-white group-hover:bg-blue-50/50 text-center w-[80px]">
+                      <button 
+                         onClick={() => handleDelete(app.id)}
+                         className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                         title="Delete Application"
+                      >
+                         <Trash2 className="w-4 h-4 mx-auto" />
+                      </button>
+                    </td>
+                    <td className="px-4 py-2 border-r border-gray-200 sticky left-[80px] z-10 bg-white group-hover:bg-blue-50/50 min-w-[150px]">
                       <div className="font-semibold text-gray-900">{app.user?.name}</div>
                       <div className="text-xs text-gray-500">{app.user?.email}</div>
                     </td>
