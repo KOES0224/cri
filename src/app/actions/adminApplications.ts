@@ -252,3 +252,33 @@ export async function getAdminApplicationsExportData() {
   }
 }
 
+/**
+ * Updates application tracking metadata from the spreadsheet view
+ */
+export async function updateApplicationProcessingFields(
+  id: string,
+  data: Partial<{
+    stage: string;
+    interviewDate: Date | null;
+    paymentDeadline: Date | null;
+    interviewComments: string;
+    generalComments: string;
+  }>
+) {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "ADMIN") return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.application.update({
+      where: { id },
+      data
+    });
+    
+    // We don't strictly revalidatePath here because it will disrupt the spreadsheet UI focus. 
+    // The spreadsheet will handle optimistic UI updates.
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+

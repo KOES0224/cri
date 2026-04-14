@@ -110,6 +110,14 @@ model Application {
   step             Int               @default(1) // Legacy step (can keep for backward compatibility)
   expectedWaitDays Int? // Expected remaining time
   content          String? // For storing application responses/essays
+
+  // Application Pipeline / Administrative Fields
+  stage               String    @default("REVIEW") // REVIEW, INTERVIEW, PAYMENT, ENROLLED, REJECTED
+  interviewDate       DateTime?
+  paymentDeadline     DateTime?
+  interviewComments   String?   @db.Text
+  generalComments     String?   @db.Text
+
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   program          Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
   steps            ApplicationStep[]
