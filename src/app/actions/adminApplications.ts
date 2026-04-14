@@ -117,3 +117,105 @@ export async function addUserComment(userId: string, content: string) {
     return { success: false, error: err.message || "Failed to add comment" };
   }
 }
+
+export async function scheduleUserNotification(userId: string, message: string, dueDate: Date) {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "ADMIN") return { success: false, error: "Unauthorized" };
+  
+  try {
+    await prisma.notification.create({
+      data: {
+        userId,
+        adminName: session.user.name || "Admin",
+        message,
+        dueDate,
+      }
+    });
+
+    await prisma.userActivity.create({
+      data: {
+        userId,
+        action: "NOTE_ADDED",
+        adminName: session.user.name || "Admin",
+        content: `Scheduled an alarm: "${message}" for ${dueDate.toLocaleDateString()}`
+      }
+    });
+
+    revalidatePath(`/dashboard/users/${userId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function scheduleUserGoogleMeeting(userId: string, title: string, startDateTime: Date, durationMinutes: number) {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "ADMIN") return { success: false, error: "Unauthorized" };
+
+  const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_CALENDAR_REFRESH_TOKEN;
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    return { success: false, error: "Google Calendar not fully configured." };
+  }
+
+  try {
+    const { google } = require('googleapis');
+    const auth = new google.auth.OAuth2(clientId, clientSecret);
+    auth.setCredentials({ refresh_token: refreshToken });
+
+    const calendar = google.calendar({ version: 'v3', auth });
+    const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
+
+    const eventBody: any = {
+      summary: title,
+      start: { dateTime: startDateTime.toISOString() },
+      end: { dateTime: endDateTime.toISOString() },
+      conferenceData: {
+        createRequest: {
+          requestId: `req-${Date.now()}`,
+          conferenceSolutionKey: { type: "hangoutsMeet" }
+        }
+      }
+    };
+
+    const response = await calendar.events.insert({
+      calendarId: 'primary',
+      requestBody: eventBody,
+      conferenceDataVersion: 1,
+    });
+
+    const eventLink = response.data.htmlLink;
+    let conferenceLink = response.data.hangoutLink;
+    
+    if (response.data.location?.includes('zoom.us')) conferenceLink = response.data.location;
+    else if (response.data.conferenceData?.entryPoints) {
+      const videoEntry = response.data.conferenceData.entryPoints.find((e: any) => e.entryPointType === 'video');
+      if (videoEntry) conferenceLink = videoEntry.uri;
+    }
+
+    await prisma.userActivity.create({
+      data: {
+        userId,
+        action: "NOTE_ADDED",
+        adminName: session.user.name || "Admin",
+        content: `Scheduled a Calendar Meeting: "${title}" for ${startDateTime.toLocaleString()}.\nLink: ${conferenceLink || 'Check Calendar'}`
+      }
+    });
+
+    await prisma.notification.create({
+      data: {
+        userId,
+        adminName: session.user.name || "Admin",
+        message: `📅 Meeting Scheduled: ${title}`,
+        dueDate: startDateTime,
+      }
+    });
+
+    revalidatePath(`/dashboard/users/${userId}`);
+    return { success: true, eventLink, conferenceLink };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

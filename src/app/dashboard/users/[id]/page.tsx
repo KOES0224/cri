@@ -136,10 +136,10 @@ export default async function AdminUserProfilePage({ params }: { params: { id: s
              <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                <h3 className="text-lg font-bold text-gray-900 flex items-center">
                  <History className="w-5 h-5 mr-2 text-gray-500" />
-                 Master Activity Timeline
+                 Interactive Timeline
                </h3>
              </div>
-             <UserActivityTimeline userId={user.id} activities={combinedActivities} />
+             <UserActivityTimeline user={user} activities={combinedActivities} />
            </div>
         </div>
 

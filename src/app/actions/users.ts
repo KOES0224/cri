@@ -75,6 +75,9 @@ export async function getUserDetails(id: string) {
         activities: {
           orderBy: { createdAt: 'desc' }
         },
+        notifications: {
+          orderBy: { dueDate: 'asc' }
+        },
         leads: {
           include: {
             activities: {
