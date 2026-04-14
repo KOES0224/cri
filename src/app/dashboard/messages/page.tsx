@@ -1,10 +1,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Lock } from "lucide-react";
+import { Lock, MessageSquare } from "lucide-react";
 import StudentLayout from "../_components/StudentLayout";
+import AdminLayout from "../_components/AdminLayout";
 import MessagesClient from "./MessagesClient";
+import AdminMessagesClient from "./AdminMessagesClient";
 import { checkHasActiveEnrollments, getAvailableContacts } from "@/app/actions/messages";
+import { getPrograms } from "@/app/actions/programs";
 
 export default async function MessagesPage() {
   const session = await getServerSession(authOptions);
@@ -13,10 +16,12 @@ export default async function MessagesPage() {
     redirect("/auth/login");
   }
 
-  // 1. Enrollment Gate (Admins inherently pass this)
+  const isAdmin = session.user.role === "ADMIN";
+
+  // 1. Enrollment Gate
   const isEnrolled = await checkHasActiveEnrollments();
 
-  if (!isEnrolled) {
+  if (!isEnrolled && !isAdmin) {
     return (
       <StudentLayout>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col min-h-[600px] items-center justify-center p-8 text-center animate-in fade-in">
@@ -32,8 +37,26 @@ export default async function MessagesPage() {
     );
   }
 
-  // 2. Peer Discovery (Only returns same-class users + Admins)
+  // 2. Peer Discovery
   const contacts = await getAvailableContacts();
+
+  if (isAdmin) {
+    const programs = await getPrograms();
+    return (
+      <AdminLayout>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
+            <MessageSquare className="h-8 w-8 text-blue-600 p-1.5 bg-blue-50 rounded-lg" />
+            Global Communications
+          </h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Broadcast messages to course groups, search students, or chat individually.
+          </p>
+        </div>
+        <AdminMessagesClient contacts={contacts as any} currentUserId={session.user.id} programs={programs} />
+      </AdminLayout>
+    );
+  }
 
   return (
     <StudentLayout>

@@ -82,7 +82,17 @@ export async function getAvailableContacts() {
   if (session.user.role === "ADMIN") {
     const allUsers = await prisma.user.findMany({
       orderBy: { name: "asc" },
-      select: { id: true, name: true, image: true, role: true }
+      select: { 
+        id: true, 
+        name: true,
+        email: true,
+        image: true, 
+        role: true,
+        enrollments: {
+          where: { status: "ONGOING" },
+          select: { program: { select: { id: true, title: true } } }
+        }
+      }
     });
     return allUsers.map(u => ({ ...u, unreadCount: unreadMap.get(u.id) || 0 }));
   }
@@ -191,6 +201,34 @@ export async function sendMessage(receiverId: string, content: string) {
         receiverId,
         content
       }
+    });
+
+    revalidatePath("/dashboard/messages");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Send a message to multiple users simultaneously.
+ * Admin only.
+ */
+export async function sendGroupMessage(receiverIds: string[], content: string) {
+  const session = await requireAuth();
+  
+  if (session.user.role !== "ADMIN") return { success: false, error: "Unauthorized" };
+  if (!content.trim() || receiverIds.length === 0) return { success: false, error: "Empty message or no recipients" };
+
+  try {
+    const messages = receiverIds.map(id => ({
+      senderId: session.user.id,
+      receiverId: id,
+      content
+    }));
+
+    await prisma.message.createMany({
+      data: messages
     });
 
     revalidatePath("/dashboard/messages");
