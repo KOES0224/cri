@@ -7,7 +7,7 @@ export default function PartnersPage() {
   return (
     <div className="fixed inset-0 z-[9999] bg-black">
       <iframe
-        src="/partners-presentation.html"
+        src={`/partners-presentation.html?v=${new Date().getTime()}`}
         className="w-full h-full border-none"
         title="B2B Partnership Presentation"
       />
