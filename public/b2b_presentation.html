@@ -227,6 +227,37 @@ body {
   .contact-container { flex-direction: column; border-radius: 30px; gap: 2.5rem; text-align: center; padding: 3rem;}
   .c-item { text-align: center; }
 }
+
+@media (max-width: 768px) {
+  body { scroll-snap-type: none; overflow-y: auto; height: auto; }
+  .slide { height: auto; min-height: 100vh; padding: 6rem 5vw 4rem 5vw; scroll-snap-align: none; }
+  .fixed-nav { height: 60px; padding: 0 1rem; }
+  .nav-logo { font-size: 1.1rem; }
+  .nav-cta { padding: 0.5rem 0.8rem; font-size: 0.85rem; }
+  
+  .hero-title { font-size: 2.4rem; }
+  .hero-subtitle { font-size: 1.1rem; margin-bottom: 2.5rem; }
+  .hero-points { flex-direction: column; gap: 1rem; align-items: stretch; margin-bottom: 2rem; }
+  .hero-points li { font-size: 1rem; padding: 0.8rem 1.2rem; justify-content: center; }
+  
+  .section-title { font-size: 2.2rem; }
+  .section-subtitle { font-size: 1rem; margin-bottom: 3rem; }
+  
+  .glass-card { padding: 2rem 1.5rem; }
+  .glass-card h3 { font-size: 1.5rem; }
+  .glass-card p { font-size: 1rem; }
+  
+  .fw-item, .fw-milestone { padding: 2rem 1.5rem; }
+  .fw-title { font-size: 1.5rem; }
+  .fw-milestone .fw-title { font-size: 1.8rem; }
+  
+  .wf-step { padding: 2rem 1.5rem; }
+  .wf-step h5 { font-size: 1.3rem; }
+  
+  .contact-container { padding: 2rem 1.5rem; gap: 1.5rem; width: 100%; border-radius: 20px;}
+  .c-label { font-size: 0.85rem; }
+  .c-value { font-size: 1.1rem !important; word-break: break-all; }
+}
 </style>
 </head>
 <body>
