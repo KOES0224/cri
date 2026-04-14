@@ -304,6 +304,16 @@ export async function scheduleGoogleMeeting(leadId: string, title: string, start
       }
     });
 
+    // 6) Also log an active Alarm to the Dashboard
+    await prisma.notification.create({
+      data: {
+        leadId,
+        adminName: session.user.name || "Admin",
+        message: `📅 Meeting Scheduled: ${title}`,
+        dueDate: startDateTime,
+      }
+    });
+
     revalidatePath(`/dashboard/leads/${leadId}`);
     return { success: true, eventLink, conferenceLink };
   } catch (error: any) {
