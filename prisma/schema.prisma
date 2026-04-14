@@ -27,6 +27,7 @@ model User {
   messagesSent Message[]     @relation("SentMessages")
   messagesRecv Message[]     @relation("ReceivedMessages")
   leads        Lead[]
+  activities   UserActivity[]
 
   // Parent-Student Relationship
   parentId String?
@@ -322,4 +323,15 @@ model SiteContent {
   updatedAt DateTime @updatedAt
   
   @@index([key])
+}
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  adminName String?  // The admin who recorded the log
+  action    String   // "NOTE_ADDED", "STATUS_CHANGE"
+  content   String?  // The actual text log or note
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { Users, BookOpen, Settings, LayoutTemplate, PhoneCall, Bell, MessageSquare, Tag, CheckCircle2, ArrowRight } from "lucide-react";
+import { Users, BookOpen, Settings, LayoutTemplate, PhoneCall, Bell, MessageSquare, Tag, CheckCircle2, ArrowRight, ClipboardCheck } from "lucide-react";
 import { getActiveNotifications, getRecentLeadActivities } from "@/app/actions/crm";
+import { getAdminApplications } from "@/app/actions/adminApplications";
 import { format } from "date-fns";
 
 export default async function AdminDashboard({ name }: { name: string }) {
   const activeAlarms = await getActiveNotifications();
   const recentLogs = await getRecentLeadActivities(10);
+  const recentApps = await getAdminApplications(5);
 
   return (
     <>
@@ -57,6 +59,59 @@ export default async function AdminDashboard({ name }: { name: string }) {
           <h3 className="text-lg font-bold text-gray-900">Settings</h3>
           <p className="text-sm text-gray-500 mt-1">Configure global portal settings.</p>
         </Link>
+      </div>
+
+      <div className="mb-10 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100 bg-orange-50/30 flex justify-between items-center">
+           <h3 className="text-lg font-bold tracking-tight text-gray-900 flex items-center">
+             <ClipboardCheck className="w-5 h-5 mr-2 text-orange-600" />
+             Recent Applications
+           </h3>
+           <Link href="/dashboard/applications-admin" className="text-xs font-bold text-orange-600 hover:text-orange-800 transition-colors flex items-center bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">
+              Manage All Applications <ArrowRight className="w-3.5 h-3.5 ml-1" />
+           </Link>
+        </div>
+        <div className="p-0">
+           {recentApps.length === 0 ? (
+              <div className="text-center text-gray-500 py-10 text-sm">No new applications yet.</div>
+           ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider">
+                    <tr>
+                      <th className="px-6 py-3 font-semibold">Applicant</th>
+                      <th className="px-6 py-3 font-semibold">Program</th>
+                      <th className="px-6 py-3 font-semibold">Date</th>
+                      <th className="px-6 py-3 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {recentApps.map(app => (
+                       <tr key={app.id} className="hover:bg-gray-50/50 transition-colors">
+                         <td className="px-6 py-4 font-bold text-gray-900 flex items-center gap-2">
+                           {app.user.image ? (
+                             <img src={app.user.image} className="w-6 h-6 rounded-full" alt="" />
+                           ) : (
+                             <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-[10px]">
+                               {app.user.name?.charAt(0).toUpperCase() || 'U'}
+                             </div>
+                           )}
+                           <Link href={`/dashboard/users/${app.user.id}`} className="hover:text-blue-600 transition-colors">{app.user.name}</Link>
+                         </td>
+                         <td className="px-6 py-4 text-gray-600 font-medium">{app.program.title}</td>
+                         <td className="px-6 py-4 text-gray-500">{format(new Date(app.createdAt), 'MMM d, yyyy')}</td>
+                         <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wider ${app.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' : app.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}`}>
+                              {app.status}
+                            </span>
+                         </td>
+                       </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+           )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">

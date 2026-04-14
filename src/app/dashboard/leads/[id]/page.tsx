@@ -46,6 +46,23 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         />
       </div>
 
+      {lead.user && (
+        <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-blue-900 font-bold flex items-center text-lg">
+              <User className="w-5 h-5 mr-2" /> 
+              Registered Student Profile
+            </h3>
+            <p className="text-sm text-blue-700 mt-1.5 max-w-2xl leading-relaxed">
+              This lead has registered a user account. To add new timeline notes, view applications, and manage steps, please visit their full Master User Profile. Fragmented logging here is disabled.
+            </p>
+          </div>
+          <Link href={`/dashboard/users/${lead.user.id}`} className="shrink-0 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm">
+            View Master Profile
+          </Link>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Column: Details & Original Message */}
@@ -73,7 +90,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
         {/* Right Column: Interactive Timeline Client */}
         <div className="lg:col-span-2">
-          <LeadTimelineClient lead={lead} />
+          <LeadTimelineClient lead={lead} hideInput={!!lead.user} />
         </div>
 
       </div>

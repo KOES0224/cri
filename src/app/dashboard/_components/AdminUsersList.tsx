@@ -186,16 +186,14 @@ export default function AdminUsersList({ initialUsers }: { initialUsers: User[] 
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right flex justify-end gap-2">
-                    {user.leads && user.leads.length > 0 && (
-                      <Link
-                        href={`/dashboard/leads/${user.leads[0].id}`}
-                        className="text-blue-500 hover:text-blue-700 transition-colors p-2 hover:bg-blue-50 rounded-lg flex items-center"
-                        title="View CRM Lead Profile"
-                      >
-                        <UserCog className="w-5 h-5 mr-1" />
-                        <span className="text-xs font-bold">CRM</span>
-                      </Link>
-                    )}
+                    <Link
+                      href={`/dashboard/users/${user.id}`}
+                      className="text-blue-500 hover:text-blue-700 transition-colors p-2 hover:bg-blue-50 rounded-lg flex items-center"
+                      title="View Master User Profile"
+                    >
+                      <UserCog className="w-5 h-5 mr-1" />
+                      <span className="text-xs font-bold">Profile</span>
+                    </Link>
                     <button
                       onClick={() => handleDelete(user.id)}
                       disabled={loading === user.id}

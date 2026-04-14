@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { CheckCircle2, MessageSquare, Tag, Send, Bell, CalendarRange } from "lucide-react";
 import { updateLeadStatus, addLeadNote, scheduleNotification, scheduleGoogleMeeting } from "@/app/actions/crm";
 
-export default function LeadTimelineClient({ lead }: { lead: any }) {
+export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hideInput?: boolean }) {
   const [status, setStatus] = useState(lead.status);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   
@@ -197,9 +197,9 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
         </div>
       </div>
 
-      {/* Input Composer Footer with Tabs */}
-      <div className="border-t border-gray-200 bg-gray-50/50">
-        <div className="flex border-b border-gray-200 px-4 pt-2 gap-2">
+      {!hideInput && (
+        <div className="border-t border-gray-200 bg-gray-50/50">
+          <div className="flex border-b border-gray-200 px-4 pt-2 gap-2">
            <button 
              onClick={() => setActiveTab("note")}
              className={`px-5 py-3 text-sm font-bold flex items-center transition-all rounded-t-xl ${activeTab === 'note' ? 'bg-white text-blue-600 border border-gray-200 border-b-white' : 'text-gray-500 hover:bg-gray-100 border border-transparent'}`}
@@ -328,7 +328,7 @@ export default function LeadTimelineClient({ lead }: { lead: any }) {
              </div>
           )}
         </div>
-      </div>
+      )}
 
     </div>
   );

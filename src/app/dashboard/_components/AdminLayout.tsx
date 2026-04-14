@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, BookOpen, Settings, LayoutTemplate, ArrowLeft, UserCircle, PhoneCall } from "lucide-react";
+import { Users, BookOpen, Settings, LayoutTemplate, ArrowLeft, UserCircle, PhoneCall, ClipboardCheck } from "lucide-react";
 
 export default async function AdminDashboardLayout({
   children,
@@ -40,6 +40,11 @@ export default async function AdminDashboardLayout({
           <Link href="/dashboard/programs" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-700 transition-colors group">
             <BookOpen className="h-5 w-5" />
             <span className="font-medium text-sm">Program Management</span>
+          </Link>
+
+          <Link href="/dashboard/applications-admin" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700 transition-colors group">
+            <ClipboardCheck className="h-5 w-5" />
+            <span className="font-medium text-sm">Application Management</span>
           </Link>
 
           <Link href="/dashboard/cms" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-purple-50 hover:text-purple-700 transition-colors group">

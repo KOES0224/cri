@@ -59,3 +59,34 @@ export async function deleteUser(userId: string) {
     return { success: false, error: "Failed to delete user." };
   }
 }
+
+export async function getUserDetails(id: string) {
+  try {
+    return await prisma.user.findUnique({
+      where: { id },
+      include: {
+        applications: {
+          include: {
+            program: true,
+            steps: { orderBy: { order: 'asc' } }
+          },
+          orderBy: { createdAt: 'desc' }
+        },
+        activities: {
+          orderBy: { createdAt: 'desc' }
+        },
+        leads: {
+          include: {
+            activities: {
+              orderBy: { createdAt: 'desc' }
+            }
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Failed to fetch user details:", error);
+    return null;
+  }
+}
+
