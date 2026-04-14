@@ -17,7 +17,9 @@ export default function Navbar() {
   
   // Safely check pathname without trailing slashes
   const normalizedPath = pathname?.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
-  const isDarkHero = ["/", "/research", "/intern", "/projects"].includes(normalizedPath);
+  // If pathname is null/undefined during SSR layout static generation, we assume we're on the main site (dark hero)
+  // to prevent it from flashing dark text on the initial load of the homepage.
+  const isDarkHero = !normalizedPath || ["/", "/research", "/intern", "/projects"].includes(normalizedPath);
 
   useEffect(() => {
     setIsMounted(true); // Hydration safety

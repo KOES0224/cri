@@ -174,8 +174,14 @@ export default function StudentDashboard({
 
       {/* Pending Tasks Modal */}
       {isPendingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => setIsPendingModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
               <h3 className="text-lg font-bold text-gray-900 flex items-center">
                 <Clock className="w-5 h-5 mr-2 text-orange-500" />
