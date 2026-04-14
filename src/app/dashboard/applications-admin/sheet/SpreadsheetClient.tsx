@@ -52,7 +52,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
     
     // Build Headers
     const headers = [
-      "ID", "Name", "Email", "Program", "Stage", "Interview Date", 
+      "ID", "Name", "Email", "Initial Program", "Final Course", "Stage", "Interview Date", 
       "Payment Deadline", "Interview Comments", "General Comments",
       ...contentColumns
     ];
@@ -72,6 +72,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
         escapeCSV(app.user?.name),
         escapeCSV(app.user?.email),
         escapeCSV(app.program?.title),
+        escapeCSV(app.finalRegisteredCourse),
         escapeCSV(app.stage),
         escapeCSV(app.interviewDate ? new Date(app.interviewDate).toLocaleDateString() : ""),
         escapeCSV(app.paymentDeadline ? new Date(app.paymentDeadline).toLocaleDateString() : ""),
@@ -143,7 +144,8 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
             <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-20">
               <tr>
                 <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200 sticky left-0 z-30 bg-gray-50">Applicant</th>
-                <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200">Program</th>
+                <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200">Initial Program</th>
+                <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200 bg-yellow-50 min-w-[200px]">Final Enrolled Course</th>
                 <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200 bg-yellow-50 min-w-[140px]">Pipeline Stage</th>
                 <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200 bg-yellow-50 min-w-[160px]">Interview Date</th>
                 <th className="px-4 py-3 font-semibold text-gray-700 border-r border-gray-200 bg-yellow-50 min-w-[160px]">Payment Deadline</th>
@@ -170,6 +172,17 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
                     </td>
                     <td className="px-4 py-2 border-r border-gray-200 text-gray-700">
                       <span className="truncate block max-w-[200px]" title={app.program?.title}>{app.program?.title}</span>
+                    </td>
+
+                    <td className="px-2 py-2 border-r border-gray-200 bg-yellow-50/30">
+                      <select 
+                        value={app.finalRegisteredCourse || ""}
+                        onChange={(e) => handleFieldChange(app.id, 'finalRegisteredCourse', e.target.value)}
+                        className="w-full bg-transparent border-0 font-bold px-2 py-1 focus:ring-2 focus:ring-blue-500 rounded text-xs cursor-pointer text-gray-900"
+                      >
+                        <option value="">-- Select Final Course --</option>
+                        {programs.map((p: any) => <option key={p} value={p}>{p}</option>)}
+                      </select>
                     </td>
                     
                     {/* Interactive Pipeline State cells */}

@@ -259,6 +259,7 @@ export async function updateApplicationProcessingFields(
   id: string,
   data: Partial<{
     stage: string;
+    finalRegisteredCourse: string;
     interviewDate: Date | null;
     paymentDeadline: Date | null;
     interviewComments: string;
