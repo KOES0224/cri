@@ -256,8 +256,40 @@ body {
   .hero-points li { font-size: 1rem; padding: 0.8rem 1.2rem; justify-content: center; }
   
   .section-title { font-size: 2.2rem; }
-  .section-subtitle { font-size: 1rem; margin-bottom: 3rem; }
+  .section-subtitle { font-size: 1rem; margin-bottom: 2rem; }
   
+  /* Modern Swipe Indicator */
+  .swipe-indicator {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 0.45rem 1rem;
+    border-radius: 25px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    backdrop-filter: blur(15px);
+  }
+  .swipe-indicator svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: var(--accent-color);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation: swipeLeftRight 1.6s infinite cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes swipeLeftRight {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(5px); }
+  }
+
   /* Horizontal Swipe for Cards */
   .card-grid {
     display: flex;
@@ -326,6 +358,11 @@ body {
     <h2 class="section-title fade-up">압도적인 교수진.</h2>
     <p class="section-subtitle fade-up d-1" style="word-break: keep-all;">'진짜 연구'가 만드는 최고 수준의 아카데믹 인프라.</p>
     
+    <div class="swipe-indicator fade-up d-1" style="display: none;">
+      <span>Swipe</span>
+      <svg viewBox="0 0 24 24"><path d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+    </div>
+    
     <div class="card-grid card-grid-4">
       <div class="glass-card fade-up d-1">
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.8rem;">
@@ -376,7 +413,12 @@ body {
   <!-- Slide 3: References (Verbatim from User with Perfect Typography) -->
   <section class="slide slide-3" style="background: radial-gradient(circle at bottom center, rgba(10,20,30,0.8), var(--bg-color) 70%);">
     <h2 class="section-title fade-up" style="line-height: 1.25; word-break: keep-all;">단순한 기획을 넘어,<br>구축해 낸 2026 실제 레퍼런스</h2>
-    <p class="section-subtitle fade-up d-1" style="margin-bottom: 3.5rem; word-break: keep-all;">가장 완벽히 증명된 최상위권 아카데믹 결과물입니다.</p>
+    <p class="section-subtitle fade-up d-1" style="margin-bottom: 2rem; word-break: keep-all;">가장 완벽히 증명된 최상위권 아카데믹 결과물입니다.</p>
+    
+    <div class="swipe-indicator fade-up d-1" style="display: none;">
+      <span>Swipe</span>
+      <svg viewBox="0 0 24 24"><path d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+    </div>
     
     <div class="card-grid card-grid-3">
       
