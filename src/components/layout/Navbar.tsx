@@ -41,12 +41,11 @@ export default function Navbar() {
     };
   }, [session]);
 
-  // We ensure consistent server/client initial render matching by default
-  const navTextClass = isDarkHero && (!isMounted || !scrolled)
+  const navTextClass = isDarkHero && !scrolled
     ? "text-white/90 hover:text-white transform-gpu" 
     : "text-gray-600 hover:text-black transform-gpu";
   
-  const logoClass = isDarkHero && (!isMounted || !scrolled)
+  const logoClass = isDarkHero && !scrolled
     ? "text-white"
     : "bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600";
 
@@ -120,7 +119,7 @@ export default function Navbar() {
           <div className="flex items-center lg:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className={`p-2 -mr-2 focus:outline-none transition-colors ${isDarkHero && (!isMounted || !scrolled) ? 'text-white' : 'text-gray-600 hover:text-black'}`}
+              className={`p-2 -mr-2 focus:outline-none transition-colors ${isDarkHero && !scrolled ? 'text-white' : 'text-gray-600 hover:text-black'}`}
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>

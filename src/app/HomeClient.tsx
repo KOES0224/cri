@@ -62,6 +62,24 @@ export default function HomeClient({ content }: { content: Record<string, string
         {/* Subtle grid texture overlay */}
         <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
         
+        {/* Hover Indicator Signage (Visible when NOT hovered) */}
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-opacity duration-700 ease-in-out md:opacity-100 md:group-hover:opacity-0 hidden md:flex">
+          <motion.div 
+            animate={{ y: [0, -10, 0] }}
+            transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+            className="bg-white/10 backdrop-blur-xl border border-white/20 px-6 py-3.5 rounded-full flex items-center gap-3 shadow-2xl"
+          >
+            {/* Pulsing Dot Indicator */}
+            <div className="relative flex h-3 w-3 mr-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+            </div>
+            <span className="text-white/90 font-semibold tracking-wide text-sm">
+              Move cursor here to reveal
+            </span>
+          </motion.div>
+        </div>
+
         {/* Text container fades out unless hovered (on desktop) */}
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10 transition-opacity duration-700 ease-in-out md:opacity-0 md:group-hover:opacity-100">
           <motion.div 
