@@ -10,12 +10,12 @@ export default async function InternPage() {
   const contentReq = await getSiteContent("landing");
   const content = contentReq.data || {};
   const partners = [
-    { name: "Seoul National University", type: "Academic" },
-    { name: "UN Habitat", type: "NGO" },
-    { name: "KAIST", type: "Academic" },
-    { name: "CRI Labs", type: "Research" },
-    { name: "World Bank Institute", type: "NGO" },
-    { name: "Samsung Research", type: "Corporate" },
+    { name: "NGOs (Global)", type: "NGO" },
+    { name: "Tech Companies (USA)", type: "Tech" },
+    { name: "Finance Companies (Singapore)", type: "Finance" },
+    { name: "Research Institutes (USA/UK)", type: "Research" },
+    { name: "Startups (Silicon Valley)", type: "Tech" },
+    { name: "Think Tanks", type: "Policy" },
   ];
 
   // Fetch internships from the database where category is "Internship"
