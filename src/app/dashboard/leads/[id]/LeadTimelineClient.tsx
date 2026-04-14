@@ -328,6 +328,7 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
              </div>
           )}
         </div>
+      </div>
       )}
 
     </div>
