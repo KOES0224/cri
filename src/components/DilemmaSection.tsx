@@ -28,17 +28,17 @@ const dilemmas = [
 
 export default function DilemmaSection() {
   return (
-    <section className="w-full py-32 px-6 md:px-16" id="dilemma" style={{ background: 'radial-gradient(circle at center left, rgba(20,5,15,0.7), transparent 60%)' }}>
+    <section className="w-full py-16 md:py-24 lg:py-32 px-5 md:px-8 lg:px-16" id="dilemma" style={{ background: 'radial-gradient(circle at center left, rgba(20,5,15,0.7), transparent 60%)' }}>
       <div className="max-w-7xl mx-auto flex flex-col items-center">
         
         {/* Section Header */}
-        <div className="text-center mb-20 max-w-4xl">
+        <div className="text-center mb-12 lg:mb-20 max-w-4xl">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.8 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 leading-tight tracking-tight"
+            className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-4 lg:mb-6 leading-tight tracking-tight"
           >
             3대 현실적 딜레마
           </motion.h2>
@@ -47,14 +47,14 @@ export default function DilemmaSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg md:text-xl text-gray-300 font-medium tracking-wide font-sans mb-12 word-break-keep"
+            className="text-base md:text-lg lg:text-xl text-gray-300 font-medium tracking-wide font-sans mb-8 lg:mb-12 word-break-keep"
           >
             오직 CRI 프리미엄 인프라만이 해결할 수 있는 한계.
           </motion.p>
         </div>
 
         {/* Flat List Grid (Visible at a glance) */}
-        <div className="w-full flex flex-col gap-8 max-w-6xl">
+        <div className="w-full flex flex-col gap-6 lg:gap-8 max-w-6xl">
           {dilemmas.map((dilemma, index) => (
             <motion.div
               key={dilemma.id}
@@ -62,32 +62,32 @@ export default function DilemmaSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6, delay: index * 0.2 }}
-              className="group grid grid-cols-1 xl:grid-cols-[1fr_auto_1.2fr] items-center gap-6 xl:gap-12 bg-[#0F0F12]/60 border border-white/5 rounded-[28px] p-8 xl:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1 hover:border-[#e5c384]/30 hover:shadow-[0_15px_50px_rgba(0,0,0,0.5)] transition-all duration-300"
+              className="group grid grid-cols-1 xl:grid-cols-[1fr_auto_1.2fr] items-center gap-8 xl:gap-12 bg-[#0F0F12]/60 border border-white/5 rounded-[24px] xl:rounded-[28px] p-8 md:p-10 xl:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1 hover:border-[#e5c384]/30 hover:shadow-[0_15px_50px_rgba(0,0,0,0.5)] transition-all duration-300"
             >
               
               {/* Before Section */}
-              <div className="flex flex-col justify-center border-l-4 border-l-[#ff5050]/40 pl-6 h-full">
-                <span className="text-[#ff8888] text-[0.95rem] font-bold mb-4 tracking-widest uppercase inline-block w-max">
+              <div className="flex flex-col justify-center border-l-4 border-l-[#ff5050]/40 pl-5 md:pl-6 h-full">
+                <span className="text-[#ff8888] text-[0.85rem] lg:text-[0.95rem] font-bold mb-3 md:mb-4 tracking-widest uppercase inline-block w-max">
                   {dilemma.title} 학생 케이스
                 </span>
-                <h3 className="text-[1.25rem] xl:text-[1.3rem] text-white/90 leading-relaxed font-semibold break-keep m-0">
+                <h3 className="text-[1.1rem] md:text-[1.25rem] xl:text-[1.3rem] text-white/90 leading-[1.65] font-semibold break-keep m-0">
                   {dilemma.before}
                 </h3>
               </div>
 
               {/* Connecting Arrow */}
-              <div className="flex justify-center items-center text-[#e5c384]/40 border border-[#e5c384]/20 p-4 rounded-full bg-[#e5c384]/5 xl:transform-none transform rotate-90 self-center w-max mx-auto xl:mx-0">
-                <svg className="w-6 h-6 stroke-current" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <div className="flex justify-center items-center text-[#e5c384]/40 border border-[#e5c384]/20 p-3 md:p-4 rounded-full bg-[#e5c384]/5 xl:transform-none transform rotate-90 self-center w-max mx-auto xl:mx-0 shadow-inner">
+                <svg className="w-5 h-5 md:w-6 md:h-6 stroke-current" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                   <path d="M5 12h14m-7-7l7 7-7 7" />
                 </svg>
               </div>
 
               {/* After Section */}
-              <div className="flex flex-col justify-center border-l-4 border-l-[#e5c384] pl-6 h-full">
-                <span className="text-[#e5c384] text-[0.95rem] font-extrabold mb-4 tracking-widest uppercase inline-block w-max">
+              <div className="flex flex-col justify-center border-l-4 border-l-[#e5c384] pl-5 md:pl-6 h-full">
+                <span className="text-[#e5c384] text-[0.85rem] lg:text-[0.95rem] font-extrabold mb-3 md:mb-4 tracking-widest uppercase inline-block w-max">
                   {dilemma.afterTitle} CRI 솔루션
                 </span>
-                <p className="text-[1.35rem] xl:text-[1.45rem] text-white font-bold leading-relaxed m-0 break-keep">
+                <p className="text-[1.2rem] md:text-[1.35rem] xl:text-[1.45rem] text-white font-bold leading-[1.65] m-0 break-keep">
                   {dilemma.afterDesc}
                 </p>
               </div>
