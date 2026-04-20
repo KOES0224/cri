@@ -158,6 +158,25 @@ body {
 .section-title { font-size: 3.8rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 1.5rem 0; text-align: center; }
 .section-subtitle { font-size: 1.4rem; font-weight: 500; color: var(--text-secondary); margin: 0 0 4.5rem 0; text-align: center; line-height: 1.6; }
 
+/* --- Slide 1.5: Dilemma Flip Cards --- */
+.slide-dilemma { background: radial-gradient(circle at center left, rgba(20,5,15,0.7), var(--bg-color) 60%); }
+.flip-container { perspective: 1500px; background: transparent; cursor: pointer; }
+.flip-card { width: 100%; position: relative; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; min-height: 380px; }
+.flip-container:hover .flip-card, .flip-container.active .flip-card { transform: rotateY(180deg); }
+.flip-front, .flip-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 28px; padding: 3.5rem 2.5rem; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
+
+/* Front */
+.flip-front { background: linear-gradient(145deg, rgba(30, 20, 25, 0.8), rgba(15, 15, 18, 0.9)); border: 1px solid rgba(255, 80, 80, 0.2); box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 2; transform: rotateY(0deg); }
+.flip-front .dilemma-tag { color: #ff8888; background: rgba(255, 80, 80, 0.1); padding: 0.4rem 1.2rem; border-radius: 20px; font-size: 0.95rem; font-weight: 700; display: inline-block; margin-bottom: 2rem; align-self: flex-start; }
+.flip-front h3 { font-size: 1.5rem; color: #fff; line-height: 1.6; word-break: keep-all; font-weight: 600; margin: 0;}
+
+/* Back */
+.flip-back { background: linear-gradient(135deg, rgba(229, 195, 132, 0.15), rgba(0,0,0,0.8)); border: 1px solid rgba(229, 195, 132, 0.4); box-shadow: 0 10px 40px rgba(229, 195, 132, 0.2); transform: rotateY(180deg); }
+.flip-back .solution-tag { color: var(--accent-color); background: rgba(229, 195, 132, 0.15); padding: 0.4rem 1.2rem; border-radius: 20px; font-size: 0.95rem; font-weight: 800; display: inline-block; margin-bottom: 2rem; align-self: flex-start; }
+.flip-back p { font-size: 1.3rem; color: rgba(255,255,255,0.95); line-height: 1.65; word-break: keep-all; font-weight: 500; margin: 0;}
+.flip-hint { margin-top: auto; font-size: 0.9rem; color: rgba(255,255,255,0.3); text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;}
+
+
 /* --- Slide 2: Stories / General Glass Card --- */
 .slide-2 { background: radial-gradient(circle at top right, rgba(20,20,35,0.7), var(--bg-color) 60%); }
 .card-grid { display: grid; gap: 2.5rem; width: 100%; max-width: 1400px; }
@@ -392,6 +411,70 @@ body {
       <li>논문 통과 (Peer Review Pass Rate) <strong class="gold-highlight">99.2%</strong></li>
       <li>진정성 있는 교수 직속 추천서 발급 <strong class="gold-highlight">100% 보장</strong></li>
     </ul>
+  </section>
+
+  <!-- Slide 1.5: 3D Dilemma Flip Cards -->
+  <section class="slide slide-dilemma">
+    <h2 class="section-title fade-up">3대 현실적 딜레마</h2>
+    <p class="section-subtitle fade-up d-1" style="word-break: keep-all;">오직 CRI 프리미엄 인프라만이 해결할 수 있는 한계.</p>
+    
+    <div class="swipe-indicator fade-up d-1" style="display: none;">
+      <span>Tap & Swipe</span>
+      <svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+    </div>
+
+    <div class="card-grid card-grid-3">
+      <!-- Card 1 -->
+      <div class="flip-container fade-up d-1" onclick="this.classList.toggle('active')">
+        <div class="flip-card">
+          <!-- Front -->
+          <div class="flip-front">
+            <div class="dilemma-tag">[프로필 1]</div>
+            <h3>방학 중 해외 썸머 캠프 참가와 SAT/AP 수강 사이에서 양자택일을 고민하는 학생</h3>
+            <div class="flip-hint"><span>Hover to Flip</span><svg style="width:16px; fill:none; stroke:currentColor; stroke-width:2;" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+          </div>
+          <!-- Back -->
+          <div class="flip-back">
+            <div class="solution-tag">[교수진 직접 방한]</div>
+            <p>출국없이 강남 대면 지도로 학원 스케줄과 리서치 100% 병행</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Card 2 -->
+      <div class="flip-container fade-up d-2" onclick="this.classList.toggle('active')">
+        <div class="flip-card">
+          <!-- Front -->
+          <div class="flip-front">
+            <div class="dilemma-tag">[프로필 2]</div>
+            <h3>에세이 스토리는 기획되었으나, 사정관을 압도할 '대학원급 실물 데이터'가 부재한 학생</h3>
+            <div class="flip-hint"><span>Hover to Flip</span><svg style="width:16px; fill:none; stroke:currentColor; stroke-width:2;" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+          </div>
+          <!-- Back -->
+          <div class="flip-back">
+            <div class="solution-tag">[스펙의 무한 연쇄]</div>
+            <p>맞춤형 논문 출판 후 교수 회사 인턴십, 대회 준비, 개인 프로젝트로 연결</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="flip-container fade-up d-3" onclick="this.classList.toggle('active')">
+        <div class="flip-card">
+          <!-- Front -->
+          <div class="flip-front">
+            <div class="dilemma-tag">[프로필 3]</div>
+            <h3>흔한 스펙만 보유하여, '프리미엄 컨설팅 패키지' 최종 등록을 망설이는 학부모</h3>
+            <div class="flip-hint"><span>Hover to Flip</span><svg style="width:16px; fill:none; stroke:currentColor; stroke-width:2;" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+          </div>
+          <!-- Back -->
+          <div class="flip-back">
+            <div class="solution-tag">[독보적 프리미엄 스펙 장착]</div>
+            <p>'아이비리그 정교수 1:1 연구'라는 독보적 자산을 결합하여, 프리미엄 컨설팅 패키지 가치 극대화</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- Slide 2: Faculty -->
