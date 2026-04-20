@@ -28,7 +28,7 @@ const dilemmas = [
 
 export default function DilemmaSection() {
   return (
-    <section className="w-full py-16 md:py-24 lg:py-32 px-5 md:px-8 lg:px-16" id="dilemma" style={{ background: 'radial-gradient(circle at center left, rgba(20,5,15,0.7), transparent 60%)' }}>
+    <section className="w-full pt-28 pb-16 md:pt-32 md:pb-24 lg:pt-40 lg:pb-32 px-5 md:px-8 lg:px-16" id="dilemma" style={{ background: 'radial-gradient(circle at center left, rgba(20,5,15,0.7), transparent 60%)' }}>
       <div className="max-w-7xl mx-auto flex flex-col items-center">
         
         {/* Section Header */}
