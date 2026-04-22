@@ -179,15 +179,17 @@ export default async function AdminDashboard({ name }: { name: string }) {
                 <div className="text-center text-gray-500 py-10 text-sm">You have no upcoming alarms.</div>
              ) : (
                 <div className="space-y-4">
-                  {activeAlarms.map((alarm: any) => (
+                  {activeAlarms.map((alarm: any) => {
+                    const isToday = new Date(alarm.dueDate).toDateString() === new Date().toDateString();
+                    return (
                     <Link href={`/dashboard/leads/${alarm.leadId}`} key={alarm.id} className="block group">
-                      <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm hover:shadow-md hover:border-rose-300 transition-all">
+                      <div className={`bg-white border ${isToday ? 'border-rose-400 bg-rose-50/50' : 'border-gray-200'} p-4 rounded-xl shadow-sm hover:shadow-md hover:border-rose-300 transition-all`}>
                         <div className="flex justify-between items-center mb-2">
                            <span className="text-sm font-bold text-gray-900 group-hover:text-rose-600 transition-colors">
                              {alarm.lead.name}
                            </span>
-                           <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-lg border border-rose-100 flex items-center">
-                             Due {format(new Date(alarm.dueDate), 'MMM d')}
+                           <span className={`text-xs font-bold ${isToday ? 'text-white bg-rose-500 border-rose-500 shadow-sm animate-[pulse_2s_infinite]' : 'text-rose-600 bg-rose-50 border-rose-100'} px-2 py-1 rounded-lg border flex items-center`}>
+                             {isToday ? 'Today' : `Due ${format(new Date(alarm.dueDate), 'MMM d')}`}
                            </span>
                         </div>
                         <p className="text-sm text-gray-600 font-medium mb-3">{alarm.message}</p>
@@ -199,7 +201,7 @@ export default async function AdminDashboard({ name }: { name: string }) {
                         </div>
                       </div>
                     </Link>
-                  ))}
+                  )})}
                 </div>
              )}
           </div>

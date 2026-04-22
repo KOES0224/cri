@@ -14,11 +14,12 @@ export default function LeadDetailsClient({ initialLead }: { initialLead: any })
     name: initialLead.name || "",
     email: initialLead.email || "",
     phone: initialLead.phone || "",
-    age: initialLead.age || "",
+    grade: initialLead.grade || "",
     interest: initialLead.interest || "",
     institution: initialLead.institution || "",
     agencyName: initialLead.agencyName || "",
     parentName: initialLead.parentName || "",
+    parentPhone: initialLead.parentPhone || "",
     kakaoId: initialLead.kakaoId || "",
   });
 
@@ -86,8 +87,8 @@ export default function LeadDetailsClient({ initialLead }: { initialLead: any })
         {/* Academic Profile Group */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Age</label>
-            <input type="number" name="age" value={formData.age} onChange={handleChange} placeholder="e.g. 17" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" />
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Grade</label>
+            <input type="text" name="grade" value={formData.grade} onChange={handleChange} placeholder="e.g. 10th Grade" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" />
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center"><Building className="w-3.5 h-3.5 mr-1" /> Institution</label>
@@ -107,6 +108,10 @@ export default function LeadDetailsClient({ initialLead }: { initialLead: any })
              <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center"><Users className="w-3.5 h-3.5 mr-1" /> Parent Name</label>
               <input type="text" name="parentName" value={formData.parentName} onChange={handleChange} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" />
+             </div>
+             <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center"><Phone className="w-3.5 h-3.5 mr-1" /> Parent Phone</label>
+              <input type="tel" name="parentPhone" value={formData.parentPhone} onChange={handleChange} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" />
              </div>
              <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 flex items-center"><MessageSquare className="w-3.5 h-3.5 mr-1" /> Kakao ID</label>

@@ -44,7 +44,7 @@ export default function CreateLeadModal() {
               Add Manual Lead
             </h3>
             <p className="text-gray-500 text-sm mb-6 mt-4">
-              Create a blank Lead profile. You can fill in the rich parameters (Age, Kakao, Agency, etc.) once the profile is generated.
+              Create a blank Lead profile. You can fill in the rich parameters (Grade, Kakao, Agency, etc.) once the profile is generated.
             </p>
             
             <form onSubmit={handleSubmit} className="space-y-4">

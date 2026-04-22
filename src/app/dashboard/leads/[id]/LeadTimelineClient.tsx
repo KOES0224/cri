@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { CheckCircle2, MessageSquare, Tag, Send, Bell, CalendarRange } from "lucide-react";
-import { updateLeadStatus, addLeadNote, scheduleNotification, scheduleGoogleMeeting } from "@/app/actions/crm";
+import { updateLeadStatus, addLeadNote, scheduleNotification, scheduleGoogleMeeting, deleteNotification } from "@/app/actions/crm";
 
 export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hideInput?: boolean }) {
   const [status, setStatus] = useState(lead.status);
@@ -68,6 +68,16 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
     setSubmittingAlarm(false);
   };
 
+  const handleDeleteAlarm = async (id: string) => {
+    if (confirm("Are you sure you want to delete this scheduled alarm?")) {
+      const res = await deleteNotification(id);
+      if (res.success) {
+        // Assume UI will rehydrate since it uses server actions / server components wrapping it
+        // Or we could rely on the parent page revalidation
+      }
+    }
+  };
+
   const handleScheduleMeeting = async () => {
     if (!meetingTitle.trim() || !meetingDate || !meetingTime) return;
     setSubmittingMeeting(true);
@@ -126,9 +136,16 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
         <div className="relative border-l-2 border-dashed border-gray-200 ml-4 space-y-8 pb-4">
           
           {/* Active Alarms Feed */}
-          {lead.notifications?.filter((n: any) => !n.isRead).length > 0 && (
+          {(() => {
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+            const activeAlarms = lead.notifications?.filter((n: any) => !n.isRead && new Date(n.dueDate) >= startOfToday) || [];
+            
+            if (activeAlarms.length === 0) return null;
+            
+            return (
              <div className="mb-6 space-y-3">
-               {lead.notifications.filter((n: any) => !n.isRead).map((alarm: any) => (
+               {activeAlarms.map((alarm: any) => (
                  <div key={alarm.id} className="relative pl-8 animate-in fly-in">
                    <span className="absolute -left-[17px] bg-rose-50 p-1.5 rounded-full border border-rose-200 z-10 shadow-sm">
                      <Bell className="w-4 h-4 text-rose-600 animate-pulse" />
@@ -139,9 +156,14 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
                          <Bell className="w-3.5 h-3.5 mr-1.5 opacity-70" />
                          Scheduled Alarm: {format(new Date(alarm.dueDate), 'PPP')}
                        </span>
-                       <span className="text-xs font-bold text-rose-600 bg-white border border-rose-100 px-2.5 py-1 rounded-full shadow-sm">
-                         Pending
-                       </span>
+                       <div className="flex items-center gap-2">
+                         <span className="text-xs font-bold text-rose-600 bg-white border border-rose-100 px-2.5 py-1 rounded-full shadow-sm">
+                           Pending
+                         </span>
+                         <button onClick={() => handleDeleteAlarm(alarm.id)} className="text-gray-400 hover:text-red-600 transition-colors bg-white p-1 rounded-md border border-rose-100 shadow-sm" title="Delete Alarm">
+                           ✕
+                         </button>
+                       </div>
                      </div>
                      <span className="text-rose-800 text-sm mt-3 font-medium bg-white/50 p-3 rounded-lg border border-rose-100/50">{alarm.message}</span>
                      <span className="text-xs text-rose-500 mt-3 font-semibold">Scheduled by {alarm.adminName}</span>
@@ -149,7 +171,8 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
                  </div>
                ))}
              </div>
-          )}
+            );
+          })()}
           
           {/* Dynamic Feed */}
           {lead.activities?.slice().reverse().map((activity: any) => (

@@ -3,14 +3,24 @@ export const metadata = {
   description: 'Premium B2B Academic Infrastructure Partnership',
 };
 
+import HeroSection from "@/components/HeroSection";
+import DilemmaSection from "@/components/DilemmaSection";
+import CoreEngineSection from "@/components/CoreEngineSection";
+import TrackRecordSection from "@/components/TrackRecordSection";
+import PipelineSection from "@/components/PipelineSection";
+import EcosystemSection from "@/components/EcosystemSection";
+import WorkflowCTASection from "@/components/WorkflowCTASection";
+
 export default function PartnersPage() {
   return (
-    <div className="fixed inset-0 z-[9999] bg-black">
-      <iframe
-        src={`/partners-presentation.html?v=${new Date().getTime()}`}
-        className="w-full h-full border-none"
-        title="B2B Partnership Presentation"
-      />
-    </div>
+    <main className="w-full min-h-screen bg-deepNavy overflow-x-hidden pt-0 selection:bg-champagneGold selection:text-obsidianBlack">
+      <HeroSection />
+      <DilemmaSection />
+      <CoreEngineSection />
+      <TrackRecordSection />
+      <PipelineSection />
+      <EcosystemSection />
+      <WorkflowCTASection />
+    </main>
   );
 }

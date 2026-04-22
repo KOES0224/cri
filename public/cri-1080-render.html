@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500&family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap');
+        
+        body { margin: 0; padding: 0; background: #040A14; font-family: 'Inter', 'Noto Sans KR', sans-serif; }
+        
+        .poster {
+            width: 1080px; height: auto; background: #040A14; 
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
+            color: #fff; box-sizing: border-box;
+        }
+
+        section {
+            padding: 120px 80px; position: relative; box-sizing: border-box;
+            border-bottom: 2px solid rgba(255,255,255,0.05);
+        }
+        section:last-child { border-bottom: none; }
+
+        h1, h2, h3, h4, p { margin: 0; }
+        .sec-label { font-size: 32px; font-weight: 700; letter-spacing: 0.15em; color: #D4AF37; text-transform: uppercase; margin-bottom: 35px; text-align: center; }
+        .sec-title { font-family: 'Playfair Display', serif; font-size: 85px; font-weight: 700; color: #fff; margin-bottom: 45px; line-height: 1.25; text-align: center; letter-spacing: -0.02em; }
+        .sec-desc { font-size: 42px; color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 80px; font-weight: 300; text-align: center; word-break: keep-all; }
+
+        .hero-section { padding-top: 100px; background: radial-gradient(circle at 85% 15%, rgba(197, 152, 42, 0.15) 0%, transparent 40%), radial-gradient(circle at 10% 60%, rgba(139, 26, 43, 0.15) 0%, transparent 50%), linear-gradient(180deg, #040A14 0%, #071326 100%); }
+        .header { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 30px; margin-bottom: 120px; }
+        .header-logo { width: 140px; height: 140px; border-radius: 50%; border: 4px solid #D4AF37; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 45px; font-weight: 700; color: #D4AF37; }
+        .header-text h2 { font-size: 34px; letter-spacing: 0.15em; color: rgba(255,255,255,0.6); font-weight: 400; text-transform: uppercase; }
+        .header-text h1 { font-size: 52px; letter-spacing: 0.08em; color: #fff; margin-top: 10px; font-weight: 700; text-transform: uppercase; }
+        .proof-badge { display: inline-flex; align-items: center; gap: 20px; background: rgba(27, 115, 64, 0.15); border: 2px solid rgba(106, 232, 156, 0.3); color: #6AE89C; padding: 25px 45px; border-radius: 100px; font-size: 34px; font-weight: 600; margin-bottom: 60px; align-self: flex-start; }
+        .hero-headline { font-family: 'Playfair Display', serif; font-size: 130px; font-weight: 800; line-height: 1.15; color: #ffffff; margin-bottom: 50px; letter-spacing: -0.01em; text-align: left; }
+        .hero-headline em { font-style: italic; color: #D4AF37; font-weight: 700; }
+        .hero-sub { font-size: 46px; line-height: 1.6; color: rgba(255,255,255,0.8); font-weight: 300; word-break: keep-all; margin-bottom: 100px; text-align: left; }
+        .trust-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 60px 40px; background: rgba(255,255,255,0.03); border-radius: 36px; border: 2px solid rgba(255,255,255,0.08); padding: 80px 40px; text-align: center; }
+        .trust-stat .number { font-family: 'Playfair Display', serif; font-size: 90px; font-weight: 800; color: #D4AF37; margin-bottom: 15px; }
+        .trust-stat .label { font-size: 34px; color: rgba(255,255,255,0.6); font-weight: 500; line-height: 1.4; }
+        .offers-wrap { display: flex; flex-direction: column; gap: 50px; }
+        .offer-card { display: flex; flex-direction: column; align-items: flex-start; gap: 40px; background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 2px solid rgba(255,255,255,0.1); border-radius: 36px; padding: 70px 60px; text-align: left; }
+        .offer-icon { font-size: 90px; width: 160px; height: 160px; background: rgba(139, 26, 43, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid rgba(139, 26, 43, 0.3); }
+        .offer-text h3 { font-size: 55px; font-weight: 700; color: #fff; margin-bottom: 25px; line-height: 1.3; }
+        .offer-text p { font-size: 42px; color: rgba(255,255,255,0.65); line-height: 1.5; word-break: keep-all; }
+        .schedule { display: flex; flex-direction: column; gap: 40px; }
+        .s-day { background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.1); border-radius: 36px; padding: 70px 60px; }
+        .s-day h3 { font-family: 'Playfair Display', serif; font-size: 60px; font-weight: 700; margin-bottom: 60px; color: #D4AF37; }
+        .s-event { display: flex; flex-direction: column; gap: 20px; padding: 45px 0; border-top: 2px solid rgba(255,255,255,0.1); }
+        .s-time { font-size: 44px; font-weight: 700; color: #D4AF37; }
+        .s-detail h4 { font-size: 50px; font-weight: 700; margin-bottom: 20px; }
+        .s-detail p { font-size: 40px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+        .s-tag { display: inline-block; font-size: 32px; font-weight: 700; padding: 15px 30px; border-radius: 12px; margin-top: 20px; background: rgba(255,255,255,0.1); color: #fff; align-self: flex-start; }
+        .tag-admit { background: rgba(106, 232, 156, 0.15); color: #6AE89C; }
+        .outcomes-wrap { display: flex; flex-direction: column; gap: 50px; }
+        .out-card { background: #fff; color: #000; border-radius: 36px; overflow: hidden; display: flex; flex-direction: column; }
+        .out-body { padding: 70px 60px; }
+        .out-quote { font-family: 'Playfair Display', serif; font-size: 48px; font-style: italic; font-weight: 700; color: #040A14; margin-bottom: 50px; line-height: 1.5; }
+        .out-meta { display: flex; align-items: center; gap: 30px; margin-bottom: 40px; }
+        .out-ava { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #112A4A, #8B1A2B); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; color: #fff; flex-shrink: 0; }
+        .out-name { font-size: 44px; font-weight: 700; color: #040A14; margin-bottom: 10px; }
+        .out-school { font-size: 36px; color: #555; }
+        .out-journey { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; font-size: 34px; color: #555; padding-top: 40px; border-top: 2px solid #ddd; font-weight: 600; }
+        .journey-arrow { color: #8B1A2B; font-weight: 700; font-size: 40px; }
+        .cta-section { background: linear-gradient(180deg, #040A14 0%, #0B1D3A 100%); padding-bottom: 150px; }
+        .cta-wrap { display: flex; flex-direction: column; gap: 50px; }
+        .cta-box { border-radius: 36px; padding: 80px 60px; text-align: center; }
+        .cta-admit { background: rgba(106, 232, 156, 0.08); border: 3px solid rgba(106, 232, 156, 0.3); }
+        .cta-prospect { background: rgba(212, 175, 55, 0.08); border: 3px solid rgba(212, 175, 55, 0.3); }
+        .cta-badge { display: inline-block; font-size: 36px; font-weight: 700; padding: 18px 45px; border-radius: 100px; margin-bottom: 40px; }
+        .cta-admit .cta-badge { background: rgba(106, 232, 156, 0.15); color: #6AE89C; }
+        .cta-prospect .cta-badge { background: rgba(212, 175, 55, 0.15); color: #D4AF37; }
+        .cta-box h4 { font-family: 'Playfair Display', serif; font-size: 70px; font-weight: 700; margin-bottom: 35px; }
+        .cta-box p { font-size: 44px; color: rgba(255,255,255,0.7); line-height: 1.5; word-break: keep-all; }
+        .footer-section { padding: 120px 80px 180px; text-align: center; }
+        .footer-logo { font-family: 'Playfair Display', serif; font-size: 55px; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 60px; text-align: center; line-height: 1.3; }
+        .footer-qr-area { display: flex; flex-direction: column; align-items: center; gap: 60px; background: #fff; border-radius: 36px; padding: 80px 60px; color: #000; text-align: center; }
+        .qr-text { font-size: 46px; font-weight: 600; line-height: 1.5; }
+        .qr-text strong { display: block; font-size: 65px; color: #8B1A2B; margin-bottom: 20px; }
+        .qr-box { width: 300px; height: 300px; background: #000; border-radius: 20px; }
+        .qr-inner { width: 100%; height: 100%; background-image: linear-gradient(45deg, #fff 25%, transparent 25%, transparent 75%, #fff 75%, #fff), linear-gradient(45deg, #fff 25%, transparent 25%, transparent 75%, #fff 75%, #fff); background-size: 40px 40px; background-position: 0 0, 20px 20px; border: 16px solid #fff; border-radius: 20px; position: relative; }
+        .qr-inner::before, .qr-inner::after { content: ''; position: absolute; width: 70px; height: 70px; background: #fff; border: 20px solid #000; border-radius: 12px; }
+        .qr-inner::before { top: 12px; left: 12px; }
+        .qr-inner::after { bottom: 12px; right: 12px; }
+    </style>
+</head>
+<body>
+    <div class="poster">
+        
+        <section class="hero-section">
+            <div class="header">
+                <div class="header-logo">CRI</div>
+                <div class="header-text">
+                    <h2>Seoul Research Program</h2>
+                    <h1>Elite Research Institute</h1>
+                </div>
+            </div>
+
+            <div class="proof-badge">
+                <span>●</span> 2025 한국 국적 수료생 100% US Top 30 진학
+            </div>
+            
+            <h1 class="hero-headline">당신의 <em>연구</em>가<br>여기서 시작됩니다.</h1>
+            <p class="hero-sub">
+                아이비리그 현직 교수진과의 1:1 연구 멘토링.<br>
+                입학 사정관이 가장 신뢰하는 완벽한 학술 실적.
+            </p>
+
+            <div class="trust-grid">
+                <div class="trust-stat">
+                    <div class="number">100%</div>
+                    <div class="label">명문대 진학률</div>
+                </div>
+                <div class="trust-stat">
+                    <div class="number">1:1</div>
+                    <div class="label">교수:학생 비율</div>
+                </div>
+                <div class="trust-stat">
+                    <div class="number">15+</div>
+                    <div class="label">학술 논문 게재</div>
+                </div>
+                <div class="trust-stat">
+                    <div class="number">Ivy</div>
+                    <div class="label">멘토 교수 소속</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="sec-label">The Experience</div>
+            <h2 class="sec-title">다른 곳에서는 불가능한<br>압도적 연구 경험</h2>
+            <div class="offers-wrap">
+                <div class="offer-card">
+                    <div class="offer-icon">🔬</div>
+                    <div class="offer-text">
+                        <h3>Ivy League 1:1 Mentoring</h3>
+                        <p>입시 실적을 보장하는 최정상급 현직 교수의 맞춤형 단독 멘토링</p>
+                    </div>
+                </div>
+                <div class="offer-card">
+                    <div class="offer-icon">📝</div>
+                    <div class="offer-text">
+                        <h3>Direct Recommendation</h3>
+                        <p>지원서 신뢰도를 극대화하는 담당 교수의 직접 작성 추천서 발급</p>
+                    </div>
+                </div>
+                <div class="offer-card">
+                    <div class="offer-icon">📄</div>
+                    <div class="offer-text">
+                        <h3>Publication / Symposium</h3>
+                        <p>실제 아이비리그 학술지 논문 게재 및 심포지엄 발표 실적 이수</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="sec-label">Open Day 2026</div>
+            <h2 class="sec-title">CRI 클래스를 직접<br>확인하세요</h2>
+            <p class="sec-desc">프로그램 체험, 졸업생 패널, 그리고 교수진 1:1 면담. 합격자와 예비 지원자 모두를 캠퍼스로 초대합니다.</p>
+            <div class="schedule">
+                <div class="s-day">
+                    <h3>Event Highlights</h3>
+                    
+                    <div class="s-event">
+                        <div class="s-time">Class</div>
+                        <div class="s-detail">
+                            <h4>Faculty Master Class</h4>
+                            <p>아이비리그 교수진이 직접 진행하는 실전 대학 강의 체험</p>
+                        </div>
+                    </div>
+                    <div class="s-event">
+                        <div class="s-time">Panel</div>
+                        <div class="s-detail">
+                            <h4>Alumni Talk Q&A</h4>
+                            <p>MIT, Columbia, UPenn 합격생들의 리얼 스토리와 질의응답</p>
+                        </div>
+                    </div>
+                    <div class="s-event">
+                        <div class="s-time">Meet</div>
+                        <div class="s-detail">
+                            <h4>1:1 Faculty Meeting</h4>
+                            <p>전공별 담당 교수진과의 개별 연구 주제 설정 및 진학 상담</p>
+                            <span class="s-tag tag-admit">합격자 최우선 배정</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="sec-label">Proven Outcomes</div>
+            <h2 class="sec-title">우리가 만든 결과가<br>당신의 미래입니다</h2>
+            <div class="outcomes-wrap">
+                <div class="out-card">
+                    <div class="out-body">
+                        <div class="out-quote">"교수님 추천서 한 줄이 제가 쓴 에세이 전체보다 훨씬 강력하게 입학 사정관을 설득했습니다."</div>
+                        <div class="out-meta">
+                            <div class="out-ava">JH</div>
+                            <div>
+                                <div class="out-name">이지현 (CRI '25)</div>
+                                <div class="out-school">Columbia University 합격</div>
+                            </div>
+                        </div>
+                        <div class="out-journey">
+                            CRI 지원 <span class="journey-arrow">→</span> 6개월 연구 <span class="journey-arrow">→</span> <span style="color:#8B1A2B;">Columbia 합격</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="out-card">
+                    <div class="out-body">
+                        <div class="out-quote">"직접 연구한 논문이 출판되면서, 어떤 인터뷰에서도 당당하게 저만의 스토리를 증명할 수 있었습니다."</div>
+                        <div class="out-meta">
+                            <div class="out-ava">SW</div>
+                            <div>
+                                <div class="out-name">박서우 (CRI '25)</div>
+                                <div class="out-school">UPenn 합격</div>
+                            </div>
+                        </div>
+                        <div class="out-journey">
+                            CRI 지원 <span class="journey-arrow">→</span> 논문 출판 <span class="journey-arrow">→</span> <span style="color:#8B1A2B;">UPenn 합격</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <div class="sec-label">Next Steps</div>
+            <h2 class="sec-title">지금 결정하세요</h2>
+            <div class="cta-wrap">
+                <div class="cta-box cta-admit">
+                    <div class="cta-badge">합격자 전용</div>
+                    <h4>2026 과정 등록</h4>
+                    <p>5월 15일 등록 마감. 포탈에 접속하여 등록 절차를 완료하세요.</p>
+                </div>
+                <div class="cta-box cta-prospect">
+                    <div class="cta-badge">예비 지원자</div>
+                    <h4>Open Day 신청</h4>
+                    <p>조기 마감이 예상됩니다. 선착순으로 교수진 대면 상담을 선점하세요.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="footer-section">
+            <div class="footer-logo">Seoul Research Campus<br>Elite Research Institute</div>
+            <div class="footer-qr-area">
+                <div class="qr-text">
+                    <strong>공식 포탈 바로가기</strong>
+                    QR 코드를 스캔하거나 터치하여<br>
+                    등록 밎 참가 신청을 진행하세요.
+                </div>
+                <div class="qr-box">
+                    <div class="qr-inner"></div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

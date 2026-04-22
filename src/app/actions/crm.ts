@@ -97,11 +97,12 @@ export async function updateLeadDetails(id: string, data: any) {
         name: data.name,
         email: data.email,
         phone: data.phone,
-        age: data.age ? parseInt(data.age) : null,
+        grade: data.grade,
         interest: data.interest,
         institution: data.institution,
         agencyName: data.agencyName,
         parentName: data.parentName,
+        parentPhone: data.parentPhone,
         kakaoId: data.kakaoId,
         ...(linkedUserId ? { userId: linkedUserId } : {}),
       }
@@ -195,10 +196,17 @@ export async function scheduleNotification(leadId: string, message: string, dueD
 
 export async function getActiveNotifications() {
   await requireAdmin();
+  
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
   // Fetch unread notifications due today or in the future
   return prisma.notification.findMany({
     where: {
        isRead: false,
+       dueDate: {
+         gte: startOfToday
+       }
     },
     orderBy: { dueDate: "asc" },
     include: {
@@ -216,6 +224,26 @@ export async function markNotificationRead(id: string) {
     data: { isRead: true }
   });
   revalidatePath("/dashboard");
+}
+
+export async function deleteNotification(id: string) {
+  await requireAdmin();
+  try {
+    const notification = await prisma.notification.findUnique({ where: { id } });
+    if (!notification) return { success: false, error: "Not found" };
+
+    await prisma.notification.delete({
+      where: { id }
+    });
+
+    if (notification.leadId) {
+      revalidatePath(`/dashboard/leads/${notification.leadId}`);
+    }
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
 }
 
 export async function getRecentLeadActivities(limit: number = 15) {

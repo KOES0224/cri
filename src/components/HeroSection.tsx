@@ -64,17 +64,27 @@ export default function HeroSection() {
 
       {/* Main Content */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 pt-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.0, ease: "easeOut" }}
+          className="mb-8 px-5 py-2 border border-white/20 rounded-full bg-white/5 backdrop-blur-md"
+        >
+          <span className="text-xs md:text-sm text-gray-300 font-light tracking-wide font-sans">
+            🏆 최근 실적: <strong className="text-white font-medium">NLCS 제주</strong>에서 <strong className="text-champagneGold font-semibold drop-shadow-[0_0_8px_rgba(212,175,55,0.8)]">스탠포드(Stanford) 합격생</strong> 배출
+          </span>
+        </motion.div>
+
         <motion.h1 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight max-w-5xl"
+          transition={{ duration: 1.2, ease: "easeOut", delay: 0.1 }}
+          className="text-4xl md:text-5xl lg:text-7xl font-serif font-bold leading-tight max-w-5xl tracking-tight"
         >
-          최상위권 입시의 본질: 단순한 결과물이 아닌 <br className="hidden md:block"/>
+          진짜 연구가 만드는 <br className="hidden md:block"/>
           <span className="text-champagneGold drop-shadow-[0_0_20px_rgba(212,175,55,0.4)]">
-            &#39;학술적 권위&#39;
+            압도적 격차
           </span>
-          의 증명
         </motion.h1>
         
         <motion.p 

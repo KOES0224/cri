@@ -223,12 +223,13 @@ model Lead {
   status      String    @default("NEW") // NEW, CONTACTED, MET, ENROLLED, WAITLISTED, REJECTED
   
   // Rich CRM Profile Fields
-  age         Int?
+  grade       String?
   interest    String?
   institution String?
   agencyName  String?
   parentName  String?
   kakaoId     String?
+  parentPhone String?
 
   notes       String?   // Initial inquiry message
   deadline    DateTime?
