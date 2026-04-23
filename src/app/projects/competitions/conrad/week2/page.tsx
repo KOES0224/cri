@@ -22,7 +22,7 @@ export default function Week2() {
              <div className="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/10 blur-3xl rounded-full"></div>
             <h3 className="text-2xl font-bold mb-4 border-b border-white/10 pb-4 text-white">Case Study 1: Aquaneer Vietnam</h3>
             <p className="text-gray-400 mb-4 text-sm font-medium uppercase tracking-wider">2024-2025 Scholarship Winner</p>
-            <p className="text-gray-300 mb-4 leading-relaxed"><strong className="text-white font-semibold">The Wrong Approach:</strong> "We want to make a cool water filter using chemistry."</p>
+            <p className="text-gray-300 mb-4 leading-relaxed"><strong className="text-white font-semibold">The Wrong Approach:</strong> &quot;We want to make a cool water filter using chemistry.&quot;</p>
             <p className="text-gray-300 mb-8 leading-relaxed"><strong className="text-white font-semibold">The Winning Approach:</strong> This team identified a very specific local problem—shrimp waste abundance causing poor water quality. They developed a sustainable water filtration system using chitosan extracted from the exact shrimp waste polluting their local environment.</p>
             
             <div className="bg-[#00e5ff]/5 border-l-4 border-[#00e5ff] p-6 rounded-r-xl">
@@ -35,12 +35,12 @@ export default function Week2() {
             {/* Glow for Case Study */}
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 blur-3xl rounded-full"></div>
             <h3 className="text-2xl font-bold mb-4 border-b border-white/10 pb-4 text-white">Case Study 2: Pollution Patrol</h3>
-            <p className="text-gray-300 mb-4 leading-relaxed"><strong className="text-white font-semibold">The Wrong Approach:</strong> "Let's build an awesome drone."</p>
+            <p className="text-gray-300 mb-4 leading-relaxed"><strong className="text-white font-semibold">The Wrong Approach:</strong> &quot;Let&apos;s build an awesome drone.&quot;</p>
             <p className="text-gray-300 mb-8 leading-relaxed"><strong className="text-white font-semibold">The Winning Approach:</strong> This team developed an environmental drone specifically to analyze air quality and identify pollutants in regions suffering from severe wildfires. They tied the technology directly to a tangible health crisis.</p>
             
             <div className="bg-red-500/5 border-l-4 border-[#f42c40] p-6 rounded-r-xl">
               <h4 className="text-[#f42c40] font-bold mb-2 flex items-center gap-2 text-lg">🏆 Why They Won</h4>
-              <p className="text-gray-300">They didn't just build hardware; they proved that their drone provided real-time, life-saving analytics on public health risks, converting "drone tech" into "medical prevention tech".</p>
+              <p className="text-gray-300">They didn&apos;t just build hardware; they proved that their drone provided real-time, life-saving analytics on public health risks, converting &quot;drone tech&quot; into &quot;medical prevention tech&quot;.</p>
             </div>
           </div>
 

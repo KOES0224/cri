@@ -18,9 +18,9 @@ export default function Week1() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           <div className="bg-[#14141c]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-xl">
-            <h3 className="text-2xl font-bold mb-4 border-b border-white/10 pb-4 text-white">The "Builder's Trap"</h3>
-            <p className="text-gray-300 mb-4 leading-relaxed">Many students enter the Conrad Challenge saying: <em className="text-white">"I want to build a drone that plants trees!"</em></p>
-            <p className="text-gray-300 mb-8 leading-relaxed">This is the <strong>Builder's Trap</strong>. You have invented a solution looking for a problem. When the judges ask you <em>"Who is going to pay for this drone?"</em> or <em>"Is this more cost-effective than humans planting trees?"</em>, the project falls apart.</p>
+            <h3 className="text-2xl font-bold mb-4 border-b border-white/10 pb-4 text-white">The &quot;Builder&apos;s Trap&quot;</h3>
+            <p className="text-gray-300 mb-4 leading-relaxed">Many students enter the Conrad Challenge saying: <em className="text-white">&quot;I want to build a drone that plants trees!&quot;</em></p>
+            <p className="text-gray-300 mb-8 leading-relaxed">This is the <strong>Builder&apos;s Trap</strong>. You have invented a solution looking for a problem. When the judges ask you <em>&quot;Who is going to pay for this drone?&quot;</em> or <em>&quot;Is this more cost-effective than humans planting trees?&quot;</em>, the project falls apart.</p>
             
             <div className="bg-[#00e5ff]/5 border-l-4 border-[#00e5ff] p-6 rounded-r-xl">
               <h4 className="text-[#00e5ff] font-bold mb-2 flex items-center gap-2 text-lg">💡 The Winning Approach</h4>
@@ -36,12 +36,12 @@ export default function Week1() {
               <li><strong className="text-white">What is the financial or human cost of their problem?</strong> (The stakes)</li>
               <li><strong className="text-white">How are they trying to solve it right now?</strong> (Current alternatives)</li>
             </ul>
-            <p className="text-gray-400 italic">If you can answer those three things clearly, your Lean Canvas "Problem" section is already 90% complete.</p>
+            <p className="text-gray-400 italic">If you can answer those three things clearly, your Lean Canvas &quot;Problem&quot; section is already 90% complete.</p>
           </div>
 
           <div className="bg-gradient-to-br from-[#14141c] to-[#1f0a0d] border border-[#f42c40]/30 rounded-2xl p-8 shadow-xl">
             <h3 className="text-2xl font-bold mb-4 text-[#f42c40]">Assignment: The Problem Statement</h3>
-            <p className="text-gray-300 leading-relaxed">For your chosen category (e.g., Aerospace, Health, Environment), identify 3 specific, painful problems. Do NOT think about the solution yet. For each problem, identify who the "Early Adopter" would be—the person so desperate they would try a half-finished prototype.</p>
+            <p className="text-gray-300 leading-relaxed">For your chosen category (e.g., Aerospace, Health, Environment), identify 3 specific, painful problems. Do NOT think about the solution yet. For each problem, identify who the &quot;Early Adopter&quot; would be—the person so desperate they would try a half-finished prototype.</p>
           </div>
         </div>
 
