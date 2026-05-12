@@ -25,6 +25,10 @@ export async function getLeads() {
           image: true,
         },
       },
+      activities: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
     },
   });
 }

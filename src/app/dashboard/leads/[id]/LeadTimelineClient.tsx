@@ -174,8 +174,8 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
             );
           })()}
           
-          {/* Dynamic Feed */}
-          {lead.activities?.slice().reverse().map((activity: any) => (
+          {/* Dynamic Feed — newest first (DB returns desc, no reverse needed) */}
+          {lead.activities?.map((activity: any) => (
             <div key={activity.id} className="relative pl-8 animate-in fade-in slide-in-from-bottom-2">
               <span className={`absolute -left-[17px] bg-white p-1.5 rounded-full border-2 shadow-sm ${activity.action === "STATUS_CHANGE" ? 'border-purple-200' : 'border-blue-200'}`}>
                 {activity.action === "STATUS_CHANGE" ? (
@@ -203,7 +203,7 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
             </div>
           ))}
 
-          {/* Base Creation Entry */}
+          {/* Lead Genesis — always pinned at the very bottom as the origin entry */}
           <div className="relative pl-8">
             <span className="absolute -left-[17px] bg-white p-1 rounded-full border-2 border-gray-200 shadow-sm">
               <CheckCircle2 className="w-4 h-4 text-gray-400" />
