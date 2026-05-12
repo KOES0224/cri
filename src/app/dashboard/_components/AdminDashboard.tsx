@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Users, BookOpen, Settings, LayoutTemplate, PhoneCall, Bell, MessageSquare, Tag, CheckCircle2, ArrowRight, ClipboardCheck } from "lucide-react";
 import { getActiveNotifications, getRecentLeadActivities } from "@/app/actions/crm";
 import { getAdminApplications } from "@/app/actions/adminApplications";
-import { format } from "date-fns";
+import { formatKST } from "@/lib/formatKST";
 
 export default async function AdminDashboard({ name }: { name: string }) {
   const activeAlarms = await getActiveNotifications();
@@ -99,7 +99,7 @@ export default async function AdminDashboard({ name }: { name: string }) {
                            <Link href={`/dashboard/users/${app.user.id}`} className="hover:text-blue-600 transition-colors">{app.user.name}</Link>
                          </td>
                          <td className="px-6 py-4 text-gray-600 font-medium">{app.program.title}</td>
-                         <td className="px-6 py-4 text-gray-500">{format(new Date(app.createdAt), 'MMM d, yyyy')}</td>
+                         <td className="px-6 py-4 text-gray-500">{formatKST(new Date(app.createdAt), 'MMM d, yyyy')}</td>
                          <td className="px-6 py-4">
                             <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wider ${app.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' : app.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}`}>
                               {app.status}
@@ -150,7 +150,7 @@ export default async function AdminDashboard({ name }: { name: string }) {
                                 {log.lead.name}
                               </Link>
                            </div>
-                           <span className="text-xs font-medium text-gray-400">{format(new Date(log.createdAt), 'MMM d, h:mm a')}</span>
+                           <span className="text-xs font-medium text-gray-400">{formatKST(new Date(log.createdAt), 'MMM d, h:mm a')}</span>
                         </div>
                         <p className={`mt-1.5 text-sm ${log.action === 'STATUS_CHANGE' ? 'font-bold text-purple-700' : 'text-gray-600'} leading-relaxed`}>
                            {log.content}
@@ -189,7 +189,7 @@ export default async function AdminDashboard({ name }: { name: string }) {
                              {alarm.lead.name}
                            </span>
                            <span className={`text-xs font-bold ${isToday ? 'text-white bg-rose-500 border-rose-500 shadow-sm animate-[pulse_2s_infinite]' : 'text-rose-600 bg-rose-50 border-rose-100'} px-2 py-1 rounded-lg border flex items-center`}>
-                             {isToday ? 'Today' : `Due ${format(new Date(alarm.dueDate), 'MMM d')}`}
+                             {isToday ? 'Today' : `Due ${formatKST(new Date(alarm.dueDate), 'MMM d')}`}
                            </span>
                         </div>
                         <p className="text-sm text-gray-600 font-medium mb-3">{alarm.message}</p>

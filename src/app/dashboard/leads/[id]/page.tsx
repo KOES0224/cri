@@ -5,7 +5,7 @@ import { getLeadDetails } from "@/app/actions/crm";
 import AdminLayout from "../../_components/AdminLayout";
 import Link from "next/link";
 import { ArrowLeft, Mail, Phone, Calendar, Clock, User, FileText } from "lucide-react";
-import { format } from "date-fns";
+import { formatKST } from "@/lib/formatKST";
 import LeadTimelineClient from "./LeadTimelineClient";
 import LeadDetailsClient from "./LeadDetailsClient";
 
@@ -82,7 +82,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
               </p>
               <div className="mt-4 pt-4 border-t border-orange-200/50 flex items-center text-xs font-medium text-orange-700/70 relative z-10">
                 <Calendar className="w-4 h-4 mr-1.5" />
-                Submitted on {format(new Date(lead.createdAt), 'PPP')}
+                Submitted on {formatKST(new Date(lead.createdAt), 'PPP')}
               </div>
             </div>
           )}

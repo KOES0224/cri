@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
+import { formatKST } from "@/lib/formatKST";
 import { CheckCircle2, MessageSquare, Tag, Send, Bell, CalendarRange, User as UserIcon } from "lucide-react";
 import { addUserComment, scheduleUserNotification, scheduleUserGoogleMeeting } from "@/app/actions/adminApplications";
 import { useRouter } from "next/navigation";
@@ -102,7 +102,7 @@ export default function UserActivityTimeline({ user, activities }: { user: any, 
                      <div className="flex items-center justify-between">
                        <span className="text-sm font-bold text-rose-900 flex items-center">
                          <Bell className="w-3.5 h-3.5 mr-1.5 opacity-70" />
-                         Scheduled Alarm: {format(new Date(alarm.dueDate), 'PPP')}
+                         Scheduled Alarm: {formatKST(new Date(alarm.dueDate), 'PPP')}
                        </span>
                        <span className="text-xs font-bold text-rose-600 bg-white border border-rose-100 px-2.5 py-1 rounded-full shadow-sm">
                          Pending
@@ -145,7 +145,7 @@ export default function UserActivityTimeline({ user, activities }: { user: any, 
                          </span>
                        )}
                     </div>
-                    <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">{format(new Date(log.createdAt), 'MMM d, h:mm a')}</span>
+                    <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">{formatKST(new Date(log.createdAt), 'MMM d, h:mm a')}</span>
                   </div>
                   <p className="mt-3 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
                     {log.content}

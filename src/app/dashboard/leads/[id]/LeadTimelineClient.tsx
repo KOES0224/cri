@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
+import { formatKST } from "@/lib/formatKST";
 import { CheckCircle2, MessageSquare, Tag, Send, Bell, CalendarRange } from "lucide-react";
 import { updateLeadStatus, addLeadNote, scheduleNotification, scheduleGoogleMeeting, deleteNotification } from "@/app/actions/crm";
 
@@ -154,7 +154,7 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
                      <div className="flex items-center justify-between">
                        <span className="text-sm font-bold text-rose-900 flex items-center">
                          <Bell className="w-3.5 h-3.5 mr-1.5 opacity-70" />
-                         Scheduled Alarm: {format(new Date(alarm.dueDate), 'PPP')}
+                         Scheduled Alarm: {formatKST(new Date(alarm.dueDate), 'PPP')}
                        </span>
                        <div className="flex items-center gap-2">
                          <span className="text-xs font-bold text-rose-600 bg-white border border-rose-100 px-2.5 py-1 rounded-full shadow-sm">
@@ -174,7 +174,21 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
             );
           })()}
           
-          {/* Dynamic Feed — newest first (DB returns desc, no reverse needed) */}
+          {/* Lead Genesis — pinned at the TOP as the very first event */}
+          <div className="relative pl-8">
+            <span className="absolute -left-[17px] bg-white p-1 rounded-full border-2 border-gray-200 shadow-sm">
+              <CheckCircle2 className="w-4 h-4 text-gray-400" />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-gray-900">Lead Genesis</span>
+              <span className="text-xs font-semibold text-gray-400 mt-1">{formatKST(new Date(lead.createdAt), 'PPpp')}</span>
+              <span className="text-sm font-bold text-gray-500 mt-2 bg-gray-100/80 self-start px-3 py-1.5 rounded-lg border border-gray-200">
+                Initial data generated.
+              </span>
+            </div>
+          </div>
+
+          {/* Dynamic Feed — oldest first going down (DB returns asc) */}
           {lead.activities?.map((activity: any) => (
             <div key={activity.id} className="relative pl-8 animate-in fade-in slide-in-from-bottom-2">
               <span className={`absolute -left-[17px] bg-white p-1.5 rounded-full border-2 shadow-sm ${activity.action === "STATUS_CHANGE" ? 'border-purple-200' : 'border-blue-200'}`}>
@@ -187,7 +201,7 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-gray-900">{activity.adminName}</span>
-                  <span className="text-xs font-semibold text-gray-400">• {format(new Date(activity.createdAt), 'PPpp')}</span>
+                  <span className="text-xs font-semibold text-gray-400">• {formatKST(new Date(activity.createdAt), 'PPpp')}</span>
                 </div>
                 
                 {activity.action === "STATUS_CHANGE" ? (
@@ -202,20 +216,6 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
               </div>
             </div>
           ))}
-
-          {/* Lead Genesis — always pinned at the very bottom as the origin entry */}
-          <div className="relative pl-8">
-            <span className="absolute -left-[17px] bg-white p-1 rounded-full border-2 border-gray-200 shadow-sm">
-              <CheckCircle2 className="w-4 h-4 text-gray-400" />
-            </span>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-gray-900">Lead Genesis</span>
-              <span className="text-xs font-semibold text-gray-400 mt-1">{format(new Date(lead.createdAt), 'PPpp')}</span>
-              <span className="text-sm font-bold text-gray-500 mt-2 bg-gray-100/80 self-start px-3 py-1.5 rounded-lg border border-gray-200">
-                Initial data generated.
-              </span>
-            </div>
-          </div>
 
         </div>
       </div>

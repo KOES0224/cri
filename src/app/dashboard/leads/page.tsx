@@ -5,6 +5,7 @@ import { getLeads } from "@/app/actions/crm";
 import AdminLayout from "../_components/AdminLayout";
 import Link from "next/link";
 import { format, formatDistanceToNow } from "date-fns";
+import { formatKST } from "@/lib/formatKST";
 import { PhoneCall, Search, User, MessageSquare, Tag } from "lucide-react";
 import CreateLeadModal from "./CreateLeadModal";
 
@@ -181,7 +182,7 @@ export default async function AdminLeadsPage() {
 
                     {/* Created */}
                     <td className="px-4 py-3 border-r border-gray-100">
-                      <span className="text-xs text-gray-500 font-medium">{format(new Date(lead.createdAt), 'MMM d, yy')}</span>
+                      <span className="text-xs text-gray-500 font-medium">{formatKST(new Date(lead.createdAt), 'MMM d, yy')}</span>
                     </td>
 
                     {/* Actions */}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Send, Lock, Loader2 } from "lucide-react";
 import { getConversation, sendMessage } from "@/app/actions/messages";
-import { format } from "date-fns";
+import { formatKST } from "@/lib/formatKST";
 
 type User = {
   id: string;
@@ -182,7 +182,7 @@ export default function MessagesClient({ contacts, currentUserId }: { contacts: 
                           {msg.content}
                         </div>
                         <span className="text-[11px] font-bold text-gray-400 mt-2 px-1">
-                          {format(new Date(msg.createdAt), 'h:mm a')}
+                          {formatKST(new Date(msg.createdAt), 'h:mm a')}
                         </span>
                       </div>
                     </div>

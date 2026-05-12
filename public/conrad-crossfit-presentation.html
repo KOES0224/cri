@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>VI CrossFit Innovation & Conrad Challenge</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/night.min.css">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --brand-color: #d3ff24; 
+            --brand-dark: #0a0a0f;
+            --text-main: #ffffff;
+            --text-sub: #d1d1d1;
+        }
+
+        body {
+            background-color: var(--brand-dark);
+            font-family: 'Pretendard', sans-serif !important;
+        }
+
+        .reveal .slides {
+            font-family: 'Pretendard', sans-serif !important;
+            text-align: left;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5 {
+            font-family: 'Pretendard', sans-serif !important;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        .reveal h1 { 
+            font-family: 'Syncopate', sans-serif !important; 
+            font-weight: 900; 
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            color: var(--brand-color);
+        }
+
+        /* 안전한 100% 내부 분할 카드 레이아웃 */
+        .photo-split {
+            display: flex;
+            align-items: stretch;
+            height: 700px;
+            width: 100%;
+            margin: 0 auto;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .photo-split .photo-side {
+            flex: 1.2;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .photo-split .text-side {
+            flex: 1;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #111111;
+        }
+
+        /* 여백이 들어간 스플릿 */
+        .card-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: center;
+            height: 100%;
+            margin-top: 50px;
+        }
+
+        .reveal p, .reveal li {
+            font-size: 1.6rem;
+            color: var(--text-main);
+            line-height: 1.7;
+            font-weight: 400;
+        }
+
+        .desc-text {
+            color: var(--text-sub) !important;
+            font-size: 1.5rem !important;
+            font-weight: 300;
+        }
+
+        .feature-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 6px solid var(--brand-color);
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 0 16px 16px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-box h4 {
+            color: var(--brand-color);
+            font-size: 2rem;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+
+        .feature-box p {
+            margin: 0;
+            font-size: 1.4rem;
+        }
+
+        .quote-box {
+            font-size: 1.8rem;
+            font-weight: 600;
+            border-left: 8px solid var(--brand-color);
+            padding-left: 30px;
+            color: #fff;
+            margin-top: 40px;
+            line-height: 1.6;
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .photo-item {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        /* 📱 모바일 버전 반응형 최적화 (Interactive Mobile UX) */
+        @media (max-width: 800px) {
+            .reveal .slides {
+                text-align: center !important; /* 모바일에서는 중앙 정렬이 깔끔함 */
+            }
+            .reveal h1 { font-size: 2.5rem !important; margin-bottom: 10px !important; }
+            .reveal h2 { font-size: 2rem !important; margin-bottom: 15px !important; line-height: 1.2 !important; }
+            .reveal h3 { font-size: 1.3rem !important; margin-bottom: 15px !important; }
+            
+            .reveal p, .reveal li { font-size: 1.1rem !important; line-height: 1.5 !important; }
+            .desc-text { font-size: 1rem !important; }
+            
+            .layout-split {
+                grid-template-columns: 1fr !important;
+                gap: 20px;
+            }
+            .photo-split {
+                flex-direction: column !important;
+                height: 100%;
+                border-radius: 12px;
+                box-shadow: none;
+                border: none;
+            }
+            .photo-split .photo-side {
+                flex: none;
+                height: 250px; /* 상단 고정 높이 */
+            }
+            .photo-split .text-side {
+                padding: 25px !important;
+                justify-content: flex-start;
+            }
+            /* 좌우 플렉스 순서 등 변경 무시 */
+            .photo-split[style*="row-reverse"] {
+                flex-direction: column !important;
+            }
+            
+            .card-split {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+                margin-top: 20px !important;
+            }
+            
+            .feature-box {
+                margin-bottom: 15px !important;
+                padding: 20px 15px !important;
+                border-radius: 12px !important;
+                border-left: 4px solid var(--brand-color) !important;
+                border-top: none !important;
+                text-align: left !important;
+            }
+            
+            .feature-box h4 {
+                font-size: 1.5rem !important;
+            }
+
+            .feature-list li {
+                padding: 15px !important;
+                border-left: 4px solid var(--brand-color) !important;
+            }
+            
+            .photo-grid {
+                grid-template-columns: 1fr auto !important; /* 숨기거나 크기 줄이기 */
+                display: flex !important;
+                flex-direction: row;
+                gap: 10px;
+                margin-top: 10px !important;
+            }
+            .photo-grid .photo-item {
+                height: 150px !important; 
+            }
+            
+            .bg-number {
+                font-size: 8rem !important;
+                top: -30px !important;
+                right: -10px !important;
+            }
+
+            .quote-box {
+                font-size: 1.3rem !important;
+                padding-left: 15px !important;
+                border-left-width: 4px !important;
+                margin-top: 20px !important;
+            }
+
+            /* 모바일에서 섹션들이 강제로 넘치지 않게 */
+            section {
+                height: 100% !important;
+                overflow-y: auto !important; 
+                padding: 10px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Slide 1: Title -->
+            <section data-background-image="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=1920" data-background-opacity="0.3">
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; width: 100%;">
+                    <div style="background: rgba(0,0,0,0.6); padding: 80px 100px; border-radius: 30px; text-align: center; border: 1px solid rgba(255,255,255,0.1); display: inline-block;">
+                        <h1>A Vision for <br><span class="highlight">CrossFit</span></h1>
+                        <h3 style="margin-top: 20px;">시각장애인을 위한 스포츠 혁신 모델</h3>
+                        <p style="margin-top: 40px; color: var(--text-sub); font-size: 1.3rem;">Conrad Challenge Project</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 2: 첫 번째 교훈 (내부 분할 카드형) -->
+            <section>
+                <div class="photo-split">
+                    <!-- 실제 학생들이 고안한 농구공 사진 적용 -->
+                    <div class="photo-side" style="background-image: url('https://www.yankodesign.com/images/design_news/2023/02/wilson-reveals-3d-printed-airless-basketball-with-a-see-through-hexagonal-mesh-design/wilson_airless_basketball_5.jpg');"></div>
+                    <div class="text-side">
+                        <h2 style="font-size: 2.8rem; margin-bottom: 30px;">우리의 시작:<br><span class="highlight">"소리나는 농구공"</span></h2>
+                        
+                        <h4 style="color: #fff;">문제 발견</h4>
+                        <p class="desc-text" style="font-size: 1.3rem !important; margin-bottom: 25px;">프로젝트 초기, 시각장애인(VI)의 짧은 기대수명 문제를 해결하기 위해 '소리가 나는 농구공'을 고안했습니다.</p>
+                        
+                        <h4 style="color: #fff;">기획자의 흔한 함정</h4>
+                        <p class="desc-text" style="font-size: 1.3rem !important;">우리는 단순히 '소리'만 제공하거나, 그들만의 격리된 약자 전용 스포츠(골볼 등)를 만들어주면 기뻐할 것이라 착각했습니다.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 3: 고객의 진심 -->
+            <section>
+                <div class="photo-split" style="flex-direction: row-reverse;">
+                    <!-- '진짜 땀을 흘리는 강도'에 맞는 역동적인 피트니스 이미지 -->
+                    <div class="photo-side" style="background-image: url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=1920');"></div>
+                    <div class="text-side">
+                        <h2 style="font-size: 2.8rem; margin-bottom: 30px;">고객이 원한 것:<br><span class="highlight">"진짜 땀을 흘리는 강도"</span></h2>
+                        <ul style="padding-left: 20px;">
+                            <li style="margin-bottom: 25px;"><span class="desc-text">구기종목은 변수가 너무 많아 <strong>충돌과 부상</strong> 위험이 극심합니다.</span></li>
+                            <li><span class="desc-text">시각장애인들은 단순한 재활 치료에서 벗어나, <strong>진짜 근육을 쓰고 땀을 흘리는 고강도 퍼포먼스</strong>를 원했습니다.</span></li>
+                        </ul>
+                        <div class="quote-box" style="margin-top: 30px;">
+                            결론:<br> <span class="highlight">Safe (안전) &middot; Inclusive (포용) &middot; Performance (퍼포먼스)</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 4: 그래서 크로스핏 -->
+            <section data-background-image="https://images.unsplash.com/photo-1526506465439-bdfbc99da6db?auto=format&fit=crop&q=80&w=1920" data-background-opacity="0.2">
+                <h2 style="text-align: center; margin-bottom: 60px;">우리가 <span class="highlight">CrossFit</span>을 선택한 이유</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px;">
+                    <div class="feature-box" style="border-radius: 16px; border-left: none; border-top: 6px solid var(--brand-color); padding: 40px 20px; text-align: center;">
+                        <h4 style="font-size: 2.2rem; margin-bottom: 20px;">1. 제자리 (Static)</h4>
+                        <p class="desc-text" style="font-size: 1.3rem !important;">경기장을 뛰어다니는 구기종목과 달리 스테이션(제자리) 베이스라 충돌 변수가 없습니다.</p>
+                    </div>
+                    <div class="feature-box" style="border-radius: 16px; border-left: none; border-top: 6px solid var(--brand-color); padding: 40px 20px; text-align: center;">
+                        <h4 style="font-size: 2.2rem; margin-bottom: 20px;">2. 포용성 (Inclusive)</h4>
+                        <p class="desc-text" style="font-size: 1.3rem !important;">비장애인과 함께 옆에서 동일한 운동(WOD) 스케줄을 아무 위화감 없이 소화할 수 있습니다.</p>
+                    </div>
+                    <div class="feature-box" style="border-radius: 16px; border-left: none; border-top: 6px solid var(--brand-color); padding: 40px 20px; text-align: center;">
+                        <h4 style="font-size: 2.2rem; margin-bottom: 20px;">3. 퍼포먼스 (Performance)</h4>
+                        <p class="desc-text" style="font-size: 1.3rem !important;">고강도 심폐/근력 운동으로 이들의 수명 단축 문제를 본질적으로 해결합니다.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 5: Solution 1 -->
+            <section>
+                <div class="card-split">
+                    <div>
+                        <h2 style="font-size: 3rem; color: #fff;">솔루션 01.<br><span class="highlight">Environmental Navigation</span></h2>
+                        <p class="desc-text" style="margin: 30px 0;">완벽한 공간 인지를 위한 인프라 리모델링 (Infrastructure)</p>
+                        <div class="feature-box">
+                            <h4>Tactile Floor Grids (촉각 매트)</h4>
+                            <p>기구 반경마다 다른 패턴의 고무매트를 깔아, 발의 감각만으로 내 위치가 스쿼트 랙인지 로잉머신인지 정확히 파악합니다.</p>
+                        </div>
+                        <div class="feature-box">
+                            <h4>Audio Beacons & Tape</h4>
+                            <p>저시력자를 위한 고대비 반사 테이프 적용. 정수기 및 출구 등 랜드마크에 부착된 비콘이 방향성 오디오 알림을 줍니다.</p>
+                        </div>
+                    </div>
+                    <div class="photo-grid">
+                        <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=800" class="photo-item" alt="Gym Floor">
+                        <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&q=80&w=800" class="photo-item" alt="Gym Structure">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 6: Solution 2 -->
+            <section>
+                <div class="card-split">
+                    <div class="photo-grid">
+                        <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=800" class="photo-item" alt="Weights">
+                        <img src="https://images.unsplash.com/photo-1517963879433-6ad2b056d712?auto=format&fit=crop&q=80&w=800" class="photo-item" alt="Bio Feedback">
+                    </div>
+                    <div>
+                        <h2 style="font-size: 3rem; color: #fff;">솔루션 02.<br><span class="highlight">Smart Equipment</span></h2>
+                        <p class="desc-text" style="margin: 30px 0;">시각 정보를 대체하는 다이렉트 바이오-피드백 장비</p>
+                        <div class="feature-box">
+                            <h4>"Talking" Ergometers</h4>
+                            <p>로잉머신의 거리, 칼로리, 심박수 데이터를 선수의 이어폰으로 실시간 오디오 중계합니다.</p>
+                        </div>
+                        <div class="feature-box">
+                            <h4>Haptic Weights (진동 장비) & RFID</h4>
+                            <p>케틀벨 스윙 시 등 목표 가동 범위에 이르면 진동 피드백 발송! <br>RFID 태그를 통해 "덤벨 15kg" 음성 스캔 안내를 제공합니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 7: Solution 3 -->
+            <section>
+                <div class="card-split">
+                    <div>
+                        <h2 style="font-size: 3rem; color: #fff;">솔루션 03.<br><span class="highlight">Personal Safety Gear</span></h2>
+                        <p class="desc-text" style="margin: 30px 0;">기구 교체 시 발생할 수 있는 충돌을 방어하는 웨어러블 가디언</p>
+                        <div class="feature-box">
+                            <h4>Proximity-Sensing Vests (조끼)</h4>
+                            <p>타인이나 기구가 반경 2m 내로 접근하면, 위치(좌/우/중앙)에 따라 다르게 진동하여 조기 경보를 줍니다.</p>
+                        </div>
+                        <div class="feature-box">
+                            <h4>Taptic Jump Ropes & "Halo"</h4>
+                            <p>줄넘기가 바닥을 치기 직전 손잡이를 진동시켜 쌩쌩이 리듬을 알게 해주고, 머리를 보호하는 경량 헤드기어로 심리적 안정감을 극대화합니다.</p>
+                        </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=800" style="width: 100%; height: 650px; object-fit: cover; border-radius: 20px;" alt="Wearable Vest">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 8: Business Strategy -->
+            <section data-background-image="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=1920" data-background-opacity="0.2">
+                <div style="background: rgba(0,0,0,0.7); padding: 60px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                    <h2 style="font-size: 3.5rem; text-align: center; margin-bottom: 50px;">B2B 시장 접근법: <span class="highlight">"VI Friendly" 인증</span></h2>
+                    <ul style="padding-left: 20px;">
+                        <li style="margin-bottom: 25px;"><strong>마케팅 패러다임:</strong> 우리는 장비 몇 개 파는 것이 목적이 아닙니다. 체육관 인프라 자체를 '인증형 가맹' 형태로 리모델링합니다.</li>
+                        <li style="margin-bottom: 25px;"><strong>기업들의 니즈 부합:</strong> 체육관 오너들에게 "장애인을 포용하는 차세대 복합 체육 시설"이라는 압도적 PR 타이틀을 제공합니다.</li>
+                        <li><strong>수익 모델 (SAM/SOM):</strong> 장기적으로 크로스핏뿐만 아니라 F45, 대형 피트니스 센터로 파이프라인 확장.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Slide 9: Conrad Roadmap Stage 1 -->
+            <section>
+                <div class="bg-number">S1</div>
+                <h2 style="font-size: 3rem; margin-bottom: 20px;">Conrad Roadmap: <span class="highlight">Stage 1</span></h2>
+                <h3 style="color: var(--text-sub); margin-bottom: 50px;">비즈니스 뼈대 구축 및 시장 검증 (Activation Stage)</h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div class="feature-box" style="margin: 0;">
+                        <h4>1. 고객 인터뷰 및 Pain Point 발굴</h4>
+                        <p>사업의 기본은 고객입니다. 시각장애인 당사자 및 크로스핏 관장(B2B 고객)과의 심층 인터뷰를 통해 가설을 증명합니다.</p>
+                    </div>
+                    <div class="feature-box" style="margin: 0;">
+                        <h4>2. Lean Canvas (린 캔버스) 작성</h4>
+                        <p>아이디어를 1페이지로 요약하는 비즈니스 모델링. '고객군', '비용 구조', '수익 모델', '고유 가치 제안' 등 9가지 항목을 정의합니다.</p>
+                    </div>
+                    <div class="feature-box" style="margin: 0;">
+                        <h4>3. TAM - SAM - SOM 시장 규모 산출</h4>
+                        <p>감각이 아닌 숫자로 시장을 증명합니다. 전체 피트니스 시장(TAM)부터 우리가 실제 장악 가능한 체육관 수(SOM)를 계산합니다.</p>
+                    </div>
+                    <div class="feature-box" style="margin: 0;">
+                        <h4>4. 팀 빌딩 및 C-Level 역할 분담</h4>
+                        <p>학생들이 각각 CEO(경영), CMO(마케팅), CTO(기술) 역할을 맡아 회사의 조직도를 구성하는 스타트업 기초 실무를 배웁니다.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 10: Conrad Roadmap Stage 2 -->
+            <section>
+                <div class="bg-number">S2</div>
+                <h2 style="font-size: 3rem; margin-bottom: 20px;">Conrad Roadmap: <span class="highlight">Stage 2</span></h2>
+                <h3 style="color: var(--text-sub); margin-bottom: 50px;">제품 시각화 및 투자 피칭 (Innovation Stage)</h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div class="feature-box" style="margin: 0;">
+                        <h4>5. AI 기반 제품 시각화 (Mock-up)</h4>
+                        <p>어려운 3D 툴 대신 생성형 AI(Midjourney 등)를 활용합니다. 처음인 학생들도 간단한 프롬프트로 전문가 수준의 실제 제품 콘셉트와 목업 이미지를 추출해 냅니다.</p>
+                    </div>
+                    <div class="feature-box" style="margin: 0;">
+                        <h4>6. Innovation Pitch Video (투자 유치 영상)</h4>
+                        <p>단순한 발표가 아닙니다. 투자자(심사위원)를 매료시킬 3~5분 분량의 영문 제품 시연 및 비전 피칭 영상을 직접 기획하고 촬영합니다.</p>
+                    </div>
+                    <div class="feature-box" style="margin: 0;">
+                        <h4>7. 브랜드 아이덴티티 & 웹사이트 개설</h4>
+                        <p>회사 이름, 로고를 만들고 'VI Friendly CrossFit' 인증을 홍보할 수 있는 세일즈 랜딩 페이지(웹사이트)를 실제로 오픈합니다.</p>
+                    </div>
+                    <div class="feature-box" style="margin: 0;">
+                        <h4>8. Business Executive Summary 완성</h4>
+                        <p>마케팅 전략, 경쟁사 분석, 지식재산권(특허) 침해 여부를 방어하는 내용을 담은 종합 비즈니스 플랜(사업계획서)을 심사위원에게 제안합니다.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 11: Conrad Roadmap Stage 3 & Ending -->
+            <section data-background-image="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=1920" data-background-opacity="0.15">
+                <div class="bg-number">S3</div>
+                <h2 style="font-size: 3rem; margin-bottom: 20px;">Conrad Roadmap: <span class="highlight">Deliverables</span></h2>
+                <h3 style="color: var(--text-sub); margin-bottom: 30px;">과정 수료 시 학생들의 3대 최종 산출물</h3>
+                
+                <ul class="feature-list" style="margin-bottom: 40px;">
+                    <li style="padding: 20px 30px; margin-bottom: 15px;">
+                        <h4 style="color: #fff; font-size: 1.6rem;">1. 비즈니스 설계서 (Conrad Challenge 공식 제출)</h4>
+                        <p style="font-size: 1.3rem;">비즈니스의 뼈대와 시장 분석이 담긴 글로벌 스탠다드의 <strong>Lean Canvas 및 Executive Plan</strong>.</p>
+                    </li>
+                    <li style="padding: 20px 30px; margin-bottom: 15px;">
+                        <h4 style="color: #fff; font-size: 1.6rem;">2. 영문 투자 피칭 영상 (English Pitch Video)</h4>
+                        <p style="font-size: 1.3rem;">심사위원을 설득하기 위해 학생들이 직접 기획하고 제작하는 <strong>3~5분 분량의 영문 제품 시연 영상</strong>.</p>
+                    </li>
+                    <li style="padding: 20px 30px; margin-bottom: 15px;">
+                        <h4 style="color: #fff; font-size: 1.6rem;">3. 독자적인 비즈니스 웹사이트 (Website Creation)</h4>
+                        <p style="font-size: 1.3rem;">우리가 고안한 <strong>1) 제품 생태계(B2C)와 2) 체육관 패키지 제안(B2B)</strong>을 모두 완벽하게 담아내는 종합 비즈니스 포트폴리오 웹사이트를 대표 결과물로 제작합니다.</p>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Slide 12: Ending Quote -->
+            <section data-background-image="https://images.unsplash.com/photo-1582212932971-d68a2d1000c0?auto=format&fit=crop&q=80&w=1920" data-background-opacity="0.3">
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; width: 100%;">
+                    <div style="background: rgba(0,0,0,0.6); padding: 80px 100px; border-radius: 24px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+                        <h2 style="font-size: 4rem; margin-bottom: 25px; line-height: 1.3;">"We don't build for the disabled."</h2>
+                        <h3 style="color: var(--brand-color); font-size: 3.5rem;">"We build for athletes."</h3>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+    <script>
+        // 디바이스 감지 (모바일인지 아닌지)
+        const isMobile = window.innerWidth <= 800;
+
+        Reveal.initialize({
+            hash: true,
+            transition: isMobile ? 'slide' : 'fade', // 모바일에서는 스와이프 느낌의 슬라이드가 좋음
+            // 모바일 환경일 경우 화면을 100% 꽉 채우고 브라우저 스크롤 허용 (세로로 길어져도 잘리지 않음)
+            width: isMobile ? '100%' : 1440,
+            height: isMobile ? '100%' : 810,
+            margin: isMobile ? 0 : 0.08,
+            disableLayout: isMobile, // 모바일에서는 자체 스케일링 중단 -> 반응형 CSS 작동 활성화
+            minScale: 0.2,
+            maxScale: 1.5,
+            controls: true,
+            progress: true,
+            slideNumber: 'c/t',
+            center: !isMobile // 모바일에서는 위에서부터 읽기, PC에서는 수직 중앙정렬
+        });
+    </script>
+</body>
+</html>

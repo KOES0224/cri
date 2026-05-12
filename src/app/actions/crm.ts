@@ -77,7 +77,7 @@ export async function getLeadDetails(id: string) {
         select: { id: true, name: true, email: true, image: true, studentCode: true },
       },
       activities: {
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: "asc" },
       },
       notifications: {
         orderBy: { dueDate: "asc" },
