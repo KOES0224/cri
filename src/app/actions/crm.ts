@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { formatKST } from "@/lib/formatKST";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -187,7 +188,7 @@ export async function scheduleNotification(leadId: string, message: string, dueD
         leadId,
         action: "NOTE_ADDED",
         adminName: session.user.name || "Admin",
-        content: `Scheduled an alarm: "${message}" for ${dueDate.toLocaleDateString()}`
+        content: `Scheduled an alarm: "${message}" for ${formatKST(dueDate, 'yyyy년 M월 d일')}`
       }
     });
 
@@ -404,7 +405,7 @@ export async function scheduleGoogleMeeting(leadId: string, title: string, start
         leadId,
         action: "NOTE_ADDED",
         adminName: session.user.name || "Admin",
-        content: `Scheduled a Calendar Meeting: "${title}" for ${startDateTime.toLocaleString()}.\nLink: ${conferenceLink || 'Check Calendar'}`
+        content: `Scheduled a Calendar Meeting: "${title}" for ${formatKST(startDateTime, 'yyyy년 M월 d일 (EEE) a h:mm')}.\nLink: ${conferenceLink || 'Check Calendar'}`
       }
     });
 
