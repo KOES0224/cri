@@ -12,6 +12,7 @@ type ProgramFormProps = {
     category: string;
     subCategory?: string | null;
     status: string;
+    isPublished?: boolean;
     tuition?: number | null;
     startDate?: Date | null;
     endDate?: Date | null;
@@ -55,6 +56,7 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
     category: initialData?.category || "Summer Camp",
     subCategory: initialData?.subCategory || "",
     status: initialData?.status || "OPEN",
+    isPublished: initialData?.isPublished !== undefined ? initialData.isPublished : true,
     tuition: initialData?.tuition || "",
     startDate: initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : "",
     endDate: initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "",
@@ -127,6 +129,7 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
         subCategory: formData.subCategory,
         tuition: formData.tuition ? Number(formData.tuition) : null,
         status: formData.status,
+        isPublished: formData.isPublished,
         startDate: formData.startDate ? new Date(formData.startDate) : undefined,
         endDate: formData.endDate ? new Date(formData.endDate) : undefined,
         content: formData.content || null,
@@ -333,6 +336,22 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
             placeholder="e.g. 8580"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Public Website Visibility</label>
+          <label className="flex items-center gap-3 px-4 py-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors h-[42px]">
+            <input
+              type="checkbox"
+              name="isPublished"
+              checked={formData.isPublished}
+              onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+              className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+            />
+            <span className="text-sm font-medium text-gray-900 select-none">
+              {formData.isPublished ? "Visible on Public Website" : "Hidden from Public Website (Draft)"}
+            </span>
+          </label>
         </div>
       </div>
 

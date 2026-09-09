@@ -18,12 +18,19 @@ export default function ResearchProgramsClient({
 }) {
   const [activeTab, setActiveTab] = useState("ALL");
   
-  // Filter programs based on the specific hub category, and then the active tab
+  // Filter programs based on visibility, the specific hub category, and then the active tab
   const filteredPrograms = programs.filter(p => {
-    // First ensure it belongs to this hub's category
+    // Only display published programs on the public website
+    if (p.isPublished === false) return false;
+
+    // First ensure it belongs to this hub's category (case-insensitive & robust)
+    const cat = (p.category || "").trim().toLowerCase();
     const matchesCategory = Array.isArray(categoryFilter)
-      ? categoryFilter.includes(p.category)
-      : p.category === categoryFilter;
+      ? categoryFilter.some(c => {
+          const target = c.trim().toLowerCase();
+          return cat === target || cat.includes(target);
+        })
+      : cat === categoryFilter.trim().toLowerCase() || cat.includes(categoryFilter.trim().toLowerCase());
     
     if (!matchesCategory) return false;
     

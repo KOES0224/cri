@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { PlusCircle, Edit, Trash2, Briefcase } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Briefcase, Eye, EyeOff } from "lucide-react";
 import ProgramForm from "./ProgramForm";
-import { deleteProgram, updateProgramOrder } from "@/app/actions/programs";
+import { deleteProgram, updateProgramOrder, toggleProgramPublished } from "@/app/actions/programs";
 import { useRouter } from "next/navigation";
 
 type Program = {
@@ -15,6 +15,7 @@ type Program = {
   tuition: number | null;
   order: number;
   status: string;
+  isPublished?: boolean;
   startDate: Date | null;
   endDate: Date | null;
   createdAt: Date;
@@ -25,6 +26,7 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const TABS = ["Summer Camp", "Winter Online", "Projects", "Competitions", "Interns", "Archive & Mock"];
 
@@ -127,6 +129,7 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
               <th className="px-6 py-4 font-medium">Title</th>
               <th className="px-6 py-4 font-medium hidden md:table-cell">Category</th>
               <th className="px-6 py-4 font-medium">Status</th>
+              <th className="px-6 py-4 font-medium">Public Site</th>
               <th className="px-6 py-4 font-medium w-24">Order</th>
               <th className="px-6 py-4 font-medium hidden lg:table-cell">Start Date</th>
               <th className="px-6 py-4 font-medium text-right">Actions</th>
@@ -135,7 +138,7 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
           <tbody className="divide-y divide-gray-100">
             {filteredPrograms.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                   No programs found in this tab.
                 </td>
               </tr>
@@ -152,6 +155,41 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
                     }`}>
                       {program.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      type="button"
+                      disabled={togglingId === program.id}
+                      onClick={async () => {
+                        setTogglingId(program.id);
+                        const nextState = program.isPublished === false ? true : false;
+                        const res = await toggleProgramPublished(program.id, nextState);
+                        if (res.success) {
+                          router.refresh();
+                        } else {
+                          alert(res.error || "Failed to update visibility");
+                        }
+                        setTogglingId(null);
+                      }}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                        program.isPublished !== false
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                          : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
+                      } ${togglingId === program.id ? "opacity-50 pointer-events-none" : ""}`}
+                      title={program.isPublished !== false ? "Visible on public website (Click to Hide)" : "Hidden from public website (Click to Show)"}
+                    >
+                      {program.isPublished !== false ? (
+                        <>
+                          <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Visible</span>
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="w-3.5 h-3.5 text-gray-400" />
+                          <span>Hidden</span>
+                        </>
+                      )}
+                    </button>
                   </td>
                   <td className="px-6 py-4">
                     <input 

@@ -28,6 +28,15 @@ export async function getProgramById(id: string) {
   }
 }
 
+const revalidateProgramPaths = () => {
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/programs");
+  revalidatePath("/research");
+  revalidatePath("/research/winter");
+  revalidatePath("/research/summer-camp");
+  revalidatePath("/research/1-on-1");
+};
+
 export async function createProgram(data: {
   title: string;
   description: string;
@@ -35,6 +44,7 @@ export async function createProgram(data: {
   subCategory?: string | null;
   tuition?: number | null;
   status: string;
+  isPublished?: boolean;
   startDate?: Date;
   endDate?: Date;
   content?: string | null;
@@ -51,8 +61,7 @@ export async function createProgram(data: {
         professors: professorIds ? { connect: professorIds.map((id) => ({ id })) } : undefined,
       },
     });
-    revalidatePath("/dashboard");
-    revalidatePath("/research");
+    revalidateProgramPaths();
     return { success: true, program };
   } catch (error) {
     console.error("Failed to create program:", error);
@@ -69,6 +78,7 @@ export async function updateProgram(
     subCategory?: string | null;
     tuition?: number | null;
     status: string;
+    isPublished?: boolean;
     startDate?: Date;
     endDate?: Date;
     content?: string | null;
@@ -87,12 +97,25 @@ export async function updateProgram(
         professors: professorIds ? { set: professorIds.map((id) => ({ id })) } : undefined,
       },
     });
-    revalidatePath("/dashboard");
-    revalidatePath("/research");
+    revalidateProgramPaths();
     return { success: true, program };
   } catch (error) {
     console.error("Failed to update program:", error);
     return { success: false, error: "Failed to update program." };
+  }
+}
+
+export async function toggleProgramPublished(id: string, isPublished: boolean) {
+  try {
+    const program = await prisma.program.update({
+      where: { id },
+      data: { isPublished },
+    });
+    revalidateProgramPaths();
+    return { success: true, program };
+  } catch (error) {
+    console.error("Failed to toggle program published status:", error);
+    return { success: false, error: "Failed to toggle program visibility." };
   }
 }
 
@@ -101,8 +124,7 @@ export async function deleteProgram(id: string) {
     await prisma.program.delete({
       where: { id },
     });
-    revalidatePath("/dashboard");
-    revalidatePath("/research");
+    revalidateProgramPaths();
     return { success: true };
   } catch (error) {
     console.error("Failed to delete program:", error);
@@ -116,8 +138,7 @@ export async function updateProgramOrder(id: string, order: number) {
       where: { id },
       data: { order },
     });
-    revalidatePath("/dashboard");
-    revalidatePath("/research");
+    revalidateProgramPaths();
     return { success: true, program };
   } catch (error) {
     console.error("Failed to update program order:", error);

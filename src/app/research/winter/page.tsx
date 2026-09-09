@@ -6,6 +6,9 @@ export const dynamic = "force-dynamic";
 
 export default async function WinterResearchPage() {
   const programs = await prisma.program.findMany({
+    where: {
+      isPublished: true,
+    },
     include: { professors: true },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }]
   });
@@ -15,7 +18,7 @@ export default async function WinterResearchPage() {
       programs={programs}
       title="Winter Remote Cohort"
       description="Structure your methodology, conduct literature reviews, and begin your data collection over the winter holiday. Fully remote."
-      categoryFilter="winter"
+      categoryFilter={["Winter Online", "Winter"]}
     />
   );
 }

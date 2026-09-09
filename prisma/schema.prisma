@@ -89,6 +89,7 @@ model Program {
   startDate    DateTime?
   endDate      DateTime?
   content      String?        @db.Text
+  isPublished  Boolean        @default(true)
   
   teachingHoursProf String?
   teachingHoursTA   String?

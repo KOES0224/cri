@@ -6,6 +6,9 @@ export const dynamic = "force-dynamic";
 
 export default async function SeoulResearchPage() {
   const programs = await prisma.program.findMany({
+    where: {
+      isPublished: true,
+    },
     include: { professors: true },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }]
   });
