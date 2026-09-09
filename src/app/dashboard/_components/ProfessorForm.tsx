@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProfessor, updateProfessor } from "@/app/actions/professors";
+import { Upload, Image as ImageIcon, X, Loader2 } from "lucide-react";
 
 type ProfessorFormProps = {
   initialData?: {
@@ -11,6 +12,8 @@ type ProfessorFormProps = {
     role: string;
     university: string | null;
     bio: string;
+    imageUrl?: string | null;
+    universityLogo?: string | null;
     acceptingMentees: boolean;
     publications: number;
     programs?: { id: string; title: string }[];
@@ -30,6 +33,8 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
@@ -37,6 +42,8 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
     role: initialData?.role || "",
     university: initialData?.university || "",
     bio: initialData?.bio || "",
+    imageUrl: initialData?.imageUrl || "",
+    universityLogo: initialData?.universityLogo || "",
     acceptingMentees: initialData?.acceptingMentees ?? true,
     publications: initialData?.publications || 0,
     programIds: initialData?.programs?.map(p => p.id) || ([] as string[]),
@@ -51,6 +58,48 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: data });
+      if (!res.ok) {
+        const errorMsg = await res.text();
+        throw new Error(errorMsg || "Failed to upload image");
+      }
+      const blob = await res.json();
+      setFormData(prev => ({ ...prev, imageUrl: blob.url }));
+    } catch (err: any) {
+      alert(err.message || "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: data });
+      if (!res.ok) {
+        const errorMsg = await res.text();
+        throw new Error(errorMsg || "Failed to upload logo");
+      }
+      const blob = await res.json();
+      setFormData(prev => ({ ...prev, universityLogo: blob.url }));
+    } catch (err: any) {
+      alert(err.message || "Failed to upload logo");
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   const handleProgramToggle = (programId: string) => {
@@ -77,6 +126,8 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
         role: formData.role,
         university: formData.university || null,
         bio: formData.bio,
+        imageUrl: formData.imageUrl || null,
+        universityLogo: formData.universityLogo || null,
         acceptingMentees: formData.acceptingMentees,
         publications: formData.publications,
         programIds: formData.programIds,
@@ -149,6 +200,117 @@ export default function ProfessorForm({ initialData, programs, onSuccess, onCanc
           placeholder="e.g. Stanford University"
           className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 transition-all outline-none"
         />
+      </div>
+
+      {/* Professor Photo and Institute Logo Upload Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50/80 border border-gray-200 rounded-2xl">
+        {/* Professor Face / Headshot */}
+        <div>
+          <label className="block text-sm font-bold text-gray-800 mb-0.5">
+            Professor Photo (Headshot / Face)
+          </label>
+          <p className="text-xs text-gray-500 mb-3">
+            Displayed on program cards and detail pages.
+          </p>
+          
+          <div className="flex items-center gap-4">
+            <div className="relative w-20 h-20 rounded-full border-2 border-dashed border-gray-300 bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+              {formData.imageUrl ? (
+                <>
+                  <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, imageUrl: "" }))}
+                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 shadow hover:bg-red-700 transition-colors"
+                    title="Remove photo"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </>
+              ) : uploadingImage ? (
+                <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+              ) : (
+                <ImageIcon className="w-6 h-6 text-gray-400" />
+              )}
+            </div>
+
+            <div className="flex-1 space-y-2">
+              <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 cursor-pointer shadow-xs transition-colors">
+                <Upload className="w-3.5 h-3.5 text-gray-600" />
+                {uploadingImage ? "Uploading..." : "Upload Photo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                  className="hidden"
+                />
+              </label>
+              <input
+                type="url"
+                name="imageUrl"
+                value={formData.imageUrl}
+                onChange={handleChange}
+                placeholder="Or paste image URL..."
+                className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-green-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Institute / University Logo */}
+        <div>
+          <label className="block text-sm font-bold text-gray-800 mb-0.5">
+            Institute / University Logo
+          </label>
+          <p className="text-xs text-gray-500 mb-3">
+            Official seal or logo for Harvard, Oxford, Notre Dame, etc.
+          </p>
+          
+          <div className="flex items-center gap-4">
+            <div className="relative w-28 h-20 rounded-xl border-2 border-dashed border-gray-300 bg-white flex items-center justify-center p-2 overflow-hidden shrink-0 shadow-inner">
+              {formData.universityLogo ? (
+                <>
+                  <img src={formData.universityLogo} alt="Logo preview" className="max-h-full max-w-full object-contain" />
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, universityLogo: "" }))}
+                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 shadow hover:bg-red-700 transition-colors"
+                    title="Remove logo"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </>
+              ) : uploadingLogo ? (
+                <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+              ) : (
+                <ImageIcon className="w-6 h-6 text-gray-400" />
+              )}
+            </div>
+
+            <div className="flex-1 space-y-2">
+              <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 cursor-pointer shadow-xs transition-colors">
+                <Upload className="w-3.5 h-3.5 text-gray-600" />
+                {uploadingLogo ? "Uploading..." : "Upload Logo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  disabled={uploadingLogo}
+                  className="hidden"
+                />
+              </label>
+              <input
+                type="url"
+                name="universityLogo"
+                value={formData.universityLogo}
+                onChange={handleChange}
+                placeholder="Or paste logo URL..."
+                className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-green-500"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div>

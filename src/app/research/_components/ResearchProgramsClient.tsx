@@ -132,18 +132,42 @@ export default function ResearchProgramsClient({
                  <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight group-hover:text-blue-600 transition-colors">
                    {program.title}
                  </h3>
-                 
-                 {program.professors && program.professors.length > 0 && (
-                   <div className="mb-4 text-sm font-semibold text-gray-700">
-                     <div className="flex items-center gap-2">
-                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                       {program.professors[0].name}
-                       {program.professors[0].university && (
-                         <span className="text-gray-400 font-normal">| {program.professors[0].university}</span>
-                       )}
-                     </div>
-                   </div>
-                 )}
+                                  {program.professors && program.professors.length > 0 && (
+                    <div className="mb-5 p-3 rounded-2xl bg-gray-50/80 border border-gray-100 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {program.professors[0].imageUrl ? (
+                          <img
+                            src={program.professors[0].imageUrl}
+                            alt={program.professors[0].name}
+                            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-gray-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+                            {program.professors[0].name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-bold text-gray-900 text-sm truncate">
+                            {program.professors[0].name}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {[program.professors[0].role, program.professors[0].university].filter(Boolean).join(" • ")}
+                          </div>
+                        </div>
+                      </div>
+
+                      {program.professors[0].universityLogo && (
+                        <div className="shrink-0 pl-2">
+                          <img
+                            src={program.professors[0].universityLogo}
+                            alt={program.professors[0].university || "Institution"}
+                            className="h-9 max-w-[85px] object-contain"
+                            title={program.professors[0].university || ""}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                  <p className="text-gray-600 text-base leading-relaxed mb-6 flex-grow">
                    {program.description}

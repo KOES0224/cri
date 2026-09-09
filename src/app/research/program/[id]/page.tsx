@@ -104,19 +104,28 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                      <h3 className="text-3xl font-bold text-gray-900 mb-6">Course Curriculum</h3>
                      {program.professors.map((prof: any) => (
                        <div key={prof.id} className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-blue-100 shadow-md">
-                         <div className="flex items-center gap-4 mb-6">
-                           {prof.imageUrl ? (
-                             <img src={prof.imageUrl} alt={prof.name} className="w-16 h-16 rounded-full object-cover border-4 border-blue-50 shadow-sm" />
-                           ) : (
-                             <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl shadow-sm">
-                               {prof.name.charAt(0)}
-                             </div>
-                           )}
-                           <div>
-                             <h4 className="text-xl font-bold text-gray-900 leading-tight">{prof.courseTitle || 'Research Project Seminar'}</h4>
-                             <p className="text-sm text-blue-600 font-medium">Led by {prof.name} • {prof.role} at {prof.university || 'Affiliated Institution'}</p>
-                           </div>
-                         </div>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-100">
+                            <div className="flex items-center gap-4">
+                              {prof.imageUrl ? (
+                                <img src={prof.imageUrl} alt={prof.name} className="w-16 h-16 rounded-full object-cover border-4 border-blue-50 shadow-md ring-1 ring-gray-100 shrink-0" />
+                              ) : (
+                                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl shadow-md border-4 border-blue-50 shrink-0">
+                                  {prof.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="text-xl font-bold text-gray-900 leading-tight">{prof.courseTitle || 'Research Project Seminar'}</h4>
+                                <p className="text-sm text-blue-600 font-semibold mt-1">Led by {prof.name}</p>
+                                <p className="text-xs text-gray-500 font-normal">{prof.role} {prof.university ? `• ${prof.university}` : ''}</p>
+                              </div>
+                            </div>
+
+                            {prof.universityLogo && (
+                              <div className="sm:self-center shrink-0 bg-gray-50 p-2.5 rounded-2xl border border-gray-100">
+                                <img src={prof.universityLogo} alt={prof.university || "Institute Logo"} className="h-10 max-w-[120px] object-contain" />
+                              </div>
+                            )}
+                          </div>
                          
                          {prof.courseDescription ? (
                            <div className="prose prose-sm prose-gray max-w-none mb-8">
@@ -159,6 +168,42 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
            <div className="lg:col-span-1">
               <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl sticky top-32">
                  <h3 className="text-xl font-bold text-gray-900 mb-6">Program Details</h3>
+
+                 {program.professors && program.professors.length > 0 && (
+                   <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-blue-50/60 to-indigo-50/40 border border-blue-100">
+                     <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider mb-3">Faculty Mentor</p>
+                     <div className="flex items-center gap-3">
+                       {program.professors[0].imageUrl ? (
+                         <img
+                           src={program.professors[0].imageUrl}
+                           alt={program.professors[0].name}
+                           className="w-13 h-13 rounded-full object-cover border-2 border-white shadow-md ring-1 ring-blue-100 shrink-0"
+                         />
+                       ) : (
+                         <div className="w-13 h-13 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+                           {program.professors[0].name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+                         </div>
+                       )}
+                       <div className="min-w-0 flex-1">
+                         <h4 className="font-bold text-gray-900 text-sm leading-snug">{program.professors[0].name}</h4>
+                         <p className="text-xs text-gray-600 line-clamp-1">{program.professors[0].role}</p>
+                         {program.professors[0].university && (
+                           <p className="text-xs font-semibold text-blue-700">{program.professors[0].university}</p>
+                         )}
+                       </div>
+                     </div>
+                     {program.professors[0].universityLogo && (
+                       <div className="mt-3 pt-3 border-t border-blue-100/70 flex items-center justify-between">
+                         <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Affiliation</span>
+                         <img
+                           src={program.professors[0].universityLogo}
+                           alt={program.professors[0].university || "Logo"}
+                           className="h-6 max-w-[90px] object-contain"
+                         />
+                       </div>
+                     )}
+                   </div>
+                 )}
                  
                  <div className="space-y-6 mb-8">
                     <div className="flex items-center text-gray-700">

@@ -15,12 +15,22 @@ export async function getProfessors() {
   }
 }
 
+const revalidateProfessorPaths = () => {
+  revalidatePath("/dashboard/cms/professors");
+  revalidatePath("/professors");
+  revalidatePath("/research");
+  revalidatePath("/research/winter");
+  revalidatePath("/research/summer-camp");
+  revalidatePath("/research/1-on-1");
+};
+
 export async function createProfessor(data: {
   name: string;
   role: string;
   university?: string | null;
   bio: string;
   imageUrl?: string | null;
+  universityLogo?: string | null;
   acceptingMentees?: boolean;
   publications?: number;
   programIds?: string[];
@@ -41,8 +51,7 @@ export async function createProfessor(data: {
         }
       },
     });
-    revalidatePath("/dashboard/cms/professors");
-    revalidatePath("/professors");
+    revalidateProfessorPaths();
     return { success: true, prof };
   } catch (error) {
     console.error("Failed to create professor:", error);
@@ -58,6 +67,7 @@ export async function updateProfessor(
     university?: string | null;
     bio: string;
     imageUrl?: string | null;
+    universityLogo?: string | null;
     acceptingMentees?: boolean;
     publications?: number;
     programIds?: string[];
@@ -80,8 +90,7 @@ export async function updateProfessor(
         } : undefined
       },
     });
-    revalidatePath("/dashboard/cms/professors");
-    revalidatePath("/professors");
+    revalidateProfessorPaths();
     return { success: true, prof };
   } catch (error) {
     console.error("Failed to update professor:", error);
@@ -94,8 +103,7 @@ export async function deleteProfessor(id: string) {
     await prisma.professor.delete({
       where: { id },
     });
-    revalidatePath("/dashboard/cms/professors");
-    revalidatePath("/professors");
+    revalidateProfessorPaths();
     return { success: true };
   } catch (error) {
     console.error("Failed to delete professor:", error);

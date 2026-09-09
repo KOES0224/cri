@@ -21,6 +21,7 @@ export async function getProgramById(id: string) {
   try {
     return await prisma.program.findUnique({
       where: { id },
+      include: { professors: true },
     });
   } catch (error) {
     console.error(`Failed to fetch program with id ${id}:`, error);

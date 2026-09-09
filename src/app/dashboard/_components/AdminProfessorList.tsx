@@ -12,6 +12,8 @@ type Professor = {
   role: string;
   university: string | null;
   bio: string;
+  imageUrl?: string | null;
+  universityLogo?: string | null;
   acceptingMentees: boolean;
   publications: number;
   createdAt: Date;
@@ -137,9 +139,34 @@ export default function AdminProfessorList({
             ) : (
               initialProfessors.map((prof) => (
                 <tr key={prof.id} className="hover:bg-green-50/30 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">{prof.name}</td>
+                  <td className="px-6 py-4 font-medium text-gray-900">
+                    <div className="flex items-center gap-3">
+                      {prof.imageUrl ? (
+                        <img src={prof.imageUrl} alt={prof.name} className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-700 border border-blue-100 flex items-center justify-center font-bold text-xs shrink-0">
+                          {prof.name.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-bold text-gray-900">{prof.name}</div>
+                        {prof.programs && prof.programs.length > 0 && (
+                          <div className="text-[11px] text-gray-400 truncate max-w-[200px]">
+                            {prof.programs.map(p => p.title).join(", ")}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 text-gray-500 hidden md:table-cell">{prof.role}</td>
-                  <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">{prof.university || "-"}</td>
+                  <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">
+                    <div className="flex items-center gap-2">
+                      {prof.universityLogo && (
+                        <img src={prof.universityLogo} alt="Logo" className="h-6 max-w-[40px] object-contain shrink-0" />
+                      )}
+                      <span>{prof.university || "-"}</span>
+                    </div>
+                  </td>
                   <td className="px-6 py-4">
                      {prof.acceptingMentees ? (
                        <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">

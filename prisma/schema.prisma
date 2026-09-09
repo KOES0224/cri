@@ -312,6 +312,7 @@ model Professor {
   university       String?
   bio              String
   imageUrl         String?
+  universityLogo   String?
   acceptingMentees Boolean  @default(true)
   publications     Int      @default(0)
   
