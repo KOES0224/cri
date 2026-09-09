@@ -90,130 +90,169 @@ export default function ResearchProgramsClient({
              <p className="text-gray-500 max-w-md mx-auto">There are currently no research programs matching this criteria. Please check back later.</p>
            </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-8">
-            {filteredPrograms.map((program) => (
-              <div 
-                key={program.id}
-                className="group bg-white rounded-3xl p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full"
-              >
-                 <div className="flex justify-between items-start mb-6">
-                   {program.status === "OPEN" ? (
-                     <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider rounded-full flex items-center">
-                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Open
-                     </span>
-                   ) : (
-                     <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider rounded-full">
-                       Closed
-                     </span>
-                   )}
-                   
-                   {(() => {
-                     let majorText = program.subCategory;
-                     if (program.professors && program.professors.length > 0) {
-                        const prof = program.professors[0];
-                        if (prof.relatedMajor) {
-                            majorText = prof.relatedMajor;
-                        } else if (prof.potentialTopics) {
-                            const topics = prof.potentialTopics.split(/[|,]/);
-                            if (topics.length > 0 && topics[0].trim()) {
-                                majorText = topics[0].trim();
-                            }
-                        }
-                     }
-                     if (!majorText) return null;
-                     return (
-                       <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-3 py-1 rounded-full uppercase tracking-wider max-w-[200px] truncate">
-                         {majorText}
-                       </span>
-                     );
-                   })()}
-                 </div>
-                 
-                 <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight group-hover:text-blue-600 transition-colors">
-                   {program.title}
-                 </h3>
-                                  {program.professors && program.professors.length > 0 && (
-                    <div className="mb-5 p-3 rounded-2xl bg-gray-50/80 border border-gray-100 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {program.professors[0].imageUrl ? (
-                          <img
-                            src={program.professors[0].imageUrl}
-                            alt={program.professors[0].name}
-                            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-gray-200 shrink-0"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
-                            {program.professors[0].name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <div className="font-bold text-gray-900 text-sm truncate">
-                            {program.professors[0].name}
-                          </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {[program.professors[0].role, program.professors[0].university].filter(Boolean).join(" • ")}
-                          </div>
-                        </div>
-                      </div>
+          <div className="space-y-4">
+            {filteredPrograms.map((program) => {
+              const prof = program.professors && program.professors.length > 0 ? program.professors[0] : null;
 
-                      {program.professors[0].universityLogo && (
-                        <div className="shrink-0 pl-2">
+              // Disciplinary badge determination
+              let majorText = program.subCategory;
+              if (prof) {
+                if (prof.relatedMajor) {
+                  majorText = prof.relatedMajor;
+                } else if (prof.potentialTopics) {
+                  const topics = prof.potentialTopics.split(/[|,]/);
+                  if (topics.length > 0 && topics[0].trim()) {
+                    majorText = topics[0].trim();
+                  }
+                }
+              }
+
+              // Color coding by major keywords
+              const mLower = (majorText || "").toLowerCase();
+              let badgeColor = "bg-purple-50 text-purple-700 border-purple-100";
+              if (mLower.includes("bio") || mLower.includes("genom") || mLower.includes("stem")) {
+                badgeColor = "bg-emerald-50 text-emerald-800 border-emerald-200";
+              } else if (mLower.includes("polit") || mLower.includes("geopol") || mLower.includes("relation")) {
+                badgeColor = "bg-blue-50 text-blue-800 border-blue-200";
+              } else if (mLower.includes("chem") || mLower.includes("pharm")) {
+                badgeColor = "bg-rose-50 text-rose-800 border-rose-200";
+              } else if (mLower.includes("econ")) {
+                badgeColor = "bg-amber-50 text-amber-900 border-amber-200";
+              }
+
+              // Key research tags
+              const sourceTags = prof ? (prof.keywords || prof.potentialTopics) : "";
+              const tags = sourceTags
+                ? sourceTags.split(/[|,]/).map((t: string) => t.trim()).filter(Boolean).slice(0, 3)
+                : [];
+
+              return (
+                <div 
+                  key={program.id}
+                  className="group bg-white rounded-3xl p-6 sm:p-7 border border-gray-200/80 shadow-xs hover:shadow-xl hover:border-blue-400/80 transition-all duration-300 flex flex-col xl:flex-row xl:items-center justify-between gap-6"
+                >
+                  {/* Left: Faculty & Institution Showcase */}
+                  <div className="flex items-center gap-4 xl:w-72 shrink-0 pb-4 xl:pb-0 border-b xl:border-b-0 border-gray-100">
+                    <div className="relative shrink-0">
+                      {prof?.imageUrl ? (
+                        <img
+                          src={prof.imageUrl}
+                          alt={prof.name}
+                          className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl object-cover border-2 border-white shadow-md ring-1 ring-gray-200"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 border border-slate-300/70 flex items-center justify-center font-black text-lg shadow-inner">
+                          {prof?.name
+                            ? prof.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')
+                            : "CRI"}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      {prof ? (
+                        <>
+                          <div className="font-extrabold text-gray-900 text-base leading-tight group-hover:text-blue-600 transition-colors truncate">
+                            {prof.name}
+                          </div>
+                          <div className="text-xs text-gray-500 font-medium truncate mt-0.5">
+                            {prof.role || "Faculty Mentor"}
+                          </div>
+                          <div className="text-xs font-semibold text-gray-700 truncate mt-0.5">
+                            {prof.university}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="font-bold text-gray-900 text-sm">Faculty Mentor</div>
+                      )}
+
+                      {prof?.universityLogo && (
+                        <div className="mt-2 pt-1.5 border-t border-gray-100">
                           <img
-                            src={program.professors[0].universityLogo}
-                            alt={program.professors[0].university || "Institution"}
-                            className="h-9 max-w-[85px] object-contain"
-                            title={program.professors[0].university || ""}
+                            src={prof.universityLogo}
+                            alt={prof.university || "Institution"}
+                            className="h-6 max-w-[110px] object-contain"
+                            title={prof.university || ""}
                           />
                         </div>
                       )}
                     </div>
-                  )}
+                  </div>
 
-                 <p className="text-gray-600 text-base leading-relaxed mb-6 flex-grow">
-                   {program.description}
-                 </p>
+                  {/* Center: Program Title, Badges & Quick Description */}
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {program.status === "OPEN" ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-[11px] font-black uppercase tracking-wider rounded-full border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                          Accepting Applications
+                        </span>
+                      ) : (
+                        <span className="inline-block px-2.5 py-0.5 bg-gray-100 text-gray-600 text-[11px] font-black uppercase tracking-wider rounded-full">
+                          Closed
+                        </span>
+                      )}
 
-                 {program.professors && program.professors.length > 0 && (program.professors[0].keywords || program.professors[0].potentialTopics) && (
-                   <div className="mb-6 flex flex-wrap gap-2">
-                     {(() => {
-                       const prof = program.professors[0];
-                       const sourceString = prof.keywords || prof.potentialTopics;
-                       if (!sourceString) return null;
-                       return sourceString.split(/[|,]/).map((topic: string, idx: number) => {
-                         const t = topic.trim();
-                         if (!t || idx >= 3) return null;
-                         return (
-                           <span key={idx} className="text-[10px] font-bold text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-md uppercase tracking-wider">
-                             {t}
-                           </span>
-                         );
-                       });
-                     })()}
-                   </div>
-                 )}
-                 
-                 <div className="pt-6 border-t border-gray-50 mt-auto flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                    <div className="flex flex-col gap-2">
-                      <div className="text-sm font-medium text-gray-500 flex items-center bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 w-fit">
-                         <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                         {program.startDate ? format(new Date(program.startDate), 'MMM d, yyyy') : 'TBA'}
-                         {program.endDate ? ` - ${format(new Date(program.endDate), 'MMM d, yyyy')}` : ''}
+                      {majorText && (
+                        <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${badgeColor}`}>
+                          {majorText}
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <Link href={`/research/program/${program.id}`}>
+                        <h3 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight group-hover:text-blue-600 transition-colors leading-snug">
+                          {program.title}
+                        </h3>
+                      </Link>
+                      <p className="text-sm text-gray-600 line-clamp-2 mt-1.5 leading-relaxed font-normal">
+                        {program.description}
+                      </p>
+                    </div>
+
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {tags.map((tag: string, idx: number) => (
+                          <span 
+                            key={idx} 
+                            className="text-[10px] font-semibold text-gray-600 bg-gray-100/80 hover:bg-gray-200/70 border border-gray-200/60 px-2.5 py-0.5 rounded-md transition-colors"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
                       </div>
+                    )}
+                  </div>
+
+                  {/* Right: Schedule, Tuition & Direct Action Button */}
+                  <div className="flex flex-row xl:flex-col items-center xl:items-end justify-between xl:justify-center gap-4 pt-4 xl:pt-0 border-t xl:border-t-0 border-gray-100 xl:w-56 shrink-0">
+                    <div className="text-left xl:text-right space-y-1">
+                      <div className="text-xs font-semibold text-gray-500 flex items-center xl:justify-end">
+                        <Calendar className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+                        {program.startDate ? format(new Date(program.startDate), 'MMM d') : 'TBA'}
+                        {program.endDate ? ` - ${format(new Date(program.endDate), 'MMM d, yyyy')}` : ''}
+                      </div>
+                      
                       {program.tuition && (
-                        <div className="text-sm font-bold text-gray-900 flex items-center bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 w-fit">
-                           <span className="text-emerald-600 font-black mr-2">$</span>
-                           {program.tuition.toLocaleString()} USD
+                        <div className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">
+                          ${program.tuition.toLocaleString()}
+                          <span className="text-xs font-semibold text-gray-500 ml-1">USD</span>
                         </div>
                       )}
                     </div>
-                    
-                    <Link href={`/research/program/${program.id}`} className="w-full sm:w-auto h-11 px-6 rounded-xl bg-gray-900 white text-white text-sm font-bold hover:bg-black transition-colors inline-flex items-center justify-center group/btn shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 shrink-0">
+
+                    <Link 
+                      href={`/research/program/${program.id}`} 
+                      className="h-11 px-6 rounded-2xl bg-gray-900 hover:bg-black text-white text-sm font-bold transition-all inline-flex items-center justify-center group/btn shadow-sm hover:shadow-md focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 shrink-0 whitespace-nowrap"
+                    >
                       Explore Program
                       <ChevronRight className="ml-2 h-4 w-4 text-gray-400 group-hover/btn:translate-x-1 group-hover/btn:text-white transition-all" />
                     </Link>
-                 </div>
-              </div>
-            ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
