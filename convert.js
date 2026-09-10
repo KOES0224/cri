@@ -36,11 +36,16 @@ for (const row of data) {
   const generatedTitle = `${randomPrefix} ${extractedMajor}`;
 
   // 2. Generate Marketing Bio (If empty)
+  const workExp = (row["Work Experience"] || "").trim();
   let generatedBio = "";
-  if (title && university && extractedMajor !== "Interdisciplinary Studies") {
-    generatedBio = `${profName} is a distinguished ${title} from ${university}, renowned for their specialized focus in ${extractedMajor}. Their ongoing academic work serves to advance modern methodological approaches and critical innovations within the discipline. Working under their mentorship offers students an exclusive window into top-tier academic research and publishing standards.`;
+  if (workExp && workExp.length > 20) {
+    let cleanExp = workExp.replace(/\s+/g, ' ').replace(new RegExp(`^${profName}[,\\s]+`, 'i'), '');
+    if (!cleanExp.endsWith('.')) cleanExp += '.';
+    generatedBio = `${title} at ${university}, ${profName} is an accomplished scholar at the forefront of ${extractedMajor}. ${cleanExp} Under their dedicated mentorship, students master university-grade research methodologies, sharpen their critical analytical reasoning, and produce distinctive, publication-standard academic manuscripts that distinguish them in competitive university admissions.`;
+  } else if (title && university) {
+    generatedBio = `${title} at ${university}, ${profName} directs foundational inquiry in ${extractedMajor}. Renowned for fostering academic excellence and intellectual rigor, their mentorship empowers ambitious students to conduct original, publication-ready research and build compelling academic credentials evaluated highly by top admissions committees.`;
   } else {
-    generatedBio = `${profName} is an elite academic mentor specializing in rigorous, publication-driven research. Students under their guidance will explore cutting-edge concepts and develop an advanced understanding of the material currently debated at the highest levels of academia.`;
+    generatedBio = `${profName} is an elite academic mentor specializing in rigorous, publication-driven research. Students under their guidance explore cutting-edge concepts and develop advanced scholarly mastery evaluated highly by top university admissions committees.`;
   }
 
   // 3. Generate Course Description (If empty)
