@@ -14,6 +14,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  sessionVersion Int      @default(0)
   role          String    @default("STUDENT") // STUDENT, PARENT, ADMIN
   studentCode   String?   @unique // 8-digit random code
   isAgency      Boolean   @default(false) // Hidden flag for parent accounts
@@ -22,6 +23,8 @@ model User {
   accounts     Account[]
   sessions     Session[]
   applications Application[]
+  applicationDocuments ApplicationDocument[]
+  applicationCheckouts ApplicationCheckout[]
   enrollments  Enrollment[]
   submissions  AssignmentSubmission[]
   messagesSent Message[]     @relation("SentMessages")
@@ -352,4 +355,39 @@ model UserActivity {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Public-form limits are shared across server instances.
+model RequestLimit {
+  key       String   @id
+  count     Int      @default(1)
+  resetAt   DateTime
+  @@index([resetAt])
+}
+
+// Application documents are served only to their owner or an administrator.
+model ApplicationDocument {
+  id        String   @id @default(cuid())
+  userId    String
+  filename  String
+  data      Bytes
+  createdAt DateTime @default(now())
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+// Server-owned order data binds the fee and application to the authenticated user.
+model ApplicationCheckout {
+  id            String   @id
+  userId        String
+  programId     String
+  formData      Json
+  amount        Int
+  currency      String
+  status        String   @default("PENDING")
+  applicationId String?
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, programId])
 }

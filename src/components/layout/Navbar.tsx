@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Menu, X, ArrowRight, UserCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { getGlobalUnreadCount } from "@/app/actions/messages";
 
@@ -12,17 +12,20 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [globalUnread, setGlobalUnread] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
   
-  // Safely check pathname without trailing slashes
-  const normalizedPath = pathname?.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
-  // If pathname is null/undefined during SSR layout static generation, we assume we're on the main site (dark hero)
-  // to prevent it from flashing dark text on the initial load of the homepage.
-  const isDarkHero = !normalizedPath || ["/", "/research", "/intern", "/projects"].includes(normalizedPath);
+  useEffect(() => { setIsOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setIsOpen(false); menuButton.current?.focus(); }
+    };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [isOpen]);
 
   useEffect(() => {
-    setIsMounted(true); // Hydration safety
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
@@ -43,18 +46,13 @@ export default function Navbar() {
     };
   }, [session]);
 
-  const navTextClass = isDarkHero && !scrolled
-    ? "text-white/90 hover:text-white transform-gpu" 
-    : "text-gray-600 hover:text-black transform-gpu";
-  
-  const logoClass = isDarkHero && !scrolled
-    ? "text-white"
-    : "bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600";
+  const navTextClass = "text-gray-700 hover:text-black";
+  const logoClass = "text-gray-900";
 
   return (
-    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "py-4" : "py-6"}`}>
+    <nav aria-label="Main navigation" className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "py-4" : "py-6"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className={`flex items-center justify-between rounded-2xl px-6 py-3 transition-colors duration-300 ${scrolled ? "bg-white/70 shadow-lg shadow-black/5 ring-1 ring-black/5 backdrop-blur-xl" : "bg-transparent"}`}>
+        <div className={`flex items-center justify-between rounded-2xl px-6 py-3 transition-colors duration-300 bg-white/95 shadow-lg shadow-black/5 ring-1 ring-black/5 backdrop-blur-xl`}>
           
           <div className="flex items-center">
             <Link href="/" className={`text-2xl font-black tracking-tighter ${logoClass}`}>
@@ -86,7 +84,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-4">
             {session ? (
               <div className="flex items-center space-x-3 bg-gray-50/80 backdrop-blur-md rounded-full p-1 pr-4 border border-gray-200">
-                <Link href="/dashboard" className="relative flex items-center justify-center h-8 w-8 rounded-full bg-white shadow-sm border border-gray-100 text-blue-600 hover:ring-2 hover:ring-blue-100 transition-all">
+                <Link href="/dashboard" aria-label="Open your dashboard" className="relative flex items-center justify-center h-8 w-8 rounded-full bg-white shadow-sm border border-gray-100 text-blue-600 hover:ring-2 hover:ring-blue-100 transition-all">
                   <UserCircle className="w-5 h-5" />
                   {globalUnread > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -110,11 +108,7 @@ export default function Navbar() {
                 </Link>
                 <Link 
                   href="/auth/login" 
-                  className={`group relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden hover-lift click-press transition-all ${
-                    isDarkHero && !scrolled
-                      ? "bg-white text-gray-900 hover:bg-gray-100 shadow-md"
-                      : "text-white bg-black hover:bg-gray-800"
-                  }`}
+                  className={`group relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden hover-lift click-press transition-all text-white bg-black hover:bg-gray-800`}
                 >
                   <span className="relative flex items-center">
                     Portal <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -126,8 +120,12 @@ export default function Navbar() {
 
           <div className="flex items-center lg:hidden">
             <button
+              ref={menuButton}
+              aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={isOpen}
+              aria-controls="mobile-navigation"
               onClick={() => setIsOpen(!isOpen)}
-              className={`p-2 -mr-2 focus:outline-none transition-colors ${isDarkHero && !scrolled ? 'text-white' : 'text-gray-600 hover:text-black'}`}
+              className={`p-2 -mr-2 focus:outline-none transition-colors ${'text-gray-700 hover:text-black'}`}
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -137,7 +135,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 w-full px-4 mt-2">
+        <div id="mobile-navigation" onClick={(event) => { if ((event.target as HTMLElement).closest("a")) setIsOpen(false); }} className="absolute top-full left-0 w-full px-4 mt-2 max-h-[calc(100dvh-110px)] overflow-y-auto">
           <div className="p-4 bg-white/95 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-2xl flex flex-col space-y-3">
             <Link href="/research" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">Research</Link>
             <Link href="/projects" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">Projects</Link>

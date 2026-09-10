@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { programFacts, inventoryFacts, programKind, seoulDay } from "@/lib/program-policy";
 import { useRouter } from "next/navigation";
 import { createProgram, updateProgram } from "@/app/actions/programs";
 
@@ -55,15 +56,15 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
     description: initialData?.description || "",
-    category: initialData?.category || "Summer Camp",
+    category: programFacts({ category: initialData?.category || "Seoul Research Program" }).name,
     subCategory: initialData?.subCategory || "",
     status: initialData?.status || "OPEN",
     isPublished: initialData?.isPublished !== undefined ? initialData.isPublished : true,
     tuition: initialData?.tuition || "",
-    locationFormat: initialData?.locationFormat || "Online (Remote)",
-    capacity: initialData?.capacity !== undefined && initialData?.capacity !== null ? initialData.capacity : 5,
-    startDate: initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : "",
-    endDate: initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "",
+    locationFormat: programFacts({ category: initialData?.category || "Seoul Research Program", ...initialData }).format,
+    capacity: programFacts({ category: initialData?.category || "Seoul Research Program", ...initialData }).capacity ?? "",
+    startDate: initialData?.startDate ? seoulDay(initialData.startDate) || "" : "",
+    endDate: initialData?.endDate ? seoulDay(initialData.endDate) || "" : "",
     content: initialData?.content || "",
     teachingHoursProf: initialData?.teachingHoursProf || "",
     teachingHoursTA: initialData?.teachingHoursTA || "",
@@ -72,7 +73,8 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value, ...(name === "category" ? { ...inventoryFacts(value), capacity: programFacts({ category: value }).capacity ?? "", teachingHoursProf: programFacts({ category: value }).professorHours ?? "", teachingHoursTA: programFacts({ category: value }).taHours ?? "" } : {}) });
   };
 
   const handleProfessorToggle = (profId: string) => {
@@ -134,14 +136,14 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
         tuition: formData.tuition ? Number(formData.tuition) : null,
         status: formData.status,
         isPublished: formData.isPublished,
-        startDate: formData.startDate ? new Date(formData.startDate) : undefined,
-        endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+        startDate: formData.startDate ? new Date(formData.startDate + "T00:00:00+09:00") : null,
+        endDate: formData.endDate ? new Date(formData.endDate + "T00:00:00+09:00") : null,
         content: formData.content || null,
         teachingHoursProf: formData.teachingHoursProf || null,
         teachingHoursTA: formData.teachingHoursTA || null,
         courseSchedule: formData.courseSchedule || null,
         locationFormat: formData.locationFormat || "Online (Remote)",
-        capacity: formData.capacity ? Number(formData.capacity) : 5,
+        capacity: programFacts({ category: formData.category }).capacity ?? null,
         professorIds: formData.professorIds,
       };
 
@@ -259,9 +261,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Program Title *</label>
+        <label htmlFor="program-title" className="block text-sm font-medium text-gray-700 mb-1">Program Title *</label>
         <input
-          type="text"
+          id="program-title" type="text"
           name="title"
           required
           value={formData.title}
@@ -272,9 +274,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+        <label htmlFor="program-description" className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
         <textarea
-          name="description"
+          id="program-description" name="description"
           required
           rows={4}
           value={formData.description}
@@ -286,17 +288,17 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Program Category *</label>
+          <label htmlFor="program-category" className="block text-sm font-medium text-gray-700 mb-1">Program Category *</label>
           <select
-            name="category"
+            id="program-category" name="category"
             value={formData.category}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none font-medium"
           >
-            <option value="Research">Research (1-on-1)</option>
-            <option value="Summer Camp">Summer Camp (Global)</option>
+            <option value="1-on-1 Advanced Research Program">1-on-1 Advanced Research Program</option>
+            <option value="Global Research Program">Global Research Program</option>
             <option value="Seoul Research Program">Seoul Research Program</option>
-            <option value="Winter Online">Winter Online</option>
+            <option value="Winter Online Research Program">Winter Online Research Program</option>
             <option value="Projects">Projects</option>
             <option value="Competitions">Competitions</option>
             <option value="Internship">Interns / Internships</option>
@@ -305,9 +307,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
         </div>
 
         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory / Variation (Optional)</label>
+           <label htmlFor="program-subCategory" className="block text-sm font-medium text-gray-700 mb-1">Subcategory / Variation (Optional)</label>
            <input
-            type="text"
+            id="program-subCategory" type="text"
             name="subCategory"
             value={formData.subCategory}
             onChange={handleChange}
@@ -317,7 +319,7 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label><p className="text-sm text-gray-500 mb-2">Applications automatically close after the end date (Seoul time). Manual closure takes effect immediately.</p>
           <select
             name="status"
             value={formData.status}
@@ -333,9 +335,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tuition (USD)</label>
+          <label htmlFor="program-tuition" className="block text-sm font-medium text-gray-700 mb-1">Tuition (USD)</label>
           <input
-            type="number"
+            id="program-tuition" type="number"
             name="tuition"
             value={formData.tuition}
             onChange={handleChange}
@@ -363,13 +365,16 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Delivery / Location Format *</label>
+          <label htmlFor="program-locationFormat" className="block text-sm font-medium text-gray-700 mb-1">Delivery / Location Format *</label>
           <select
+            id="program-locationFormat" disabled={programKind(formData.category) !== "other"}
             name="locationFormat"
             value={formData.locationFormat}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none font-medium bg-white"
           >
+            <option value="In person (Onsite)">In person (Onsite)</option>
+            <option value="Online or in person · arranged individually">Online or in person · arranged individually</option>
             <option value="Online (Remote)">Online (Remote) - 100% Virtual</option>
             <option value="In-Person (On-Campus)">In-Person (On-Campus) - On-Campus</option>
             <option value="Hybrid (In-Person & Online)">Hybrid (In-Person & Online)</option>
@@ -377,9 +382,10 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Cohort Capacity (Number of Students)</label>
+          <label htmlFor="program-capacity" className="block text-sm font-medium text-gray-700 mb-1">Cohort Capacity (Not displayed for 1-on-1)</label>
           <input
-            type="number"
+            id="program-capacity" type="number"
+            disabled={programKind(formData.category) !== "other"}
             name="capacity"
             value={formData.capacity}
             onChange={handleChange}
@@ -393,9 +399,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+          <label htmlFor="program-startDate" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
           <input
-            type="date"
+            id="program-startDate" type="date"
             name="startDate"
             value={formData.startDate}
             onChange={handleChange}
@@ -418,9 +424,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+          <label htmlFor="program-endDate" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
           <input
-            type="date"
+            id="program-endDate" type="date"
             name="endDate"
             value={formData.endDate}
             onChange={handleChange}
@@ -446,9 +452,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Course Schedule</label>
+          <label htmlFor="program-courseSchedule" className="block text-sm font-medium text-gray-700 mb-1">Course Schedule</label>
           <input
-            type="text"
+            id="program-courseSchedule" type="text"
             name="courseSchedule"
             value={formData.courseSchedule}
             onChange={handleChange}
@@ -460,9 +466,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Professor Teaching Hours</label>
+          <label htmlFor="program-teachingHoursProf" className="block text-sm font-medium text-gray-700 mb-1">Professor Teaching Hours</label>
           <input
-            type="text"
+            id="program-teachingHoursProf" type="text"
             name="teachingHoursProf"
             value={formData.teachingHoursProf}
             onChange={handleChange}
@@ -471,9 +477,9 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">TA Teaching Hours</label>
+          <label htmlFor="program-teachingHoursTA" className="block text-sm font-medium text-gray-700 mb-1">TA Teaching Hours</label>
           <input
-            type="text"
+            id="program-teachingHoursTA" type="text"
             name="teachingHoursTA"
             value={formData.teachingHoursTA}
             onChange={handleChange}

@@ -33,12 +33,12 @@ export async function confirmTossPayment(
   orderId: string,
   amount: number
 ): Promise<TossPaymentConfirmResult> {
-  const secretKey = process.env.TOSS_SECRET_KEY || "test_sk_Z1aOwRO7hkNOa42Nl4e8y3yAqnz2";
+  const secretKey = process.env.TOSS_SECRET_KEY;
 
   if (!secretKey) {
     return {
       success: false,
-      error: "TOSS_SECRET_KEY is not configured on the server.",
+      error: "Online payment is unavailable. Contact admissions before paying.",
     };
   }
 
@@ -50,6 +50,7 @@ export async function confirmTossPayment(
       headers: {
         Authorization: `Basic ${basicToken}`,
         "Content-Type": "application/json",
+        "Idempotency-Key": orderId,
       },
       body: JSON.stringify({
         paymentKey,
@@ -62,25 +63,25 @@ export async function confirmTossPayment(
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Toss Payments confirm error response:", data);
+      console.error("Toss Payments confirmation failed", response.status);
       return {
         success: false,
-        error: data.message || `Payment confirmation failed (code: ${data.code || response.status})`,
+        error: "Payment could not be confirmed. Contact support if your account shows a charge.",
       };
     }
 
     if (data.status !== "DONE") {
       return {
         success: false,
-        error: `Payment status is not DONE (current: ${data.status})`,
+        error: "The payment has not completed. Check your payment provider before retrying.",
       };
     }
 
     // Verify amount to prevent frontend tampering
-    if (Number(data.totalAmount) !== Number(amount)) {
+    if (Number(data.totalAmount) !== Number(amount) || data.currency !== "KRW" || data.orderId !== orderId) {
       return {
         success: false,
-        error: `Amount mismatch: expected ${amount}, received ${data.totalAmount}`,
+        error: "Payment details could not be verified. Contact support with your order reference.",
       };
     }
 
@@ -92,7 +93,7 @@ export async function confirmTossPayment(
         orderName: data.orderName,
         status: data.status,
         totalAmount: data.totalAmount,
-        currency: data.currency || "USD",
+        currency: data.currency,
         method: data.method,
         card: data.card,
         receiptUrl: data.receipt?.url,
@@ -100,11 +101,26 @@ export async function confirmTossPayment(
         approvedAt: data.approvedAt,
       },
     };
-  } catch (err: any) {
-    console.error("Failed to connect to Toss Payments confirm API:", err);
+  } catch {
+    console.error("Payment provider confirmation unavailable.");
     return {
       success: false,
-      error: err.message || "Network error while verifying payment with Toss Payments.",
+      error: "Payment verification is unavailable. If a charge appears, contact support before trying again.",
     };
   }
+}
+
+/** Read-only reconciliation: recovers a confirmed charge after a database/network failure. */
+export async function findConfirmedTossPayment(orderId: string, amount: number): Promise<TossPaymentConfirmResult> {
+  if (!process.env.TOSS_SECRET_KEY) return { success: false };
+  try {
+    const response = await fetch(`https://api.tosspayments.com/v1/payments/orders/${encodeURIComponent(orderId)}`, {
+      headers: { Authorization: `Basic ${Buffer.from(`${process.env.TOSS_SECRET_KEY}:`).toString('base64')}` },
+      cache: 'no-store', signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) return { success: false };
+    const data = await response.json();
+    if (data.status !== 'DONE' || data.orderId !== orderId || data.totalAmount !== amount || data.currency !== 'KRW') return { success: false };
+    return {success: true, paymentData: {...data, receiptUrl: data.receipt?.url}};
+  } catch { return {success: false}; }
 }

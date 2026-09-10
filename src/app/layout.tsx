@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CRI | Premium Research Programs for Students",
-  description: "CRI offers exceptional research programs for ambitious students, guided by Ivy League and top-tier university professors. Transform your curiosity into accepted publications.",
+  description: "CRI offers student-led research guided by university professors. Develop an original research question from your interests and write your own paper through in-person summer, online winter, or individual programs.",
   openGraph: {
     title: "CRI | Premium Research Programs",
     description: "Guided research programs with top university professors.",

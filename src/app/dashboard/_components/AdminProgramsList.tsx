@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PlusCircle, Edit, Trash2, Briefcase, Eye, EyeOff } from "lucide-react";
 import ProgramForm from "./ProgramForm";
 import { deleteProgram, updateProgramOrder, toggleProgramPublished } from "@/app/actions/programs";
+import { admissionLabel, programKind } from "@/lib/program-policy";
 import { useRouter } from "next/navigation";
 
 type Program = {
@@ -28,7 +29,7 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const TABS = ["Summer Camp", "Winter Online", "Projects", "Competitions", "Interns", "Archive & Mock"];
+  const TABS = ["Summer Camp", "Winter Online", "1-on-1", "Projects", "Competitions", "Interns", "Archive & Mock"];
 
   const mockTitles = ["Advanced Cognitive Psychology Research", "Sustainable Urban Design Project", "Global FinTech Internship"];
   
@@ -41,8 +42,10 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
       return "Archive & Mock";
     }
 
-    if (cat === 'summer camp' || cat === 'seoul' || cat === 'camp' || sub.includes('summer') || sub.includes('seoul')) return "Summer Camp";
-    if (cat === 'winter online' || cat === 'winter' || sub.includes('winter')) return "Winter Online";
+    const kind = programKind(program.category);
+    if (kind === 'seoul' || kind === 'global') return "Summer Camp";
+    if (kind === 'winter') return "Winter Online";
+    if (kind === 'individual') return "1-on-1";
     if (cat.includes('project')) return "Projects";
     if (cat.includes('competition')) return "Competitions";
     if (cat.includes('intern')) return "Interns";
@@ -153,7 +156,7 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
                       program.status === 'CLOSED' ? 'bg-yellow-100 text-yellow-800' : 
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {program.status}
+                      {admissionLabel(program)}
                     </span>
                   </td>
                   <td className="px-6 py-4">

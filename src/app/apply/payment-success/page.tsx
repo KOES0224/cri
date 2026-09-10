@@ -30,28 +30,8 @@ function PaymentSuccessContent() {
         return;
       }
 
-      // Retrieve saved application form draft from sessionStorage or localStorage
-      let draftData: any = {};
       try {
-        const stored = sessionStorage.getItem("cri_apply_draft") || localStorage.getItem("cri_apply_draft");
-        if (stored) {
-          draftData = JSON.parse(stored);
-        }
-      } catch (e) {
-        console.error("Could not parse draft data:", e);
-      }
-
-      const targetProgramId = programId || draftData.programId;
-
-      if (!targetProgramId) {
-        setError("Program ID is missing. Please contact support with your payment receipt.");
-        setLoading(false);
-        return;
-      }
-
       const res = await finalizePaidApplication({
-        programId: targetProgramId,
-        formData: draftData.formData || {},
         paymentKey,
         orderId,
         amount: Number(amountStr),
@@ -72,11 +52,9 @@ function PaymentSuccessContent() {
           localStorage.removeItem("cri_apply_draft");
         } catch (e) {}
 
-        // Auto redirect to applications dashboard after 5 seconds
-        setTimeout(() => {
-          router.push("/dashboard/applications");
-        }, 5000);
+
       }
+      } catch { setError("Unable to verify payment. Do not pay again if you see a charge; contact support with your order reference."); setLoading(false); }
     }
 
     processPayment();
@@ -126,7 +104,7 @@ function PaymentSuccessContent() {
               Application & Fee Paid!
             </h2>
             <p className="text-gray-500 text-sm max-w-xs leading-relaxed mb-6">
-              Your $50 USD application fee was verified. Your dossier has been submitted to the admissions committee.
+              Your application fee payment of ₩68,000 KRW was verified. Program tuition is separate. Your dossier has been submitted to the admissions committee.
             </p>
 
             <div className="w-full bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100 text-xs text-left space-y-2">
@@ -140,7 +118,7 @@ function PaymentSuccessContent() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500 font-medium">Status:</span>
-                <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">PAID ($50.00 USD)</span>
+                <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">PAID (₩68,000 KRW)</span>
               </div>
             </div>
 
@@ -162,7 +140,7 @@ function PaymentSuccessContent() {
             >
               Go to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
-            <p className="text-[11px] text-gray-400 mt-3">Redirecting automatically in a few seconds...</p>
+            <p className="text-[11px] text-gray-400 mt-3">Your application is saved. Continue to the dashboard when you are ready.</p>
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { allowRequest } from "@/lib/request-limit";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -25,8 +26,9 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        if (credentials.password.length > 1000 || !await allowRequest("login", credentials.email.trim().toLowerCase(), 10, 900)) return null;
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
+          where: { email: credentials.email.trim().toLowerCase() }
         });
 
         if (!user || !user.password) {
@@ -53,10 +55,11 @@ export const authOptions: NextAuthOptions = {
       if (user && user.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: user.email },
-          select: { id: true, role: true, studentCode: true }
+          select: { id: true, role: true, studentCode: true, sessionVersion: true }
         });
 
         if (dbUser) {
+          token.sessionVersion = dbUser.sessionVersion;
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.studentCode = dbUser.studentCode;
@@ -66,9 +69,12 @@ export const authOptions: NextAuthOptions = {
         }
       }
       
-      if (trigger === "update" && session?.user) {
-        token.role = session.user.role;
-        token.studentCode = session.user.studentCode;
+      if (!user && token.id) {
+        const current = await prisma.user.findUnique({ where: { id: token.id as string }, select: { role: true, studentCode: true, sessionVersion: true } });
+        if (!current || (token.sessionVersion ?? 0) !== current.sessionVersion) { token.id = ""; token.role = "REVOKED"; return token; }
+        token.role = current.role;
+        token.studentCode = current?.studentCode;
+        if (!current) token.id = "";
       }
       return token;
     },
@@ -87,5 +93,5 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-for-dev",
+  secret: process.env.NEXTAUTH_SECRET,
 };

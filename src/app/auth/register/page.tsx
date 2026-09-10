@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { safeCallbackUrl } from "@/lib/auth-input";
 import { signIn } from "next-auth/react";
 
 function ErrorAlert() {
@@ -29,7 +30,7 @@ function ErrorAlert() {
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -84,8 +85,8 @@ function RegisterForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="absolute top-8 left-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center pt-44 pb-12 sm:px-6 lg:px-8">
+      <div className="absolute top-28 left-6">
         <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to main site
@@ -108,20 +109,21 @@ function RegisterForm() {
             <ErrorAlert />
           </Suspense>
 
-          <form className="space-y-6" onSubmit={onSubmit}>
+          <p className="text-sm text-gray-600 mb-6">New applicant? <Link href="/admissions" className="text-blue-700 underline">Review the application steps, preparation checklist and fees</Link> before you begin.</p>
+          <form aria-busy={loading} className="space-y-6" onSubmit={onSubmit}>
             <div>
               <label className="block text-sm font-medium text-gray-700">I am a...</label>
               <div className="mt-2 grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => setRole("STUDENT")}
+                  aria-pressed={role === "STUDENT"} onClick={() => setRole("STUDENT")}
                   className={`border rounded-md py-2 px-4 flex items-center justify-center text-sm font-medium transition-colors ${role === "STUDENT" ? "border-black bg-gray-50 text-black" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
                 >
                   Student
                 </button>
                 <button
                   type="button"
-                  onClick={() => setRole("PARENT")}
+                  aria-pressed={role === "PARENT"} onClick={() => setRole("PARENT")}
                   className={`border rounded-md py-2 px-4 flex items-center justify-center text-sm font-medium transition-colors ${role === "PARENT" ? "border-black bg-gray-50 text-black" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
                 >
                   Parent / Agency
@@ -130,7 +132,7 @@ function RegisterForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
               <div className="mt-1">
                 <input
                   id="name"
@@ -144,7 +146,7 @@ function RegisterForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email address</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
               <div className="mt-1">
                 <input
                   id="email"
@@ -159,7 +161,7 @@ function RegisterForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
               <div className="mt-1 relative">
                 <input
                   id="password"
@@ -167,11 +169,13 @@ function RegisterForm() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={12} maxLength={72} aria-describedby="password-help"
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10"
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
                 >
@@ -180,8 +184,9 @@ function RegisterForm() {
               </div>
             </div>
 
+            <p id="password-help" className="text-sm text-gray-600">Use at least 12 characters. A long, unique passphrase is recommended. <Link href="/privacy" className="text-blue-700 underline">How we use account information</Link></p>
             {error && (
-              <div className="text-sm font-medium text-red-600">
+              <div role="alert" className="text-sm font-medium text-red-600">
                 {error}
               </div>
             )}

@@ -1,9 +1,12 @@
 "use server";
 
+import { inventoryFacts } from "@/lib/program-policy";
+import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function getPrograms() {
+  await requireAdmin();
   try {
     return await prisma.program.findMany({
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
@@ -19,8 +22,8 @@ export async function getPrograms() {
 
 export async function getProgramById(id: string) {
   try {
-    return await prisma.program.findUnique({
-      where: { id },
+    return await prisma.program.findFirst({
+      where: { id, isPublished: true },
       include: { professors: true },
     });
   } catch (error) {
@@ -32,7 +35,7 @@ export async function getProgramById(id: string) {
 const revalidateProgramPaths = () => {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/programs");
-  revalidatePath("/research");
+  revalidatePath("/research", "layout");
   revalidatePath("/research/winter");
   revalidatePath("/research/summer-camp");
   revalidatePath("/research/1-on-1");
@@ -46,8 +49,8 @@ export async function createProgram(data: {
   tuition?: number | null;
   status: string;
   isPublished?: boolean;
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: Date | null;
+  endDate?: Date | null;
   content?: string | null;
   teachingHoursProf?: string | null;
   teachingHoursTA?: string | null;
@@ -56,11 +59,13 @@ export async function createProgram(data: {
   capacity?: number | null;
   professorIds?: string[];
 }) {
+  await requireAdmin();
   const { professorIds, ...rest } = data;
   try {
     const program = await prisma.program.create({
       data: {
         ...rest,
+        ...inventoryFacts(rest.category!),
         professors: professorIds ? { connect: professorIds.map((id) => ({ id })) } : undefined,
       },
     });
@@ -82,8 +87,8 @@ export async function updateProgram(
     tuition?: number | null;
     status: string;
     isPublished?: boolean;
-    startDate?: Date;
-    endDate?: Date;
+    startDate?: Date | null;
+    endDate?: Date | null;
     content?: string | null;
     teachingHoursProf?: string | null;
     teachingHoursTA?: string | null;
@@ -93,12 +98,16 @@ export async function updateProgram(
     professorIds?: string[];
   }>
 ) {
+  await requireAdmin();
   const { professorIds, ...rest } = data;
+  const current = await prisma.program.findUnique({ where: { id } });
+  if (!current) return { success: false, error: "Program not found." };
   try {
     const program = await prisma.program.update({
       where: { id },
       data: {
         ...rest,
+        ...inventoryFacts(rest.category || current.category),
         professors: professorIds ? { set: professorIds.map((id) => ({ id })) } : undefined,
       },
     });
@@ -111,6 +120,7 @@ export async function updateProgram(
 }
 
 export async function toggleProgramPublished(id: string, isPublished: boolean) {
+  await requireAdmin();
   try {
     const program = await prisma.program.update({
       where: { id },
@@ -125,6 +135,7 @@ export async function toggleProgramPublished(id: string, isPublished: boolean) {
 }
 
 export async function deleteProgram(id: string) {
+  await requireAdmin();
   try {
     await prisma.program.delete({
       where: { id },
@@ -138,6 +149,7 @@ export async function deleteProgram(id: string) {
 }
 
 export async function updateProgramOrder(id: string, order: number) {
+  await requireAdmin();
   try {
     const program = await prisma.program.update({
       where: { id },

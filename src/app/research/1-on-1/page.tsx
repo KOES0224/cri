@@ -8,7 +8,7 @@ export default async function OneOnOneResearchPage() {
   const programs = await prisma.program.findMany({
     where: { 
       isPublished: true,
-      category: { in: ["1-on-1", "Research"] } 
+      category: { in: ["1-on-1", "Research", "Mentorship", "1-on-1 Advanced Research Program"] }
     },
     include: { professors: true },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }]
@@ -17,9 +17,9 @@ export default async function OneOnOneResearchPage() {
   return (
     <ResearchProgramsClient 
       programs={programs}
-      title="1-on-1 Advanced Mentorship"
-      description="Work directly with a leading researcher to produce a publication-ready thesis over 12-24 weeks. Highly personalized and rigorous."
-      categoryFilter={["1-on-1", "Research"]}
+      title="1-on-1 Advanced Research Program"
+      description="Advanced research built around the student’s interests and schedule, online or in person. Typically 2–4 months; some projects finish within a month and others take longer. Contact us to discuss readiness, mentorship hours and your research plan."
+      categoryFilter={["1-on-1", "Research", "Mentorship"]}
     />
   );
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
@@ -18,7 +19,7 @@ export async function getProfessors() {
 const revalidateProfessorPaths = () => {
   revalidatePath("/dashboard/cms/professors");
   revalidatePath("/professors");
-  revalidatePath("/research");
+  revalidatePath("/research", "layout");
   revalidatePath("/research/winter");
   revalidatePath("/research/summer-camp");
   revalidatePath("/research/1-on-1");
@@ -41,6 +42,7 @@ export async function createProfessor(data: {
   relatedMajor?: string | null;
   keywords?: string | null;
 }) {
+  await requireAdmin();
   const { programIds, ...rest } = data;
   try {
     const prof = await prisma.professor.create({
@@ -79,6 +81,7 @@ export async function updateProfessor(
     keywords?: string | null;
   }>
 ) {
+  await requireAdmin();
   const { programIds, ...rest } = data;
   try {
     const prof = await prisma.professor.update({
@@ -99,6 +102,7 @@ export async function updateProfessor(
 }
 
 export async function deleteProfessor(id: string) {
+  await requireAdmin();
   try {
     await prisma.professor.delete({
       where: { id },

@@ -20,12 +20,12 @@ export default function ContactPage() {
   useEffect(() => {
     if (session?.user) {
       const nameParts = session.user.name?.split(" ") || [""];
-      setFormData({
-        firstName: nameParts[0] || "",
-        lastName: nameParts.slice(1).join(" ") || "",
-        email: session.user.email || "",
-        message: "",
-      });
+      setFormData(previous => ({
+        ...previous,
+        firstName: previous.firstName || nameParts[0] || "",
+        lastName: previous.lastName || nameParts.slice(1).join(" ") || "",
+        email: previous.email || session.user.email || "",
+      }));
     }
   }, [session]);
 
@@ -41,7 +41,9 @@ export default function ContactPage() {
     setStatus("loading");
     setErrorMessage("");
 
-    const res = await submitContactForm(formData);
+    try {
+    const params = new URLSearchParams(window.location.search);
+    const res = await submitContactForm({ ...formData, topic: params.get("topic") || "", programId: params.get("programId") || "" });
     if (res.success) {
       setStatus("success");
       setFormData({ firstName: "", lastName: "", email: "", message: "" });
@@ -49,6 +51,7 @@ export default function ContactPage() {
       setStatus("error");
       setErrorMessage(res.error || "Something went wrong.");
     }
+    } catch { setStatus("error"); setErrorMessage("Your message could not be sent. Please try again or email support@cri.kr."); }
   };
 
   return (
@@ -65,7 +68,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-1">Email Us</h3>
-                <p className="text-gray-500">support@cri.kr</p>
+                <a href="mailto:support@cri.kr" className="text-blue-700 underline">support@cri.kr</a>
               </div>
             </div>
             
@@ -81,15 +84,15 @@ export default function ContactPage() {
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="bg-white p-10 rounded-[2rem] border border-gray-100 shadow-[0_20px_40px_rgb(0,0,0,0.04)]">
+        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 sm:p-10 rounded-[2rem] border border-gray-100 shadow-[0_20px_40px_rgb(0,0,0,0.04)]">
           
           {status === "success" ? (
-            <div className="text-center py-12">
+            <div role="status" className="text-center py-12">
               <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Mail className="w-10 h-10 text-green-500" />
               </div>
               <h3 className="text-3xl font-bold text-gray-900 mb-4">Message Sent!</h3>
-              <p className="text-gray-600 mb-8">Thank you for reaching out. Our admissions board will review your inquiry and get back to you shortly.</p>
+              <p className="text-gray-600 mb-8">Thank you for reaching out. Your inquiry has been received by the admissions team. We will reply to the email address you provided. If you need to add information, email support@cri.kr.</p>
               <button onClick={() => setStatus("idle")} className="text-blue-600 font-bold hover:underline">Send another message</button>
             </div>
           ) : (
@@ -104,18 +107,18 @@ export default function ContactPage() {
               </div>
               
               {status === "error" && (
-                <div className="p-4 mb-6 bg-red-50 text-red-700 rounded-xl text-sm font-medium">
+                <div role="alert" className="p-4 mb-6 bg-red-50 text-red-700 rounded-xl text-sm font-medium">
                   {errorMessage}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
+              <form aria-busy={status === "loading"} onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
+                    <label htmlFor="contact-firstName" className="block text-sm font-bold text-gray-700 mb-2">First Name *</label>
                     <input 
                       required 
-                      name="firstName" 
+                      id="contact-firstName" name="firstName" maxLength={100}
                       value={formData.firstName} 
                       onChange={handleChange} 
                       type="text" 
@@ -124,9 +127,9 @@ export default function ContactPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
+                    <label htmlFor="contact-lastName" className="block text-sm font-bold text-gray-700 mb-2">Last Name (optional)</label>
                     <input 
-                      name="lastName" 
+                      id="contact-lastName" name="lastName" maxLength={100}
                       value={formData.lastName} 
                       onChange={handleChange} 
                       type="text" 
@@ -136,10 +139,10 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
+                  <label htmlFor="contact-email" className="block text-sm font-bold text-gray-700 mb-2">Email *</label>
                   <input 
                     required 
-                    name="email" 
+                    id="contact-email" name="email" maxLength={254}
                     value={formData.email} 
                     onChange={handleChange} 
                     type="email" 
@@ -148,10 +151,10 @@ export default function ContactPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">How can we help?</label>
+                  <label htmlFor="contact-message" className="block text-sm font-bold text-gray-700 mb-2">How can we help? *</label>
                   <textarea 
                     required 
-                    name="message" 
+                    id="contact-message" name="message" maxLength={5000}
                     value={formData.message} 
                     onChange={handleChange} 
                     rows={4} 
@@ -159,6 +162,7 @@ export default function ContactPage() {
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   />
                 </div>
+                <p className="text-sm text-gray-600">* Required. We use your contact details and message to respond to this inquiry. Do not include passwords, payment card details or identity documents. <Link href="/privacy" className="underline text-blue-700">Privacy information</Link></p>
                 <button 
                   disabled={status === "loading"} 
                   type="submit" 

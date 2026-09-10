@@ -1,5 +1,7 @@
 "use client";
 
+import { beginApplicationCheckout } from "@/app/actions/payment";
+import { APPLICATION_CHARGE_LABEL } from "@/lib/application-fee";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
@@ -27,9 +29,10 @@ import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 type ApplyClientProps = {
   program: any;
   user: any;
+  savedDraft?: Record<string, string>;
 };
 
-export default function ApplyClient({ program, user }: ApplyClientProps) {
+export default function ApplyClient({ program, user, savedDraft }: ApplyClientProps) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -65,22 +68,11 @@ export default function ApplyClient({ program, user }: ApplyClientProps) {
     thirdChoiceProfessor: "",
     previousResearch: "",
     howLearned: "",
+    ...savedDraft,
   });
 
-  // Restore draft from sessionStorage or localStorage if user previously started or returned from payment
-  useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem("cri_apply_draft") || localStorage.getItem("cri_apply_draft");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.programId === program.id && parsed.formData) {
-          setFormData(prev => ({ ...prev, ...parsed.formData }));
-        }
-      }
-    } catch (e) {
-      console.error("Failed to restore application draft:", e);
-    }
-  }, [program.id]);
+  // Clear legacy cross-account drafts. Application details now remain on the server.
+  useEffect(() => { try { localStorage.removeItem("cri_apply_draft"); sessionStorage.removeItem("cri_apply_draft"); } catch {} }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -90,8 +82,8 @@ export default function ApplyClient({ program, user }: ApplyClientProps) {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
     
-    if (file.type !== "application/pdf") {
-      alert("Please upload your resume in PDF format only.");
+    if (file.type !== "application/pdf" || file.size > 5 * 1024 * 1024) {
+      alert("Please upload a PDF resume up to 5 MB.");
       return;
     }
 
@@ -132,34 +124,24 @@ export default function ApplyClient({ program, user }: ApplyClientProps) {
     setLoading(true);
     setError("");
 
-    // Persist form state into sessionStorage and localStorage before redirecting to Toss checkout
     try {
-      const draftPayload = JSON.stringify({
-        programId: program.id,
-        formData,
-      });
-      sessionStorage.setItem("cri_apply_draft", draftPayload);
-      localStorage.setItem("cri_apply_draft", draftPayload);
-    } catch (e) {
-      console.error("Draft save warning:", e);
-    }
-
-    try {
-      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq";
+      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+      if (!clientKey) throw new Error("Online payment is unavailable. Please contact admissions.");
+      const order = await beginApplicationCheckout(program.id, formData);
+      if (order.error || !order.orderId) throw new Error(order.error || "Unable to prepare checkout.");
       const tossPayments = await loadTossPayments(clientKey);
-      const payment = tossPayments.payment({ customerKey: user.id || "ANONYMOUS" });
-
-      const orderId = `CRI_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const payment = tossPayments.payment({ customerKey: user.id });
+      const orderId = order.orderId;
       const candidateName = `${formData.studentFirstName} ${formData.studentLastName}`.trim() || user.name || "Applicant";
 
       await payment.requestPayment({
         method: "CARD",
         amount: {
-          currency: "KRW",
-          value: 68000, // Equivalent to $50.00 USD at standard rate
+          currency: order.currency!,
+          value: order.amount!
         },
         orderId,
-        orderName: `${program.title} Application Fee ($50 USD)`,
+        orderName: order.orderName!,
         successUrl: `${window.location.origin}/apply/payment-success?programId=${program.id}`,
         failUrl: `${window.location.origin}/apply/payment-fail?programId=${program.id}`,
         customerEmail: formData.studentEmail || user.email,
@@ -182,6 +164,12 @@ export default function ApplyClient({ program, user }: ApplyClientProps) {
   return (
     <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-6">
       <div className="max-w-3xl mx-auto">
+        <aside className="bg-blue-50 border border-blue-100 p-5 rounded-2xl mb-6 text-sm text-blue-950">
+          {savedDraft && <p className="mb-3 font-semibold">Your saved checkout application has been restored. To revise it, contact admissions before paying.</p>}
+          <p><strong>Program tuition:</strong> {program.tuition != null ? `$${program.tuition.toLocaleString()} USD` : 'Available on inquiry'}.</p>
+          <p className="mt-2"><strong>Separate application fee:</strong> USD 50. The current checkout charges {APPLICATION_CHARGE_LABEL}; this is the application fee only, not tuition. Check this amount before paying.</p>
+          <p className="mt-2">Prepare your academic details, PDF CV, research interests and written responses. Your application is recorded after payment is confirmed. <Link href="/admissions" className="underline">Application guide</Link> · <Link href="/privacy" className="underline">Privacy information</Link></p>
+        </aside>
          <Link href={`/research/program/${program.id}`} className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-8">
            <ChevronLeft className="w-4 h-4 mr-1" />
            Back to Program Details
@@ -305,19 +293,19 @@ function section2(step: number, formData: any, handleChange: any, nextStep: () =
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Student's First Name *</label>
-            <input type="text" name="studentFirstName" value={formData.studentFirstName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
+            <label htmlFor="apply-studentFirstName" className="block text-sm font-bold text-gray-700 mb-2">Student's First Name *</label>
+            <input id="apply-studentFirstName" type="text" name="studentFirstName" value={formData.studentFirstName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Student's Last Name *</label>
-            <input type="text" name="studentLastName" value={formData.studentLastName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
+            <label htmlFor="apply-studentLastName" className="block text-sm font-bold text-gray-700 mb-2">Student's Last Name *</label>
+            <input id="apply-studentLastName" type="text" name="studentLastName" value={formData.studentLastName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Gender *</label>
-            <select name="gender" value={formData.gender} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
+            <label htmlFor="apply-gender" className="block text-sm font-bold text-gray-700 mb-2">Gender *</label>
+            <select id="apply-gender" name="gender" value={formData.gender} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
               <option value="">Select...</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -325,8 +313,8 @@ function section2(step: number, formData: any, handleChange: any, nextStep: () =
             </select>
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">T-Shirt Size *</label>
-            <select name="tShirtSize" value={formData.tShirtSize} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
+            <label htmlFor="apply-tShirtSize" className="block text-sm font-bold text-gray-700 mb-2">T-Shirt Size *</label>
+            <select id="apply-tShirtSize" name="tShirtSize" value={formData.tShirtSize} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
               <option value="">Select...</option>
               <option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option>
               <option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option>
@@ -336,12 +324,12 @@ function section2(step: number, formData: any, handleChange: any, nextStep: () =
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Student's Email *</label>
-            <input type="email" name="studentEmail" value={formData.studentEmail} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
+            <label htmlFor="apply-studentEmail" className="block text-sm font-bold text-gray-700 mb-2">Student's Email *</label>
+            <input id="apply-studentEmail" type="email" name="studentEmail" value={formData.studentEmail} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Student's Phone / WhatsApp *</label>
-            <input type="text" name="studentPhone" value={formData.studentPhone} onChange={handleChange} required placeholder="e.g. +1 555-0123 / +82 10-1234-5678" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
+            <label htmlFor="apply-studentPhone" className="block text-sm font-bold text-gray-700 mb-2">Student's Phone / WhatsApp *</label>
+            <input id="apply-studentPhone" type="text" name="studentPhone" value={formData.studentPhone} onChange={handleChange} required placeholder="e.g. +1 555-0123 / +82 10-1234-5678" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
           </div>
         </div>
 
@@ -349,37 +337,37 @@ function section2(step: number, formData: any, handleChange: any, nextStep: () =
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Parent's First Name *</label>
-            <input type="text" name="parentFirstName" value={formData.parentFirstName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
+            <label htmlFor="apply-parentFirstName" className="block text-sm font-bold text-gray-700 mb-2">Parent's First Name *</label>
+            <input id="apply-parentFirstName" type="text" name="parentFirstName" value={formData.parentFirstName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Parent's Last Name *</label>
-            <input type="text" name="parentLastName" value={formData.parentLastName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
+            <label htmlFor="apply-parentLastName" className="block text-sm font-bold text-gray-700 mb-2">Parent's Last Name *</label>
+            <input id="apply-parentLastName" type="text" name="parentLastName" value={formData.parentLastName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Parent's Email *</label>
-            <input type="email" name="parentEmail" value={formData.parentEmail} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
+            <label htmlFor="apply-parentEmail" className="block text-sm font-bold text-gray-700 mb-2">Parent's Email *</label>
+            <input id="apply-parentEmail" type="email" name="parentEmail" value={formData.parentEmail} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Parent's Phone *</label>
-            <input type="text" name="parentPhone" value={formData.parentPhone} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
+            <label htmlFor="apply-parentPhone" className="block text-sm font-bold text-gray-700 mb-2">Parent's Phone *</label>
+            <input id="apply-parentPhone" type="text" name="parentPhone" value={formData.parentPhone} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
           </div>
         </div>
 
         <hr className="border-gray-100 my-6" />
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">School/Institution *</label>
-          <input type="text" name="school" value={formData.school} onChange={handleChange} required placeholder="e.g. Phillips Exeter Academy, Anglo-Chinese School, Seoul Int'l School" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
+          <label htmlFor="apply-school" className="block text-sm font-bold text-gray-700 mb-2">School/Institution *</label>
+          <input id="apply-school" type="text" name="school" value={formData.school} onChange={handleChange} required placeholder="e.g. Phillips Exeter Academy, Anglo-Chinese School, Seoul Int'l School" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Expected Grad Year *</label>
-            <select name="gradYear" value={formData.gradYear} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
+            <label htmlFor="apply-gradYear" className="block text-sm font-bold text-gray-700 mb-2">Expected Grad Year *</label>
+            <select id="apply-gradYear" name="gradYear" value={formData.gradYear} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
               <option value="">Select...</option>
               <option value="2026">2026</option><option value="2027">2027</option>
               <option value="2028">2028</option><option value="2029">2029</option>
@@ -387,8 +375,8 @@ function section2(step: number, formData: any, handleChange: any, nextStep: () =
             </select>
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Photo/Video Consent *</label>
-            <select name="photoConsent" value={formData.photoConsent} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
+            <label htmlFor="apply-photoConsent" className="block text-sm font-bold text-gray-700 mb-2">Photo/Video Consent *</label>
+            <select id="apply-photoConsent" name="photoConsent" value={formData.photoConsent} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
               <option value="">Select...</option>
               <option value="Yes">Yes</option>
               <option value="No">No</option>
@@ -432,7 +420,7 @@ function section3(
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">Resume Upload (PDF Only) *</label>
           <div className="w-full p-6 border-2 border-dashed border-gray-200 rounded-2xl text-center bg-gray-50 hover:bg-gray-100 transition-colors relative cursor-pointer group">
-            <input type="file" accept=".pdf" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required={!formData.resumeUrl} />
+            <input aria-label="Upload CV as PDF, up to 5 MB" type="file" accept=".pdf" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required={!formData.resumeUrl} />
             <div className="flex flex-col items-center justify-center">
               {uploadingResume ? (
                 <div className="w-8 h-8 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin"></div>
@@ -454,44 +442,44 @@ function section3(
         </div>
 
         <div>
-           <label className="block text-sm font-bold text-gray-700 mb-2">Initial Research Topic Ideas *</label>
-           <textarea name="initialTopicIdeas" rows={3} value={formData.initialTopicIdeas} onChange={handleChange} required placeholder="Briefly describe your areas of interest..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
+           <label htmlFor="apply-initialTopicIdeas" className="block text-sm font-bold text-gray-700 mb-2">Initial Research Topic Ideas *</label>
+           <textarea id="apply-initialTopicIdeas" name="initialTopicIdeas" rows={3} value={formData.initialTopicIdeas} onChange={handleChange} required placeholder="Briefly describe your areas of interest..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
         </div>
 
         <div>
-           <label className="block text-sm font-bold text-gray-700 mb-2">Primary Area of Interest *</label>
-           <input type="text" name="areaOfInterest" value={formData.areaOfInterest} onChange={handleChange} required placeholder="e.g. Computer Science, Artificial Intelligence, Bioengineering" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none font-medium" />
+           <label htmlFor="apply-areaOfInterest" className="block text-sm font-bold text-gray-700 mb-2">Primary Area of Interest *</label>
+           <input id="apply-areaOfInterest" type="text" name="areaOfInterest" value={formData.areaOfInterest} onChange={handleChange} required placeholder="e.g. Computer Science, Artificial Intelligence, Bioengineering" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none font-medium" />
         </div>
 
         <div>
-           <label className="block text-sm font-bold text-gray-700 mb-2">Essay: Why are you interested? (Max 500w) *</label>
-           <textarea name="essay" rows={5} value={formData.essay} onChange={handleChange} required placeholder="Highlight relevant experiences or aspirations..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
+           <label htmlFor="apply-essay" className="block text-sm font-bold text-gray-700 mb-2">Essay: Why are you interested? (Max 500w) *</label>
+           <textarea id="apply-essay" name="essay" rows={5} value={formData.essay} onChange={handleChange} required placeholder="Highlight relevant experiences or aspirations..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
         </div>
 
         <div>
-           <label className="block text-sm font-bold text-gray-700 mb-2">Short Answer: Goals Alignment (Max 150w) *</label>
-           <textarea name="shortAnswer" rows={3} value={formData.shortAnswer} onChange={handleChange} required placeholder="How does this align with your professional goals?" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
+           <label htmlFor="apply-shortAnswer" className="block text-sm font-bold text-gray-700 mb-2">Short Answer: Goals Alignment (Max 150w) *</label>
+           <textarea id="apply-shortAnswer" name="shortAnswer" rows={3} value={formData.shortAnswer} onChange={handleChange} required placeholder="How does this align with your professional goals?" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
         </div>
 
         <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 space-y-4">
           <h3 className="font-bold text-blue-900 mb-2">Professor Preferences</h3>
           <div>
-            <label className="block text-xs font-bold text-blue-800 mb-1">First Choice *</label>
-            <select name="firstChoiceProfessor" value={formData.firstChoiceProfessor} onChange={handleChange} required className="w-full px-4 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none bg-white text-sm font-medium">
+            <label htmlFor="apply-firstChoiceProfessor" className="block text-xs font-bold text-blue-800 mb-1">First Choice *</label>
+            <select id="apply-firstChoiceProfessor" name="firstChoiceProfessor" value={formData.firstChoiceProfessor} onChange={handleChange} required className="w-full px-4 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none bg-white text-sm font-medium">
               <option value="">Select First Choice...</option>
               {professors.map((p: any) => <option key={p.id} value={p.name}>{p.name} ({p.university}, {p.role})</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-blue-800 mb-1">Second Choice</label>
-            <select name="secondChoiceProfessor" value={formData.secondChoiceProfessor} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none bg-white text-sm font-medium">
+            <label htmlFor="apply-secondChoiceProfessor" className="block text-xs font-bold text-blue-800 mb-1">Second Choice</label>
+            <select id="apply-secondChoiceProfessor" name="secondChoiceProfessor" value={formData.secondChoiceProfessor} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none bg-white text-sm font-medium">
               <option value="">Select Second Choice (Optional)...</option>
               {professors.map((p: any) => <option key={p.id} value={p.name}>{p.name} ({p.university}, {p.role})</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-blue-800 mb-1">Third Choice</label>
-            <select name="thirdChoiceProfessor" value={formData.thirdChoiceProfessor} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none bg-white text-sm font-medium">
+            <label htmlFor="apply-thirdChoiceProfessor" className="block text-xs font-bold text-blue-800 mb-1">Third Choice</label>
+            <select id="apply-thirdChoiceProfessor" name="thirdChoiceProfessor" value={formData.thirdChoiceProfessor} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none bg-white text-sm font-medium">
               <option value="">Select Third Choice (Optional)...</option>
               {professors.map((p: any) => <option key={p.id} value={p.name}>{p.name} ({p.university}, {p.role})</option>)}
             </select>
@@ -499,13 +487,13 @@ function section3(
         </div>
 
         <div>
-           <label className="block text-sm font-bold text-gray-700 mb-2">Past Research Experience *</label>
-           <textarea name="previousResearch" rows={3} value={formData.previousResearch} onChange={handleChange} required placeholder="If yes, describe contributions (or write 'None')..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
+           <label htmlFor="apply-previousResearch" className="block text-sm font-bold text-gray-700 mb-2">Past Research Experience *</label>
+           <textarea id="apply-previousResearch" name="previousResearch" rows={3} value={formData.previousResearch} onChange={handleChange} required placeholder="If yes, describe contributions (or write 'None')..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">How did you learn about this program? *</label>
-          <select name="howLearned" value={formData.howLearned} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
+          <label htmlFor="apply-howLearned" className="block text-sm font-bold text-gray-700 mb-2">How did you learn about this program? *</label>
+          <select id="apply-howLearned" name="howLearned" value={formData.howLearned} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
             <option value="">Select...</option>
             <option value="University/College Announcement">University/College Announcement</option>
             <option value="Academic Advisor Recommendation">Academic Advisor Recommendation</option>

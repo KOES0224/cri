@@ -16,9 +16,9 @@ export default async function SeoulResearchPage() {
   return (
     <ResearchProgramsClient 
       programs={programs}
-      title="Summer Camp"
-      description="An immersive 2-week onsite intensive research program held in major global hubs including Seoul, NYC, and more. Join a selective cohort of scholars."
-      categoryFilter={["Summer Camp", "Seoul Research Program", "seoul"]}
+      title="Seoul Research Program & Global Research Program"
+      description="In-person summer research for rising Grade 9 through university students. Each cohort has up to 10 students, with 30 hours of professor instruction and 20 hours of TA guidance."
+      categoryFilter={["Summer Camp", "Seoul Research Program", "Global Research Program", "seoul", "global", "camp"]}
     />
   );
 }
