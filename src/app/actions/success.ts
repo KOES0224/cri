@@ -25,8 +25,12 @@ export async function createSuccessStory(data: {
   externalLink?: string | null;
 }) {
   try {
+    const { slug, ...rest } = data;
     const story = await prisma.successStory.create({
-      data,
+      data: {
+        ...rest,
+        ...(slug ? { slug } : {}),
+      },
     });
     revalidatePath("/dashboard/cms/success");
     revalidatePath("/success");
@@ -51,9 +55,13 @@ export async function updateSuccessStory(
   }>
 ) {
   try {
+    const { slug, ...rest } = data;
     const story = await prisma.successStory.update({
       where: { id },
-      data,
+      data: {
+        ...rest,
+        ...(slug ? { slug } : {}),
+      },
     });
     revalidatePath("/dashboard/cms/success");
     revalidatePath("/success");

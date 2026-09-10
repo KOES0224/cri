@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Calendar, Users, MapPin, Tag, ChevronRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MapPin, Tag, ChevronRight, CheckCircle2, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import ApplyButton from "./ApplyButton";
 
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
@@ -222,8 +223,10 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                     <div className="flex items-center text-gray-700">
                        <Users className="h-5 w-5 mr-4 text-blue-600 shrink-0" />
                        <div>
-                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Capacity</p>
-                         <p className="font-medium">Limited Cohort</p>
+                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Cohort Capacity</p>
+                         <p className="font-semibold text-gray-900">
+                           {program.capacity ? `${program.capacity} Students (Selective Cohort)` : '5 Students (Selective Cohort)'}
+                         </p>
                        </div>
                     </div>
                     
@@ -232,17 +235,32 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                     <div className="flex items-center text-gray-700">
                        <MapPin className="h-5 w-5 mr-4 text-blue-600 shrink-0" />
                        <div>
-                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Location Format</p>
-                         <p className="font-medium uppercase">{program.category === 'seoul' ? 'On-Campus (Seoul)' : 'Remote / Hybrid'}</p>
+                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Delivery Format</p>
+                         <p className="font-semibold text-gray-900">
+                           {program.locationFormat || (program.category === 'seoul' ? 'In-Person (On-Campus)' : 'Online (Remote)')}
+                         </p>
                        </div>
                     </div>
                  </div>
                  
+                 {/* Application Fee Notice */}
+                 {program.status === 'OPEN' && (
+                   <div className="bg-gradient-to-br from-blue-50/90 to-indigo-50/70 border border-blue-100/90 rounded-2xl p-4 mb-4 text-left shadow-xs">
+                     <div className="flex items-center justify-between mb-1.5">
+                       <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                         <CreditCard className="w-3.5 h-3.5 text-blue-600" />
+                         Application Fee
+                       </span>
+                       <span className="font-black text-gray-900 text-sm">$50 USD</span>
+                     </div>
+                     <p className="text-xs text-blue-900/70 leading-relaxed font-normal">
+                       Covers admissions committee evaluation & interview scheduling. Payable via card upon submission.
+                     </p>
+                   </div>
+                 )}
+
                  {program.status === 'OPEN' ? (
-                   <Link href={`/apply?programId=${program.id}`} className="block w-full h-14 bg-blue-600 text-white rounded-2xl text-center font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-blue-500/30 flex items-center justify-center group/btn shine-effect">
-                     Apply for Program
-                     <ChevronRight className="ml-2 h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
-                   </Link>
+                   <ApplyButton programId={program.id} />
                  ) : (
                    <div className="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl text-center font-bold text-lg border border-gray-200">
                      Applications Closed

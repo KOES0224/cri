@@ -20,18 +20,39 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
     redirect("/research");
   }
 
-  const program = await prisma.program.findUnique({
-    where: { id: programId },
-  });
+  // Concurrently fetch program and check for existing application
+  const [program, existing] = await Promise.all([
+    prisma.program.findUnique({
+      where: { id: programId },
+      include: {
+        professors: {
+          where: { acceptingMentees: true },
+          select: { id: true, name: true, university: true, role: true }
+        }
+      }
+    }),
+    prisma.application.findUnique({
+      where: {
+        userId_programId: {
+          userId: session.user.id,
+          programId
+        }
+      }
+    })
+  ]);
 
   if (!program) {
     redirect("/research");
   }
 
-  // Fetch all programs in the same category to get all professors within that group
+  if (existing) {
+    redirect("/dashboard/applications");
+  }
+
+  // Fetch all professors within that category group for mentee selection
   const relatedPrograms = await prisma.program.findMany({
     where: { category: program.category },
-    include: {
+    select: {
       professors: {
         where: { acceptingMentees: true },
         select: { id: true, name: true, university: true, role: true }
@@ -40,6 +61,9 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
   });
 
   const uniqueProfessorsMap = new Map();
+  (program.professors || []).forEach(prof => {
+    uniqueProfessorsMap.set(prof.id, prof);
+  });
   relatedPrograms.forEach(p => {
     p.professors.forEach(prof => {
       uniqueProfessorsMap.set(prof.id, prof);
@@ -50,20 +74,6 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
     ...program,
     professors: Array.from(uniqueProfessorsMap.values())
   };
-  
-  // Check if they already applied to this specific program
-  const existing = await prisma.application.findUnique({
-    where: {
-      userId_programId: {
-         userId: session.user.id,
-         programId
-      }
-    }
-  });
-
-  if (existing) {
-    redirect("/dashboard/applications");
-  }
 
   return <ApplyClient program={programWithProfessors} user={session.user} />;
 }

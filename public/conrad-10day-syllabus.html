@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Conrad Challenge - Applied Research & STEM Entrepreneurship</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/night.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+<style>
+:root { --accent: #d3ff24; --dark: #050508; --card: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.1); }
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--dark); font-family: 'Inter', sans-serif !important; }
+.reveal, .reveal .slides { font-family: 'Inter', sans-serif !important; text-align: left; }
+.reveal h1,.reveal h2,.reveal h3,.reveal h4 { font-family: 'Inter', sans-serif !important; font-weight: 700; line-height: 1.3; color: #fff; letter-spacing: -0.03em;}
+.reveal h1 { font-size: 3.8rem; font-weight: 900; }
+.reveal h2 { font-size: 2.8rem; font-weight: 700; margin-bottom: 25px;}
+.reveal p,.reveal li { font-size: 1.3rem; line-height: 1.9; font-weight: 400; color: #d1d5db; }
+.ac { color: var(--accent); }
+.sub { color: #9ca3af; font-weight: 400; font-size: 1.5rem !important;}
+
+.day-badge { display:inline-block; font-family:'Syncopate',sans-serif; background:rgba(211,255,36,0.15); border:1px solid var(--accent); color:var(--accent); font-size:1.1rem; border-radius:20px; padding:6px 20px; margin-bottom:20px; font-weight:700; letter-spacing:0.1em; }
+
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:30px; margin-bottom:20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.stat-num { font-size:2.5rem; font-weight:900; color:var(--accent); line-height:1.2; margin-bottom: 15px;}
+
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:30px; align-items: stretch;}
+.grid-2-img { display:grid; grid-template-columns: 1.2fr 0.8fr; gap: 50px; align-items: center; }
+
+.box-alert { border-left:6px solid #ef4444; margin-top:30px; background:rgba(239, 68, 68, 0.05); padding: 25px; border-radius: 0 16px 16px 0; backdrop-filter: blur(8px);}
+.box-success { border-left:6px solid var(--accent); margin-top:30px; background:rgba(211, 255, 36, 0.05); padding: 25px; border-radius: 0 16px 16px 0; backdrop-filter: blur(8px);}
+
+.slide-img { width: 100%; height: 420px; object-fit: cover; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.5);}
+.hero-bg { position: absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity: 0.12; z-index:-1; mix-blend-mode: luminosity;}
+
+.number-circle { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #000; font-weight: 800; font-size: 1.2rem; margin-right: 15px; margin-bottom: 15px;}
+
+/* CSS Charts & Diagrams */
+.chart-wrap { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:30px; margin-top:20px; backdrop-filter: blur(12px);}
+.bar-row { display:flex; align-items:center; gap:16px; margin-bottom:18px; }
+.bar-label { font-size:1.1rem; color:#ccc; width:200px; flex-shrink:0; text-align:right; font-weight:600;}
+.bar-track { flex:1; background:rgba(255,255,255,0.05); border-radius:8px; height:36px; overflow:hidden; position: relative;}
+.bar-fill { height:100%; border-radius:8px; display:flex; align-items:center; justify-content: flex-end; padding-right:12px; font-weight:800; font-size:1.1rem; color:#111; transition:width 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: inset 0 -2px 5px rgba(0,0,0,0.2);}
+.bar-accent { background: linear-gradient(90deg, #a3d311, var(--accent)); }
+.bar-red { background: linear-gradient(90deg, #b91c1c, #ef4444); color:#fff; }
+.bar-blue { background: linear-gradient(90deg, #1d4ed8, #3b82f6); color:#fff; }
+.bar-gray { background:rgba(255,255,255,0.2); color:#fff; }
+
+.funnel { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 30px;}
+.funnel-step { background: rgba(211,255,36,0.08); border: 1px solid rgba(211,255,36,0.3); color: var(--accent); padding: 18px; border-radius: 12px; text-align: center; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.3); transition: transform 0.3s ease;}
+.funnel-step:hover { transform: scale(1.02); background: rgba(211,255,36,0.15); border-color: var(--accent);}
+.funnel-step:nth-child(1) { width: 100%; z-index: 4; }
+.funnel-step:nth-child(2) { width: 85%; z-index: 3; }
+.funnel-step:nth-child(3) { width: 70%; z-index: 2; }
+.funnel-step:nth-child(4) { width: 55%; z-index: 1; }
+
+.venn-container { position: relative; height: 350px; display: flex; justify-content: center; align-items: center; margin-top:30px;}
+.venn-circle { position: absolute; width: 220px; height: 220px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; text-align: center; padding: 20px; mix-blend-mode: screen; backdrop-filter: blur(5px);}
+.venn-1 { background: rgba(211,255,36,0.3); border: 2px solid var(--accent); transform: translateX(-60px) translateY(-30px); }
+.venn-2 { background: rgba(59,130,246,0.3); border: 2px solid #3b82f6; transform: translateX(60px) translateY(-30px); }
+.venn-3 { background: rgba(239,68,68,0.3); border: 2px solid #ef4444; transform: translateY(60px); }
+
+table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border);}
+th, td { border-bottom: 1px solid var(--border); padding: 18px 24px; text-align: left; font-size: 1.2rem; color: #ccc;}
+tr:last-child td { border-bottom: none; }
+th { background: rgba(255,255,255,0.05); color: #fff; font-weight: 700; font-size: 1.3rem; border-right: 1px solid var(--border);}
+td { border-right: 1px solid var(--border); transition: background 0.2s ease;}
+tr:hover td { background: rgba(255,255,255,0.03); }
+th:last-child, td:last-child { border-right: none; }
+
+.citation { font-size: 0.95rem; color: #737373; margin-top: 25px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; display: inline-block;}
+.activity-badge { display:inline-block; font-family:'Syncopate',sans-serif; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444; font-size:0.9rem; border-radius:20px; padding:4px 15px; margin-bottom:15px; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section>
+
+        <section data-background-color="#0f172a">
+            <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=2000" class="hero-bg">
+            <div class="day-badge">MODULE 01</div>
+            <h1 class="hero-title">The Engineering Pivot</h1>
+            <p class="sub" style="margin-top: 30px;">Why we must evolve beyond the basketball.</p>
+            <div class="box-success" style="max-width: 800px; margin: 50px auto 0;">
+              <h4 style="color:var(--accent); margin-top:0;">12-Slide Deep Dive</h4>
+              <p style="margin-bottom:0; color:#fff;">Scroll down to access the exhaustive modules and rigorous simulations for today's session.</p>
+            </div>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>1. The <span class='ac'>Physics of Failure</span></h2>
+            <div class="grid-2-img">
+              <div>
+                <p>Building the audible basketball was a necessary engineering test. It revealed the physical limits of sound localization and the structural exclusion inherent in dynamic team sports.</p>
+                <div class="box-alert">
+                  <h4 style="color:#ef4444; margin-top:0;">Product-Centric Trap</h4>
+                  <p style="margin-bottom:0;">If you obsess over the solution (the ball), you miss the true problem (accessibility). We are shifting to a 'Problem-Centric' mindset.</p>
+                </div>
+              </div>
+              <div><img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+            </div>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>2. Acoustic <span class='ac'>Limitations</span></h2>
+            <p>Why the audible ball fundamentally fails.</p>
+            <div class="chart-wrap">
+              <h4 style="margin-bottom: 30px;">Audio Tracking Accuracy in Court Environment</h4>
+              <div class="bar-row"><div class="bar-label">Stationary Beep</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:90%">90%</div></div></div><div class="bar-row"><div class="bar-label">Rolling Ball</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:50%">50%</div></div></div><div class="bar-row"><div class="bar-label">Bouncing Ball (Directional Chaos)</div><div class="bar-track"><div class="bar-fill bar-red" style="width:12%">12%</div></div></div>
+            </div>
+            <div class="citation">Acoustic Physics in Unpredictable Motion (CRI Data)</div>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>3. The <span class='ac'>Lab to Market</span> Funnel</h2>
+            <p>Translating early failure into a viable business.</p>
+            <div class="funnel"><div class="funnel-step" style="width:100%; z-index:10; ">1. Failed Hardware Prototype (The Basketball)</div><div class="funnel-step" style="width:85%; z-index:9; ">2. Underlying Friction Discovery (Accessibility)</div><div class="funnel-step" style="width:70%; z-index:8; ">3. Environment Control Research (CrossFit/Rowing)</div><div class="funnel-step" style="width:55%; z-index:7; background:var(--accent); color:#000;">4. Scalable Viable Product (The Real Market)</div></div>
+            <div class="citation">Engineering Pivot Methodology</div>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>4. Product vs <span class='ac'>Problem</span></h2>
+            <table>
+              <tr><th>Perspective</th><th>Product-Centric</th><th>Problem-Centric</th></tr>
+              <tr><td >Focus</td><td >How do we make the ball beep louder?</td><td style="color:var(--accent); font-weight:bold;">Why is the blind athlete excluded?</td></tr><tr><td >Attachment</td><td >In love with the technology</td><td style="color:var(--accent); font-weight:bold;">In love with the customer's pain</td></tr><tr><td >Result</td><td >A niche toy</td><td style="color:var(--accent); font-weight:bold;">A scalable startup</td></tr>
+            </table>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>5. The <span class="ac">Interrogation</span></h2>
+            <div class="grid-3" style="margin-top: 40px;"><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Why</h4><p>Why did the basketball fail physically?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Who</h4><p>Who was actually structurally excluded?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Pivot</h4><p>Are you willing to scrap your first idea?</p></div></div>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>6. The Pivot <span class='ac'>Sweet Spot</span></h2>
+            <div class="venn-container"><div class="venn-circle venn-1">Original Prototype Failure</div><div class="venn-circle venn-2">Deeper Target Problem</div></div>
+            <p style="text-align:center; margin-top: 40px; color: var(--accent); font-weight: bold; font-style:italic;">"Innovation is not about holding onto your first idea. It is about relentless adaptation to the truth."</p>
+            <div class="citation" style="text-align:center; width:100%; display:block; border-top:none;"></div>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>7. <span class="ac">Rubric</span> Parameters</h2>
+            <div class="grid-2">
+              <div class="stat-card" style="border-top: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+                <h4 style="color:#ef4444;">Fatal Errors 🚩</h4>
+                <p style="color:#ccc;">Refusing to abandon the initial basketball prototype and ignoring the laws of physics regarding sound localization.</p>
+              </div>
+              <div class="stat-card" style="border-top: 4px solid var(--accent); background: rgba(211,255,36,0.05);">
+                <h4 style="color:var(--accent);">Winning Traits 🟢</h4>
+                <p style="color:#ccc;">Accepting failure as data and pivoting aggressively toward the actual structural problem of the target demographic.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>8. Activity: <span class="ac">The Pivot Justification</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Write a harsh, 3-point critique of your own original basketball prototype. Present exactly why it had to die.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Execute with speed and zero hesitation.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>9. Activity: <span class="ac">The 'Real Problem' Pitch</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Without mentioning sports equipment, pitch the underlying sociological or physical friction point Visually Impaired (VI) athletes face.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Test your assumptions against brutal reality.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>10. <span class="ac">Homework</span> & Logistics</h2>
+            <div class="box-success">
+              <h4 style="color:var(--accent); margin-top:0;">Task 1</h4>
+              <p>Read 'The Mom Test'.</p>
+            </div>
+            <div class="box-alert">
+              <h4 style="color:#ef4444; margin-top:0;">Task 2</h4>
+              <p>Write a 1-page summary on 'Pivot Rationale'.</p>
+            </div>
+            <div class="citation"></div>
+        </section>
+        <section data-background-color="#0f172a">
+            <h2>11. <span class="ac">Module 01 Debrief</span></h2>
+            <p>Summary of what we've accomplished today.</p>
+            <ol style="margin-top: 30px; line-height: 2;">
+              <li>Mastered the core theoretical concepts.</li>
+              <li>Validated logic with actual math and data.</li>
+              <li>Survived the rigorous in-class simulations.</li>
+            </ol>
+            <h4 style="margin-top: 40px; color: var(--accent); text-align: center;">Prepare for Module 2.</h4>
+        </section></section>
+<section>
+
+        <section data-background-color="#1e3a8a">
+            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=2000" class="hero-bg">
+            <div class="day-badge">MODULE 02</div>
+            <h1 class="hero-title">'The Mom Test'<br>Masterclass</h1>
+            <p class="sub" style="margin-top: 30px;">Extracting true needs from VI athletes without bias.</p>
+            <div class="box-success" style="max-width: 800px; margin: 50px auto 0;">
+              <h4 style="color:var(--accent); margin-top:0;">12-Slide Deep Dive</h4>
+              <p style="margin-bottom:0; color:#fff;">Scroll down to access the exhaustive modules and rigorous simulations for today's session.</p>
+            </div>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>1. The <span class='ac'>False Positive</span></h2>
+            <div class="grid-2-img">
+              <div>
+                <p>Asking 'What do you think of my idea?' guarantees a lie. People want to protect your feelings. Never mention your solution during an interview.</p>
+                <div class="box-alert">
+                  <h4 style="color:#ef4444; margin-top:0;">Mom Test Rule</h4>
+                  <p style="margin-bottom:0;">Never ask about the future. Ask strictly about past behaviors and current habits. Do not pitch your product.</p>
+                </div>
+              </div>
+              <div><img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+            </div>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>2. Customer <span class='ac'>Lying Rates</span></h2>
+            <p>Why traditional surveys fail.</p>
+            <div class="chart-wrap">
+              <h4 style="margin-bottom: 30px;">Probability of Honesty in Interviews</h4>
+              <div class="bar-row"><div class="bar-label">Asked 'Would you buy this?'</div><div class="bar-track"><div class="bar-fill bar-red" style="width:15%">15%</div></div></div><div class="bar-row"><div class="bar-label">Asked 'Do you like my idea?'</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:20%">20%</div></div></div><div class="bar-row"><div class="bar-label">Asked 'How did you solve this last week?'</div><div class="bar-track"><div class="bar-fill bar-accent" style="width:85%">85%</div></div></div>
+            </div>
+            <div class="citation">Source: 'The Mom Test' by Rob Fitzpatrick</div>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>3. The <span class='ac'>Interview</span> Funnel</h2>
+            <p>Extracting truth from VI athletes and educators.</p>
+            <div class="funnel"><div class="funnel-step" style="width:100%; z-index:10; ">1. Establish Rapport (No Pitching)</div><div class="funnel-step" style="width:85%; z-index:9; ">2. Ask About Life & Habits (Broad)</div><div class="funnel-step" style="width:70%; z-index:8; ">3. Dig into Specific Past Friction (Narrow)</div><div class="funnel-step" style="width:55%; z-index:7; background:var(--accent); color:#000;">4. Identify 'Duct-Tape' Solutions (The Reality)</div></div>
+            <div class="citation">Customer Discovery Architecture</div>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>4. Question <span class='ac'>Design</span></h2>
+            <table>
+              <tr><th>Bad Question (Leading)</th><th>Good Question (Mom Test)</th></tr>
+              <tr><td >Would you use this sensor for the blind?</td><td style="color:var(--accent); font-weight:bold;">What was the most frustrating part of exercising recently?</td></tr><tr><td >Do you think basketball is dangerous?</td><td style="color:var(--accent); font-weight:bold;">What sports were you typically assigned in physical education class?</td></tr><tr><td >Would you pay $50 for this product?</td><td style="color:var(--accent); font-weight:bold;">How much are you currently spending to solve this problem?</td></tr>
+            </table>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>5. The <span class="ac">Interrogation</span></h2>
+            <div class="grid-3" style="margin-top: 40px;"><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Pitch</h4><p>Did you mention your solution? (You failed)</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Future</h4><p>Did you ask about tomorrow? (You failed)</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Wallet</h4><p>Did you ask about past spending? (You pass)</p></div></div>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>6. True <span class='ac'>Validation</span></h2>
+            <div class="venn-container"><div class="venn-circle venn-1">Customer's Past Behavior</div><div class="venn-circle venn-2">Customer's Current Spending</div></div>
+            <p style="text-align:center; margin-top: 40px; color: var(--accent); font-weight: bold; font-style:italic;">"Talk about their life instead of your idea."</p>
+            <div class="citation" style="text-align:center; width:100%; display:block; border-top:none;">- Rob Fitzpatrick</div>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>7. <span class="ac">Rubric</span> Parameters</h2>
+            <div class="grid-2">
+              <div class="stat-card" style="border-top: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+                <h4 style="color:#ef4444;">Fatal Errors 🚩</h4>
+                <p style="color:#ccc;">Drafting an interview questionnaire full of leading questions like 'Do you like this feature?' or 'Would you buy this?'.</p>
+              </div>
+              <div class="stat-card" style="border-top: 4px solid var(--accent); background: rgba(211,255,36,0.05);">
+                <h4 style="color:var(--accent);">Winning Traits 🟢</h4>
+                <p style="color:#ccc;">Designing exactly 10 questions focused purely on the subject's past specific experiences and current financial/emotional expenditures.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>8. Activity: <span class="ac">Mom Test Questionnaire Design</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1540317580384-e5d43867caa6?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Collaborate to write the 10 absolute best Mom Test questions for our upcoming VI stakeholder interviews. We will use these to find our target problem.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Execute with speed and zero hesitation.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>9. Activity: <span class="ac">Blindfold Empathy Check</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Blindfold one teammate. The other must guide them through a simple physical task. Afterwards, interview them about the friction using Mom Test rules.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Test your assumptions against brutal reality.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>10. <span class="ac">Homework</span> & Logistics</h2>
+            <div class="box-success">
+              <h4 style="color:var(--accent); margin-top:0;">Task 1</h4>
+              <p>Finalize the 10-question Mom Test Questionnaire.</p>
+            </div>
+            <div class="box-alert">
+              <h4 style="color:#ef4444; margin-top:0;">Task 2</h4>
+              <p>We will provide sources to find VI interviewees. Conduct & Record 3 Field Interviews.</p>
+            </div>
+            <div class="citation"></div>
+        </section>
+        <section data-background-color="#1e3a8a">
+            <h2>11. <span class="ac">Module 02 Debrief</span></h2>
+            <p>Summary of what we've accomplished today.</p>
+            <ol style="margin-top: 30px; line-height: 2;">
+              <li>Mastered the core theoretical concepts.</li>
+              <li>Validated logic with actual math and data.</li>
+              <li>Survived the rigorous in-class simulations.</li>
+            </ol>
+            <h4 style="margin-top: 40px; color: var(--accent); text-align: center;">Prepare for Module 3.</h4>
+        </section></section>
+<section>
+
+        <section data-background-color="#064e3b">
+            <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80&w=2000" class="hero-bg">
+            <div class="day-badge">MODULE 03</div>
+            <h1 class="hero-title">Qualitative Data<br>Synthesis</h1>
+            <p class="sub" style="margin-top: 30px;">Interview synthesis and pain point extraction.</p>
+            <div class="box-success" style="max-width: 800px; margin: 50px auto 0;">
+              <h4 style="color:var(--accent); margin-top:0;">12-Slide Deep Dive</h4>
+              <p style="margin-bottom:0; color:#fff;">Scroll down to access the exhaustive modules and rigorous simulations for today's session.</p>
+            </div>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>1. The <span class='ac'>Affinity Diagram</span></h2>
+            <div class="grid-2-img">
+              <div>
+                <p>A visual framework to translate raw interview noise into structured, actionable data patterns.</p>
+                <div class="box-alert">
+                  <h4 style="color:#ef4444; margin-top:0;">Data Overload</h4>
+                  <p style="margin-bottom:0;">Three deep-dive interviews will generate massive amounts of text. If you do not structure this visually, you will revert to guessing.</p>
+                </div>
+              </div>
+              <div><img src="https://images.unsplash.com/photo-1581291518857-484c0e054fa8?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+            </div>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>2. Pain Point <span class='ac'>Density</span></h2>
+            <p>Tracking frequency of complaints.</p>
+            <div class="chart-wrap">
+              <h4 style="margin-bottom: 30px;">Mentions in VI Sports Interviews</h4>
+              <div class="bar-row"><div class="bar-label">Fear of Collisions</div><div class="bar-track"><div class="bar-fill bar-red" style="width:85%">85%</div></div></div><div class="bar-row"><div class="bar-label">Inability to Track the Ball</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:70%">70%</div></div></div><div class="bar-row"><div class="bar-label">Lack of Independence</div><div class="bar-track"><div class="bar-fill bar-accent" style="width:95%">95%</div></div></div>
+            </div>
+            <div class="citation">Sample Synthesized Data Distribution</div>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>3. Synthesis <span class='ac'>Pipeline</span></h2>
+            <p>From noise to signal.</p>
+            <div class="funnel"><div class="funnel-step" style="width:100%; z-index:10; ">1. Transcribe Interviews (Raw Text)</div><div class="funnel-step" style="width:85%; z-index:9; ">2. Extract Key Quotes (Post-It Notes)</div><div class="funnel-step" style="width:70%; z-index:8; ">3. Group by Emotional/Physical Friction (Affinity)</div><div class="funnel-step" style="width:55%; z-index:7; background:var(--accent); color:#000;">4. Define the Top 3 Target Pain Points</div></div>
+            <div class="citation">Design Thinking Synthesis</div>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>4. Data <span class='ac'>Translation</span></h2>
+            <table>
+              <tr><th>Raw Interview Quote</th><th>Underlying Theme</th><th>Engineering Implication</th></tr>
+              <tr><td >'I am terrified of running off the court.'</td><td >Loss of spatial awareness and boundaries</td><td style="color:var(--accent); font-weight:bold;">Need for confined or guided boundaries</td></tr><tr><td >'I can never predict where the ball goes.'</td><td >Inability to control dynamic variables</td><td style="color:var(--accent); font-weight:bold;">Need for static or highly predictable mechanics</td></tr><tr><td >'I always need someone to stand next to me.'</td><td >Loss of independence</td><td style="color:var(--accent); font-weight:bold;">Need for autonomous equipment UI</td></tr>
+            </table>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>5. The <span class="ac">Interrogation</span></h2>
+            <div class="grid-3" style="margin-top: 40px;"><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Bias</h4><p>Are you only listening to feedback you like?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Frequency</h4><p>Did multiple people mention this pain?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Intensity</h4><p>How angry/frustrated were they about it?</p></div></div>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>6. Actionable <span class='ac'>Insights</span></h2>
+            <div class="venn-container"><div class="venn-circle venn-1">High Frequency Pain</div><div class="venn-circle venn-2">High Intensity Pain</div></div>
+            <p style="text-align:center; margin-top: 40px; color: var(--accent); font-weight: bold; font-style:italic;">"Data without synthesis is just noise. Synthesis without data is just fiction."</p>
+            <div class="citation" style="text-align:center; width:100%; display:block; border-top:none;"></div>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>7. <span class="ac">Rubric</span> Parameters</h2>
+            <div class="grid-2">
+              <div class="stat-card" style="border-top: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+                <h4 style="color:#ef4444;">Fatal Errors 🚩</h4>
+                <p style="color:#ccc;">Ignoring the interview data and merely using it as fake justification for the product you originally wanted to build.</p>
+              </div>
+              <div class="stat-card" style="border-top: 4px solid var(--accent); background: rgba(211,255,36,0.05);">
+                <h4 style="color:var(--accent);">Winning Traits 🟢</h4>
+                <p style="color:#ccc;">Submitting a Needs Assessment Report that extracts exactly 3 critical pain points using a verified Affinity Diagram process.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>8. Activity: <span class="ac">The Post-It Sort</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Teams extract 15 quotes from their homework interviews onto digital or physical notes. Group them by underlying friction themes in 15 minutes.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Execute with speed and zero hesitation.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>9. Activity: <span class="ac">The 3-Point Summary</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Distill the entire synthesis into exactly 3 sentences defining the core problem. Pitch the summary to the instructor.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Test your assumptions against brutal reality.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>10. <span class="ac">Homework</span> & Logistics</h2>
+            <div class="box-success">
+              <h4 style="color:var(--accent); margin-top:0;">Task 1</h4>
+              <p>Complete the Affinity Diagram.</p>
+            </div>
+            <div class="box-alert">
+              <h4 style="color:#ef4444; margin-top:0;">Task 2</h4>
+              <p>Write and submit the 'Needs Assessment Report'.</p>
+            </div>
+            <div class="citation"></div>
+        </section>
+        <section data-background-color="#064e3b">
+            <h2>11. <span class="ac">Module 03 Debrief</span></h2>
+            <p>Summary of what we've accomplished today.</p>
+            <ol style="margin-top: 30px; line-height: 2;">
+              <li>Mastered the core theoretical concepts.</li>
+              <li>Validated logic with actual math and data.</li>
+              <li>Survived the rigorous in-class simulations.</li>
+            </ol>
+            <h4 style="margin-top: 40px; color: var(--accent); text-align: center;">Prepare for Module 4.</h4>
+        </section></section>
+<section>
+
+        <section data-background-color="#451a03">
+            <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2000" class="hero-bg">
+            <div class="day-badge">MODULE 04</div>
+            <h1 class="hero-title">Background Research<br>(Sports Intersection)</h1>
+            <p class="sub" style="margin-top: 30px;">Finding the perfect target sports intersection.</p>
+            <div class="box-success" style="max-width: 800px; margin: 50px auto 0;">
+              <h4 style="color:var(--accent); margin-top:0;">12-Slide Deep Dive</h4>
+              <p style="margin-bottom:0; color:#fff;">Scroll down to access the exhaustive modules and rigorous simulations for today's session.</p>
+            </div>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>1. The <span class='ac'>Environmental Control</span> Factor</h2>
+            <div class="grid-2-img">
+              <div>
+                <p>Unpredictable sports like basketball have inherent limits for the visually impaired. We must seek controlled environments.</p>
+                <div class="box-alert">
+                  <h4 style="color:#ef4444; margin-top:0;">The Target Evolution</h4>
+                  <p style="margin-bottom:0;">CrossFit, Rowing, Track & Field. These sports offer controlled, individual spaces and stationary equipment. This is where we intercept the market.</p>
+                </div>
+              </div>
+              <div><img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+            </div>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>2. Safety vs <span class='ac'>Dynamic Motion</span></h2>
+            <p>Why predictablity equals accessibility.</p>
+            <div class="chart-wrap">
+              <h4 style="margin-bottom: 30px;">Injury Risk / Friction by Sport Type (VI)</h4>
+              <div class="bar-row"><div class="bar-label">Basketball / Soccer (Dynamic)</div><div class="bar-track"><div class="bar-fill bar-red" style="width:85%">85%</div></div></div><div class="bar-row"><div class="bar-label">Running / Track (Semi-Dynamic)</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:45%">45%</div></div></div><div class="bar-row"><div class="bar-label">CrossFit / Rowing (Stationary)</div><div class="bar-track"><div class="bar-fill bar-accent" style="width:15%">15%</div></div></div>
+            </div>
+            <div class="citation">Biomechanical Safety Analysis</div>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>3. Intersection <span class='ac'>Filter</span></h2>
+            <p>How to select the target sport.</p>
+            <div class="funnel"><div class="funnel-step" style="width:100%; z-index:10; ">1. Identify User Needs (Safety, Autonomy, Feedback)</div><div class="funnel-step" style="width:85%; z-index:9; ">2. Map Available Sports</div><div class="funnel-step" style="width:70%; z-index:8; ">3. Filter by 'Stationary/Controlled' Mechanisms</div><div class="funnel-step" style="width:55%; z-index:7; background:var(--accent); color:#000;">4. Select Target Market (e.g., CrossFit Infrastructure)</div></div>
+            <div class="citation">Sports Accessibility Framework</div>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>4. Sports <span class='ac'>Matrix</span></h2>
+            <table>
+              <tr><th>Sport</th><th>Predictability</th><th>VI Accessibility Status</th></tr>
+              <tr><td >Basketball</td><td >Low (Random bounces/players)</td><td style="color:var(--accent); font-weight:bold;">High Barrier (Needs audio beacon)</td></tr><tr><td >Rowing</td><td >High (Fixed track, repetitive)</td><td style="color:var(--accent); font-weight:bold;">Medium Barrier (Needs balance feedback)</td></tr><tr><td >CrossFit</td><td >High (Stationary equipment)</td><td style="color:var(--accent); font-weight:bold;">High Potential (Needs tactile/audio UI)</td></tr>
+            </table>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>5. The <span class="ac">Interrogation</span></h2>
+            <div class="grid-3" style="margin-top: 40px;"><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Physics</h4><p>Are the mechanics of the sport predictable?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Independence</h4><p>Can the athlete do this without a human guide?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Scalability</h4><p>Are gyms/facilities already built for this?</p></div></div>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>6. The <span class='ac'>Target Solution</span></h2>
+            <div class="venn-container"><div class="venn-circle venn-1">VI Safety/Autonomy Needs</div><div class="venn-circle venn-2">Controlled Environment Sports</div></div>
+            <p style="text-align:center; margin-top: 40px; color: var(--accent); font-weight: bold; font-style:italic;">"Do not change the athlete to fit the sport. Change the environment to fit the athlete."</p>
+            <div class="citation" style="text-align:center; width:100%; display:block; border-top:none;"></div>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>7. <span class="ac">Rubric</span> Parameters</h2>
+            <div class="grid-2">
+              <div class="stat-card" style="border-top: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+                <h4 style="color:#ef4444;">Fatal Errors 🚩</h4>
+                <p style="color:#ccc;">Stubbornly sticking to unpredictable team sports and trying to force sensors to fix an unfixable physical environment.</p>
+              </div>
+              <div class="stat-card" style="border-top: 4px solid var(--accent); background: rgba(211,255,36,0.05);">
+                <h4 style="color:var(--accent);">Winning Traits 🟢</h4>
+                <p style="color:#ccc;">Logically deducing the single safest and most scalable target sport (e.g., CrossFit) through a 3-sport comparative matrix.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>8. Activity: <span class="ac">The Matrix Showdown</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Draw a 3x3 matrix on the board. Score 3 different sports on Autonomy, Safety, and Engineering Feasibility. Present the winner.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Execute with speed and zero hesitation.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>9. Activity: <span class="ac">The Infrastructure Audit</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>For the winning sport (e.g. CrossFit), Google the standard equipment used. Identify exactly which piece of gear needs modification.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Test your assumptions against brutal reality.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>10. <span class="ac">Homework</span> & Logistics</h2>
+            <div class="box-success">
+              <h4 style="color:var(--accent); margin-top:0;">Task 1</h4>
+              <p>Complete the 'Sports Matrix Analysis' document.</p>
+            </div>
+            <div class="box-alert">
+              <h4 style="color:#ef4444; margin-top:0;">Task 2</h4>
+              <p>Select and officially lock in your target sport and specific equipment to modify.</p>
+            </div>
+            <div class="citation"></div>
+        </section>
+        <section data-background-color="#451a03">
+            <h2>11. <span class="ac">Module 04 Debrief</span></h2>
+            <p>Summary of what we've accomplished today.</p>
+            <ol style="margin-top: 30px; line-height: 2;">
+              <li>Mastered the core theoretical concepts.</li>
+              <li>Validated logic with actual math and data.</li>
+              <li>Survived the rigorous in-class simulations.</li>
+            </ol>
+            <h4 style="margin-top: 40px; color: var(--accent); text-align: center;">Prepare for Module 5.</h4>
+        </section></section>
+<section>
+
+        <section data-background-color="#3b0764">
+            <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2000" class="hero-bg">
+            <div class="day-badge">MODULE 05</div>
+            <h1 class="hero-title">The Lean Canvas</h1>
+            <p class="sub" style="margin-top: 30px;">Converting ideas into sustainable businesses.</p>
+            <div class="box-success" style="max-width: 800px; margin: 50px auto 0;">
+              <h4 style="color:var(--accent); margin-top:0;">12-Slide Deep Dive</h4>
+              <p style="margin-bottom:0; color:#fff;">Scroll down to access the exhaustive modules and rigorous simulations for today's session.</p>
+            </div>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>1. Lab to <span class='ac'>Market</span></h2>
+            <div class="grid-2-img">
+              <div>
+                <p>Every block on the Lean Canvas is an unproven hypothesis. Even brilliant engineering dies in the lab without a business model.</p>
+                <div class="box-alert">
+                  <h4 style="color:#ef4444; margin-top:0;">The Funding Reality</h4>
+                  <p style="margin-bottom:0;">This is not a charity. You must prove who receives the value and exactly how the operation generates sustainable revenue.</p>
+                </div>
+              </div>
+              <div><img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+            </div>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>2. Market <span class='ac'>Sizing (VI Segment)</span></h2>
+            <p>B2B vs B2C Economics</p>
+            <div class="chart-wrap">
+              <h4 style="margin-bottom: 30px;">Addressable Purchasing Power</h4>
+              <div class="bar-row"><div class="bar-label">B2C (Direct to Athlete)</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:20%">20%</div></div></div><div class="bar-row"><div class="bar-label">B2B (Blind Schools / Associations)</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:45%">45%</div></div></div><div class="bar-row"><div class="bar-label">B2B2C (Gym Franchises / CrossFit)</div><div class="bar-track"><div class="bar-fill bar-accent" style="width:85%">85%</div></div></div>
+            </div>
+            <div class="citation">Market Segmentation Strategy</div>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>3. The <span class='ac'>9 Blocks</span></h2>
+            <p>Lean Canvas Architecture</p>
+            <div class="funnel"><div class="funnel-step" style="width:100%; z-index:10; ">1. Problem & Customer Segments</div><div class="funnel-step" style="width:85%; z-index:9; ">2. Unique Value Proposition (UVP)</div><div class="funnel-step" style="width:70%; z-index:8; ">3. Solution & Channels</div><div class="funnel-step" style="width:55%; z-index:7; background:var(--accent); color:#000;">4. Cost Structure & Revenue Streams</div></div>
+            <div class="citation">Ash Maurya - 'Running Lean'</div>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>4. Revenue <span class='ac'>Models</span></h2>
+            <table>
+              <tr><th>Target Customer</th><th>Model</th><th>Viability for VI Sports</th></tr>
+              <tr><td >Individual User</td><td >One-off Hardware Purchase</td><td style="color:var(--accent); font-weight:bold;">Low (High cost barrier)</td></tr><tr><td >Schools/Institutions</td><td >Bulk Licensing + Maintenance</td><td style="color:var(--accent); font-weight:bold;">Medium (Bureaucracy)</td></tr><tr><td >Gym Franchises</td><td >B2B SaaS / Equipment Lease</td><td style="color:var(--accent); font-weight:bold;">High (Scalable, Recurring)</td></tr>
+            </table>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>5. The <span class="ac">Interrogation</span></h2>
+            <div class="grid-3" style="margin-top: 40px;"><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Buyer</h4><p>Who actually signs the check? (User vs Gym)</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The UVP</h4><p>What makes you different in 1 sentence?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Cost</h4><p>Can you build this cheaper than the incumbent?</p></div></div>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>6. A Viable <span class='ac'>Business</span></h2>
+            <div class="venn-container"><div class="venn-circle venn-1">Social Impact</div><div class="venn-circle venn-2">Financial Profitability</div></div>
+            <p style="text-align:center; margin-top: 40px; color: var(--accent); font-weight: bold; font-style:italic;">"A startup is a temporary organization designed to search for a repeatable and scalable business model."</p>
+            <div class="citation" style="text-align:center; width:100%; display:block; border-top:none;">- Steve Blank</div>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>7. <span class="ac">Rubric</span> Parameters</h2>
+            <div class="grid-2">
+              <div class="stat-card" style="border-top: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+                <h4 style="color:#ef4444;">Fatal Errors 🚩</h4>
+                <p style="color:#ccc;">A business canvas with no revenue model, relying entirely on vague concepts like 'donations' or 'advertisements'.</p>
+              </div>
+              <div class="stat-card" style="border-top: 4px solid var(--accent); background: rgba(211,255,36,0.05);">
+                <h4 style="color:var(--accent);">Winning Traits 🟢</h4>
+                <p style="color:#ccc;">A mathematically sound B2B or B2B2C model targeting a specific segment (e.g., gym franchise owners) with clear cost structures.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>8. Activity: <span class="ac">The Red Pen Canvas</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1581291518857-484c0e054fa8?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Print out a blank Lean Canvas. Fill it out in 15 minutes. Teams swap and aggressively red-pen any assumption not backed by data.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Execute with speed and zero hesitation.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>9. Activity: <span class="ac">The B2B Pitch</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Assume the instructor is a gym franchise owner. Pitch your solution not as a charity, but as a way to increase THEIR revenue or PR.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Test your assumptions against brutal reality.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>10. <span class="ac">Homework</span> & Logistics</h2>
+            <div class="box-success">
+              <h4 style="color:var(--accent); margin-top:0;">Task 1</h4>
+              <p>Finalize your Version 1 Lean Canvas.</p>
+            </div>
+            <div class="box-alert">
+              <h4 style="color:#ef4444; margin-top:0;">Task 2</h4>
+              <p>Define your specific Customer Segment and UVP.</p>
+            </div>
+            <div class="citation"></div>
+        </section>
+        <section data-background-color="#3b0764">
+            <h2>11. <span class="ac">Module 05 Debrief</span></h2>
+            <p>Summary of what we've accomplished today.</p>
+            <ol style="margin-top: 30px; line-height: 2;">
+              <li>Mastered the core theoretical concepts.</li>
+              <li>Validated logic with actual math and data.</li>
+              <li>Survived the rigorous in-class simulations.</li>
+            </ol>
+            <h4 style="margin-top: 40px; color: var(--accent); text-align: center;">Prepare for Module 6.</h4>
+        </section></section>
+<section>
+
+        <section data-background-color="#0f766e">
+            <img src="https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0?auto=format&fit=crop&q=80&w=2000" class="hero-bg">
+            <div class="day-badge">MODULE 06</div>
+            <h1 class="hero-title">Official Website 1<br>(Vibe Coding)</h1>
+            <p class="sub" style="margin-top: 30px;">Generative AI Website Planning.</p>
+            <div class="box-success" style="max-width: 800px; margin: 50px auto 0;">
+              <h4 style="color:var(--accent); margin-top:0;">12-Slide Deep Dive</h4>
+              <p style="margin-bottom:0; color:#fff;">Scroll down to access the exhaustive modules and rigorous simulations for today's session.</p>
+            </div>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>1. Enter <span class='ac'>Vibe Coding</span></h2>
+            <div class="grid-2-img">
+              <div>
+                <p>You no longer need to know syntax to build global-standard websites. We will use AI (Cursor, v0) to generate production-ready code.</p>
+                <div class="box-alert">
+                  <h4 style="color:#ef4444; margin-top:0;">The Speed Advantage</h4>
+                  <p style="margin-bottom:0;">Do not waste 10 hours aligning CSS margins. Our goal is to visualize the business. Structure the prompts and focus on the logic.</p>
+                </div>
+              </div>
+              <div><img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+            </div>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>2. AI Dev <span class='ac'>Efficiency</span></h2>
+            <p>Why we vibe code.</p>
+            <div class="chart-wrap">
+              <h4 style="margin-bottom: 30px;">Time to Deploy MVP Landing Page</h4>
+              <div class="bar-row"><div class="bar-label">Traditional HTML/CSS Coding</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:80%">80%</div></div></div><div class="bar-row"><div class="bar-label">Website Builders (Wix/Squarespace)</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:40%">40%</div></div></div><div class="bar-row"><div class="bar-label">Vibe Coding (v0 / Cursor)</div><div class="bar-track"><div class="bar-fill bar-accent" style="width:10%">10%</div></div></div>
+            </div>
+            <div class="citation">Modern AI Engineering Metrics</div>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>3. Information <span class='ac'>Architecture</span></h2>
+            <p>The skeleton of your site.</p>
+            <div class="funnel"><div class="funnel-step" style="width:100%; z-index:10; ">1. The Hero Section (UVP & CTA)</div><div class="funnel-step" style="width:85%; z-index:9; ">2. The Problem Statement (Empathy)</div><div class="funnel-step" style="width:70%; z-index:8; ">3. The Solution / 3D Render (Technical Proof)</div><div class="funnel-step" style="width:55%; z-index:7; background:var(--accent); color:#000;">4. Team Bio & Footer</div></div>
+            <div class="citation">Landing Page UX Best Practices</div>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>4. Prompt <span class='ac'>Engineering</span></h2>
+            <table>
+              <tr><th>Bad Prompt</th><th>Vibe Coding Prompt (Good)</th></tr>
+              <tr><td >Make a website for blind sports.</td><td style="color:var(--accent); font-weight:bold;">Generate a modern, dark-theme landing page in React. The hero section must have a bold H1 stating 'Redefining CrossFit for the Visually Impaired' with a glassmorphism CTA button.</td></tr><tr><td >Add pictures of the team.</td><td style="color:var(--accent); font-weight:bold;">Create a 3-column grid section for team profiles using Tailwind CSS, with circular avatar placeholders and minimalist typography.</td></tr>
+            </table>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>5. The <span class="ac">Interrogation</span></h2>
+            <div class="grid-3" style="margin-top: 40px;"><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Structure</h4><p>Is your IA logical from top to bottom?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Copy</h4><p>Is your English copywriting punchy and professional?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Prompt</h4><p>Are you being specific enough for the AI?</p></div></div>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>6. The <span class='ac'>Modern Builder</span></h2>
+            <div class="venn-container"><div class="venn-circle venn-1">Domain Knowledge</div><div class="venn-circle venn-2">AI Prompting Skills</div></div>
+            <p style="text-align:center; margin-top: 40px; color: var(--accent); font-weight: bold; font-style:italic;">"English is the hottest new programming language."</p>
+            <div class="citation" style="text-align:center; width:100%; display:block; border-top:none;">- Andrej Karpathy</div>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>7. <span class="ac">Rubric</span> Parameters</h2>
+            <div class="grid-2">
+              <div class="stat-card" style="border-top: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+                <h4 style="color:#ef4444;">Fatal Errors 🚩</h4>
+                <p style="color:#ccc;">Submitting a clunky Wix template with a watermark, or writing English copywriting filled with grammatical errors.</p>
+              </div>
+              <div class="stat-card" style="border-top: 4px solid var(--accent); background: rgba(211,255,36,0.05);">
+                <h4 style="color:var(--accent);">Winning Traits 🟢</h4>
+                <p style="color:#ccc;">Using v0 or Cursor to generate enterprise-grade UI components with premium English copywriting and a flawless prompt.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>8. Activity: <span class="ac">The Copywriting Sprint</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Write the exact English H1, Subheadline, and CTA for your Hero Section in 10 minutes. The instructor will critique the impact.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Execute with speed and zero hesitation.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>9. Activity: <span class="ac">Prompt Engineering Race</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Open v0.dev. Teams have 15 minutes to write a prompt and generate the best-looking 'Features' section UI. Compare results.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Test your assumptions against brutal reality.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>10. <span class="ac">Homework</span> & Logistics</h2>
+            <div class="box-success">
+              <h4 style="color:var(--accent); margin-top:0;">Task 1</h4>
+              <p>Finalize your website Wireframe & IA.</p>
+            </div>
+            <div class="box-alert">
+              <h4 style="color:#ef4444; margin-top:0;">Task 2</h4>
+              <p>Write the master AI Prompt to generate your homepage.</p>
+            </div>
+            <div class="citation"></div>
+        </section>
+        <section data-background-color="#0f766e">
+            <h2>11. <span class="ac">Module 06 Debrief</span></h2>
+            <p>Summary of what we've accomplished today.</p>
+            <ol style="margin-top: 30px; line-height: 2;">
+              <li>Mastered the core theoretical concepts.</li>
+              <li>Validated logic with actual math and data.</li>
+              <li>Survived the rigorous in-class simulations.</li>
+            </ol>
+            <h4 style="margin-top: 40px; color: var(--accent); text-align: center;">Prepare for Module 7.</h4>
+        </section></section>
+<section>
+
+        <section data-background-color="#1d4ed8">
+            <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=2000" class="hero-bg">
+            <div class="day-badge">MODULE 07</div>
+            <h1 class="hero-title">Official Website 2<br>(Deployment)</h1>
+            <p class="sub" style="margin-top: 30px;">Deployment & Branding: Earning Investor Trust.</p>
+            <div class="box-success" style="max-width: 800px; margin: 50px auto 0;">
+              <h4 style="color:var(--accent); margin-top:0;">12-Slide Deep Dive</h4>
+              <p style="margin-bottom:0; color:#fff;">Scroll down to access the exhaustive modules and rigorous simulations for today's session.</p>
+            </div>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>1. The <span class='ac'>Investor Eye Test</span></h2>
+            <div class="grid-2-img">
+              <div>
+                <p>The first 5 seconds a judge clicks your URL dictates your credibility. Branding and speed are proxies for technical competence.</p>
+                <div class="box-alert">
+                  <h4 style="color:#ef4444; margin-top:0;">Mobile Responsiveness</h4>
+                  <p style="margin-bottom:0;">70% of judges will check your site on their phone. If the text breaks or flows off-screen, you are instantly disqualified.</p>
+                </div>
+              </div>
+              <div><img src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+            </div>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>2. Trust <span class='ac'>Metrics</span></h2>
+            <p>Why aesthetics matter.</p>
+            <div class="chart-wrap">
+              <h4 style="margin-bottom: 30px;">Factors Driving Credibility</h4>
+              <div class="bar-row"><div class="bar-label">Deep Technical Text</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:20%">20%</div></div></div><div class="bar-row"><div class="bar-label">Social Proof (Logos/Data)</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:40%">40%</div></div></div><div class="bar-row"><div class="bar-label">Visual Design & Layout</div><div class="bar-track"><div class="bar-fill bar-accent" style="width:75%">75%</div></div></div>
+            </div>
+            <div class="citation">Stanford Web Credibility Research</div>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>3. Deployment <span class='ac'>Pipeline</span></h2>
+            <p>Getting it live.</p>
+            <div class="funnel"><div class="funnel-step" style="width:100%; z-index:10; ">1. Refine AI-generated Code (UI/UX Tweaks)</div><div class="funnel-step" style="width:85%; z-index:9; ">2. Add Custom Assets (Renders, Team Photos)</div><div class="funnel-step" style="width:70%; z-index:8; ">3. Check Mobile Responsiveness (Dev Tools)</div><div class="funnel-step" style="width:55%; z-index:7; background:var(--accent); color:#000;">4. Deploy to Vercel / GitHub Pages</div></div>
+            <div class="citation">Modern Jamstack Workflow</div>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>4. Branding <span class='ac'>Audit</span></h2>
+            <table>
+              <tr><th>Element</th><th>Amateur Flag</th><th>Startup Standard</th></tr>
+              <tr><td >Colors</td><td >5+ random bright colors</td><td style="color:var(--accent); font-weight:bold;">Strict 3-color palette (Dark/Accent/Muted)</td></tr><tr><td >Team Bio</td><td >Selfies & Hobbies</td><td style="color:var(--accent); font-weight:bold;">Professional Headshots & Tech Roles</td></tr><tr><td >Typography</td><td >Times New Roman / Comic Sans</td><td style="color:var(--accent); font-weight:bold;">Inter, Roboto, Space Grotesk (Sans-serif)</td></tr>
+            </table>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>5. The <span class="ac">Interrogation</span></h2>
+            <div class="grid-3" style="margin-top: 40px;"><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Load</h4><p>Does the site load instantly?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Mobile</h4><p>Does the menu work on an iPhone?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The URL</h4><p>Is the link clean and functional?</p></div></div>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>6. The <span class='ac'>Digital Footprint</span></h2>
+            <div class="venn-container"><div class="venn-circle venn-1">Premium Aesthetics</div><div class="venn-circle venn-2">Flawless Functionality</div></div>
+            <p style="text-align:center; margin-top: 40px; color: var(--accent); font-weight: bold; font-style:italic;">"You cannot mandate productivity, you must provide the tools to let people become their best."</p>
+            <div class="citation" style="text-align:center; width:100%; display:block; border-top:none;">- Steve Jobs</div>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>7. <span class="ac">Rubric</span> Parameters</h2>
+            <div class="grid-2">
+              <div class="stat-card" style="border-top: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+                <h4 style="color:#ef4444;">Fatal Errors 🚩</h4>
+                <p style="color:#ccc;">Submitting a localhost link, or deploying a site that completely breaks when viewed on a mobile device.</p>
+              </div>
+              <div class="stat-card" style="border-top: 4px solid var(--accent); background: rgba(211,255,36,0.05);">
+                <h4 style="color:var(--accent);">Winning Traits 🟢</h4>
+                <p style="color:#ccc;">Deploying a live URL via Vercel featuring responsive design, cohesive branding, and premium visual components.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>8. Activity: <span class="ac">The Mobile Break Test</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Open the deployed site on your phones. Aggressively try to break the layout by scrolling and clicking menus. Fix what breaks.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Execute with speed and zero hesitation.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>9. Activity: <span class="ac">The 5-Second Test</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Flash your live site to another team for exactly 5 seconds. If they can't state your UVP immediately, your H1 is too weak.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Test your assumptions against brutal reality.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>10. <span class="ac">Homework</span> & Logistics</h2>
+            <div class="box-success">
+              <h4 style="color:var(--accent); margin-top:0;">Task 1</h4>
+              <p>Finalize website UI/UX.</p>
+            </div>
+            <div class="box-alert">
+              <h4 style="color:#ef4444; margin-top:0;">Task 2</h4>
+              <p>Deploy to Vercel and submit the Live URL.</p>
+            </div>
+            <div class="citation"></div>
+        </section>
+        <section data-background-color="#1d4ed8">
+            <h2>11. <span class="ac">Module 07 Debrief</span></h2>
+            <p>Summary of what we've accomplished today.</p>
+            <ol style="margin-top: 30px; line-height: 2;">
+              <li>Mastered the core theoretical concepts.</li>
+              <li>Validated logic with actual math and data.</li>
+              <li>Survived the rigorous in-class simulations.</li>
+            </ol>
+            <h4 style="margin-top: 40px; color: var(--accent); text-align: center;">Prepare for Module 8.</h4>
+        </section></section>
+<section>
+
+        <section data-background-color="#831843">
+            <img src="https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=2000" class="hero-bg">
+            <div class="day-badge">MODULE 08</div>
+            <h1 class="hero-title">Video Script &<br>Storytelling</h1>
+            <p class="sub" style="margin-top: 30px;">Pitching our journey in 3 minutes.</p>
+            <div class="box-success" style="max-width: 800px; margin: 50px auto 0;">
+              <h4 style="color:var(--accent); margin-top:0;">12-Slide Deep Dive</h4>
+              <p style="margin-bottom:0; color:#fff;">Scroll down to access the exhaustive modules and rigorous simulations for today's session.</p>
+            </div>
+        </section>
+        <section data-background-color="#831843">
+            <h2>1. The <span class='ac'>Narrative Hook</span></h2>
+            <div class="grid-2-img">
+              <div>
+                <p>We must architect a narrative: starting from the failure of the basketball, discovering the real problem, and proposing the ultimate sports solution.</p>
+                <div class="box-alert">
+                  <h4 style="color:#ef4444; margin-top:0;">The Boredom Rule</h4>
+                  <p style="margin-bottom:0;">Do not start with 'Hello we are team X'. Judges watch hundreds of videos. Start with a shocking fact or a visceral story to grab their attention.</p>
+                </div>
+              </div>
+              <div><img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+            </div>
+        </section>
+        <section data-background-color="#831843">
+            <h2>2. 3-Minute <span class='ac'>Pacing</span></h2>
+            <p>Time allocation strategy.</p>
+            <div class="chart-wrap">
+              <h4 style="margin-bottom: 30px;">Optimal Script Distribution (180 Seconds)</h4>
+              <div class="bar-row"><div class="bar-label">The Hook & Problem</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:25%">25%</div></div></div><div class="bar-row"><div class="bar-label">The Innovation (Tech)</div><div class="bar-track"><div class="bar-fill bar-accent" style="width:50%">50%</div></div></div><div class="bar-row"><div class="bar-label">Market & The Ask</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:25%">25%</div></div></div>
+            </div>
+            <div class="citation">Pitch Deck Flow Analytics</div>
+        </section>
+        <section data-background-color="#831843">
+            <h2>3. Storyboard <span class='ac'>Architecture</span></h2>
+            <p>Visualizing the script.</p>
+            <div class="funnel"><div class="funnel-step" style="width:100%; z-index:10; ">1. Audio: The Script (What is said)</div><div class="funnel-step" style="width:85%; z-index:9; ">2. A-Roll: The Speaker (Who is talking)</div><div class="funnel-step" style="width:70%; z-index:8; ">3. B-Roll: The Visual Proof (CAD, Web, Action shots)</div><div class="funnel-step" style="width:55%; z-index:7; background:var(--accent); color:#000;">4. Text/GFX: Key metrics on screen</div></div>
+            <div class="citation">Cinematic Pitching Framework</div>
+        </section>
+        <section data-background-color="#831843">
+            <h2>4. Scripting <span class='ac'>Errors</span></h2>
+            <table>
+              <tr><th>Common Mistake</th><th>Why it Fails</th><th>The Fix</th></tr>
+              <tr><td >Academic Tone</td><td >Boring, hard to follow verbally</td><td style="color:var(--accent); font-weight:bold;">Use short, punchy conversational English</td></tr><tr><td >No Visual Cues</td><td >Talking head for 3 minutes</td><td style="color:var(--accent); font-weight:bold;">Write '[CUT TO: CAD Render]' in the script</td></tr><tr><td >Missing the 'Ask'</td><td >No call to action at the end</td><td style="color:var(--accent); font-weight:bold;">End with: 'We need X to achieve Y.'</td></tr>
+            </table>
+        </section>
+        <section data-background-color="#831843">
+            <h2>5. The <span class="ac">Interrogation</span></h2>
+            <div class="grid-3" style="margin-top: 40px;"><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Journey</h4><p>Do you explain the pivot from basketball?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Proof</h4><p>Are you showing the website/CAD during the pitch?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Time</h4><p>Does it fit perfectly under 3 minutes?</p></div></div>
+        </section>
+        <section data-background-color="#831843">
+            <h2>6. The <span class='ac'>Winning Pitch</span></h2>
+            <div class="venn-container"><div class="venn-circle venn-1">Emotional Story</div><div class="venn-circle venn-2">Technical Depth</div><div class="venn-circle venn-3">Visual Evidence</div></div>
+            <p style="text-align:center; margin-top: 40px; color: var(--accent); font-weight: bold; font-style:italic;">"The most powerful person in the world is the storyteller."</p>
+            <div class="citation" style="text-align:center; width:100%; display:block; border-top:none;">- Steve Jobs</div>
+        </section>
+        <section data-background-color="#831843">
+            <h2>7. <span class="ac">Rubric</span> Parameters</h2>
+            <div class="grid-2">
+              <div class="stat-card" style="border-top: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+                <h4 style="color:#ef4444;">Fatal Errors 🚩</h4>
+                <p style="color:#ccc;">Reading a stiff, academic script without any visual B-Roll planning, showing only a talking head for 3 minutes.</p>
+              </div>
+              <div class="stat-card" style="border-top: 4px solid var(--accent); background: rgba(211,255,36,0.05);">
+                <h4 style="color:var(--accent);">Winning Traits 🟢</h4>
+                <p style="color:#ccc;">Submitting a perfectly timed 3-minute script mapping the Hook-Problem-Solution-Ask arc, complete with a scene-by-scene storyboard.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#831843">
+            <h2>8. Activity: <span class="ac">The 10-Second Hook Battle</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1540317580384-e5d43867caa6?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Write 3 different opening hooks. Perform them live. The class votes on which one makes them want to watch the rest.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Execute with speed and zero hesitation.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#831843">
+            <h2>9. Activity: <span class="ac">The Table Read</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Read the 3-minute script out loud with a stopwatch. Cut ANY word or sentence that causes you to stumble or sounds unnatural.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Test your assumptions against brutal reality.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#831843">
+            <h2>10. <span class="ac">Homework</span> & Logistics</h2>
+            <div class="box-success">
+              <h4 style="color:var(--accent); margin-top:0;">Task 1</h4>
+              <p>Finalize the 3-minute English video script.</p>
+            </div>
+            <div class="box-alert">
+              <h4 style="color:#ef4444; margin-top:0;">Task 2</h4>
+              <p>Submit the Scene-by-Scene Storyboard.</p>
+            </div>
+            <div class="citation"></div>
+        </section>
+        <section data-background-color="#831843">
+            <h2>11. <span class="ac">Module 08 Debrief</span></h2>
+            <p>Summary of what we've accomplished today.</p>
+            <ol style="margin-top: 30px; line-height: 2;">
+              <li>Mastered the core theoretical concepts.</li>
+              <li>Validated logic with actual math and data.</li>
+              <li>Survived the rigorous in-class simulations.</li>
+            </ol>
+            <h4 style="margin-top: 40px; color: var(--accent); text-align: center;">Prepare for Module 9.</h4>
+        </section></section>
+<section>
+
+        <section data-background-color="#3f6212">
+            <img src="https://images.unsplash.com/photo-1516280440502-6138c2dc9359?auto=format&fit=crop&q=80&w=2000" class="hero-bg">
+            <div class="day-badge">MODULE 09</div>
+            <h1 class="hero-title">Pitch Video<br>Production</h1>
+            <p class="sub" style="margin-top: 30px;">Persuasive delivery and video publishing.</p>
+            <div class="box-success" style="max-width: 800px; margin: 50px auto 0;">
+              <h4 style="color:var(--accent); margin-top:0;">12-Slide Deep Dive</h4>
+              <p style="margin-bottom:0; color:#fff;">Scroll down to access the exhaustive modules and rigorous simulations for today's session.</p>
+            </div>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>1. The <span class='ac'>Delivery</span> Matrix</h2>
+            <div class="grid-2-img">
+              <div>
+                <p>Eye contact, non-verbal communication, and crisp enunciation build authority on camera.</p>
+                <div class="box-alert">
+                  <h4 style="color:#ef4444; margin-top:0;">The Audio Rule</h4>
+                  <p style="margin-bottom:0;">Audio is more important than video. If there is an echo or wind noise, judges will stop watching. Use lapel mics or sync voice memos.</p>
+                </div>
+              </div>
+              <div><img src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+            </div>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>2. Perceived <span class='ac'>Energy</span></h2>
+            <p>Cameras eat your enthusiasm.</p>
+            <div class="chart-wrap">
+              <h4 style="margin-bottom: 30px;">Energy Translation to Screen</h4>
+              <div class="bar-row"><div class="bar-label">Normal Speaking Voice</div><div class="bar-track"><div class="bar-fill bar-red" style="width:30%">30%</div></div></div><div class="bar-row"><div class="bar-label">Perceived by Camera</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:15%">15%</div></div></div><div class="bar-row"><div class="bar-label">Required Delivery (+20%)</div><div class="bar-track"><div class="bar-fill bar-accent" style="width:85%">85%</div></div></div>
+            </div>
+            <div class="citation">Public Speaking Optics</div>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>3. Production <span class='ac'>Checklist</span></h2>
+            <p>Before hitting record.</p>
+            <div class="funnel"><div class="funnel-step" style="width:100%; z-index:10; ">1. Lighting (Face the window, no shadows)</div><div class="funnel-step" style="width:85%; z-index:9; ">2. Audio (Zero background noise)</div><div class="funnel-step" style="width:70%; z-index:8; ">3. Framing (Rule of Thirds, clean background)</div><div class="funnel-step" style="width:55%; z-index:7; background:var(--accent); color:#000;">4. Energy (Smile, use hands, speak loudly)</div></div>
+            <div class="citation">Cinematography Basics</div>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>4. Editing <span class='ac'>Techniques</span></h2>
+            <table>
+              <tr><th>Technique</th><th>Purpose</th><th>Example</th></tr>
+              <tr><td >B-Roll Overlay</td><td >Maintain interest, show proof</td><td style="color:var(--accent); font-weight:bold;">Cut to website scrolling while speaking</td></tr><tr><td >Jump Cuts</td><td >Remove dead space/breaths</td><td style="color:var(--accent); font-weight:bold;">Keeping the pace fast and aggressive</td></tr><tr><td >Lower Thirds</td><td >Identify speakers & metrics</td><td style="color:var(--accent); font-weight:bold;">Name / Title graphics at the bottom</td></tr>
+            </table>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>5. The <span class="ac">Interrogation</span></h2>
+            <div class="grid-3" style="margin-top: 40px;"><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Eyes</h4><p>Are you looking AT the lens, or reading a screen?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Posture</h4><p>Are you confident and open?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">The Clarity</h4><p>Is every English word articulated clearly?</p></div></div>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>6. Professional <span class='ac'>Publishing</span></h2>
+            <div class="venn-container"><div class="venn-circle venn-1">Crisp Audio/Video</div><div class="venn-circle venn-2">Dynamic Editing</div></div>
+            <p style="text-align:center; margin-top: 40px; color: var(--accent); font-weight: bold; font-style:italic;">"The medium is the message."</p>
+            <div class="citation" style="text-align:center; width:100%; display:block; border-top:none;">- Marshall McLuhan</div>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>7. <span class="ac">Rubric</span> Parameters</h2>
+            <div class="grid-2">
+              <div class="stat-card" style="border-top: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+                <h4 style="color:#ef4444;">Fatal Errors 🚩</h4>
+                <p style="color:#ccc;">Submitting a video with 'dead eyes' (reading off a screen), or terrible audio noise that obscures the English speech.</p>
+              </div>
+              <div class="stat-card" style="border-top: 4px solid var(--accent); background: rgba(211,255,36,0.05);">
+                <h4 style="color:var(--accent);">Winning Traits 🟢</h4>
+                <p style="color:#ccc;">Confident eye contact, crystal clear audio, and effective B-Roll integration demonstrating the prototypes.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>8. Activity: <span class="ac">The Dead Eyes Check</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Record a teammate reading from a laptop screen vs speaking directly into the lens. Compare the energy and trust levels side-by-side.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Execute with speed and zero hesitation.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>9. Activity: <span class="ac">The Audio Obstacle Course</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1593697972679-c4041d132a4e?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Record a 15-second pitch in a noisy hallway using just the phone, then using a lapel mic/voice memo sync. Notice the stark difference.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Test your assumptions against brutal reality.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>10. <span class="ac">Homework</span> & Logistics</h2>
+            <div class="box-success">
+              <h4 style="color:var(--accent); margin-top:0;">Task 1</h4>
+              <p>Shoot, edit, and export the final Pitch Video.</p>
+            </div>
+            <div class="box-alert">
+              <h4 style="color:#ef4444; margin-top:0;">Task 2</h4>
+              <p>Upload to YouTube (Unlisted) and secure the link.</p>
+            </div>
+            <div class="citation"></div>
+        </section>
+        <section data-background-color="#3f6212">
+            <h2>11. <span class="ac">Module 09 Debrief</span></h2>
+            <p>Summary of what we've accomplished today.</p>
+            <ol style="margin-top: 30px; line-height: 2;">
+              <li>Mastered the core theoretical concepts.</li>
+              <li>Validated logic with actual math and data.</li>
+              <li>Survived the rigorous in-class simulations.</li>
+            </ol>
+            <h4 style="margin-top: 40px; color: var(--accent); text-align: center;">Prepare for Module 10.</h4>
+        </section></section>
+<section>
+
+        <section data-background-color="#7f1d1d">
+            <img src="https://images.unsplash.com/photo-1475721028341-8b6bbd02d244?auto=format&fit=crop&q=80&w=2000" class="hero-bg">
+            <div class="day-badge">MODULE 10</div>
+            <h1 class="hero-title">Final Submission<br>(Conrad Portal)</h1>
+            <p class="sub" style="margin-top: 30px;">Final audit and global submission.</p>
+            <div class="box-success" style="max-width: 800px; margin: 50px auto 0;">
+              <h4 style="color:var(--accent); margin-top:0;">12-Slide Deep Dive</h4>
+              <p style="margin-bottom:0; color:#fff;">Scroll down to access the exhaustive modules and rigorous simulations for today's session.</p>
+            </div>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>1. The <span class='ac'>Integration</span></h2>
+            <div class="grid-2-img">
+              <div>
+                <p>We are now integrating all 4 core deliverables into a single, cohesive business package for the global stage.</p>
+                <div class="box-alert">
+                  <h4 style="color:#ef4444; margin-top:0;">The Checksum</h4>
+                  <p style="margin-bottom:0;">If one link is broken, or a video is set to private, 10 weeks of effort evaporates. Validate everything rigorously.</p>
+                </div>
+              </div>
+              <div><img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+            </div>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>2. Submission <span class='ac'>Analytics</span></h2>
+            <p>Why teams get disqualified.</p>
+            <div class="chart-wrap">
+              <h4 style="margin-bottom: 30px;">Common Administrative Failures</h4>
+              <div class="bar-row"><div class="bar-label">Incorrect Category / Missing Forms</div><div class="bar-track"><div class="bar-fill bar-gray" style="width:20%">20%</div></div></div><div class="bar-row"><div class="bar-label">Broken Website URLs</div><div class="bar-track"><div class="bar-fill bar-red" style="width:35%">35%</div></div></div><div class="bar-row"><div class="bar-label">Private/Inaccessible YouTube Links</div><div class="bar-track"><div class="bar-fill bar-red" style="width:45%">45%</div></div></div>
+            </div>
+            <div class="citation">General Competition Post-Mortems</div>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>3. The <span class='ac'>Final Checklist</span></h2>
+            <p>Do not hit submit until this is verified.</p>
+            <div class="funnel"><div class="funnel-step" style="width:100%; z-index:10; ">1. Final Lean Canvas (PDF)</div><div class="funnel-step" style="width:85%; z-index:9; ">2. Official Website URL (Tested on mobile)</div><div class="funnel-step" style="width:70%; z-index:8; ">3. YouTube Pitch Video (Unlisted, tested incognito)</div><div class="funnel-step" style="width:55%; z-index:7; background:var(--accent); color:#000;">4. Optional Business Plan / Brief</div></div>
+            <div class="citation">Conrad Challenge Submission Rules</div>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>4. Quality <span class='ac'>Assurance</span></h2>
+            <table>
+              <tr><th>Deliverable</th><th>Verification Action</th><th>Pass Condition</th></tr>
+              <tr><td >Website URL</td><td >Open in Chrome Incognito mode on a phone</td><td style="color:var(--accent); font-weight:bold;">Loads fast, no broken images, responsive</td></tr><tr><td >YouTube Video</td><td >Send link to a non-team member</td><td style="color:var(--accent); font-weight:bold;">Plays with audio, no 'Private' error</td></tr><tr><td >Lean Canvas</td><td >Proofread for typos</td><td style="color:var(--accent); font-weight:bold;">PDF format, clean layout, data-backed</td></tr>
+            </table>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>5. The <span class="ac">Interrogation</span></h2>
+            <div class="grid-3" style="margin-top: 40px;"><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">Consistency</h4><p>Do the website and video pitch the exact same UVP?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">Accessibility</h4><p>Are all links public or correctly unlisted?</p></div><div class="stat-card"><div class="number-circle">?</div><h4 style="color:#fff;">Pride</h4><p>Is this the absolute best work you can do?</p></div></div>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>6. The <span class='ac'>Conrad Standard</span></h2>
+            <div class="venn-container"><div class="venn-circle venn-1">Scientific Rigor</div><div class="venn-circle venn-2">Entrepreneurial Execution</div></div>
+            <p style="text-align:center; margin-top: 40px; color: var(--accent); font-weight: bold; font-style:italic;">"Success is where preparation and opportunity meet."</p>
+            <div class="citation" style="text-align:center; width:100%; display:block; border-top:none;">- Bobby Unser</div>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>7. <span class="ac">Rubric</span> Parameters</h2>
+            <div class="grid-2">
+              <div class="stat-card" style="border-top: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+                <h4 style="color:#ef4444;">Fatal Errors 🚩</h4>
+                <p style="color:#ccc;">Submitting incomplete materials at the deadline, or making careless URL permission errors preventing judge access.</p>
+              </div>
+              <div class="stat-card" style="border-top: 4px solid var(--accent); background: rgba(211,255,36,0.05);">
+                <h4 style="color:var(--accent);">Winning Traits 🟢</h4>
+                <p style="color:#ccc;">All assets (Canvas, Web, Video) maintaining brand consistency and successfully submitted to the portal ahead of time.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>8. Activity: <span class="ac">The Incognito Audit</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1558402529-d2638a7023e9?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Open an Incognito browser window. Try to access your Website URL and YouTube link. If it asks for a login, you failed. Fix it.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Execute with speed and zero hesitation.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>9. Activity: <span class="ac">The Final Upload</span></h2>
+            <div class="activity-badge">IN-CLASS SIMULATION</div>
+            <div class="grid-2-img">
+              <div><img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=800" class="slide-img"></div>
+              <div class="stat-card" style="background: rgba(255,255,255,0.02);">
+                <h4 style="color:#fff;">The Challenge</h4>
+                <p>Log into the Conrad Challenge portal. Upload all documents, paste all URLs. Take a screenshot of the confirmation page.</p>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 20px;">Time Limit: 20 Minutes</p>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #ccc; margin-bottom: 0;">Goal: Test your assumptions against brutal reality.</p>
+              </div>
+            </div>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>10. <span class="ac">Homework</span> & Logistics</h2>
+            <div class="box-success">
+              <h4 style="color:var(--accent); margin-top:0;">Task 1</h4>
+              <p>Final Submission Complete Checklist.</p>
+            </div>
+            <div class="box-alert">
+              <h4 style="color:#ef4444; margin-top:0;">Task 2</h4>
+              <p>Capture and submit the Conrad Portal submission confirmation.</p>
+            </div>
+            <div class="citation"></div>
+        </section>
+        <section data-background-color="#7f1d1d">
+            <h2>11. <span class="ac">Module 10 Debrief</span></h2>
+            <p>Summary of what we've accomplished today.</p>
+            <ol style="margin-top: 30px; line-height: 2;">
+              <li>Mastered the core theoretical concepts.</li>
+              <li>Validated logic with actual math and data.</li>
+              <li>Survived the rigorous in-class simulations.</li>
+            </ol>
+            <h4 style="margin-top: 40px; color: var(--accent); text-align: center;">Prepare for Module 11.</h4>
+        </section></section>
+
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script>
+Reveal.initialize({
+  hash: true, transition: 'slide', width: 1440, height: 810, margin: 0.06, minScale: 0.2, maxScale: 1.5, controls: true, progress: true, slideNumber: 'c/t', center: true, autoAnimateEasing: 'ease'
+});
+</script>
+</body>
+</html>

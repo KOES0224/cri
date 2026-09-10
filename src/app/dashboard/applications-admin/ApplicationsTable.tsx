@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { 
@@ -11,7 +11,12 @@ import {
   CheckCircle2, 
   XSquare, 
   Send,
-  Trash2
+  Trash2,
+  Search,
+  Filter,
+  Check,
+  Clock,
+  XCircle
 } from "lucide-react";
 import { 
   updateApplicationStepStatus, 
@@ -24,8 +29,15 @@ import { useRouter } from "next/navigation";
 
 export default function ApplicationsTable({ initialApplications }: { initialApplications: any[] }) {
   const router = useRouter();
+  const [applications, setApplications] = useState<any[]>(initialApplications);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   
+  useEffect(() => {
+    setApplications(initialApplications);
+  }, [initialApplications]);
+
   // Modals state
   const [activeCommentApp, setActiveCommentApp] = useState<any>(null);
   const [commentText, setCommentText] = useState("");
@@ -35,39 +47,66 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
   const [activeNotifyApp, setActiveNotifyApp] = useState<any>(null);
   const [notifyText, setNotifyText] = useState("");
 
+  const filteredApplications = useMemo(() => {
+    return applications.filter(app => {
+      const q = search.toLowerCase().trim();
+      const matchesSearch = !q || 
+        (app.user?.name || "").toLowerCase().includes(q) ||
+        (app.user?.email || "").toLowerCase().includes(q) ||
+        (app.user?.studentCode || "").toLowerCase().includes(q) ||
+        (app.program?.title || "").toLowerCase().includes(q);
+      const matchesStatus = statusFilter === "ALL" || app.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [applications, search, statusFilter]);
+
   const handleDelete = async (appId: string) => {
     if (!confirm("Are you sure you want to permanently delete this application and all associated steps? This action cannot be undone.")) return;
-    setLoading(true);
+    
+    // Optimistic delete
+    const previous = applications;
+    setApplications(prev => prev.filter(a => a.id !== appId));
+    
     const res = await deleteApplication(appId);
     if (!res.success) {
       alert("Failed to delete application: " + res.error);
+      setApplications(previous); // Revert
     }
-    setLoading(false);
-    router.refresh(); // Refresh the list
   };
 
   const handleStatusChange = async (appId: string, newStatus: string) => {
-    if (!confirm(`Are you sure you want to mark this application as ${newStatus}?`)) return;
-    setLoading(true);
-    await updateApplicationStatus(appId, newStatus);
-    setLoading(false);
-    router.refresh();
+    // Optimistic status update (0ms perceived latency)
+    const previous = applications;
+    setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: newStatus } : a));
+    
+    const res = await updateApplicationStatus(appId, newStatus);
+    if (res && !res.success) {
+      alert("Failed to update status: " + (res.error || "Unknown error"));
+      setApplications(previous); // Revert
+    }
   };
 
   const handleStepChange = async (stepId: string, newStatus: string) => {
-    setLoading(true);
-    await updateApplicationStepStatus(stepId, newStatus);
-    setLoading(false);
-    
-    // Optimistic local update for the modal
-    if (activeStepsApp) {
-      const updatedApp = {
-        ...activeStepsApp,
-        steps: activeStepsApp.steps.map((s: any) => s.id === stepId ? { ...s, status: newStatus } : s)
+    // Optimistic step update
+    setApplications(prev => prev.map(app => {
+      if (!app.steps) return app;
+      return {
+        ...app,
+        steps: app.steps.map((s: any) => s.id === stepId ? { ...s, status: newStatus } : s)
       };
-      setActiveStepsApp(updatedApp);
+    }));
+
+    if (activeStepsApp) {
+      setActiveStepsApp((prev: any) => ({
+        ...prev,
+        steps: prev.steps.map((s: any) => s.id === stepId ? { ...s, status: newStatus } : s)
+      }));
     }
-    router.refresh();
+
+    const res = await updateApplicationStepStatus(stepId, newStatus);
+    if (res && !res.success) {
+      alert("Failed to update step: " + (res.error || "Unknown error"));
+    }
   };
 
   const submitComment = async () => {
@@ -101,28 +140,74 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative min-h-[600px]">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative min-h-[600px] flex flex-col">
+      {/* Apple-style Search & Filter Bar */}
+      <div className="px-6 py-4 bg-gray-50/70 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by student, email, code..."
+            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium placeholder:text-gray-400"
+          />
+          {search && (
+            <button 
+              onClick={() => setSearch("")} 
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs bg-gray-100 rounded-full w-4 h-4 flex items-center justify-center"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        {/* Status Filter Pills */}
+        <div className="flex items-center gap-1.5 p-1 bg-gray-100 rounded-xl self-stretch sm:self-auto text-xs font-bold">
+          {(["ALL", "PENDING", "ACCEPTED", "REJECTED"] as const).map(status => (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              className={`px-3.5 py-1.5 rounded-lg transition-all capitalize cursor-pointer ${
+                statusFilter === status 
+                  ? "bg-white text-gray-900 shadow-sm" 
+                  : "text-gray-500 hover:text-gray-800"
+              }`}
+            >
+              {status.toLowerCase()} ({
+                status === "ALL" 
+                  ? applications.length 
+                  : applications.filter(a => a.status === status).length
+              })
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="overflow-x-auto flex-1">
         <table className="min-w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 font-semibold">
+          <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
             <tr>
-              <th className="px-6 py-4">Applicant</th>
-              <th className="px-6 py-4">Program</th>
-              <th className="px-6 py-4">Submitted Date</th>
-              <th className="px-6 py-4">Application Status</th>
-              <th className="px-6 py-4">Timeline Steps</th>
-              <th className="px-6 py-4 text-right">Actions</th>
+              <th className="px-6 py-3.5">Applicant</th>
+              <th className="px-6 py-3.5">Program</th>
+              <th className="px-6 py-3.5">Submitted Date</th>
+              <th className="px-6 py-3.5">Application Status</th>
+              <th className="px-6 py-3.5">Timeline Steps</th>
+              <th className="px-6 py-3.5 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {initialApplications.length === 0 ? (
+            {filteredApplications.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                  No applications found.
+                <td colSpan={6} className="px-6 py-16 text-center text-gray-400">
+                  <div className="max-w-xs mx-auto">
+                    <p className="font-semibold text-gray-600 mb-1">No applications found</p>
+                    <p className="text-xs text-gray-400">Try adjusting your search or status filter</p>
+                  </div>
                 </td>
               </tr>
             ) : (
-              initialApplications.map(app => {
+              filteredApplications.map(app => {
                 const currentStepIndex = app.steps?.findIndex((s: any) => s.status === 'IN_PROGRESS' || s.status === 'UPCOMING');
                 const currentStep = currentStepIndex !== -1 && app.steps ? app.steps[currentStepIndex] : null;
 

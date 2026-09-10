@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EyeSync Smart Glasses: Technical Specification & Manufacturing Plan</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Mermaid.js for rendering the system diagram -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      securityLevel: 'loose',
+      flowchart: { useMaxWidth: true, htmlLabels: true }
+    });
+  </script>
+
+  <style>
+    :root {
+      --primary-color: #121212;
+      --accent-color: #D4FF00;
+      --bg-light: #F9F9F6;
+      --text-dark: #222221;
+      --text-muted: #575755;
+      --border-color: #E2E2DF;
+      --card-bg: #FFFFFF;
+      --code-bg: #F0F0EC;
+      --highlight-soft: #FCFCE8;
+    }
+
+    /* General reset and typography */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-light);
+      font-family: 'Merriweather', Georgia, serif;
+      color: var(--text-dark);
+      line-height: 1.7;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 60px 80px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      border-radius: 4px;
+    }
+
+    /* Print control floating bar */
+    .print-bar {
+      max-width: 850px;
+      margin: 0 auto 20px;
+      background: var(--primary-color);
+      color: #FFF;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 4px;
+      font-family: 'Outfit', sans-serif;
+    }
+    .print-btn {
+      background: var(--accent-color);
+      color: var(--primary-color);
+      border: none;
+      padding: 8px 20px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      transition: opacity 0.2s ease;
+    }
+    .print-btn:hover { opacity: 0.9; }
+
+    /* Headers */
+    h1, h2, h3, h4 {
+      font-family: 'Outfit', sans-serif;
+      color: var(--primary-color);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 5px;
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 15px;
+    }
+    .subtitle {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 30px;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin: 40px 0 20px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    h3 {
+      font-size: 1.2rem;
+      margin: 25px 0 12px;
+      color: var(--text-dark);
+    }
+    h4 {
+      font-size: 1.05rem;
+      margin: 20px 0 10px;
+    }
+
+    p { margin-bottom: 20px; font-weight: 300; font-size: 1.05rem; }
+    
+    /* Lists */
+    ul, ol { margin-bottom: 20px; padding-left: 24px; }
+    li { margin-bottom: 8px; font-size: 1.05rem; font-weight: 300; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+    th {
+      background-color: var(--bg-light);
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+    tr:hover { background-color: rgba(0,0,0,0.01); }
+
+    /* Code & Pre */
+    code {
+      font-family: 'Fira Code', monospace;
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.9rem;
+    }
+    pre {
+      background: var(--primary-color);
+      padding: 20px;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+    pre code {
+      background: none;
+      color: #E2E2DF;
+      padding: 0;
+      font-size: 0.85rem;
+    }
+
+    /* Highlight blocks */
+    .highlight-box {
+      background-color: var(--bg-light);
+      border-left: 4px solid var(--primary-color);
+      padding: 20px;
+      margin: 25px 0;
+      font-size: 1rem;
+    }
+    .highlight-box h4 { margin-top: 0; }
+
+    /* Diagram wrapper */
+    .diagram-wrapper {
+      margin: 30px 0;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: #FFF;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Print Specific Media Styles */
+    @media print {
+      body {
+        background-color: #FFF;
+        padding: 0;
+      }
+      .print-bar { display: none; }
+      .container {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      h2 { page-break-before: always; }
+      pre, table, .diagram-wrapper, .highlight-box { page-break-inside: avoid; }
+      a { text-decoration: none; color: var(--text-dark); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Printable Floating Header -->
+  <div class="print-bar">
+    <div>
+      <strong>Document Export:</strong> EyeSync Smart Glasses Specification
+    </div>
+    <button class="print-btn" onclick="window.print()">Print / Save to PDF</button>
+  </div>
+
+  <div class="container">
+    <h1>EyeSync Smart Glasses: Technical Specification & Manufacturing Plan</h1>
+    <div class="subtitle">Version 1.2 // Lead Product Designer & Senior Engineering Specifications</div>
+
+    <!-- 1. EXECUTIVE SUMMARY -->
+    <h2>1. Executive Summary & Product Concept</h2>
+    <p>The <strong>EyeSync Smart Glasses</strong> is an assistive wearable designed to close the 80% visual information void for Visually Impaired (VI) and elderly users. Rather than relying on cloud-tethered streaming (which creates high latency and privacy risks), EyeSync operates a local, high-efficiency hybrid compute architecture to translate physical spaces, kiosks, and hazards into real-time auditory guides.</p>
+    
+    <h3>Core Use Cases:</h3>
+    <ul>
+      <li><strong>Interactive Spatial Navigation:</strong> The user states a destination (e.g., <em>"Where is the bathroom?"</em>). The glasses map the environment, calculate the optimal path, and provide directional audio prompts while scanning for dynamic obstacles (e.g., wet floors, stray bags, open doors).</li>
+      <li><strong>Kiosk & Interface Interaction:</strong> The glasses recognize public touchscreens (e.g., fast-food ordering kiosks, ATM screens, subway ticketing machines), parse the text and layout, announce options via bone-conduction audio, and guide the user's physical hand to the correct coordinates on the glass.</li>
+      <li><strong>Elderly Assistance Mode:</strong> Features automated fall detection, medication label reading, and high-contrast digital text magnification (via companion devices).</li>
+    </ul>
+
+    <!-- 2. SYSTEM ARCHITECTURE -->
+    <h2>2. System Architecture & Hardware Specification</h2>
+    <div class="diagram-wrapper">
+      <div class="mermaid">
+        graph TD
+            subgraph Input Sensors
+                CAM[Dual 5MP Wide-Angle Cameras] --> |MIPI CSI-2| ISP[Image Signal Processor]
+                IMU[6-Axis IMU LSM6DSV] --> |SPI| MCU
+                TOF[FlightSense ToF VL53L8CX] --> |I2C| MCU[STM32H7 Ultra-Low Power MCU]
+                MIC[MEMS Microphone Array] --> |I2S| MCU
+            end
+
+            subgraph Core Compute
+                MCU --> |SPI / UART| SoC[Qualcomm Snapdragon XR2 Gen 2]
+                ISP --> SoC
+                SoC --> |On-device NPU| SLAM[Local VIO / SLAM]
+                SoC --> |On-device NPU| VLM[Quantized VLM / OCR Engine]
+            end
+
+            subgraph Output Feedback
+                SoC --> |Audio Codec| BC[Bone Conduction Transducers]
+                MCU --> |Power Management| HAP[Temporal Haptic Actuators]
+            end
+      </div>
+    </div>
+
+    <h3>2.1 Hardware Component Specifications</h3>
+    <ul>
+      <li><strong>Dual Cameras:</strong> 2x Omnivision OV5675 5MP sensors (1/5" optical format, 1.12µm pixel size). Mounted at the frame temples to match human interpupillary distance, enabling stereoscopic depth mapping.</li>
+      <li><strong>Time-of-Flight (ToF) Ranger:</strong> STMicroelectronics VL53L8CX 8x8 multizone ranging sensor. Provides active depth mapping up to 4 meters under any lighting condition, ensuring obstacle detection in low light.</li>
+      <li><strong>Inertial Measurement Unit (IMU):</strong> STMicroelectronics LSM6DSV 6-axis IMU with embedded finite state machine for step tracking and fall detection.</li>
+      <li><strong>Audio Output:</strong> Dual bone-conduction transducers mounted on the temporal bone arm. Keeps the ear canal open, allowing users to maintain full ambient acoustic awareness of their surroundings.</li>
+      <li><strong>Compute Unit:</strong>
+        <ul>
+          <li><strong>Primary System-on-Chip (SoC):</strong> Qualcomm Snapdragon XR2 Gen 2, featuring an integrated Hexagon NPU (delivering up to 15 INT8 TOPS of local AI compute).</li>
+          <li><strong>Co-Processor:</strong> STM32H7 dual-core ARM Cortex-M7 microcontroller for low-power sensor fusion, microphone voice trigger wake-word monitoring, and power rail management.</li>
+        </ul>
+      </li>
+      <li><strong>Battery System:</strong> Dual 320mAh Lithium-Polymer pouch cells shaped inside the temple arms (total 640mAh, 3.8V). Hot-swappable magnetic connection allows charging without taking off the frames.</li>
+      <li><strong>Total Weight Target:</strong> <strong>62 grams</strong> (typical non-smart plastic glasses weigh 30-40g; 62g is optimized for all-day comfort without nose bridge fatigue).</li>
+    </ul>
+
+    <!-- 3. SOFTWARE PIPELINE -->
+    <h2>3. Software Pipeline & Computational Logic</h2>
+    <h3>3.1 Local Natural Language Interaction (Speech-to-Text & VLM)</h3>
+    <p>To execute offline verbal commands (e.g., <em>"Find the exit"</em>), the software utilizes a quantized wake-word engine and a local small language model:</p>
+    <ol>
+      <li><strong>Acoustic Wake-Word detection:</strong> The low-power STM32H7 microcontroller continuously monitors mic feeds for the wake word using a local, sub-1MB neural net (e.g., Syntiant NDP120 pipeline).</li>
+      <li><strong>Local Transcription:</strong> The audio buffer is passed to a quantized Whisper-Tiny engine running on the Snapdragon NPU, translating speech to text locally in under 120ms.</li>
+      <li><strong>Intent Parsing:</strong> The text is fed into a quantized 1.1B parameter LLaMA-style model (quantized to INT4) to extract intent (Destination: <code>bathroom</code>, Task: <code>navigation</code>).</li>
+    </ol>
+
+    <h3>3.2 Dynamic Obstacle & Hazard Mapping</h3>
+    <p><strong>Visual-Inertial Odometry (VIO):</strong> A lightweight SLAM algorithm integrates IMU acceleration data with camera feature points to track the user's 3D position inside unmapped structures.</p>
+    <p><strong>Fast Segmentation:</strong> Runs <strong>Mobile-FastSAM</strong> on the NPU to isolate floor grids, detecting level changes (steps, drop-offs) and dynamic obstacles (moving pedestrians, pet hazards) within a 3-meter radius.</p>
+    <p><strong>Audio Navigation Prompting:</strong> If a path is clear, the system generates a spatialized periodic sound click (panned to the left/right earbud to indicate walking angle). If a hazard is detected, it interrupts with a direct voice alert: <em>"Obstacle detected, step right."</em></p>
+
+    <h3>3.3 Kiosk Touchscreen Assistance Algorithm</h3>
+    <p><strong>Screen Detection:</strong> A localized YOLO-based object detector identifies rectangular screen boundaries of kiosks.</p>
+    <p><strong>Optical Character Recognition (OCR):</strong> Tesseract-OCR or custom quantized text-detection models extract all words on screen and map their exact pixel coordinate bounding boxes $(x_1, y_1, x_2, y_2)$.</p>
+    <p><strong>Interactive Audio Readout:</strong> The VLM converts the buttons on screen into an audio list (e.g., <em>"Select 1: Beef Burger, Select 2: Chicken Sandwich. Say your selection."</em>).</p>
+    <p><strong>Hand Guidance Tracking:</strong> The camera tracks the coordinate of the user's index finger in 3D space, calculates the vector difference between the user's hand and the targeted button, and guides the hand verbally: <em>"Move hand up 3 inches, right 2 inches... press."</em></p>
+
+    <!-- 4. BOM -->
+    <h2>4. Bill of Materials (BOM) & Sourcing Specification</h2>
+    <p>Estimated costs are calculated for a production run of <strong>50,000 units</strong>.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Component Description</th>
+          <th>Supplier / Mfg</th>
+          <th>Unit Cost (USD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Compute</strong></td>
+          <td>Qualcomm Snapdragon XR2 Gen 2</td>
+          <td>Qualcomm</td>
+          <td>$45.00</td>
+        </tr>
+        <tr>
+          <td><strong>Co-Process</strong></td>
+          <td>STM32H7 Dual-Core Microcontroller</td>
+          <td>STMicroelectronics</td>
+          <td>$6.50</td>
+        </tr>
+        <tr>
+          <td><strong>Sensors</strong></td>
+          <td>Omnivision 5MP Wide Camera Sensors (x2)</td>
+          <td>Omnivision</td>
+          <td>$7.80</td>
+        </tr>
+        <tr>
+          <td><strong>Sensors</strong></td>
+          <td>LSM6DSV IMU + VL53L8CX ToF Array</td>
+          <td>STMicroelectronics</td>
+          <td>$4.20</td>
+        </tr>
+        <tr>
+          <td><strong>Audio</strong></td>
+          <td>Bone Conduction Transducers (x2)</td>
+          <td>AfterShokz OEM</td>
+          <td>$8.00</td>
+        </tr>
+        <tr>
+          <td><strong>Battery</strong></td>
+          <td>Custom Li-Po Pouch Cells 320mAh (x2)</td>
+          <td>Grepow Battery</td>
+          <td>$3.50</td>
+        </tr>
+        <tr>
+          <td><strong>Optics</strong></td>
+          <td>Clear Demo Lenses (Optional Prescription compatible)</td>
+          <td>Essilor OEM</td>
+          <td>$2.20</td>
+        </tr>
+        <tr>
+          <td><strong>Enclosure</strong></td>
+          <td>TR90 Memory Polymer Injection Frame</td>
+          <td>Custom Tooling</td>
+          <td>$5.00</td>
+        </tr>
+        <tr>
+          <td><strong>PCB</strong></td>
+          <td>10-layer Rigid-Flex PCB</td>
+          <td>dynamic-flex</td>
+          <td>$6.50</td>
+        </tr>
+        <tr>
+          <td><strong>Assy / Test</strong></td>
+          <td>Final SMT Assembly, Calibration, & Testing</td>
+          <td>Foxconn / Pegatron</td>
+          <td>$12.00</td>
+        </tr>
+        <tr>
+          <td><strong>Packaging</strong></td>
+          <td>Recycled Cardboard Box + Charge Cable + Manual</td>
+          <td>Custom</td>
+          <td>$3.00</td>
+        </tr>
+        <tr>
+          <td><strong>Total COGS</strong></td>
+          <td><strong>Estimated Unit Cost of Goods Sold</strong></td>
+          <td></td>
+          <td><strong>$103.70</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 5. MANUFACTURING PLAN -->
+    <h2>5. Manufacturing & Assembly Plan</h2>
+    <h3>5.1 Injection Molding (TR90 Frame)</h3>
+    <p><strong>Material:</strong> TR90 (Grilamid) Memory Polymer. Selected for its high flexibility, impact resistance, low density, and biocompatibility (preventing skin irritation over long wear cycles).</p>
+    <p><strong>Process:</strong> High-precision plastic injection molding. The temples require custom internal metal guide tracks to house the micro-ribbon cables linking the cameras, sensors, and battery terminals.</p>
+
+    <h3>5.2 SMT & Rigid-Flex PCB Assembly</h3>
+    <p>Due to the curve of the glasses' frame, a <strong>Rigid-Flex PCB</strong> configuration is required. The main compute board sits in the right temple arm, connected via flexible PCB joints through the frame hinge to the sensor arrays on the front bridge and the left battery arm.</p>
+    <p><strong>SMT Line:</strong> 0201 passives are utilized to maximize board space efficiency. Lead-free reflow profile must be monitored to protect the flexible PCB joints from thermal cracking.</p>
+
+    <h3>5.3 Sensor Calibration & Alignment</h3>
+    <p>Stereoscopic cameras must undergo automatic optical alignment calibration on the assembly line to resolve mechanical placement tolerances. A retroreflective checkerboard target is captured at various distances to calibrate intrinsic and extrinsic camera matrices, writing correction coefficients directly to the SoC’s EEPROM.</p>
+
+    <h3>5.4 Waterproofing (IP54 Rating)</h3>
+    <p>To protect against sweat and rain, the final rigid-flex assembly undergoes a hydrophobic conformal nano-coating process (e.g., P2i or HZO vacuum deposition) prior to final mechanical assembly inside the TR90 frame.</p>
+
+    <!-- 6. REGULATORY COMPLIANCE -->
+    <h2>6. Regulatory Compliance & Quality Control (QC)</h2>
+    <ol>
+      <li><strong>Optical Safety:</strong> Time-of-Flight sensors utilize Class 1 infrared lasers. Must comply with <strong>IEC 60825-1</strong> to guarantee absolute eye safety under all usage scenarios.</li>
+      <li><strong>FCC / CE Certification:</strong> The Bluetooth 5.2 and local Wi-Fi telemetry module must undergo EMI/EMC testing under <strong>CFR Title 47 Part 15</strong> and <strong>EN 301 489</strong>.</li>
+      <li><strong>Battery Safety:</strong> The custom lithium-polymer temple batteries must hold <strong>UN 38.3</strong> and <strong>IEC 62133</strong> certifications for wearable battery configurations.</li>
+    </ol>
+
+    <!-- 7. PROTOTYPING GUIDE -->
+    <h2>7. Prototyping Guide & Sourcing (South Korea Focus)</h2>
+    <p>To construct a functional, developer-grade desktop or wearable MVP of the EyeSync glasses, you can use off-the-shelf components. Because custom rigid-flex PCBs and custom ASICs are not accessible for initial prototyping, this guide outlines the <strong>Reference Prototyping Stack</strong> and provides direct sourcing links for components available for domestic shipping in South Korea.</p>
+
+    <div class="highlight-box">
+      <h4>Development Prototype Architecture</h4>
+      <ul>
+        <li>Primary Edge Compute: Nvidia Jetson Orin Nano (8GB)</li>
+        <li>Sensor Coprocessor: ESP32-S3 DevKitC-1</li>
+        <li>Spatial Sensors: VL53L5CX ToF + LSM6DSOX IMU</li>
+        <li>Video Input: Arducam Wide-Angle USB Camera</li>
+        <li>Audio Output: MAX98357A I2S + Bone Transducer</li>
+      </ul>
+    </div>
+
+    <h3>7.1 Korea Electronics Sourcing Directory</h3>
+    <p>These three primary domestic distributors cover all components with standard next-day shipping in South Korea:</p>
+    <ul>
+      <li><strong>Devicemart (디바이스마트):</strong> <a href="https://www.devicemart.co.kr" target="_blank">www.devicemart.co.kr</a> (Best for MCUs, sensors, amplifiers, and breadboard wiring tools).</li>
+      <li><strong>Eleparts (엘레파츠):</strong> <a href="https://www.eleparts.co.kr" target="_blank">www.eleparts.co.kr</a> (Excellent inventory for Adafruit/SparkFun sensor breakout boards and specialized transducers).</li>
+      <li><strong>ICbanQ (아이씨뱅큐):</strong> <a href="https://www.icbanq.com" target="_blank">www.icbanq.com</a> (Official Nvidia Jetson and Raspberry Pi distributor in Korea, best for compute boards and camera modules).</li>
+    </ul>
+
+    <h3>7.2 Hardware Component Sourcing Details & Direct Search Keys</h3>
+    <ul>
+      <li><strong>Primary Edge Compute Node: Nvidia Jetson Orin Nano Developer Kit (8GB)</strong>
+        <br>Runs the VIO/SLAM tracking and YOLO segmentations. Sourcing link: <a href="https://www.icbanq.com/P014603348" target="_blank">ICbanQ Jetson Orin Nano Developer Kit</a>.
+        <br><em>Search Term (Devicemart/Eleparts):</em> <code>젯슨 오린 나노 개발자 키트</code>
+      </li>
+      <li><strong>Wearable Sensor Coprocessor: ESP32-S3-DevKitC-1 (N16R8)</strong>
+        <br>Low-power controller to poll sensors over I2C and stream data over Wi-Fi. Sourcing link: <a href="https://www.devicemart.co.kr/goods/view?no=14397722" target="_blank">Devicemart ESP32-S3 Board</a>.
+        <br><em>Search Term:</em> <code>ESP32-S3 개발보드</code> or <code>ESP32-S3-DevKitC</code>
+      </li>
+      <li><strong>Optical Input: Arducam 5MP Wide Angle USB Camera Module</strong>
+        <br>USB wide-angle camera for image capture. Sourcing link: <a href="https://www.eleparts.co.kr/goods/view?no=10738600" target="_blank">Eleparts Arducam USB Camera</a>.
+        <br><em>Search Term:</em> <code>아두캠 USB 카메라</code> or <code>Arducam wide angle</code>
+      </li>
+      <li><strong>Time-of-Flight (ToF) Spatial Array: VL53L5CX 8x8 Multizone Sensor Breakout</strong>
+        <br>Active multizone depth mapping. Sourcing link: <a href="https://www.devicemart.co.kr/goods/view?no=14185794" target="_blank">Devicemart VL53L5CX Breakout</a>.
+        <br><em>Search Term:</em> <code>VL53L5CX</code> or <code>VL53L8CX</code>
+      </li>
+      <li><strong>Inertial Measurement Unit (IMU): LSM6DSOX 6-Axis IMU Breakout</strong>
+        <br>Tracks dynamic step coordinates and orientation. Sourcing link: <a href="https://www.eleparts.co.kr/goods/view?no=9782500" target="_blank">Eleparts Adafruit LSM6DSOX Board</a>.
+        <br><em>Search Term:</em> <code>LSM6DSOX</code> or <code>LSM6DS33</code>
+      </li>
+      <li><strong>Bone Conduction Audio Output: Bone Conduction Transducer (8 Ohm, 1W)</strong>
+        <br>Audio output transducers. Sourcing link: <a href="https://www.devicemart.co.kr/goods/view?no=1327461" target="_blank">Devicemart Bone Conduction Transducer</a>.
+        <br><em>Search Term:</em> <code>골전도 트랜스듀서</code> or <code>Bone Conduction Transducer</code>
+      </li>
+      <li><strong>Audio DAC/Amplifier: MAX98357A I2S Class D Amplifier</strong>
+        <br>Decodes digital I2S audio signals. Sourcing link: <a href="https://www.eleparts.co.kr/goods/view?no=9635400" target="_blank">Eleparts MAX98357 I2S Amp</a>.
+        <br><em>Search Term:</em> <code>MAX98357</code> or `I2S 앰프`
+      </li>
+    </ul>
+
+    <h3>7.3 DIY Hardware Wiring & Assembly Blueprint</h3>
+    <pre><code>[ESP32-S3 GPIO Pins]
+  ├── Pin 21 (SDA) ──────> [VL53L5CX SDA] & [LSM6DSOX SDA]  (I2C Data Line)
+  ├── Pin 22 (SCL) ──────> [VL53L5CX SCL] & [LSM6DSOX SCL]  (I2C Clock Line)
+  ├── Pin 25 (I2S_LRCK) ──> [MAX98357 LRC]                   (Audio Frame Sync)
+  ├── Pin 26 (I2S_BCLK) ──> [MAX98357 BCLK]                  (Audio Bit Clock)
+  └── Pin 27 (I2S_DOUT) ──> [MAX98357 DIN]                  (Audio Data In)
+
+[MAX98357 Speaker +/- Out] ──> [Bone Conduction Transducer Leads]</code></pre>
+    <p><strong>Assembly Setup:</strong> Mount the Arducam at the frame hinge, mount the VL53L5CX ToF sensor on the nose bridge pointing forward, and glue the bone conduction transducers to the temple arms to press firmly against your temporal bones. Route jumper wires back to your breadboard and connect to the ESP32-S3 and Nvidia Jetson Nano on your desk.</p>
+
+    <h3>7.4 Initial Software Deployment Guide</h3>
+    <p><strong>ESP32-S3 Sensor Processing:</strong> Write a basic C++ firmware loop in Arduino IDE or ESP-IDF using the <code>SparkFun_VL53L5CX_Library</code> to package the 8x8 depth array into JSON coordinates, broadcasting this telemetry over local Wi-Fi UDP at 15Hz.</p>
+    <p><strong>Jetson Orin Nano Object Recognition Setup:</strong> Flash the Jetson with JetPack 5.1.1, install PyTorch with CUDA acceleration, clone the Ultralytics YOLO repo, and run inference using a quantized <code>yolov8n.pt</code> weight file on the wide-angle camera stream to calculate spatial targets.</p>
+
+    <!-- 8. COMPETITIVE ANALYSIS -->
+    <h2>8. Competitive Analysis: EyeSync vs. EchoVision Pioneer Edition</h2>
+    <p>The <strong>EchoVision Pioneer Edition</strong> (developed by AGIGA) is a commercial assistive smart eyewear device. While EchoVision is a capable tool for basic text reading and scene description, <strong>EyeSync provides a structurally superior platform</strong> designed for active spatial autonomy, interactive physical kiosk operation, and secure offline processing.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Feature Dimension</th>
+          <th>AGIGA EchoVision Pioneer Edition</th>
+          <th>EyeSync Smart Glasses</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Depth & Space Sensing</strong></td>
+          <td>• Single 13MP Monocular 2D Camera (109° FOV).<br>• Cannot measure physical distance or depth.<br>• Fails in low-light environments.</td>
+          <td>• <strong>Dual Stereoscopic Cameras</strong> (5MP x 2).<br>• <strong>Active 8x8 Lidar Time-of-Flight Array</strong>.<br>• Sub-millimeter depth mapping.<br>• Functions in absolute pitch darkness.</td>
+        </tr>
+        <tr>
+          <td><strong>Navigation & Feedback</strong></td>
+          <td>• <strong>Passive Description</strong>: Lists objects upon request (e.g. <em>"A chair is ahead"</em>). User must estimate paths.</td>
+          <td>• <strong>Active Closed-Loop Guide</strong>: Calculates trajectories. Whispers step-by-step guides (e.g. <em>"Walk 5 steps, step right 10°"</em>).</td>
+        </tr>
+        <tr>
+          <td><strong>Kiosk & Interface Interaction</strong></td>
+          <td>• <strong>None</strong>: Can read screen text aloud, but cannot guide the user's hand to touch specific buttons on screen.</td>
+          <td>• <strong>Active Touchscreen Guide</strong>: Tracks the user's index finger in 3D, directing their hand to the exact button coordinates.</td>
+        </tr>
+        <tr>
+          <td><strong>Audio Privacy & Delivery</strong></td>
+          <td>• <strong>Directional Air-Conduction Speakers</strong>: Sound bleeds into quiet environments and is easily drowned out in subways.</td>
+          <td>• <strong>Temporal Bone-Conduction Transducers</strong>: 100% private sound, crystal-clear in deafening train stations.</td>
+        </tr>
+        <tr>
+          <td><strong>Processing & Latency</strong></td>
+          <td>• <strong>Cloud-Tethered</strong>: Streams frames to cloud servers. Causes 1.5s - 3s latency and requires data subscriptions ($9.99/mo).</td>
+          <td>• <strong>Local-Split Edge Node</strong>: VIO SLAM and safety loops run 100% offline (sub-100ms latency). No monthly data fees.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>8.2 Key Architectural Advantages of EyeSync</h3>
+    
+    <h4>1. Active 3D Lidar Depth vs. Flat 2D Vision</h4>
+    <p>EchoVision relies entirely on a single camera to "see" objects. However, a 2D camera cannot resolve scale or depth. For example, a flat camera cannot distinguish between a black rug and a deep hole in the floor, nor can it identify if an oncoming pedestrian is 1 meter away or 3 meters away. EyeSync resolves this by pairing stereoscopic cameras with an active infrared Lidar grid (the STMicroelectronics ToF sensor). EyeSync actively projects light vectors, mapping physical distances down to the millimeter. This enables critical safety features like drop-off prevention (detecting steps, subway platform edges, or road curbs) that are physically impossible to detect reliably with a single camera.</p>
+
+    <h4>2. Closed-Loop Kinematic Guidance vs. Static Object Listing</h4>
+    <p>EchoVision acts as a passive narrator—it describes what it sees but leaves the user to navigate the space. EyeSync is a spatial guide. By integrating local VIO SLAM with the sensor coprocessor, it actively calculates the user's trajectory relative to static walls and dynamic obstacles, feeding them continuous directional audio guidance.</p>
+
+    <h4>3. Touchscreen Interaction (Closing the Last-Mile Gap)</h4>
+    <p>As kiosks, ATMs, and touchscreen tablets replace physical buttons in everyday life, visually impaired individuals face severe barriers. EchoVision can read the text on a kiosk screen, but it cannot help a blind user physically press the correct button. EyeSync’s integrated hand-tracking loop tracks the coordinate vector of the user's finger, matching it to the parsed OCR screen buttons, and whispers spatial direction to guide their finger directly to the touch location.</p>
+
+    <h4>4. Temporal Bone-Conduction vs. Ambient Speaker Bleed</h4>
+    <p>Air-conduction directional speakers used by EchoVision create sound leakage, exposing private personal information (like ATM balances or reading private mail) to nearby bystanders. In loud urban environments, air-conduction speakers require high volume levels, which blocks the user's natural hearing and creates safety risks. EyeSync uses bone-conduction transducers to bypass the outer ear entirely, transmitting audio directly through the temporal bone to the inner ear, keeping the ear canal open and keeping the audio fully private.</p>
+  </div>
+
+</body>
+</html>

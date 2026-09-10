@@ -94,6 +94,8 @@ model Program {
   teachingHoursProf String?
   teachingHoursTA   String?
   courseSchedule    String?
+  locationFormat    String?        @default("Online (Remote)")
+  capacity          Int?           @default(5)
 
   applications Application[]
   createdAt    DateTime       @default(now())

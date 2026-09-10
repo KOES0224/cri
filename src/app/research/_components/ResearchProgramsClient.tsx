@@ -219,9 +219,14 @@ export default function ResearchProgramsClient({
                         </span>
                       )}
 
-                      <span className="text-xs font-medium text-gray-400 ml-auto hidden sm:inline-block">
-                        Winter Remote Cohort
-                      </span>
+                      <div className="ml-auto hidden sm:flex items-center gap-2">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100/80">
+                          {program.locationFormat || "Online (Remote)"}
+                        </span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
+                          Max {program.capacity || 5} Students
+                        </span>
+                      </div>
                     </div>
 
                     {/* Course Title & Research Focus */}

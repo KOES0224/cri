@@ -20,6 +20,8 @@ type ProgramFormProps = {
     teachingHoursProf?: string | null;
     teachingHoursTA?: string | null;
     courseSchedule?: string | null;
+    locationFormat?: string | null;
+    capacity?: number | null;
     professors?: { id: string; name: string }[];
   };
   professors?: { id: string; name: string; role?: string; university?: string; bio?: string; courseTitle?: string; courseDescription?: string; idealStudents?: string; potentialTopics?: string }[];
@@ -58,6 +60,8 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
     status: initialData?.status || "OPEN",
     isPublished: initialData?.isPublished !== undefined ? initialData.isPublished : true,
     tuition: initialData?.tuition || "",
+    locationFormat: initialData?.locationFormat || "Online (Remote)",
+    capacity: initialData?.capacity !== undefined && initialData?.capacity !== null ? initialData.capacity : 5,
     startDate: initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : "",
     endDate: initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "",
     content: initialData?.content || "",
@@ -136,6 +140,8 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
         teachingHoursProf: formData.teachingHoursProf || null,
         teachingHoursTA: formData.teachingHoursTA || null,
         courseSchedule: formData.courseSchedule || null,
+        locationFormat: formData.locationFormat || "Online (Remote)",
+        capacity: formData.capacity ? Number(formData.capacity) : 5,
         professorIds: formData.professorIds,
       };
 
@@ -352,6 +358,36 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
               {formData.isPublished ? "Visible on Public Website" : "Hidden from Public Website (Draft)"}
             </span>
           </label>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Delivery / Location Format *</label>
+          <select
+            name="locationFormat"
+            value={formData.locationFormat}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none font-medium bg-white"
+          >
+            <option value="Online (Remote)">Online (Remote) - 100% Virtual</option>
+            <option value="In-Person (On-Campus)">In-Person (On-Campus) - On-Campus</option>
+            <option value="Hybrid (In-Person & Online)">Hybrid (In-Person & Online)</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Cohort Capacity (Number of Students)</label>
+          <input
+            type="number"
+            name="capacity"
+            value={formData.capacity}
+            onChange={handleChange}
+            min={1}
+            max={100}
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+            placeholder="e.g. 5"
+          />
         </div>
       </div>
 

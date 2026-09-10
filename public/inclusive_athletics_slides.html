@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Inclusive Athletics // Closing the 80% Visual Gap</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/night.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --accent-lime: #D4FF00;
+      --text-cream: #F5F5F0;
+      --text-muted: #8E8E8A;
+      --border-color: rgba(212, 255, 0, 0.15);
+      --card-bg: rgba(255, 255, 255, 0.02);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { background: var(--bg-dark); font-family: 'Merriweather', serif !important; color: var(--text-cream); overflow: hidden; }
+    
+    /* Reveal.js Override */
+    .reveal { font-family: 'Merriweather', serif !important; }
+    .reveal .slides { text-align: left; }
+    .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+      font-family: 'Urbanist', sans-serif !important;
+      font-weight: 700;
+      color: var(--text-cream);
+      letter-spacing: -0.02em;
+      text-transform: none;
+    }
+    .reveal h1 { font-size: 3.8rem; font-weight: 900; line-height: 1.1; }
+    .reveal h2 { font-size: 2.8rem; font-weight: 700; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; }
+    .reveal h3 { font-size: 1.8rem; font-weight: 600; color: var(--accent-lime); }
+    .reveal p, .reveal li { font-size: 1.15rem; line-height: 1.7; color: var(--text-cream); font-weight: 300; }
+    .reveal .sub { font-family: 'Urbanist', sans-serif; font-size: 1.3rem; color: var(--accent-lime); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+    
+    /* Background Elements */
+    .wave-bg {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1;
+      opacity: 0.08;
+      pointer-events: none;
+    }
+    .wave-line {
+      fill: none;
+      stroke: var(--accent-lime);
+      stroke-width: 2;
+      stroke-dasharray: 4 4;
+      animation: waveMove 20s infinite linear;
+    }
+    @keyframes waveMove {
+      0% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: 400; }
+    }
+
+    /* Layout Components */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .slide-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 30px;
+      border-radius: 4px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .slide-card:hover {
+      border-color: var(--accent-lime);
+      background: rgba(212, 255, 0, 0.02);
+    }
+    .slide-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--accent-lime);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .slide-card:hover::before { opacity: 1; }
+    
+    .accent-text { color: var(--accent-lime) !important; font-family: 'Urbanist', sans-serif; font-weight: bold; }
+    .tech-pill {
+      display: inline-block;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--accent-lime);
+      border: 1px solid var(--accent-lime);
+      padding: 4px 10px;
+      border-radius: 2px;
+      margin-bottom: 15px;
+    }
+
+    /* Visual assets */
+    .mockup-container {
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 10px;
+      background: rgba(0,0,0,0.3);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .mockup-img { width: 100%; border-radius: 2px; display: block; filter: grayscale(10%) contrast(105%); }
+
+    /* Timeline component */
+    .timeline { display: flex; justify-content: space-between; position: relative; margin-top: 40px; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 15px; left: 0; width: 100%; height: 1px;
+      background: rgba(255,255,255,0.1);
+      z-index: 1;
+    }
+    .timeline-node {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      width: 22%;
+    }
+    .node-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--bg-dark);
+      border: 2px solid var(--accent-lime);
+      margin: 0 auto 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-lime);
+      font-family: 'Urbanist', sans-serif;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .timeline-node h4 { font-size: 1.1rem; margin-bottom: 5px; }
+    .timeline-node p { font-size: 0.9rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<div class="reveal">
+  <div class="slides">
+
+    <!-- SLIDE 1: Title Slide (Bold & Visionary) -->
+    <section data-background-color="#121212">
+      <svg class="wave-bg" viewBox="0 0 1440 810">
+        <path class="wave-line" d="M0,400 C360,300 720,500 1080,300 C1260,200 1380,250 1440,300" />
+        <path class="wave-line" d="M0,450 C360,350 720,550 1080,350 C1260,250 1380,300 1440,350" style="animation-delay: -2s; opacity: 0.5;" />
+      </svg>
+      <div class="sub">Conrad Challenge // Health & Nutrition Category</div>
+      <h1 style="margin-top: 20px;">Inclusive Athletics:<br>Closing the <span class="accent-text">80% Visual Information Gap</span></h1>
+      <p style="margin-top: 30px; max-width: 800px; font-size: 1.3rem;">Designing a spatial AI environment that shifts accessibility from physical retrofits to ambient intelligence, restoring complete athletic independence to the visually impaired.</p>
+      <div style="margin-top: 50px; font-family: 'Urbanist', sans-serif; font-size: 0.95rem; letter-spacing: 0.1em; color: var(--text-muted);">
+        PRESENTED BY TEAM ECHOGYM // VENTURE PORTFOLIO 2026
+      </div>
+    </section>
+
+    <!-- SLIDE 2: The Problem: The 80% Visual Information Void -->
+    <section data-background-color="#121212">
+      <div class="sub">The Friction</div>
+      <h2>The 80% Visual Information Void</h2>
+      <div class="grid-2">
+        <div>
+          <p style="margin-bottom: 20px;">Over 80% of environmental inputs in physical training are visually transmitted: machine occupied states, joint angle corrections, dynamic floor obstacles, and spatial cues.</p>
+          <div class="box-alert">
+            <h3 style="color: var(--accent-rose); font-size: 1.3rem; margin-top: 0; font-family: 'Urbanist', sans-serif;">The Exclusion Reality</h3>
+            <p style="font-size: 1rem; color: var(--text-cream); margin-bottom: 0;">Without continuous human supervision, visually impaired individuals face severe collision risks, form-induced injuries, and social isolation in fitness environments.</p>
+          </div>
+        </div>
+        <div>
+          <div class="slide-card">
+            <h3 style="font-size: 3.5rem; line-height: 1; margin-bottom: 5px;">80%</h3>
+            <p class="accent-text" style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 15px;">Information Deficit</p>
+            <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 0;">Visually impaired athletes are structurally locked out of self-guided wellness spaces due to dynamic, unmapped training floor variables.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: Insights: Beyond Function—The Need for Dignity, Design, and Privacy -->
+    <section data-background-color="#121212">
+      <div class="sub">Strategic Insights</div>
+      <h2>Beyond Function: Dignity, Design & Privacy</h2>
+      <p style="margin-bottom: 30px; max-width: 900px;">Winning accessibility designs do not merely provide utility; they resolve emotional and social vulnerabilities.</p>
+      <div class="grid-3">
+        <div class="slide-card">
+          <h3>1. Dignity</h3>
+          <p style="font-size: 0.95rem; color: #d0d0cc; margin-top: 10px;">Athletes refuse solutions that make them feel visually 'singled out.' The user experience must deliver autonomy without conspicuous assistance markers.</p>
+        </div>
+        <div class="slide-card">
+          <h3>2. Design</h3>
+          <p style="font-size: 0.95rem; color: #d0d0cc; margin-top: 10px;">Accessibility devices must match premium consumer design standards. Wearables should look like luxury accessories, not medical equipment.</p>
+        </div>
+        <div class="slide-card">
+          <h3>3. Privacy</h3>
+          <p style="font-size: 0.95rem; color: #d0d0cc; margin-top: 10px;">Camera-based solutions must process data locally. Athletes will not adopt systems that stream their biometric image feeds to the public cloud.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: Item 1: AI Vision Motion Coach (Pose Estimation & Voice Guidance) -->
+    <section data-background-color="#121212">
+      <div class="sub">Product Portfolio // Item 01</div>
+      <h2>AI Vision Motion Coach</h2>
+      <div class="grid-2">
+        <div>
+          <span class="tech-pill">LOCAL KINEMATIC POSE ESTIMATION</span>
+          <p style="margin-bottom: 20px;">By using high-frequency ceiling camera feeds, the system maps the athlete’s skeletal joints during movements like deadlifts, squats, or presses.</p>
+          <div class="box-success">
+            <h3 style="font-size: 1.15rem; margin-top: 0; font-family: 'Urbanist', sans-serif;">Acoustic Biomechanical Loops</h3>
+            <p style="font-size: 0.95rem; color: var(--text-cream); margin-bottom: 0;">Calculates joint angles in real time. If form deviates (e.g. rounded lumbar spine), a voice correction is whispered directly to their Bluetooth earbuds: <em>"Chest up, push hips back."</em></p>
+          </div>
+        </div>
+        <div>
+          <div class="mockup-container">
+            <img src="cctv_gym_posture_new.png" class="mockup-img" alt="Skeletal Joint Tracking Simulation">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Item 2: Inclusive Fitness Hub (Social Barrier Removal & Indoor Mapping) -->
+    <section data-background-color="#121212">
+      <div class="sub">Product Portfolio // Item 02</div>
+      <h2>Inclusive Fitness Hub</h2>
+      <div class="grid-2">
+        <div>
+          <div class="mockup-container">
+            <img src="cctv_gym_occupancy.png" class="mockup-img" alt="Occupancy Camera Stream Simulator">
+          </div>
+        </div>
+        <div>
+          <span class="tech-pill">AMBIENT COORDINATE MAPPING</span>
+          <p style="margin-bottom: 20px;">Instead of requiring physical beacons on every machine, a single ceiling camera maps spatial boundaries and identifies occupied/vacant states dynamically.</p>
+          <div class="slide-card">
+            <h4 style="margin-bottom: 10px; color: var(--accent-lime);">System-Level Autonomy</h4>
+            <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 0;">Athletes can independently navigate open spaces, identify open racks, and transit through corridors without relying on human guides or experiencing collision anxiety.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: Item 3: EyeSync Glasses (Vision-Language AI for Spatial Awareness) -->
+    <section data-background-color="#121212">
+      <div class="sub">Product Portfolio // Item 03</div>
+      <h2>EyeSync Glasses</h2>
+      <div class="grid-2">
+        <div>
+          <span class="tech-pill">ON-GLASS VISION-LANGUAGE MODEL</span>
+          <p style="margin-bottom: 20px;">Lightweight smart glasses equipped with ultra-low latency micro-cameras that feed local spatial feeds to a Vision-Language Processor (VLM) embedded on-frame.</p>
+          <div class="box-neutral">
+            <h4 style="color: var(--accent-lime); margin-top: 0; font-family: 'Urbanist', sans-serif;">Continuous Spatial Context</h4>
+            <p style="font-size: 0.95rem; color: var(--text-cream); margin-bottom: 0;">Transports immediate semantic audio feedback to the athlete: <em>"Rowing machine is two feet to your left, seat is facing you, handle is set at chest height."</em></p>
+          </div>
+        </div>
+        <div>
+          <div class="mockup-container">
+            <img src="user_phone_posture.png" class="mockup-img" alt="EyeSync Spatial Feedback Interface">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: Item 4: VIBE-Couture (Haptic Jewelry addressing the 'Design' insight) -->
+    <section data-background-color="#121212">
+      <div class="sub">Product Portfolio // Item 04</div>
+      <h2>VIBE-Couture</h2>
+      <div class="grid-2">
+        <div>
+          <div class="mockup-container">
+            <img src="earbud_soundwave_render.png" class="mockup-img" alt="Vibe Couture Haptic Rendering">
+          </div>
+        </div>
+        <div>
+          <span class="tech-pill">AESTHETIC ACCESSIBILITY WEARABLE</span>
+          <p style="margin-bottom: 20px;">Addresses the critical "Design and Dignity" insight. A collection of premium, elegant rings and bracelets that house micro-linear resonant actuators (LRAs).</p>
+          <div class="slide-card">
+            <h4 style="margin-bottom: 10px; color: var(--accent-lime);">Silent Spatial Haptics</h4>
+            <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 0;">Provides directional, varying vibration pulses to guide movement (e.g. left wrist pulses to signal alignment adjustment) without audio clutter or conspicuous medical bracelets.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: Item 5: SonicFlow Studio (Translating Group Motion into Rhythmic Sound) -->
+    <section data-background-color="#121212">
+      <div class="sub">Product Portfolio // Item 05</div>
+      <h2>SonicFlow Studio</h2>
+      <div class="grid-2">
+        <div>
+          <span class="tech-pill">KINETIC AUDIO SYNTHESIS</span>
+          <p style="margin-bottom: 20px;">Translates collective group class coordinates into synthesized, harmonious musical chords. The tempo and pitch adapt dynamically to synchronized motion.</p>
+          <div class="box-success">
+            <h4 style="color: var(--accent-green); margin-top: 0; font-family: 'Urbanist', sans-serif;">Empathetic Social Cohesion</h4>
+            <p style="font-size: 0.95rem; color: var(--text-cream); margin-bottom: 0;">Allows visually impaired class members to feel the rhythm and sync of the group (e.g. spin class pacing, rowing cadence) through auditory harmony, removing social distance.</p>
+          </div>
+        </div>
+        <div>
+          <div class="mockup-container">
+            <img src="user_earbud_navigation.png" class="mockup-img" alt="SonicFlow Audio Synthesis Graph">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: Technical Feasibility & Scalability for Conrad Challenge -->
+    <section data-background-color="#121212">
+      <div class="sub">Rigor & Execution</div>
+      <h2>Technical Feasibility & Scalability</h2>
+      <p style="margin-bottom: 30px; max-width: 900px;">EchoGym uses verified, modular infrastructure to guarantee ease of integration and low startup cost.</p>
+      <div class="grid-3">
+        <div class="slide-card">
+          <h4 style="color: var(--accent-lime);">Edge Compute Architecture</h4>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">Processes all kinematic video inputs locally on an Nvidia Jetson Orin node over local LAN, discarding frames instantly to ensure 100% biometric privacy.</p>
+        </div>
+        <div class="slide-card">
+          <h4 style="color: var(--accent-lime);">PoE Hardware Integration</h4>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">Leverages standard ceiling-mounted Power-over-Ethernet (PoE) security cameras. No proprietary, expensive sensors required on exercise gear.</p>
+        </div>
+        <div class="slide-card">
+          <h4 style="color: var(--accent-lime);">Standard Bluetooth Audio</h4>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">Whispers alerts to any standard bluetooth headphones already owned by the athlete, removing device distribution and cost barriers.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: Market Potential: The Global Inclusive Sports Economy -->
+    <section data-background-color="#121212">
+      <div class="sub">Market Sizing // TAM SAM SOM</div>
+      <h2>Global Inclusive Sports Economy</h2>
+      <div class="grid-2">
+        <div>
+          <p style="margin-bottom: 20px;">The addressable wellness and accessibility space presents massive commercial expansion pathways through B2B and B2G infrastructure budgets.</p>
+          <div class="box-neutral">
+            <h4 style="color: var(--accent-lime); margin-top: 0; font-family: 'Urbanist', sans-serif;">Bottoms-Up Unit Pricing</h4>
+            <p style="font-size: 0.95rem; color: var(--text-cream); margin-bottom: 0;">Upfront hardware bundle: $8,500 (cameras + local compute nodes). Layered recurring software licensing: $4,800/year per gym location.</p>
+          </div>
+        </div>
+        <div>
+          <div class="slide-card" style="margin-bottom: 16px;">
+            <span class="accent-text" style="font-size: 1.8rem; font-family: 'Fira Code', monospace;">$90 Billion TAM</span>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">Global security systems + accessibility compliance markets combined.</p>
+          </div>
+          <div class="slide-card">
+            <span class="accent-text" style="font-size: 1.8rem; font-family: 'Fira Code', monospace;">$12.5 Billion SAM</span>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">Premium fitness franchises and municipal center accessibility budgets.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 11: Roadmap: From Prototype to Empowerment -->
+    <section data-background-color="#121212">
+      <div class="sub">Implementation Timeline</div>
+      <h2>From Prototype to Empowerment</h2>
+      <div class="timeline">
+        <div class="timeline-node">
+          <div class="node-dot">1</div>
+          <h4>Discovery & Lab</h4>
+          <p>Validate joint tracking accuracy in local test environments.</p>
+        </div>
+        <div class="timeline-node">
+          <div class="node-dot">2</div>
+          <h4>Edge Beta</h4>
+          <p>Deploy edge compute modules in three local partner gyms.</p>
+        </div>
+        <div class="timeline-node">
+          <div class="node-dot">3</div>
+          <h4>SaaS Portal</h4>
+          <p>Launch software dashboard for gym safety audits and compliance reporting.</p>
+        </div>
+        <div class="timeline-node">
+          <div class="node-dot">4</div>
+          <h4>Scale (B2B/B2G)</h4>
+          <p>Retrofit franchise gyms and municipal community centers.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 12: Q&A: Designing a World Accessible to Every Eye -->
+    <section data-background-color="#121212">
+      <svg class="wave-bg" viewBox="0 0 1440 810">
+        <path class="wave-line" d="M0,300 C360,500 720,200 1080,400 C1260,500 1380,450 1440,300" />
+      </svg>
+      <div class="sub">Inclusive Athletics // Close the Gap</div>
+      <h2 style="font-size: 3.5rem; margin-top: 40px;">Designing a World Accessible<br>to <span class="accent-text">Every Eye</span></h2>
+      <p style="margin-top: 20px; max-width: 700px; font-size: 1.25rem;">We believe that safety, fitness, and physical autonomy are fundamental human rights. By turning camera grids into sensory maps, we restore independent strength training to millions.</p>
+      
+      <div class="grid-2" style="margin-top: 80px; align-items: flex-end;">
+        <div>
+          <h4 style="color: var(--accent-lime); margin-bottom: 10px;">Questions & Discussion</h4>
+          <p style="font-size: 1rem; color: var(--text-muted); margin-bottom: 0;">Explore: Team Credentials // Tech Demo // Financial Projections</p>
+        </div>
+        <div style="text-align: right;">
+          <a href="index.html" class="tech-pill" style="text-decoration: none; font-size: 0.9rem; padding: 8px 20px;">Open Gateway Portal</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    width: 1440,
+    height: 810,
+    margin: 0.08,
+    minScale: 0.2,
+    maxScale: 1.5,
+    controls: true,
+    progress: true,
+    slideNumber: 'c/t',
+    center: true,
+    autoAnimateEasing: 'ease'
+  });
+</script>
+</body>
+</html>

@@ -37,6 +37,10 @@ export async function submitApplication(
         content,
         status: "PENDING",
         expectedWaitDays: 7,
+      },
+      include: {
+        program: true,
+        user: true,
       }
     });
     
@@ -50,8 +54,24 @@ export async function submitApplication(
        ]
     });
 
+    // Stream submission to Google Sheet webhook if configured (safe non-blocking)
+    try {
+      const { syncApplicationToGoogleSheet } = await import("@/lib/googleSheets");
+      const formDataObj = JSON.parse(content || "{}");
+      await syncApplicationToGoogleSheet({
+        application: app,
+        user: session.user,
+        program: app.program,
+        formData: formDataObj,
+      });
+    } catch (sheetError) {
+      console.error("Google Sheets sync notice:", sheetError);
+    }
+
     revalidatePath("/dashboard/applications");
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/applications-admin");
+    revalidatePath("/dashboard/applications-admin/sheet");
     return { success: true, applicationId: app.id };
   } catch (err: any) {
     console.error("Apply error:", err);
