@@ -61,27 +61,9 @@ export default function HomeClient({ content }: { content: Record<string, string
         
         {/* Subtle grid texture overlay */}
         <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
-        
-        {/* Hover Indicator Signage (Visible when NOT hovered) */}
-        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-opacity duration-700 ease-in-out md:opacity-100 md:group-hover:opacity-0 hidden md:flex">
-          <motion.div 
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-            className="bg-white/10 backdrop-blur-xl border border-white/20 px-6 py-3.5 rounded-full flex items-center gap-3 shadow-2xl"
-          >
-            {/* Pulsing Dot Indicator */}
-            <div className="relative flex h-3 w-3 mr-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-            </div>
-            <span className="text-white/90 font-semibold tracking-wide text-sm">
-              Move cursor here to reveal
-            </span>
-          </motion.div>
-        </div>
 
-        {/* Text container fades out unless hovered (on desktop) */}
-        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10 transition-opacity duration-700 ease-in-out md:opacity-0 md:group-hover:opacity-100">
+        {/* Hero Content (Always visible by default) */}
+        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -204,26 +186,6 @@ export default function HomeClient({ content }: { content: Record<string, string
           </div>
         </div>
       </section>
-      
-      {/* Footer */}
-      <footer className="bg-gray-950 text-white py-20 px-6 relative z-10 overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.2)_0%,transparent_100%)]"></div>
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-12 relative z-10">
-          <div>
-            <h3 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500 break-words max-w-lg">
-              {content.landing_footer_cta || "Building the next generation of academic contributors."}
-            </h3>
-            <p className="text-gray-400 text-lg max-w-xs md:mt-6 mt-2">CRI. The Standard for Research.</p>
-          </div>
-          <div className="flex flex-col md:items-end gap-4">
-            <div className="flex gap-8 text-lg font-medium text-gray-300">
-              <a href="mailto:Admin@cri.kr" className="hover:text-white transition-colors">Admin@cri.kr</a>
-              <a href="tel:02-6203-8999" className="hover:text-white transition-colors">02-6203-8999</a>
-            </div>
-            <p className="text-sm text-gray-600 mt-2">©2024 Elite Research Co., Ltd. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -105,11 +105,17 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center space-x-4">
-                <Link href="/auth/login" className="text-sm font-semibold text-gray-600 hover:text-black transition-colors">
+                <Link href="/auth/login" className={`text-sm font-semibold transition-colors ${navTextClass}`}>
                   Sign in
                 </Link>
-                <Link href="/auth/login" className="group relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-black rounded-full overflow-hidden hover-lift click-press">
-                  <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-black opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <Link 
+                  href="/auth/login" 
+                  className={`group relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden hover-lift click-press transition-all ${
+                    isDarkHero && !scrolled
+                      ? "bg-white text-gray-900 hover:bg-gray-100 shadow-md"
+                      : "text-white bg-black hover:bg-gray-800"
+                  }`}
+                >
                   <span className="relative flex items-center">
                     Portal <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>

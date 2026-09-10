@@ -219,7 +219,7 @@ export default function ResearchProgramsClient({
                         </span>
                       )}
 
-                      <div className="ml-auto hidden sm:flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 sm:ml-auto">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100/80">
                           {program.locationFormat || "Online (Remote)"}
                         </span>

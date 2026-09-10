@@ -15,16 +15,14 @@ export async function submitContactForm(data: {
   }
 
   const session = await getServerSession(authOptions);
-  if (!session || !session.user || !session.user.email) {
-    return { success: false, error: "You must be signed in to submit an inquiry." };
-  }
+  const userId = session?.user?.id || null;
 
   try {
     const fullName = `${data.firstName} ${data.lastName}`.trim();
 
     await prisma.lead.create({
       data: {
-        userId: session.user.id, // Link to the authenticated user
+        userId, // Link to authenticated user if available, otherwise null for guests
         name: fullName,
         email: data.email,
         notes: data.message,

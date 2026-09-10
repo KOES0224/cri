@@ -1,4 +1,5 @@
 import { put } from '@vercel/blob';
+// @ts-ignore
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env' });
 

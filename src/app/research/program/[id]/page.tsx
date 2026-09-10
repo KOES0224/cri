@@ -11,6 +11,14 @@ import ApplyButton from "./ApplyButton";
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
 
+function getBackLink(category: string): string {
+  const cat = category?.toLowerCase() || '';
+  if (cat.includes('winter')) return '/research/winter';
+  if (cat.includes('seoul') || cat.includes('summer')) return '/research/summer-camp';
+  if (cat.includes('1-on-1') || cat.includes('research')) return '/research/1-on-1';
+  return '/research';
+}
+
 export default async function ProgramDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const program = await prisma.program.findUnique({
@@ -23,9 +31,9 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
   }
 
   return (
-    <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-32">
+    <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-36 lg:pb-32">
       <div className="max-w-7xl mx-auto px-6">
-        <Link href={`/research/${program.category}`} className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-10">
+        <Link href={getBackLink(program.category)} className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-10">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Programs
         </Link>
@@ -273,6 +281,24 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
            </div>
         </div>
       </div>
+
+      {/* Mobile Floating Sticky Action Bar */}
+      {program.status === 'OPEN' && (
+        <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-gray-200/80 p-4 z-40 lg:hidden shadow-[0_-8px_30px_rgba(0,0,0,0.08)] pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <div className="max-w-md mx-auto flex items-center justify-between gap-4">
+            <div className="shrink-0">
+              <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                <CreditCard className="w-3 h-3 text-blue-600" />
+                <span>App Fee</span>
+              </div>
+              <p className="font-black text-gray-900 text-lg leading-tight">$50 <span className="text-xs font-semibold text-gray-500">USD</span></p>
+            </div>
+            <div className="flex-1">
+              <ApplyButton programId={program.id} className="h-12 text-base shadow-md" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

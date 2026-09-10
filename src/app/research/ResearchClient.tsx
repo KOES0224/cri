@@ -48,7 +48,7 @@ export default function ResearchClient({ content }: { content: Record<string, st
     },
     {
       id: "1-on-1",
-      title: "1-on-[1] Advanced Research",
+      title: "1-on-1 Advanced Research",
       subtitle: "Advanced Research Program",
       icon: <BookOpen className="w-8 h-8 text-blue-500" />,
       description: "Our most exclusive offering. Work directly with a professor or senior researcher on a highly specialized topic of your choosing over 10 to 12 weeks.",

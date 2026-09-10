@@ -26,8 +26,10 @@ function ErrorAlert() {
   );
 }
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -68,7 +70,7 @@ export default function RegisterPage() {
         setError("Account created but auto-login failed. Please login manually.");
         setLoading(false);
       } else {
-        router.push("/dashboard");
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch (err: any) {
@@ -78,7 +80,7 @@ export default function RegisterPage() {
   }
 
   const handleOAuthSignIn = (provider: string) => {
-    signIn(provider, { callbackUrl: '/dashboard' });
+    signIn(provider, { callbackUrl });
   };
 
   return (
@@ -212,10 +214,24 @@ export default function RegisterPage() {
           </div>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-             Already have an account? <Link href="/auth/login" className="font-medium text-black hover:underline">Log in</Link>
+             Already have an account?{" "}
+             <Link 
+               href={callbackUrl !== "/dashboard" ? `/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/auth/login"} 
+               className="font-medium text-black hover:underline"
+             >
+               Log in
+             </Link>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="w-8 h-8 rounded-full border-4 border-gray-200 border-t-black animate-spin" /></div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

@@ -30,10 +30,10 @@ function PaymentSuccessContent() {
         return;
       }
 
-      // Retrieve saved application form draft from sessionStorage
+      // Retrieve saved application form draft from sessionStorage or localStorage
       let draftData: any = {};
       try {
-        const stored = sessionStorage.getItem("cri_apply_draft");
+        const stored = sessionStorage.getItem("cri_apply_draft") || localStorage.getItem("cri_apply_draft");
         if (stored) {
           draftData = JSON.parse(stored);
         }
@@ -69,6 +69,7 @@ function PaymentSuccessContent() {
         // Clean up draft storage
         try {
           sessionStorage.removeItem("cri_apply_draft");
+          localStorage.removeItem("cri_apply_draft");
         } catch (e) {}
 
         // Auto redirect to applications dashboard after 5 seconds

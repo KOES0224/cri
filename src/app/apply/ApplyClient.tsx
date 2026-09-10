@@ -36,9 +36,14 @@ export default function ApplyClient({ program, user }: ApplyClientProps) {
   const [error, setError] = useState("");
   const [uploadingResume, setUploadingResume] = useState(false);
 
+  const nameParts = user?.name ? user.name.trim().split(/\s+/) : [];
+  const defaultFirstName = nameParts[0] || "";
+  const defaultLastName = nameParts.slice(1).join(" ") || "";
+  const defaultProfessor = program?.professors?.[0]?.name || "";
+
   const [formData, setFormData] = useState({
-    studentFirstName: "",
-    studentLastName: "",
+    studentFirstName: defaultFirstName,
+    studentLastName: defaultLastName,
     gender: "",
     studentEmail: user.email || "",
     tShirtSize: "",
@@ -55,17 +60,17 @@ export default function ApplyClient({ program, user }: ApplyClientProps) {
     areaOfInterest: "",
     essay: "",
     shortAnswer: "",
-    firstChoiceProfessor: "",
+    firstChoiceProfessor: defaultProfessor,
     secondChoiceProfessor: "",
     thirdChoiceProfessor: "",
     previousResearch: "",
     howLearned: "",
   });
 
-  // Restore draft from sessionStorage if user previously started or returned from payment
+  // Restore draft from sessionStorage or localStorage if user previously started or returned from payment
   useEffect(() => {
     try {
-      const stored = sessionStorage.getItem("cri_apply_draft");
+      const stored = sessionStorage.getItem("cri_apply_draft") || localStorage.getItem("cri_apply_draft");
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed.programId === program.id && parsed.formData) {
@@ -127,12 +132,14 @@ export default function ApplyClient({ program, user }: ApplyClientProps) {
     setLoading(true);
     setError("");
 
-    // Persist form state into sessionStorage before redirecting to Toss checkout
+    // Persist form state into sessionStorage and localStorage before redirecting to Toss checkout
     try {
-      sessionStorage.setItem("cri_apply_draft", JSON.stringify({
+      const draftPayload = JSON.stringify({
         programId: program.id,
         formData,
-      }));
+      });
+      sessionStorage.setItem("cri_apply_draft", draftPayload);
+      localStorage.setItem("cri_apply_draft", draftPayload);
     } catch (e) {
       console.error("Draft save warning:", e);
     }
