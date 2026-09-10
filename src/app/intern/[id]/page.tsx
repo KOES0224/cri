@@ -4,22 +4,18 @@ import Link from "next/link";
 import { ArrowLeft, Building2, Briefcase, MapPin, CheckCircle2, ChevronRight, Calendar } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
-export default async function InternshipDetailsPage({ params }: { params: { id: string } }) {
+export default async function InternshipDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = await params;
   
   const internship = await prisma.program.findUnique({
     where: { id: unwrappedParams.id }
   });
 
-  if (!internship || internship.category !== "Internship") {
+  if (!internship || !internship.isPublished || internship.category !== "Internship") {
     notFound();
   }
 
-  // Generate dynamic requirements based on internship string (split by newlines if applicable)
-  // or default generic requirements if short description provided
-  const reqs = internship.description.length > 50 
-               ? ["Currently enrolled in a relevant degree program.", "Strong analytical and problem-solving skills.", "Ability to commit to the designated timeline."] 
-               : ["Passion for research", "High academic standing"];
+  const reqs = ["Share your academic interests and relevant experience.", "Discuss your availability and preferred research or industry area.", "Our team will explain partner details, responsibilities, eligibility and terms for suitable opportunities before you proceed."];
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-32">
@@ -59,7 +55,8 @@ export default async function InternshipDetailsPage({ params }: { params: { id: 
               {internship.description}
             </p>
             
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Prerequisites & Requirements</h3>
+            <p className="text-gray-600 mb-8">These opportunities are shared through a private network. Partner identities and role-specific information are discussed individually. Availability and placement are subject to partner review; an inquiry is not a confirmed placement.</p>
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">Your private consultation</h3>
             <div className="bg-gray-50 rounded-3xl p-8 mb-10 border border-gray-100">
               <ul className="space-y-4 m-0 p-0 list-none text-gray-700 text-lg">
                 {reqs.map((req, i) => (
@@ -72,8 +69,8 @@ export default async function InternshipDetailsPage({ params }: { params: { id: 
             </div>
             
             <div className="mt-12 flex justify-center">
-              <Link href="/auth/login" className="w-full md:w-auto px-12 py-5 bg-gray-900 text-white rounded-2xl text-center font-bold text-lg hover:bg-blue-600 transition-all shadow-xl hover:shadow-2xl flex items-center justify-center group/btn hover-lift click-press cursor-pointer">
-                Apply via Portal
+              <Link href={`/contact?topic=internship&programId=${encodeURIComponent(internship.id)}`} className="w-full md:w-auto px-12 py-5 bg-gray-900 text-white rounded-2xl text-center font-bold text-lg hover:bg-blue-600 transition-all shadow-xl hover:shadow-2xl flex items-center justify-center group/btn hover-lift click-press cursor-pointer">
+                Request a private consultation
                 <ChevronRight className="ml-2 h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
               </Link>
             </div>

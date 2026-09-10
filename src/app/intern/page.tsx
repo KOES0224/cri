@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Briefcase, Network, Sparkles, TrendingUp } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import InternshipListClient from "./_components/InternshipListClient";
@@ -20,7 +21,7 @@ export default async function InternPage() {
 
   // Fetch internships from the database where category is "Internship"
   const dbPrograms = await prisma.program.findMany({
-    where: { category: "Internship" },
+    where: { category: "Internship", isPublished: true },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }]
   });
 
@@ -61,7 +62,7 @@ export default async function InternPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center md:text-left mb-16">
             <h2 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tight mb-4">Why Intern Through CRI?</h2>
-            <p className="text-xl text-gray-500 max-w-2xl font-medium">We don't do generic intern pools. Every placement is a hand-selected trajectory into top-tier labs and NGOs.</p>
+            <p className="text-xl text-gray-500 max-w-2xl font-medium">Opportunities are introduced through a private partner network. An individual consultation helps us assess your interests, preparation and availability before discussing suitable placements.</p>
           </div>
 
           {/* Interactive Flex-Grow Pillars */}
@@ -78,7 +79,7 @@ export default async function InternPage() {
               <div className="relative z-10 mt-auto">
                 <h3 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight whitespace-nowrap drop-shadow-sm">Unrivaled Network</h3>
                 <p className="text-base md:text-lg text-gray-700 font-medium leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity duration-500 line-clamp-3 group-hover:line-clamp-none">
-                  Gain immediate access to a closed network of leading academic labs and corporate research divisions globally.
+                  Explore opportunities through CRI’s private network. Partner identities and role details are shared during an individual consultation when a suitable opportunity is available.
                 </p>
               </div>
             </div>
@@ -94,7 +95,7 @@ export default async function InternPage() {
               <div className="relative z-10 mt-auto">
                 <h3 className="text-3xl font-bold text-white mb-3 tracking-tight whitespace-nowrap drop-shadow-sm">Tailored Paths</h3>
                 <p className="text-base md:text-lg text-gray-300 font-medium leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity duration-500 line-clamp-3 group-hover:line-clamp-none">
-                  Matches perfectly to your specific academic ambitions and research trajectory. Zero generic assignments.
+                  Discuss your academic interests, existing skills and schedule so our team can assess fit with available opportunities.
                 </p>
               </div>
             </div>
@@ -110,7 +111,7 @@ export default async function InternPage() {
               <div className="relative z-10 mt-auto">
                 <h3 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight whitespace-nowrap drop-shadow-sm">Tangible Impact</h3>
                 <p className="text-base md:text-lg text-gray-700 font-medium leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity duration-500 line-clamp-3 group-hover:line-clamp-none">
-                  Our interns co-author papers alongside tenured professors, train actual models, and draft live NGO policies.
+                  Responsibilities, supervision and expected deliverables are clarified for each opportunity before you decide whether to proceed.
                 </p>
               </div>
             </div>
@@ -122,7 +123,7 @@ export default async function InternPage() {
       {/* Partner Network Marquee (Simulated) */}
       <div className="py-12 bg-gray-50 border-y border-gray-200 overflow-hidden shadow-inner">
         <div className="max-w-7xl mx-auto px-6 mb-6 text-center">
-          <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Our Global Placement Partners</p>
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Areas within our private network</p>
         </div>
         <div className="flex justify-center gap-4 md:gap-8 flex-wrap max-w-5xl mx-auto px-6">
           {partners.map((partner, i) => (
@@ -138,9 +139,10 @@ export default async function InternPage() {
       <div className="max-w-5xl mx-auto px-6 py-24 fade-in-up" style={{ animationDelay: "0.4s" }}>
         <div className="flex flex-col mb-12">
            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4 text-center md:text-left">Open Opportunities</h2>
-           <p className="text-lg md:text-xl text-gray-500 font-medium text-center md:text-left">Search and apply for our active internship placements below.</p>
+           <p className="text-lg md:text-xl text-gray-500 font-medium text-center md:text-left">Explore the opportunities below, then request a private consultation for partner details, eligibility, dates and participation terms. An inquiry does not guarantee a placement.</p>
         </div>
 
+        <Link href="/contact?topic=internship" className="inline-flex px-6 py-3 mb-8 rounded-xl bg-gray-900 text-white font-semibold">Request a private consultation</Link>
         <InternshipListClient initialPrograms={programs} />
       </div>
     </div>

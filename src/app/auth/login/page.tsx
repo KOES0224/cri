@@ -1,5 +1,6 @@
 "use client";
 
+import { safeCallbackUrl } from "@/lib/auth-input";
 import { signIn } from "next-auth/react";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -29,7 +30,7 @@ function ErrorAlert() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -43,6 +44,7 @@ function LoginForm() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
+    try {
     const res = await signIn("credentials", {
       email,
       password,
@@ -57,6 +59,7 @@ function LoginForm() {
       router.push(callbackUrl);
       router.refresh();
     }
+    } catch { setError("Unable to sign in. Check your connection and try again."); } finally { setLoading(false); }
   }
 
   const handleOAuthSignIn = (provider: string) => {
@@ -64,8 +67,8 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="absolute top-8 left-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center pt-44 pb-12 sm:px-6 lg:px-8">
+      <div className="absolute top-28 left-6">
         <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to main site
@@ -77,7 +80,7 @@ function LoginForm() {
           Portal Login
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Sign in to track your research applications
+          Sign in to continue your application or track your programs.
         </p>
       </div>
 
@@ -88,9 +91,10 @@ function LoginForm() {
             <ErrorAlert />
           </Suspense>
 
-          <form className="space-y-6" onSubmit={onSubmit}>
+          <p className="text-sm text-gray-600 mb-6">New applicant? <Link href="/admissions" className="text-blue-700 underline">Review the application steps, preparation checklist and fees</Link> before you begin.</p>
+          <form aria-busy={loading} className="space-y-6" onSubmit={onSubmit}>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email address</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
               <div className="mt-1">
                 <input
                   id="email"
@@ -105,7 +109,7 @@ function LoginForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
               <div className="mt-1 relative">
                 <input
                   id="password"
@@ -117,6 +121,8 @@ function LoginForm() {
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
                 >
@@ -125,8 +131,9 @@ function LoginForm() {
               </div>
             </div>
 
+            <Link href="/auth/recovery" className="block text-sm text-blue-700 underline">Forgot your password?</Link>
             {error && (
-              <div className="text-sm font-medium text-red-600">
+              <div role="alert" className="text-sm font-medium text-red-600">
                 {error}
               </div>
             )}

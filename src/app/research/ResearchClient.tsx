@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { ArrowRight, BookOpen, Globe, Laptop, Star, CheckCircle2, Award, Users } from "lucide-react";
+import ResearchGuide from "@/components/ResearchGuide";
 import { motion } from "framer-motion";
 
 export default function ResearchClient({ content }: { content: Record<string, string> }) {
   const hubs = [
     {
       id: "seoul",
-      title: "Onsite Summer Camp",
-      subtitle: "2-Week Global Intensive",
+      title: "Seoul Research Program & Global Research Program",
+      subtitle: "In-person summer research",
       icon: <Globe className="w-8 h-8 text-purple-500" />,
-      description: "A highly immersive, 2-week onsite intensive held over the summer in major global hubs including Seoul and NYC. Work closely with leading academics in an interactive, collaborative environment.",
-      features: ["2-week onsite intensive", "Daily intensive seminars", "Local symposium presentations"],
+      description: "In-person summer research for rising Grade 9 through university students. Develop a question from your own interests and write your own paper with professor and TA guidance.",
+      features: ["30 professor hours + 20 TA hours", "Up to 10 students per cohort", "Seoul and global in-person programs"],
       href: "/research/summer-camp",
       imageUrl: content.research_seoul_image || "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=2069&auto=format&fit=crop",
       highlight: false,
@@ -28,11 +29,11 @@ export default function ResearchClient({ content }: { content: Record<string, st
     },
     {
       id: "winter",
-      title: "Winter Online Research",
-      subtitle: "Remote Vacational Cohort",
+      title: "Winter Online Research Program",
+      subtitle: "Online during winter break",
       icon: <Laptop className="w-8 h-8 text-teal-500" />,
-      description: "An accelerated virtual program designed to bridge the academic year. Develop a research abstract into a full methodology over the winter break.",
-      features: ["Remote flexibility", "Structured milestone tracking", "Collaborative seminars"],
+      description: "An online research program during winter break, recommended for rising Grades 9–12. University students may also participate. Your interests guide the research question and student-authored paper.",
+      features: ["10 professor hours + 30 TA hours", "Up to 5 students per cohort", "Online instruction and research guidance"],
       href: "/research/winter",
       imageUrl: content.research_winter_image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop",
       highlight: false,
@@ -48,11 +49,11 @@ export default function ResearchClient({ content }: { content: Record<string, st
     },
     {
       id: "1-on-1",
-      title: "1-on-1 Advanced Research",
+      title: "1-on-1 Advanced Research Program",
       subtitle: "Advanced Research Program",
       icon: <BookOpen className="w-8 h-8 text-blue-500" />,
-      description: "Our most exclusive offering. Work directly with a professor or senior researcher on a highly specialized topic of your choosing over 10 to 12 weeks.",
-      features: ["Dedicated PhD mentor", "Personalized syllabus", "Publish-ready capstone"],
+      description: "For students ready for advanced, independent research. Work online or in person around your schedule, usually over 2–4 months. Projects may finish within a month or take longer; research readiness matters more than age.",
+      features: ["Your interests shape your research question", "Flexible start and individualized pacing", "Contact admissions for mentorship hours and fees"],
       href: "/research/1-on-1",
       imageUrl: content.research_1on1_image || "https://images.unsplash.com/photo-1576086213369-97a306d36557?q=80&w=2080&auto=format&fit=crop",
       highlight: true,
@@ -138,6 +139,7 @@ export default function ResearchClient({ content }: { content: Record<string, st
         </div>
       </div>
 
+      <div className="max-w-7xl mx-auto px-6"><ResearchGuide /></div>
       {/* Programs Display - Alternating Layout */}
       <div className="max-w-7xl mx-auto px-6 py-32 space-y-32">
         {hubs.map((hub, i) => {
@@ -172,7 +174,7 @@ export default function ResearchClient({ content }: { content: Record<string, st
 
                 <div className="pt-4">
                   <Link href={hub.href} className="inline-flex items-center px-8 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-gray-800 hover:scale-105 hover:shadow-xl transition-all duration-300 group">
-                    Explore {hub.title.split(' ')[0]}
+                    View programs
                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>

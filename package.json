@@ -7,7 +7,11 @@
     "build": "npx prisma db push && next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test": "tsx --test tests/*.test.ts",
+    "inventory:review": "tsx scripts/update-professor-marketing-bios.ts",
+    "inventory:programs": "tsx scripts/update-program-inventory.ts",
+    "test:integration": "tsx --test tests/server.integration.ts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
@@ -20,8 +24,8 @@
     "framer-motion": "^12.35.2",
     "googleapis": "^134.0.0",
     "lucide-react": "^0.577.0",
-    "next": "16.1.6",
-    "next-auth": "^4.24.13",
+    "next": "^16.3.4",
+    "next-auth": "^4.24.15",
     "prisma": "^5.11.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -30,7 +34,7 @@
     "remark-gfm": "^4.0.0",
     "resend": "^6.9.3",
     "tailwind-merge": "^3.5.0",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -40,8 +44,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "^16.3.4",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

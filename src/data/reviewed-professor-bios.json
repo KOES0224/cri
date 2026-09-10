@@ -1,0 +1,248 @@
+{
+  "reviewedAt": "2026-09-10",
+  "profiles": [
+    {
+      "name": "William Burke-White",
+      "aliases": [],
+      "role": "Professor of Law",
+      "bio": "William Burke-White is a professor at the University of Pennsylvania Carey Law School and served on the U.S. Secretary of State’s Policy Planning Staff during the Obama administration. Educated at Harvard and Cambridge, he studies international law, institutions and foreign policy. His work connects legal analysis with decisions made in government and international affairs.",
+      "sources": [
+        "https://www.law.upenn.edu/live/profiles/2932-william-burke-white"
+      ]
+    },
+    {
+      "name": "Jason Sello",
+      "aliases": [],
+      "role": "Professor of Pharmaceutical Chemistry",
+      "bio": "Jason Sello is a professor of pharmaceutical chemistry at the University of California, San Francisco, with doctoral training in biophysics at Harvard University. His research connects chemistry and biology to investigate antibiotics and bacterial systems. His background is relevant to students exploring how molecular research can address problems in human health.",
+      "sources": [
+        "https://profiles.ucsf.edu/jason.sello"
+      ]
+    },
+    {
+      "name": "Aziz Aboobaker",
+      "aliases": [],
+      "role": "Professor of Comparative and Functional Genomics",
+      "bio": "Aziz Aboobaker is a professor at the University of Oxford whose research investigates regeneration, stem cells and the evolution of animal biology. His laboratory uses organisms with remarkable regenerative abilities to understand how tissues are maintained and rebuilt. This work connects fundamental biological questions with modern genetics and genomics.",
+      "sources": [
+        "https://www.biology.ox.ac.uk/people/aziz-aboobaker"
+      ]
+    },
+    {
+      "name": "David McMillon",
+      "aliases": [],
+      "role": "Assistant Professor of Economics",
+      "bio": "David McMillon is an assistant professor at Emory University who earned his PhD in public policy at the University of Chicago and master’s degrees in mathematics and engineering at the University of Michigan. He studies education, intergenerational mobility and economic inequality, bringing quantitative tools to questions about opportunity and social outcomes.",
+      "sources": [
+        "https://economics.emory.edu/people/faculty/biography/mcmillon-david.html"
+      ]
+    },
+    {
+      "name": "Sebastian Rosato",
+      "aliases": [],
+      "role": "Professor of Political Science",
+      "bio": "Sebastian Rosato is a professor of political science at the University of Notre Dame and coauthor, with John Mearsheimer, of How States Think. His background includes Harvard research fellowships, degrees from Cambridge, Oxford and the University of Chicago, and earlier work at Goldman Sachs. He studies foreign policy, great-power competition and international security.",
+      "sources": [
+        "https://politicalscience.nd.edu/people/sebastian-rosato/"
+      ]
+    },
+    {
+      "name": "Brian Stoltz",
+      "aliases": [],
+      "role": "Professor of Chemistry",
+      "bio": "Brian Stoltz is a professor of chemistry at Caltech and a recipient of Caltech’s Feynman Prize for Excellence in Teaching. His research in organic synthesis explores how chemists build complex molecules and develop new chemical reactions. His work brings together molecular design, experimental strategy and the chemistry underlying potential therapeutic compounds.",
+      "sources": [
+        "https://www.caltech.edu/about/news/chemistry-professor-awarded-feynman-teaching-prize-67634"
+      ]
+    },
+    {
+      "name": "Samuel Kunes",
+      "aliases": [],
+      "role": "Professor of Molecular and Cellular Biology",
+      "bio": "Samuel Kunes is a professor of molecular and cellular biology at Harvard University. His research uses the fruit fly to investigate how nervous systems develop and how neural circuits support behavior and plasticity. His work connects genetics, cell biology and neuroscience through experimentally testable questions.",
+      "sources": [
+        "https://www.mcb.harvard.edu/directory/samuel-kunes/"
+      ]
+    },
+    {
+      "name": "Anastasia Romanou",
+      "aliases": [],
+      "role": "Climate Scientist",
+      "bio": "Anastasia Romanou is a physical scientist at NASA’s Goddard Institute for Space Studies and has an adjunct appointment at Columbia University. Her research examines the global carbon cycle, ocean processes and climate change through Earth-system modeling. Her work connects mathematical models with questions about our planet’s future.",
+      "sources": [
+        "https://www.giss.nasa.gov/staff/aromanou/"
+      ]
+    },
+    {
+      "name": "Achilles Venetoulias",
+      "aliases": [],
+      "role": "Adjunct Professor of Business",
+      "bio": "Achilles Venetoulias is an adjunct professor in finance at Columbia Business School. His background includes a Stanford PhD in statistics, teaching at MIT Sloan, and founding two hedge funds. He connects quantitative analysis with investment practice, including the use of mathematical models to understand financial risk and portfolio decisions.",
+      "sources": [
+        "https://business.columbia.edu/faculty/people/achilles-venetoulias"
+      ]
+    },
+    {
+      "name": "Alexander Ploss",
+      "aliases": [],
+      "role": "Professor of Molecular Biology",
+      "bio": "Alexander Ploss is the Harry C. Wiess Professor in the Life Sciences at Princeton University. His scientific training includes Cornell and Memorial Sloan Kettering, followed by research at Rockefeller University. His laboratory investigates infectious diseases and develops experimental systems to understand how pathogens interact with their hosts.",
+      "sources": [
+        "https://molbio.princeton.edu/people/alexander-ploss"
+      ]
+    },
+    {
+      "name": "Robin Murphy",
+      "aliases": [],
+      "role": "Experimental Psychologist",
+      "bio": "Robin Murphy is an experimental psychologist at the University of Oxford and a fellow of Corpus Christi College. His research investigates learning, reasoning and the processes underlying human behavior. His work offers a foundation for exploring psychological questions through careful experimental design and evidence.",
+      "sources": [
+        "https://www.psy.ox.ac.uk/people/robin-murphy"
+      ]
+    },
+    {
+      "name": "Ronaldo I. Borja",
+      "aliases": [
+        "Ronald Borja",
+        "Ronaldo Borja"
+      ],
+      "role": "Professor of Civil and Environmental Engineering",
+      "bio": "Ronaldo I. Borja is a professor of civil and environmental engineering at Stanford University and a recipient of the Maurice A. Biot Medal. His work in computational mechanics examines how materials and geological systems deform and fail. He is the author of Plasticity: Modeling & Computation, connecting mathematical theory with engineering simulation.",
+      "sources": [
+        "https://web.stanford.edu/~borja/"
+      ]
+    },
+    {
+      "name": "Philipp Koehn",
+      "aliases": [],
+      "role": "Professor of Computer Science",
+      "bio": "Philipp Koehn is a professor of computer science at Johns Hopkins University and a researcher in machine translation. He is known for contributions including the Europarl corpus and the Moses translation system. His work connects language, statistical modeling and artificial intelligence, with direct relevance to how computers learn to translate human language.",
+      "sources": [
+        "https://engineering.jhu.edu/faculty/philipp-koehn/"
+      ]
+    },
+    {
+      "name": "Peter Pietzuch",
+      "aliases": [],
+      "role": "Professor of Distributed Systems",
+      "bio": "Peter Pietzuch is a professor of distributed systems at Imperial College London and a co-director of its I-X initiative. His research explores the infrastructure behind cloud computing, secure systems and data-intensive applications. His work connects computer systems research with the practical challenges of making large-scale software reliable and efficient.",
+      "sources": [
+        "https://ix.imperial.ac.uk/our-people"
+      ]
+    },
+    {
+      "name": "Haifeng Xu",
+      "aliases": [],
+      "role": "Associate Professor of Computer Science and Data Science",
+      "bio": "Haifeng Xu is an associate professor at the University of Chicago and directs the SIGMA lab. A former Harvard postdoctoral fellow and recipient of a Google Faculty Research Award, he studies multi-agent artificial intelligence, machine learning and computational economics. His work explores how algorithms make decisions and interact in markets and strategic environments.",
+      "sources": [
+        "https://www.computerscience.uchicago.edu/people/haifeng-xu/",
+        "https://www.haifeng-xu.com/files/cv-xu.pdf"
+      ]
+    },
+    {
+      "name": "Ryan Fang",
+      "aliases": [
+        "Ryan Yuhao Fang"
+      ],
+      "role": "Associate Instructional Professor of Economics",
+      "bio": "Ryan Yuhao Fang is an associate instructional professor in economics at the University of Chicago, where he also earned his PhD. His interests include microeconomic theory, information economics and behavioral decision-making. His work examines how people use information, respond to incentives and make choices under uncertainty.",
+      "sources": [
+        "https://economics.uchicago.edu/directory/ryan-yuhao-fang"
+      ]
+    },
+    {
+      "name": "Liam Francis Gearon",
+      "aliases": [
+        "Liam Gearon"
+      ],
+      "role": "Associate Professor of Education",
+      "bio": "Liam Francis Gearon is an associate professor of education at the University of Oxford and a senior research fellow at Harris Manchester College. His scholarship examines education, religion and politics, including the Oxford Handbook of Religion and Education. His work provides a foundation for research into how educational ideas and institutions shape public life.",
+      "sources": [
+        "https://www.education.ox.ac.uk/person/liam-gearon/"
+      ]
+    },
+    {
+      "name": "Matthew Grimes",
+      "aliases": [],
+      "role": "Professor of Entrepreneurship and Sustainable Futures",
+      "bio": "Matthew Grimes is Professor of Entrepreneurship and Sustainable Futures at Cambridge Judge Business School. His research explores entrepreneurship, social innovation and how organizations respond to societal challenges. His work connects business strategy with questions about purpose, sustainability and the development of new ventures.",
+      "sources": [
+        "https://www.jbs.cam.ac.uk/people/matthew-grimes/"
+      ]
+    },
+    {
+      "name": "Steven Fischer",
+      "aliases": [],
+      "role": "Filmmaker, Writer and Producer",
+      "bio": "Steven Fischer is an Emmy-nominated writer, producer and director. His creative background connects filmmaking with storytelling and visual communication. For students interested in film, his professional practice offers a reference point for examining how creative ideas are developed and communicated to an audience.",
+      "sources": [
+        "https://greattalk.org/about/"
+      ]
+    },
+    {
+      "name": "Thomas Meade",
+      "aliases": [],
+      "role": "Professor of Chemistry",
+      "bio": "Thomas Meade is the Eileen M. Foell Professor of Cancer Research at Northwestern University, with earlier research training at Harvard Medical School and Caltech. His work connects chemistry, molecular imaging and biosensors. He investigates tools that help researchers observe biological processes and explore new approaches to medical diagnosis.",
+      "sources": [
+        "https://chemistry.northwestern.edu/people/faculty/profiles/thomas-meade.html"
+      ]
+    },
+    {
+      "name": "Jan Van der Spiegel",
+      "aliases": [],
+      "role": "Electrical and Systems Engineering Educator",
+      "bio": "Jan Van der Spiegel’s career at the University of Pennsylvania includes serving as a professor of electrical and systems engineering and an associate dean. Penn recognized his student advising with the Ford Motor Company Award for Faculty Advising. His background brings together engineering scholarship, teaching and academic mentorship.",
+      "sources": [
+        "https://almanac.upenn.edu/archive/volumes/v58/n32/teaching-engineering.html"
+      ]
+    },
+    {
+      "name": "Jens Hagendorff",
+      "aliases": [],
+      "role": "Professor of Finance",
+      "bio": "Jens Hagendorff is a professor of finance at King’s College London. His experience includes work with the Bank of Spain and engagement with central banks, regulators and financial institutions. His research examines banking, corporate governance and risk, connecting financial evidence with decisions made by institutions and policymakers.",
+      "sources": [
+        "https://www.kcl.ac.uk/people/jens-hagendorff"
+      ]
+    },
+    {
+      "name": "Jens Rittscher",
+      "aliases": [],
+      "role": "Professor of Engineering Science",
+      "bio": "Jens Rittscher is a professor of engineering science at the University of Oxford, with earlier leadership experience in computer vision at GE Global Research. His work applies image analysis and machine learning to biomedical problems. His research connects advanced computing with the interpretation of complex biological and medical images.",
+      "sources": [
+        "https://eng.ox.ac.uk/people/jens-rittscher"
+      ]
+    },
+    {
+      "name": "Jiann-Wen Ju",
+      "aliases": [],
+      "role": "Professor of Civil and Environmental Engineering",
+      "bio": "Jiann-Wen Ju is a professor of civil and environmental engineering at UCLA and received a lifetime achievement medal for his contributions to damage mechanics. His research examines how materials behave, accumulate damage and fail. His work connects mathematical modeling with questions about structural performance and engineering reliability.",
+      "sources": [
+        "https://newsroom.ucla.edu/dept/faculty/engineering-professor-honored-for-lifetime-achievement-in-study-of-damage-mechanics"
+      ]
+    },
+    {
+      "name": "Helen Haste",
+      "aliases": [],
+      "role": "Psychologist and Education Scholar",
+      "bio": "Helen Haste is a psychologist and education scholar who has held a visiting professorship at Harvard Graduate School of Education. Her work explores civic participation, moral development and young people’s engagement with society. She has also contributed to research for UNESCO’s Futures of Education initiative.",
+      "sources": [
+        "https://www.reach.gse.harvard.edu/resources/researchers",
+        "https://www.gse.harvard.edu/ideas/usable-knowledge/16/01/civics-today"
+      ]
+    },
+    {
+      "name": "Gbenga Ibikunle",
+      "aliases": [],
+      "role": "Professor of Finance",
+      "bio": "Gbenga Ibikunle is a professor of finance at the University of Edinburgh Business School and directs its Centre for Financial Innovations. His work includes leadership in a research partnership supported by NatWest Group. He studies financial markets and innovation, connecting academic research with questions facing financial institutions.",
+      "sources": [
+        "https://www.business-school.ed.ac.uk/staff/gbenga-ibikunle"
+      ]
+    }
+  ]
+}

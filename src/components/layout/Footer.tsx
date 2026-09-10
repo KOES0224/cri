@@ -48,17 +48,17 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li>
                 <Link href="/research/winter" className="text-gray-300 hover:text-white transition-colors">
-                  Winter Remote Cohort
+                  Winter Online Research Program
                 </Link>
               </li>
               <li>
                 <Link href="/research/summer-camp" className="text-gray-300 hover:text-white transition-colors">
-                  Onsite Summer Camp (Seoul)
+                  Seoul & Global Research Programs
                 </Link>
               </li>
               <li>
                 <Link href="/research/1-on-1" className="text-gray-300 hover:text-white transition-colors">
-                  1-on-1 Mentorship
+                  1-on-1 Advanced Research Program
                 </Link>
               </li>
               <li>
@@ -151,6 +151,7 @@ export default function Footer() {
 
         {/* Bottom Bar: Copyright & Accreditations */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+          <div className="flex flex-wrap gap-4"><Link href="/admissions" className="underline">Application guide</Link><Link href="/privacy" className="underline">Privacy information</Link></div>
           <p>© 2026 CRI Global. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <span>The Academic Standard for Student Research</span>

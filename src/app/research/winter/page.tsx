@@ -16,8 +16,8 @@ export default async function WinterResearchPage() {
   return (
     <ResearchProgramsClient 
       programs={programs}
-      title="Winter Remote Cohort"
-      description="Structure your methodology, conduct literature reviews, and begin your data collection over the winter holiday. Fully remote."
+      title="Winter Online Research Program"
+      description="Online research during winter break, recommended for rising Grades 9–12; university students may also participate. Up to 5 students per cohort, with 10 professor hours and 30 TA hours."
       categoryFilter={["Winter Online", "Winter"]}
     />
   );

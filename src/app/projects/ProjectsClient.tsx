@@ -86,7 +86,7 @@ export default function ProjectsClient({ content }: { content: Record<string, st
                   <p className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tighter mb-1 drop-shadow-sm">80<span className="text-transparent bg-clip-text bg-gradient-to-br from-teal-500 to-emerald-500">+</span></p>
                   <p className="text-[10px] md:text-xs font-extrabold text-teal-900/60 uppercase tracking-widest">Global Awards</p>
                 </div>
-                <Link href="/projects/group" className="bg-gradient-to-br from-gray-900 to-black rounded-[2rem] p-6 md:p-8 flex flex-col justify-center items-center text-center shadow-lg hover:scale-[1.02] transition-transform group border border-gray-800">
+                <Link href="/projects/gallery" className="bg-gradient-to-br from-gray-900 to-black rounded-[2rem] p-6 md:p-8 flex flex-col justify-center items-center text-center shadow-lg hover:scale-[1.02] transition-transform group border border-gray-800">
                   <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center mb-3 group-hover:bg-white/20 transition-colors border border-white/10">
                      <ArrowRight className="w-5 h-5 text-white" />
                   </div>

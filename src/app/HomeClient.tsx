@@ -63,7 +63,7 @@ export default function HomeClient({ content }: { content: Record<string, string
         <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
 
         {/* Desktop-only Hover Indicator Signage (Hidden on mobile, visible on desktop until hovered) */}
-        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-opacity duration-700 ease-in-out md:opacity-100 md:group-hover:opacity-0 hidden md:flex">
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-opacity duration-700 ease-in-out md:opacity-100 md:group-hover:opacity-0 md:group-focus-within:opacity-0 hidden md:flex">
           <motion.div 
             animate={{ y: [0, -10, 0] }}
             transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
@@ -81,7 +81,7 @@ export default function HomeClient({ content }: { content: Record<string, string
         </div>
 
         {/* Hero Content: Always visible on mobile, reveals on hover on desktop */}
-        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10 transition-opacity duration-700 ease-in-out opacity-100 md:opacity-0 md:group-hover:opacity-100 pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto">
+        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10 transition-opacity duration-700 ease-in-out opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -92,7 +92,7 @@ export default function HomeClient({ content }: { content: Record<string, string
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
             </span>
-            {content.landing_pill_badge || "Applications open for 2026 Seoul Research Program"}
+            {content.landing_pill_badge || "Student-led Research Programs"}
           </motion.div>
           
           <motion.h1 

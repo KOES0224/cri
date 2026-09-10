@@ -20,7 +20,7 @@ function PaymentFailContent() {
 
         <h2 className="text-2xl font-black text-gray-900 mb-2">Payment Incomplete</h2>
         <p className="text-gray-500 text-sm leading-relaxed mb-6">
-          Your card was not charged. Your application information has been preserved so you can easily try again.
+          Payment was not confirmed on this page. Check your card or payment provider before retrying. Your saved checkout application can be resumed with the same account; contact admissions if it has expired.
         </p>
 
         <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 text-xs text-left mb-6 font-mono text-gray-600">
@@ -30,7 +30,7 @@ function PaymentFailContent() {
 
         <div className="flex flex-col gap-3">
           <Link
-            href={programId ? `/apply?programId=${programId}` : "/research"}
+            href={programId ? `/apply?programId=${encodeURIComponent(programId)}` : "/research"}
             className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold flex items-center justify-center transition-all shadow-lg shadow-blue-500/25"
           >
             <RotateCcw className="w-4 h-4 mr-2" />

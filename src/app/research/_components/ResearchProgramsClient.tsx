@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { ArrowLeft, Clock, Calendar, ChevronRight, Filter } from "lucide-react";
-import { format } from "date-fns";
-import { useState } from "react";
+import { admissionState, admissionLabel, programFacts, programKind, programDate } from "@/lib/program-policy";
+import ResearchGuide from "@/components/ResearchGuide";
+import { useState, useEffect } from "react";
 
 export default function ResearchProgramsClient({ 
   programs, 
@@ -18,25 +19,22 @@ export default function ResearchProgramsClient({
 }) {
   const [activeTab, setActiveTab] = useState("ALL");
   
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => { const timer = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(timer); }, []);
+
   // Filter programs based on visibility, the specific hub category, and then the active tab
   const filteredPrograms = programs.filter(p => {
     // Only display published programs on the public website
     if (p.isPublished === false) return false;
 
     // First ensure it belongs to this hub's category (case-insensitive & robust)
-    const cat = (p.category || "").trim().toLowerCase();
-    const matchesCategory = Array.isArray(categoryFilter)
-      ? categoryFilter.some(c => {
-          const target = c.trim().toLowerCase();
-          return cat === target || cat.includes(target);
-        })
-      : cat === categoryFilter.trim().toLowerCase() || cat.includes(categoryFilter.trim().toLowerCase());
-    
+    const matchesCategory = (Array.isArray(categoryFilter) ? categoryFilter : [categoryFilter])
+      .some(category => programKind(category) === programKind(p.category));
     if (!matchesCategory) return false;
     
     // Then filter by active tab status
     if (activeTab === "ALL") return true;
-    return p.status === activeTab;
+    return activeTab === "CLOSED" ? admissionState(p, now) !== "OPEN" : admissionState(p, now) === "OPEN";
   });
 
   return (
@@ -56,28 +54,29 @@ export default function ResearchProgramsClient({
           </p>
         </div>
 
+        <ResearchGuide category={Array.isArray(categoryFilter) ? categoryFilter[0] : categoryFilter} />
         {/* Filters */}
-        <div className="flex items-center gap-4 mb-10 overflow-x-auto pb-4">
+        <div className="flex flex-wrap items-center gap-3 mb-10 pb-4">
            <div className="flex items-center text-sm font-bold text-gray-400 uppercase tracking-wider mr-4">
              <Filter className="w-4 h-4 mr-2" /> Filter
            </div>
            <button 
-             onClick={() => setActiveTab("ALL")}
+             aria-pressed={activeTab === "ALL"} onClick={() => setActiveTab("ALL")}
              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${activeTab === "ALL" ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
            >
              All Programs
            </button>
            <button 
-             onClick={() => setActiveTab("OPEN")}
+             aria-pressed={activeTab === "OPEN"} onClick={() => setActiveTab("OPEN")}
              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${activeTab === "OPEN" ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-blue-50"}`}
            >
              Accepting Applications
            </button>
            <button 
-             onClick={() => setActiveTab("CLOSED")}
+             aria-pressed={activeTab === "CLOSED"} onClick={() => setActiveTab("CLOSED")}
              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${activeTab === "CLOSED" ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
            >
-             Closed
+             Closed / Completed
            </button>
         </div>
 
@@ -92,6 +91,7 @@ export default function ResearchProgramsClient({
         ) : (
           <div className="space-y-6">
             {filteredPrograms.map((program) => {
+              const facts = programFacts(program);
               const prof = program.professors && program.professors.length > 0 ? program.professors[0] : null;
 
               // Disciplinary badge determination
@@ -202,14 +202,14 @@ export default function ResearchProgramsClient({
                   <div className="min-w-0 flex-1 p-6 sm:p-8 flex flex-col justify-between gap-5 bg-white">
                     {/* Header Badges */}
                     <div className="flex flex-wrap items-center gap-2">
-                      {program.status === "OPEN" ? (
+                      {admissionState(program, now) === "OPEN" ? (
                         <span className="inline-flex items-center px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black uppercase tracking-wider rounded-full border border-emerald-200">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
                           Accepting Applications
                         </span>
                       ) : (
                         <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-black uppercase tracking-wider rounded-full">
-                          Closed
+                          Closed / Completed
                         </span>
                       )}
 
@@ -221,11 +221,9 @@ export default function ResearchProgramsClient({
 
                       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 sm:ml-auto">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100/80">
-                          {program.locationFormat || "Online (Remote)"}
+                          {facts.format}
                         </span>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
-                          Max {program.capacity || 5} Students
-                        </span>
+                        {facts.capacity != null && <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">Max {facts.capacity} Students</span>}
                       </div>
                     </div>
 
@@ -238,6 +236,7 @@ export default function ResearchProgramsClient({
                       </Link>
                       <p className="text-sm sm:text-base text-gray-600 line-clamp-3 leading-relaxed font-normal pt-1">
                         {program.description}
+                      {prof?.bio && <span className="block mt-3 text-gray-700">{prof.bio}</span>}
                       </p>
                     </div>
 
@@ -247,13 +246,13 @@ export default function ResearchProgramsClient({
                       <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
                         <div className="flex items-center text-gray-700 font-semibold bg-gray-50 px-3.5 py-2 rounded-xl border border-gray-100">
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          {program.startDate ? format(new Date(program.startDate), 'MMM d') : 'TBA'}
-                          {program.endDate ? ` - ${format(new Date(program.endDate), 'MMM d, yyyy')}` : ''}
+                          {facts.kind === 'individual' ? 'Flexible start · typically 2–4 months' : program.startDate ? programDate(program.startDate) : 'Schedule available on inquiry'}
+                          {facts.kind !== 'individual' && program.endDate ? ` – ${programDate(program.endDate)}` : ''}
                         </div>
 
                         {program.tuition && (
                           <div className="font-black text-gray-900 text-base bg-emerald-50 text-emerald-900 border border-emerald-100 px-3.5 py-1.5 rounded-xl">
-                            ${program.tuition.toLocaleString()} <span className="text-xs font-bold text-emerald-700">USD</span>
+                            Tuition ${program.tuition.toLocaleString()} <span className="text-xs font-bold text-emerald-700">USD</span>
                           </div>
                         )}
 
