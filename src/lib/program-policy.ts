@@ -32,6 +32,9 @@ export function admissionState(program: ProgramLike, now: Date = new Date()) {
   const end = program.endDate && seoulDay(program.endDate);
   if (program.status === 'COMPLETED' || (end && end < seoulDay(now)!)) return 'ENDED' as const;
   if (program.isPublished === false || program.status !== 'OPEN') return 'CLOSED' as const;
+  const kind = programKind(program.category);
+  // Seasonal inventory without a valid end date must not accept indefinite payments.
+  if (['seoul', 'global', 'winter'].includes(kind) && !end) return 'CLOSED' as const;
   return 'OPEN' as const;
 }
 export function admissionLabel(program: ProgramLike, now?: Date) {

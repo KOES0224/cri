@@ -23,7 +23,7 @@ const userId=`test-${key}`, otherId=`other-${key}`, openId=`open-${key}`, closed
 const realFetch=globalThis.fetch;
 test('real database: access control, private upload, checkout idempotency and password recovery', async()=>{
  await db.user.createMany({data:[{id:userId,email:`${key}@example.test`,role:'STUDENT'},{id:otherId,email:`other-${key}@example.test`,role:'STUDENT'}]});
- await db.program.createMany({data:[{id:openId,title:'QA Winter',description:'Local only',category:'Winter',status:'OPEN'},{id:closedId,title:'QA Summer',description:'Local only',category:'Summer Camp',status:'OPEN',endDate:new Date('2020-07-31')} ]});
+ await db.program.createMany({data:[{id:openId,title:'QA Winter',description:'Local only',category:'Winter',status:'OPEN',endDate:new Date(Date.now()+86400000)},{id:closedId,title:'QA Summer',description:'Local only',category:'Summer Camp',status:'OPEN',endDate:new Date('2020-07-31')} ]});
  try {
   assert.equal(await allowRequest('integration',key,2,60),true);
   assert.equal(await allowRequest('integration',key,2,60),true);

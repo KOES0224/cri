@@ -16,6 +16,11 @@ test('manual closure and unpublished inventory cannot reopen automatically', () 
   assert.equal(admissionState({category:'Winter',status:'COMPLETED'}),'ENDED');
 });
 test('program standards override contradictory legacy inventory', () => {
+  for (const category of ['Summer Camp', 'Global Research Program', 'Winter']) {
+    assert.equal(admissionState({category, status:'OPEN', endDate:null}), 'CLOSED');
+    assert.equal(admissionState({category, status:'OPEN', endDate:'invalid'}), 'CLOSED');
+  }
+  assert.equal(admissionState({category:'Research', status:'OPEN', endDate:null}), 'OPEN');
   for(const category of ['Summer Camp','Global Research Program']) {
     const f=programFacts({category,capacity:5,locationFormat:'Online'});
     assert.equal(f.capacity,10); assert.equal(f.format,'In person (Onsite)'); assert.equal(f.professorHours,'30 hours'); assert.equal(f.taHours,'20 hours');
