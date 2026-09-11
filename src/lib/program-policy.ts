@@ -19,7 +19,7 @@ export function programFacts(program: ProgramLike) {
     capacity: summer ? 10 : kind === 'winter' ? 5 : kind === 'individual' ? null : program.capacity,
     professorHours: summer ? '30 hours' : kind === 'winter' ? '10 hours' : kind === 'individual' ? 'Discuss your plan with admissions' : program.teachingHoursProf,
     taHours: summer ? '20 hours' : kind === 'winter' ? '30 hours' : kind === 'individual' ? 'Arranged for your research plan' : program.teachingHoursTA,
-    audience: summer ? 'Rising Grade 9 through university students.' : kind === 'winter' ? 'Recommended for rising Grades 9–12. University students may also participate.' : 'For students ready for more advanced, independent research. Many participants are high school students; readiness and research interests matter more than age alone.',
+    audience: summer ? 'Rising Grade 9 through university students.' : kind === 'winter' ? 'Recommended for students in Grades 9–12. University students may also participate.' : 'For students ready for more advanced, independent research. Many participants are high school students; readiness and research interests matter more than age alone.',
     duration: kind === 'individual' ? 'Typically 2–4 months, scheduled around the student. Some projects finish within a month; others take longer.' : 'See the dates and teaching schedule for this cohort.',
   };
 }

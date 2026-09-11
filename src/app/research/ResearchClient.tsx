@@ -32,7 +32,7 @@ export default function ResearchClient({ content }: { content: Record<string, st
       title: "Winter Online Research Program",
       subtitle: "Online during winter break",
       icon: <Laptop className="w-8 h-8 text-teal-500" />,
-      description: "An online research program during winter break, recommended for rising Grades 9–12. University students may also participate. Your interests guide the research question and student-authored paper.",
+      description: "An online research program during winter break, recommended for students in Grades 9–12. University students may also participate. Your interests guide the research question and student-authored paper.",
       features: ["10 professor hours + 30 TA hours", "Up to 5 students per cohort", "Online instruction and research guidance"],
       href: "/research/winter",
       imageUrl: content.research_winter_image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop",
