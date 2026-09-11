@@ -156,7 +156,7 @@ export default function ProjectsClient({ content }: { content: Record<string, st
                  <Trophy className="w-8 h-8 text-amber-500 group-hover:scale-110 transition-transform" />
                </div>
                <h3 className="text-3xl font-bold text-gray-900 mb-4 tracking-tight">Competition Preps</h3>
-               <p className="text-lg text-gray-600 max-w-2xl">Structured preparation for international science, math, and debate olympiads. Compete at the highest global tier with rigorous training from experienced mentors.</p>
+               <p className="text-lg text-gray-600 max-w-2xl">Explore preparation for ISEF, Conrad Challenge, iGEM and other research and innovation competitions. Discover our award-winning experience and contact us for a private consultation.</p>
             </div>
 
             <div className="relative z-10 w-full md:w-auto shrink-0 pb-2">
