@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowUpRight, Trophy, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Competition Preparation | CRI",
-  description: "Explore ISEF, Conrad Challenge and iGEM preparation with CRI. Contact us for a private consultation on competition fit and participation.",
+  description: "Explore science, innovation and entrepreneurship competition pathways with CRI. Contact us for a private consultation on competition fit and participation.",
 };
 
 const competitions = [
@@ -26,6 +26,24 @@ const competitions = [
     description: "A global synthetic biology competition for student teams, including high school and university students. Teams use biology and engineering to address real-world problems.",
     url: "https://competition.igem.org/about",
   },
+  {
+    name: "Diamond Challenge",
+    field: "Business & social innovation",
+    description: "A high school entrepreneurship competition from the University of Delaware’s Horn Entrepreneurship. Teams develop business or social innovation concepts that address real-world needs.",
+    url: "https://diamondchallenge.org/competition/",
+  },
+  {
+    name: "GENIUS Olympiad",
+    field: "Environment & sustainability",
+    description: "An international high school project competition centered on environmental issues. Students explore sustainability through science, engineering, business and creative disciplines.",
+    url: "https://geniusolympiad.org/aboutUs.html",
+  },
+  {
+    name: "Regeneron STS",
+    field: "Independent scientific research",
+    description: "A U.S. science research competition for students in their final year of high school. Applicants present independent research; specific schooling and citizenship eligibility requirements apply.",
+    url: "https://www.societyforscience.org/regeneron-sts/application-requirements/",
+  },
 ];
 
 export default function CompetitionProjectsPage() {
@@ -46,8 +64,8 @@ export default function CompetitionProjectsPage() {
 
         <section aria-labelledby="competition-options" className="mt-16">
           <h2 id="competition-options" className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Explore the competitions</h2>
-          <p className="mt-3 max-w-2xl leading-relaxed text-gray-600">Three distinct paths for scientific inquiry, practical innovation and collaborative research.</p>
-          <div className="mt-7 grid gap-5 lg:grid-cols-3">
+          <p className="mt-3 max-w-2xl leading-relaxed text-gray-600">Explore opportunities across scientific inquiry, entrepreneurship, sustainability and collaborative research. Discuss eligibility and preparation availability with our team.</p>
+          <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {competitions.map((competition) => (
               <article key={competition.name} className="flex flex-col rounded-3xl border border-gray-200/90 bg-white p-7 shadow-sm sm:p-8">
                 <p className="text-xs font-bold uppercase tracking-widest text-amber-800">{competition.field}</p>
