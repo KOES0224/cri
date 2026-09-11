@@ -1,5 +1,7 @@
 "use server";
 
+import { requireAdmin } from "@/lib/admin";
+import { changeApplication } from "@/lib/application-workflow";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -39,6 +41,7 @@ export async function updateApplicationStepStatus(stepId: string, status: string
     return { success: false, error: "Unauthorized" };
   }
 
+  if (!["COMPLETED", "IN_PROGRESS", "UPCOMING", "WAIVED"].includes(status)) return { success: false, error: "Invalid step status." };
   try {
     await prisma.applicationStep.update({
       where: { id: stepId },
@@ -53,44 +56,15 @@ export async function updateApplicationStepStatus(stepId: string, status: string
   }
 }
 
-export async function updateApplicationStatus(applicationId: string, status: string) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session || session.user.role !== "ADMIN") {
-    return { success: false, error: "Unauthorized" };
-  }
-
+export async function updateApplicationStatus(applicationId: string, status: string, expectedUpdatedAt?: Date | string) {
   try {
-    const updated = await prisma.application.update({
-      where: { id: applicationId },
-      data: { status }
-    });
-    
-    // Also update enrollment status if accepted/enrolled
-    if (status === "ACCEPTED") {
-       await prisma.enrollment.upsert({
-         where: {
-            userId_programId: {
-               userId: updated.userId,
-               programId: updated.programId
-            }
-         },
-         create: {
-            userId: updated.userId,
-            programId: updated.programId,
-            status: "ONGOING"
-         },
-         update: {
-            status: "ONGOING"
-         }
-       });
-    }
-
-    revalidatePath("/dashboard/applications-admin");
-    revalidatePath("/dashboard/users/[id]");
-    return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Failed to update application" };
+    const admin = await requireAdmin();
+    const session = await getServerSession(authOptions);
+    const updated = await changeApplication(applicationId, { status }, { id: admin.id, name: session?.user.name || "Administrator" }, expectedUpdatedAt);
+    revalidatePath("/dashboard", "layout");
+    return { success: true as const, ...updated };
+  } catch (error) {
+    return { success: false as const, error: error instanceof Error ? error.message : "Unable to save the decision." };
   }
 }
 
@@ -258,29 +232,20 @@ export async function getAdminApplicationsExportData() {
  */
 export async function updateApplicationProcessingFields(
   id: string,
-  data: Partial<{
-    stage: string;
-    finalRegisteredCourse: string;
-    interviewDate: Date | null;
-    paymentDeadline: Date | null;
-    interviewComments: string;
-    generalComments: string;
-  }>
+  data: Partial<{ stage: string; finalRegisteredCourse: string; interviewDate: Date | null; paymentDeadline: Date | null; interviewComments: string; generalComments: string }>,
+  expectedUpdatedAt?: Date | string,
+  enrollmentConfirmed = false,
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") return { success: false, error: "Unauthorized" };
-
   try {
-    await prisma.application.update({
-      where: { id },
-      data
-    });
-    
-    // We don't strictly revalidatePath here because it will disrupt the spreadsheet UI focus. 
-    // The spreadsheet will handle optimistic UI updates.
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+    const admin = await requireAdmin();
+    const session = await getServerSession(authOptions);
+    const updated = await changeApplication(id, data, { id: admin.id, name: session?.user.name || "Administrator" }, expectedUpdatedAt, enrollmentConfirmed);
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/applications-admin");
+    // Avoid replacing the spreadsheet while a field is being edited.
+    return { success: true as const, ...updated };
+  } catch (error) {
+    return { success: false as const, error: error instanceof Error ? error.message : "Unable to save changes." };
   }
 }
 

@@ -1,0 +1,6 @@
+import Link from "next/link";
+export default function ListPagination({ page, pageSize, total, pathname, query = {} }: { page: number; pageSize: number; total: number; pathname: string; query?: Record<string, string> }) {
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const href = (p: number) => `${pathname}?${new URLSearchParams({ ...query, page: String(p) })}`;
+  return <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-5 py-4 text-sm"><p className="text-slate-500">{total === 0 ? "0 results" : `${Math.min((page - 1) * pageSize + 1, total)}–${Math.min(page * pageSize, total)} of ${total}`}</p><nav aria-label="List pagination" className="flex items-center gap-3">{page > 1 ? <Link prefetch={false} href={href(page - 1)} className="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-slate-50">Previous</Link> : <span className="px-3 py-1.5 text-slate-300">Previous</span>}<span className="text-xs text-slate-500">Page {page} of {pages}</span>{page < pages ? <Link prefetch={false} href={href(page + 1)} className="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-slate-50">Next</Link> : <span className="px-3 py-1.5 text-slate-300">Next</span>}</nav></div>;
+}

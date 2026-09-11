@@ -7,7 +7,7 @@ import AdminLayout from "../_components/AdminLayout";
 import MessagesClient from "./MessagesClient";
 import AdminMessagesClient from "./AdminMessagesClient";
 import { checkHasActiveEnrollments, getAvailableContacts } from "@/app/actions/messages";
-import { getPrograms } from "@/app/actions/programs";
+import { prisma } from "@/lib/prisma";
 
 export default async function MessagesPage() {
   const session = await getServerSession(authOptions);
@@ -19,7 +19,7 @@ export default async function MessagesPage() {
   const isAdmin = session.user.role === "ADMIN";
 
   // 1. Enrollment Gate
-  const isEnrolled = await checkHasActiveEnrollments();
+  const isEnrolled = isAdmin || await checkHasActiveEnrollments();
 
   if (!isEnrolled && !isAdmin) {
     return (
@@ -38,16 +38,15 @@ export default async function MessagesPage() {
   }
 
   // 2. Peer Discovery
-  const contacts = await getAvailableContacts();
+  const [contacts, programs] = await Promise.all([getAvailableContacts(), isAdmin ? prisma.program.findMany({ select: { id: true, title: true }, orderBy: { title: "asc" } }) : Promise.resolve([])]);
 
   if (isAdmin) {
-    const programs = await getPrograms();
     return (
       <AdminLayout>
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
             <MessageSquare className="h-8 w-8 text-blue-600 p-1.5 bg-blue-50 rounded-lg" />
-            Global Communications
+            Messages
           </h1>
           <p className="mt-2 text-sm text-gray-500">
             Broadcast messages to course groups, search students, or chat individually.

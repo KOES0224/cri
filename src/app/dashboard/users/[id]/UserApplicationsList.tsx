@@ -54,7 +54,7 @@ export default function UserApplicationsList({ applications }: { applications: a
                     {currentStep ? (
                       <span className="text-[11px] font-semibold text-blue-600 uppercase">{currentStep.title}</span>
                     ) : (
-                      <span className="text-[11px] font-semibold text-green-600 uppercase">All Steps Complete</span>
+                      <span className="text-[11px] font-semibold text-green-600 uppercase">{app.steps?.length ? "All steps complete" : "No steps configured"}</span>
                     )}
                   </td>
                 </tr>
@@ -65,7 +65,7 @@ export default function UserApplicationsList({ applications }: { applications: a
       </div>
       <div className="p-4 border-t border-gray-100 bg-gray-50/50 text-center">
          <Link href="/dashboard/applications-admin" className="text-xs font-bold text-orange-600 hover:text-orange-800 transition-colors">
-            Manage steps in Application Management →
+            Manage steps in Applications →
          </Link>
       </div>
     </div>

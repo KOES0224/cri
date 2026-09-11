@@ -11,7 +11,7 @@ import LeadDetailsClient from "./LeadDetailsClient";
 
 import LeadHeaderActions from "./LeadHeaderActions";
 
-export default async function LeadDetailPage({ params }: { params: { id: string } }) {
+export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "ADMIN") {
@@ -32,10 +32,10 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         <div>
           <Link href="/dashboard/leads" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to CRM Pipeline
+            Back to inquiries
           </Link>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
-            Lead Record: {lead.name}
+            Inquiry: {lead.name}
           </h1>
         </div>
         
@@ -51,14 +51,14 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
           <div>
             <h3 className="text-blue-900 font-bold flex items-center text-lg">
               <User className="w-5 h-5 mr-2" /> 
-              Registered Student Profile
+              Linked person record
             </h3>
             <p className="text-sm text-blue-700 mt-1.5 max-w-2xl leading-relaxed">
-              This lead has registered a user account. To add new timeline notes, view applications, and manage steps, please visit their full Master User Profile. Fragmented logging here is disabled.
+              This inquiry is connected to a registered account. Applications, enrollments, consultation history and reminders are available together in the person record.
             </p>
           </div>
           <Link href={`/dashboard/users/${lead.user.id}`} className="shrink-0 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-sm text-sm">
-            View Master Profile
+            Open person record
           </Link>
         </div>
       )}

@@ -162,3 +162,21 @@ export async function updateProgramOrder(id: string, order: number) {
     return { success: false, error: "Failed to update program order." };
   }
 }
+
+export async function getProgramInventory() {
+  await requireAdmin();
+  return prisma.program.findMany({
+    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    select: { id: true, title: true, category: true, subCategory: true, tuition: true, order: true, status: true, isPublished: true, startDate: true, endDate: true, createdAt: true },
+  });
+}
+
+export async function getAdminProgramForEdit(id: string) {
+  await requireAdmin();
+  return prisma.program.findUnique({ where: { id }, include: { professors: { select: { id: true, name: true } } } });
+}
+
+export async function getAdminProgramProfessors() {
+  await requireAdmin();
+  return prisma.professor.findMany({ orderBy: { name: "asc" } });
+}

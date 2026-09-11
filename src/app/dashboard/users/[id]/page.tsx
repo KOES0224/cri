@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import UserActivityTimeline from "./UserActivityTimeline";
 import UserApplicationsList from "./UserApplicationsList";
 
-export default async function AdminUserProfilePage({ params }: { params: { id: string } }) {
+export default async function AdminUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "ADMIN") {
@@ -35,10 +35,10 @@ export default async function AdminUserProfilePage({ params }: { params: { id: s
         <div>
           <Link href="/dashboard/users" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to User Management
+            Back to People
           </Link>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
-            User Profile: {user.name}
+            Person: {user.name}
           </h1>
         </div>
         <div className="flex bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 items-center">
@@ -102,7 +102,7 @@ export default async function AdminUserProfilePage({ params }: { params: { id: s
 
                 {user.leads && user.leads.length > 0 && (
                   <div className="pt-3">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Linked Leads</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Linked inquiries</p>
                     <div className="space-y-2">
                        {user.leads.map(lead => (
                          <Link key={lead.id} href={`/dashboard/leads/${lead.id}`} className="block border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50 transition-all group">
@@ -122,6 +122,7 @@ export default async function AdminUserProfilePage({ params }: { params: { id: s
 
         {/* Right Column: Applications & Timeline */}
         <div className="lg:col-span-2 space-y-6">
+          <section className="rounded-2xl border border-gray-200 bg-white p-6"><h2 className="text-lg font-bold">Enrollments</h2><p className="mt-1 text-sm text-gray-500">Admission offers and confirmed registrations are tracked separately.</p><ul className="mt-4 divide-y divide-gray-100">{user.enrollments.map(item => <li key={item.id} className="flex flex-wrap justify-between gap-2 py-3 text-sm"><span className="font-medium">{item.program.title}</span><span className="text-gray-500">{item.status === "ONGOING" ? "Registered / active" : item.status === "ACCEPTED" ? "Admitted · registration pending" : "Past enrollment"}</span></li>)}</ul>{user.enrollments.length === 0 && <p className="mt-4 text-sm text-gray-500">No enrollments yet.</p>}</section>
            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
              <div className="p-6 border-b border-gray-100 bg-orange-50/30 flex justify-between items-center">
                <h3 className="text-lg font-bold text-gray-900 flex items-center">
@@ -136,7 +137,7 @@ export default async function AdminUserProfilePage({ params }: { params: { id: s
              <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                <h3 className="text-lg font-bold text-gray-900 flex items-center">
                  <History className="w-5 h-5 mr-2 text-gray-500" />
-                 Interactive Timeline
+                 Activity & reminders
                </h3>
              </div>
              <UserActivityTimeline user={user} activities={combinedActivities} />

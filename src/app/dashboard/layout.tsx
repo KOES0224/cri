@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import AdminShell from "./_components/AdminShell";
 import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
@@ -9,7 +10,7 @@ export default async function DashboardLayout({
 }) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect("/auth/login");
   }
 
@@ -18,5 +19,6 @@ export default async function DashboardLayout({
     redirect("/onboarding");
   }
 
+  if (session.user.role === "ADMIN") return <AdminShell name={session.user.name || "Administrator"}>{children}</AdminShell>;
   return <>{children}</>;
 }

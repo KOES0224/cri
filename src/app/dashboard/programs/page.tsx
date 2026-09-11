@@ -1,8 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getPrograms } from "@/app/actions/programs";
-import { getProfessors } from "@/app/actions/professors";
+import { getProgramInventory } from "@/app/actions/programs";
 import AdminProgramsList from "../_components/AdminProgramsList";
 import AdminLayout from "../_components/AdminLayout";
 
@@ -13,21 +12,20 @@ export default async function AdminProgramsPage() {
     redirect("/dashboard");
   }
 
-  const initialPrograms: any = await getPrograms();
-  const professors = await getProfessors();
+  const initialPrograms = await getProgramInventory();
 
   return (
     <AdminLayout>
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
-          Program Management
+          Programs
         </h1>
         <p className="mt-2 text-sm text-gray-500">
-          Create, edit, and manage all academic offerings and summer camps.
+          Manage program details, recruitment status and website visibility.
         </p>
       </div>
 
-      <AdminProgramsList initialPrograms={initialPrograms} professors={professors as any} />
+      <AdminProgramsList initialPrograms={initialPrograms} />
     </AdminLayout>
   );
 }

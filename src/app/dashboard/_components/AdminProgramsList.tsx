@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useDeferredValue } from "react";
 import { PlusCircle, Edit, Trash2, Briefcase, Eye, EyeOff } from "lucide-react";
-import ProgramForm from "./ProgramForm";
-import { deleteProgram, updateProgramOrder, toggleProgramPublished } from "@/app/actions/programs";
+import dynamic from "next/dynamic";
+import ClientPagination from "./ClientPagination";
+const ProgramForm = dynamic(() => import("./ProgramForm"), { loading: () => <p role="status" className="p-6 text-sm text-slate-500">Loading program editor…</p> });
+import { getAdminProgramForEdit, getAdminProgramProfessors, deleteProgram, updateProgramOrder, toggleProgramPublished } from "@/app/actions/programs";
 import { admissionLabel, programKind } from "@/lib/program-policy";
 import { useRouter } from "next/navigation";
 
 type Program = {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   category: string;
   subCategory: string | null;
   tuition: number | null;
@@ -23,37 +25,40 @@ type Program = {
   professors?: { id: string; name: string }[];
 };
 
-export default function AdminProgramsList({ initialPrograms, professors = [] }: { initialPrograms: Program[], professors?: { id: string; name: string }[] }) {
+export default function AdminProgramsList({ initialPrograms }: { initialPrograms: Program[] }) {
   const router = useRouter();
+  const [professors, setProfessors] = useState<Awaited<ReturnType<typeof getAdminProgramProfessors>>>([]);
   const [isCreating, setIsCreating] = useState(false);
-  const [editingProgram, setEditingProgram] = useState<Program | null>(null);
+  const [editingProgram, setEditingProgram] = useState<NonNullable<Awaited<ReturnType<typeof getAdminProgramForEdit>>> | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const TABS = ["Summer Camp", "Winter Online", "1-on-1", "Projects", "Competitions", "Interns", "Archive & Mock"];
-
-  const mockTitles = ["Advanced Cognitive Psychology Research", "Sustainable Urban Design Project", "Global FinTech Internship"];
-  
+  const TABS = ["All programs", "Summer programs", "Winter online", "1-on-1 research", "Projects", "Competitions", "Internships", "Other"];
   const getProgramTab = (program: Program) => {
-    const title = program.title.toLowerCase();
-    const cat = program.category.toLowerCase();
-    const sub = program.subCategory?.toLowerCase() || "";
-
-    if (title.includes("mock") || title.includes("test") || mockTitles.includes(program.title)) {
-      return "Archive & Mock";
-    }
-
     const kind = programKind(program.category);
-    if (kind === 'seoul' || kind === 'global') return "Summer Camp";
-    if (kind === 'winter') return "Winter Online";
-    if (kind === 'individual') return "1-on-1";
-    if (cat.includes('project')) return "Projects";
-    if (cat.includes('competition')) return "Competitions";
-    if (cat.includes('intern')) return "Interns";
-    
-    return "Archive & Mock";
+    if (kind === "seoul" || kind === "global") return "Summer programs";
+    if (kind === "winter") return "Winter online";
+    if (kind === "individual") return "1-on-1 research";
+    const category = program.category.toLowerCase();
+    if (category.includes("project")) return "Projects";
+    if (category.includes("competition")) return "Competitions";
+    if (category.includes("intern")) return "Internships";
+    return "Other";
   };
-
-  const [activeTab, setActiveTab] = useState<string>("Summer Camp");
+  const [activeTab, setActiveTab] = useState("All programs");
+  const [query, setQuery] = useState("");
+  const search = useDeferredValue(query.trim().toLowerCase());
+  const [page, setPage] = useState(1);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editProgram = async (id: string) => {
+    setEditingId(id);
+    try {
+      const [program, faculty] = await Promise.all([getAdminProgramForEdit(id), getAdminProgramProfessors()]);
+      setProfessors(faculty);
+      if (!program) throw new Error("Program not found. Refresh the list and try again.");
+      setEditingProgram(program);
+    } catch { alert("Could not load this program. Please try again."); }
+    finally { setEditingId(null); }
+  };
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this program?")) {
@@ -75,7 +80,7 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
     return (
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <h3 className="text-xl font-bold text-gray-900 mb-6">
-          {isCreating ? "Create New Program" : "Edit Program"}
+          {isCreating ? "New program" : "Edit program"}
         </h3>
         <ProgramForm 
           initialData={editingProgram || undefined} 
@@ -87,10 +92,12 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
     );
   }
 
-  const filteredPrograms = initialPrograms.filter((p) => getProgramTab(p) === activeTab);
+  const filteredPrograms = initialPrograms.filter((p) => (activeTab === "All programs" || getProgramTab(p) === activeTab) && `${p.title} ${p.category}`.toLowerCase().includes(search));
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(filteredPrograms.length / 25)));
+  const visiblePrograms = filteredPrograms.slice((currentPage - 1) * 25, currentPage * 25);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px] relative">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
       <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
          <div className="flex-shrink-0">
            <h3 className="text-lg font-medium tracking-tight text-gray-900 flex items-center">
@@ -104,7 +111,8 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
            {TABS.map((tab) => (
              <button
                key={tab}
-               onClick={() => setActiveTab(tab)}
+               aria-pressed={activeTab === tab}
+               onClick={() => { setActiveTab(tab); setPage(1); }}
                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
                  activeTab === tab
                    ? "bg-white text-gray-900 shadow"
@@ -117,7 +125,13 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
          </div>
 
         <button
-          onClick={() => setIsCreating(true)}
+          disabled={editingId !== null}
+          onClick={async () => {
+            setEditingId("new");
+            try { setProfessors(await getAdminProgramProfessors()); setIsCreating(true); }
+            catch { alert("Could not load the program editor. Please retry."); }
+            finally { setEditingId(null); }
+          }}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm shrink-0"
         >
           <PlusCircle className="w-4 h-4" />
@@ -125,6 +139,7 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
         </button>
       </div>
 
+      <div className="px-5 py-4 border-b border-slate-100"><label htmlFor="program-search" className="sr-only">Search programs</label><input id="program-search" value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search program title or category" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" /></div>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 border-b border-gray-100 text-gray-600">
@@ -146,7 +161,7 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
                 </td>
               </tr>
             ) : (
-              filteredPrograms.map((program) => (
+              visiblePrograms.map((program) => (
                 <tr key={program.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 font-medium text-gray-900">{program.title}</td>
                   <td className="px-6 py-4 text-gray-500 hidden md:table-cell">{program.category}</td>
@@ -197,6 +212,7 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
                   <td className="px-6 py-4">
                     <input 
                       type="number" 
+                      aria-label={`Display order for ${program.title}`}
                       defaultValue={program.order} 
                       onBlur={async (e) => {
                         const newVal = parseInt(e.target.value);
@@ -213,9 +229,10 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
                   </td>
                   <td className="px-6 py-4 text-right space-x-3">
                     <button
-                      onClick={() => setEditingProgram(program)}
+                      disabled={editingId !== null}
+                      onClick={() => editProgram(program.id)}
                       className="text-blue-600 hover:text-blue-900 transition-colors"
-                      title="Edit"
+                      title={editingId === program.id ? "Loading editor…" : "Edit program"}
                     >
                       <Edit className="w-4 h-4 inline" />
                     </button>
@@ -233,6 +250,7 @@ export default function AdminProgramsList({ initialPrograms, professors = [] }: 
           </tbody>
         </table>
       </div>
+      <ClientPagination page={currentPage} total={filteredPrograms.length} onChange={setPage} />
     </div>
   );
 }

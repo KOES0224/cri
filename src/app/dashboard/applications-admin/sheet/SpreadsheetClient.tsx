@@ -1,23 +1,24 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { 
-  Download, 
-  Search, 
-  Filter, 
-  Trash2, 
-  FileSpreadsheet, 
-  Check, 
-  Loader2, 
-  X, 
-  Copy, 
-  CheckCheck, 
+import ClientPagination from "../../_components/ClientPagination";
+import { useState, useMemo, useEffect, useRef } from "react";
+import {
+  Download,
+  Search,
+  Filter,
+  Trash2,
+  FileSpreadsheet,
+  Check,
+  Loader2,
+  X,
+  Copy,
+  CheckCheck,
   ExternalLink,
   Sparkles,
   ArrowUpRight
 } from "lucide-react";
-import { 
-  updateApplicationProcessingFields, 
+import {
+  updateApplicationProcessingFields,
   deleteApplication,
   checkGoogleSheetWebhookStatus,
   syncAllApplicationsToGoogleSheet
@@ -38,9 +39,12 @@ function safeIsoDate(dateVal: any): string {
 
 export default function SpreadsheetClient({ initialData }: { initialData: any[] }) {
   const [data, setData] = useState(initialData);
+  const [page, setPage] = useState(1);
+  const [pendingRows, setPendingRows] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("ALL");
   const [programFilter, setProgramFilter] = useState("ALL");
+  const savingIds = useRef(new Set<string>());
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   // Google Sheets modal state
@@ -49,7 +53,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
   const [syncingAll, setSyncingAll] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
-  
+
   useEffect(() => {
     setData(initialData);
   }, [initialData]);
@@ -87,7 +91,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
 
   const filteredData = useMemo(() => {
     return data.filter((app: any) => {
-      const matchSearch = (app.user?.name || "").toLowerCase().includes(search.toLowerCase()) || 
+      const matchSearch = (app.user?.name || "").toLowerCase().includes(search.toLowerCase()) ||
                           (app.user?.email || "").toLowerCase().includes(search.toLowerCase());
       const matchStage = stageFilter === "ALL" || (app.stage || "REVIEW") === stageFilter;
       const matchProgram = programFilter === "ALL" || app.program?.title === programFilter;
@@ -95,28 +99,35 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
     });
   }, [data, search, stageFilter, programFilter]);
 
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(filteredData.length / 25)));
+
   const handleFieldChange = async (appId: string, field: string, value: any) => {
-    // Optimistic update
+    if (savingIds.current.has(appId)) { setSaveStatus("Wait for this record to finish saving, then retry."); return; }
+    const current = data.find(app => app.id === appId);
+    if (!current) return;
+    const enrollmentConfirmed = field === "stage" && value === "ENROLLED" && window.confirm("Confirm that this student has been accepted and tuition arrangements and registration have been verified. The application fee is separate from tuition.");
+    if (field === "stage" && value === "ENROLLED" && !enrollmentConfirmed) return;
+    savingIds.current.add(appId);
+    setPendingRows([...savingIds.current]);
     setData(prev => prev.map(app => app.id === appId ? { ...app, [field]: value } : app));
-    setSaveStatus("Saving...");
-    
-    // Save to DB
-    const res = await updateApplicationProcessingFields(appId, { [field]: value });
-    if (res && res.success) {
+    setSaveStatus("Saving…");
+    try {
+      const result = await updateApplicationProcessingFields(appId, { [field]: value }, current?.updatedAt, enrollmentConfirmed);
+      if (!result.success) throw new Error(result.error);
+      setData(prev => prev.map(app => app.id === appId ? { ...app, updatedAt: result.updatedAt, status: result.status, stage: result.stage } : app));
       setSaveStatus("Saved");
-      setTimeout(() => setSaveStatus(null), 1600);
-    } else {
-      setSaveStatus("Error saving");
-      setTimeout(() => setSaveStatus(null), 2500);
-    }
+    } catch (error) {
+      setData(prev => prev.map(app => app.id === appId ? current : app));
+      setSaveStatus(error instanceof Error ? error.message : "Could not save. Please retry.");
+    } finally { savingIds.current.delete(appId); setPendingRows([...savingIds.current]); }
   };
 
   const handleDelete = async (appId: string) => {
     if (!confirm("Are you sure you want to permanently delete this application? This action cannot be undone.")) return;
-    
+
     // Optimistic remove
     setData(prev => prev.filter(app => app.id !== appId));
-    
+
     const res = await deleteApplication(appId);
     if (!res.success) {
       alert("Failed to delete application: " + res.error);
@@ -143,10 +154,10 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
 
   const handleExport = () => {
     const csvData = [];
-    
+
     // Build Headers
     const headers = [
-      "ID", "Name", "Email", "Initial Program", "Final Course", "Stage", "Interview Date", 
+      "ID", "Name", "Email", "Initial Program", "Final Course", "Stage", "Interview Date",
       "Payment Deadline", "Interview Comments", "General Comments",
       ...contentColumns
     ];
@@ -191,7 +202,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
 
   return (
     <div className="flex flex-col h-full bg-white relative">
-      
+
       {/* Apple-style Stats & Metric Pills */}
       <div className="bg-white border-b border-gray-100 px-6 py-2.5 flex items-center gap-3 text-xs overflow-x-auto">
         <span className="font-bold text-gray-500 uppercase tracking-wider text-[11px]">Pipeline:</span>
@@ -214,11 +225,11 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
         </div>
 
         {saveStatus && (
-          <div className="ml-auto flex items-center gap-1.5 text-xs font-bold text-emerald-600 animate-in fade-in duration-200">
-            {saveStatus === "Saving..." ? (
+          <div role="status" className={`ml-auto flex items-center gap-1.5 text-xs font-bold ${saveStatus === "Saved" ? "text-emerald-600" : saveStatus === "Saving…" ? "text-slate-500" : "text-red-600"}`}>
+            {saveStatus === "Saving…" ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Check className="w-3.5 h-3.5" />
+              saveStatus === "Saved" ? <Check className="w-3.5 h-3.5" /> : null
             )}
             {saveStatus}
           </div>
@@ -230,22 +241,22 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative">
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input 
+            <input
               value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search applicants..." 
+              placeholder="Search applicants..."
               className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl w-64 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium transition-all"
             />
           </div>
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-400" />
-            <select 
+            <select
               value={stageFilter} onChange={e => setStageFilter(e.target.value)}
               className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             >
               <option value="ALL">All Stages</option>
               {stageOptions.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
-            <select 
+            <select
               value={programFilter} onChange={e => setProgramFilter(e.target.value)}
               className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white font-medium max-w-[220px] focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             >
@@ -254,7 +265,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
             </select>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {/* Google Sheets Integration Button */}
           <button
@@ -271,7 +282,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
           </button>
 
           {/* Export CSV Button */}
-          <button 
+          <button
             onClick={handleExport}
             className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm cursor-pointer"
           >
@@ -304,15 +315,15 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredData.map((app: any) => {
+              {filteredData.slice((currentPage - 1) * 25, currentPage * 25).map((app: any) => {
                 let contentObj: any = {};
                 try { contentObj = JSON.parse(app.content || "{}"); } catch(e) {}
-                
+
                 return (
                   <tr key={app.id} className="hover:bg-blue-50/20 group transition-colors">
                     {/* Fixed Columns */}
                     <td className="px-2 py-2 border-r border-gray-200 sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 text-center w-[80px]">
-                      <button 
+                      <button
                          onClick={() => handleDelete(app.id)}
                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                          title="Delete Application"
@@ -329,7 +340,8 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
                     </td>
 
                     <td className="px-2 py-2 border-r border-gray-200 bg-amber-50/20">
-                      <select 
+                      <select
+                        disabled={pendingRows.includes(app.id)}
                         value={app.finalRegisteredCourse || ""}
                         onChange={(e) => handleFieldChange(app.id, 'finalRegisteredCourse', e.target.value)}
                         className="w-full bg-transparent border-0 font-bold px-2 py-1 focus:ring-2 focus:ring-blue-500 rounded text-xs cursor-pointer text-gray-900"
@@ -338,15 +350,17 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
                         {programs.map((p: any) => <option key={p} value={p}>{p}</option>)}
                       </select>
                     </td>
-                    
+
                     {/* Interactive Pipeline State cells */}
                     <td className="px-2 py-2 border-r border-gray-200 bg-amber-50/20">
-                      <select 
+                      <select
+                        disabled={pendingRows.includes(app.id)}
+                        aria-label={`Stage for ${app.user?.name || app.user?.email}`}
                         value={app.stage || "REVIEW"}
                         onChange={(e) => handleFieldChange(app.id, 'stage', e.target.value)}
                         className={`w-full bg-transparent border-0 font-bold px-2 py-1 focus:ring-2 focus:ring-blue-500 rounded text-xs cursor-pointer
-                           ${app.stage === 'ENROLLED' ? 'text-green-700' : 
-                             app.stage === 'REJECTED' ? 'text-red-600' : 
+                           ${app.stage === 'ENROLLED' ? 'text-green-700' :
+                             app.stage === 'REJECTED' ? 'text-red-600' :
                              app.stage === 'PAYMENT' ? 'text-orange-600' : 'text-blue-700'}`}
                       >
                         {stageOptions.map(o => <option key={o} value={o}>{o}</option>)}
@@ -355,7 +369,8 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
 
                     {/* Safe ISO Dates */}
                     <td className="px-2 py-2 border-r border-gray-200 bg-amber-50/20">
-                      <input 
+                      <input
+                        disabled={pendingRows.includes(app.id)}
                         type="date"
                         value={safeIsoDate(app.interviewDate)}
                         onChange={(e) => handleFieldChange(app.id, 'interviewDate', e.target.value ? new Date(e.target.value) : null)}
@@ -364,7 +379,8 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
                     </td>
 
                     <td className="px-2 py-2 border-r border-gray-200 bg-amber-50/20">
-                      <input 
+                      <input
+                        disabled={pendingRows.includes(app.id)}
                         type="date"
                         value={safeIsoDate(app.paymentDeadline)}
                         onChange={(e) => handleFieldChange(app.id, 'paymentDeadline', e.target.value ? new Date(e.target.value) : null)}
@@ -374,6 +390,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
 
                     <td className="p-0 border-r border-gray-200 bg-blue-50/10 relative group/cell">
                       <textarea
+                        disabled={pendingRows.includes(app.id)}
                         defaultValue={app.interviewComments || ""}
                         onBlur={(e) => {
                           if (e.target.value !== app.interviewComments) {
@@ -393,6 +410,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
 
                     <td className="p-0 border-r border-gray-200 bg-blue-50/10 relative group/cell">
                       <textarea
+                        disabled={pendingRows.includes(app.id)}
                         defaultValue={app.generalComments || ""}
                         onBlur={(e) => {
                           if (e.target.value !== app.generalComments) {
@@ -440,7 +458,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
 
                       const displayVal = typeof val === 'object' ? JSON.stringify(val) : String(val || "");
                       const isLongText = displayVal.length > 50;
-                      
+
                       return (
                         <td key={col} className="px-4 py-2 border-r border-gray-200 text-gray-600 max-w-[250px]">
                           {isLongText ? (
@@ -466,6 +484,7 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
             </tbody>
           </table>
         </div>
+      <ClientPagination page={currentPage} total={filteredData.length} onChange={setPage} />
       </div>
 
       {/* Google Sheets Live Stream Setup Modal */}
@@ -491,8 +510,8 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
 
             {/* Status Card */}
             <div className={`mt-6 p-4 rounded-2xl border flex items-center justify-between ${
-              webhookInfo?.hasWebhook 
-                ? "bg-emerald-50/60 border-emerald-200 text-emerald-900" 
+              webhookInfo?.hasWebhook
+                ? "bg-emerald-50/60 border-emerald-200 text-emerald-900"
                 : "bg-amber-50/60 border-amber-200 text-amber-900"
             }`}>
               <div className="flex items-center gap-3">
@@ -502,8 +521,8 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
                     {webhookInfo?.hasWebhook ? "Live Sync Active" : "No Webhook Configured Yet"}
                   </div>
                   <div className="text-xs opacity-75">
-                    {webhookInfo?.hasWebhook 
-                      ? `Endpoint: ${webhookInfo.maskedUrl}` 
+                    {webhookInfo?.hasWebhook
+                      ? `Endpoint: ${webhookInfo.maskedUrl}`
                       : "Add GOOGLE_SHEET_WEBHOOK_URL in .env to stream new applications automatically."}
                   </div>
                 </div>

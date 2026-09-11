@@ -26,7 +26,7 @@ export default async function AdminProfessorPage() {
           Back to CMS Hub
         </Link>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
-          Professor Directory
+          Professors
         </h1>
         <p className="mt-2 text-sm text-gray-500">
           Manage the public directory of mentors and faculty members.

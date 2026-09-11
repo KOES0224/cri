@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { 
@@ -31,8 +31,6 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
   const router = useRouter();
   const [applications, setApplications] = useState<any[]>(initialApplications);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
   
   useEffect(() => {
     setApplications(initialApplications);
@@ -47,18 +45,7 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
   const [activeNotifyApp, setActiveNotifyApp] = useState<any>(null);
   const [notifyText, setNotifyText] = useState("");
 
-  const filteredApplications = useMemo(() => {
-    return applications.filter(app => {
-      const q = search.toLowerCase().trim();
-      const matchesSearch = !q || 
-        (app.user?.name || "").toLowerCase().includes(q) ||
-        (app.user?.email || "").toLowerCase().includes(q) ||
-        (app.user?.studentCode || "").toLowerCase().includes(q) ||
-        (app.program?.title || "").toLowerCase().includes(q);
-      const matchesStatus = statusFilter === "ALL" || app.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [applications, search, statusFilter]);
+  const filteredApplications = applications;
 
   const handleDelete = async (appId: string) => {
     if (!confirm("Are you sure you want to permanently delete this application and all associated steps? This action cannot be undone.")) return;
@@ -74,16 +61,24 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
     }
   };
 
+  const savingIds = useRef(new Set<string>());
+  const [saving, setSaving] = useState<string[]>([]);
   const handleStatusChange = async (appId: string, newStatus: string) => {
-    // Optimistic status update (0ms perceived latency)
-    const previous = applications;
-    setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: newStatus } : a));
-    
-    const res = await updateApplicationStatus(appId, newStatus);
-    if (res && !res.success) {
-      alert("Failed to update status: " + (res.error || "Unknown error"));
-      setApplications(previous); // Revert
-    }
+    if (savingIds.current.has(appId)) return;
+    const previous = applications.find(app => app.id === appId);
+    if (!previous) return;
+    savingIds.current.add(appId);
+    setSaving([...savingIds.current]);
+    setApplications(prev => prev.map(app => app.id === appId ? { ...app, status: newStatus } : app));
+    try {
+      const result = await updateApplicationStatus(appId, newStatus, previous.updatedAt);
+      if (!result.success) throw new Error(result.error);
+      setApplications(prev => prev.map(app => app.id === appId ? { ...app, ...result } : app));
+      router.refresh();
+    } catch (error) {
+      setApplications(prev => prev.map(app => app.id === appId ? previous : app));
+      alert(error instanceof Error ? error.message : "Could not save. Please retry.");
+    } finally { savingIds.current.delete(appId); setSaving([...savingIds.current]); }
   };
 
   const handleStepChange = async (stepId: string, newStatus: string) => {
@@ -140,50 +135,7 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative min-h-[600px] flex flex-col">
-      {/* Apple-style Search & Filter Bar */}
-      <div className="px-6 py-4 bg-gray-50/70 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by student, email, code..."
-            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium placeholder:text-gray-400"
-          />
-          {search && (
-            <button 
-              onClick={() => setSearch("")} 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs bg-gray-100 rounded-full w-4 h-4 flex items-center justify-center"
-            >
-              ×
-            </button>
-          )}
-        </div>
-
-        {/* Status Filter Pills */}
-        <div className="flex items-center gap-1.5 p-1 bg-gray-100 rounded-xl self-stretch sm:self-auto text-xs font-bold">
-          {(["ALL", "PENDING", "ACCEPTED", "REJECTED"] as const).map(status => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-3.5 py-1.5 rounded-lg transition-all capitalize cursor-pointer ${
-                statusFilter === status 
-                  ? "bg-white text-gray-900 shadow-sm" 
-                  : "text-gray-500 hover:text-gray-800"
-              }`}
-            >
-              {status.toLowerCase()} ({
-                status === "ALL" 
-                  ? applications.length 
-                  : applications.filter(a => a.status === status).length
-              })
-            </button>
-          ))}
-        </div>
-      </div>
-
+    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative flex flex-col">
       <div className="overflow-x-auto flex-1">
         <table className="min-w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
@@ -238,18 +190,19 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
                     </td>
                     <td className="px-6 py-4">
                       <select
+                        disabled={loading || saving.includes(app.id)}
+                        aria-label={`Decision for ${app.user.name || app.user.email}`}
                         value={app.status}
                         onChange={(e) => handleStatusChange(app.id, e.target.value)}
-                        disabled={loading}
                         className={`px-3 py-1 text-xs font-black uppercase tracking-wider rounded-md border border-transparent hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                           app.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' : 
                           app.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 
                           'bg-orange-100 text-orange-800'
                         }`}
                       >
-                        <option value="PENDING">Pending</option>
+                        <option value="PENDING">Pending review</option>
                         <option value="ACCEPTED">Accepted</option>
-                        <option value="REJECTED">Rejected</option>
+                        <option value="REJECTED">Not accepted</option>
                       </select>
                     </td>
                     <td className="px-6 py-4">
@@ -259,7 +212,7 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
                           <span className="text-xs text-gray-400">{currentStepIndex + 1} of {app.steps.length} steps</span>
                         </div>
                       ) : (
-                        <span className="text-[11px] font-semibold text-green-600 uppercase">All Steps Complete</span>
+                        <span className="text-[11px] font-semibold text-green-600 uppercase">{app.steps?.length ? "All steps complete" : "No steps configured"}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right flex justify-end gap-2">
@@ -367,8 +320,7 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
                        <select
                           value={step.status}
                           onChange={(e) => handleStepChange(step.id, e.target.value)}
-                          disabled={loading}
-                          className={`text-xs font-bold uppercase tracking-wider rounded border-0 px-2 py-1 outline-none ring-1 ring-inset ${
+                            className={`text-xs font-bold uppercase tracking-wider rounded border-0 px-2 py-1 outline-none ring-1 ring-inset ${
                             step.status === 'COMPLETED' ? 'bg-green-50 text-green-700 ring-green-600/20' :
                             step.status === 'IN_PROGRESS' ? 'bg-blue-50 text-blue-700 ring-blue-600/20' :
                             step.status === 'WAIVED' ? 'bg-gray-100 text-gray-600 ring-gray-500/20' :

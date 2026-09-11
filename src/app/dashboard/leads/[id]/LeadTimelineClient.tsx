@@ -296,7 +296,7 @@ export default function LeadTimelineClient({ lead, hideInput }: { lead: any, hid
                      disabled={submittingAlarm || !alarmMessage.trim() || !alarmDate}
                      className="px-6 py-2.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all disabled:opacity-50 flex items-center shadow-lg shadow-rose-600/20"
                    >
-                     {submittingAlarm ? 'Scheduling...' : <><Bell className="w-4 h-4 mr-2 border border-rose-400/50 rounded bg-rose-500" /> Schedule Alarm</>}
+                     {submittingAlarm ? 'Scheduling...' : <><Bell className="w-4 h-4 mr-2 border border-rose-400/50 rounded bg-rose-500" /> Add reminder</>}
                    </button>
                 </div>
              </div>

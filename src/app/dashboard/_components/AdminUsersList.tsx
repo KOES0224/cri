@@ -17,10 +17,11 @@ type User = {
   createdAt: Date;
 };
 
-export default function AdminUsersList({ initialUsers }: { initialUsers: User[] }) {
+export default function AdminUsersList({ initialUsers, activeRole }: { initialUsers: User[]; activeRole: "Admin" | "Student" | "Parent" | "Agency" }) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"Admin" | "Student" | "Parent" | "Agency">("Student");
+  const activeTab = activeRole;
+  const setActiveTab = (role: string) => router.push(`/dashboard/users?role=${role}`);
   
   // Agency Modal State
   const [agencyModalUser, setAgencyModalUser] = useState<User | null>(null);
@@ -66,20 +67,10 @@ export default function AdminUsersList({ initialUsers }: { initialUsers: User[] 
     setLoading(null);
   };
 
-  const getUserTab = (user: User) => {
-    const isMock = user.email.match(/^(student|parent)[1-5]@criglobal\.org$/);
-    if (user.role === "ADMIN" || isMock) return "Admin";
-    if (user.role === "STUDENT") return "Student";
-    if (user.role === "PARENT") {
-      return user.isAgency ? "Agency" : "Parent";
-    }
-    return "Student"; // Fallback
-  };
-
-  const filteredUsers = initialUsers.filter((user) => getUserTab(user) === activeTab);
+  const filteredUsers = initialUsers;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px] relative">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
       <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
          <div>
            <h3 className="text-lg font-medium tracking-tight text-gray-900 flex items-center">
@@ -93,7 +84,7 @@ export default function AdminUsersList({ initialUsers }: { initialUsers: User[] 
            {["Admin", "Student", "Parent", "Agency"].map((tab) => (
              <button
                key={tab}
-               onClick={() => setActiveTab(tab as any)}
+               onClick={() => setActiveTab(tab)}
                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                  activeTab === tab
                    ? "bg-white text-gray-900 shadow"
@@ -140,6 +131,7 @@ export default function AdminUsersList({ initialUsers }: { initialUsers: User[] 
                   <td className="px-6 py-4 text-gray-500">{user.email}</td>
                   <td className="px-6 py-4">
                     <select
+                      aria-label={`Role for ${user.name || user.email}`}
                       value={user.role}
                       onChange={(e) => handleRoleChange(user.id, e.target.value)}
                       disabled={loading === user.id}
@@ -218,7 +210,7 @@ export default function AdminUsersList({ initialUsers }: { initialUsers: User[] 
               {agencyModalUser.isAgency ? "Edit Agency Profile" : "Convert to Agency"}
             </h3>
             <p className="text-gray-500 text-sm mb-6 mt-4 leading-relaxed">
-              You are modifying <span className="font-bold text-gray-700">{agencyModalUser.email}</span>. By marking this parent account as an agency, they will simply be organized under the robust Agency database tab.
+              You are modifying <span className="font-bold text-gray-700">{agencyModalUser.email}</span>. By marking this parent account as an agency, they will simply be organized under the Agency tab.
             </p>
             
             <label className="block text-sm font-bold text-gray-700 mb-2">Internal Agency Name</label>

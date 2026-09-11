@@ -18,6 +18,8 @@ export default async function DashboardPage() {
   const role = session.user.role;
   const name = session.user.name || "User";
 
+  if (role === "ADMIN") return <AdminDashboard name={name} />;
+
   const isStudent = role === "STUDENT" || !role;
 
   let unreadCount = 0;
@@ -72,7 +74,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-10">
-      {role === "ADMIN" && <AdminDashboard name={name} />}
       {role === "PARENT" && <ParentDashboard name={name} />}
       {isStudent && (
         <Suspense fallback={<div>Loading dashboard overview...</div>}>

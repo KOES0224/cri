@@ -1,17 +1,15 @@
 "use server";
 
+import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function getUsers() {
+  await requireAdmin();
   try {
     return await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
-      include: {
-        leads: {
-          select: { id: true, name: true },
-        }
-      }
+      select: { id: true, name: true, email: true, role: true, studentCode: true, isAgency: true, agencyName: true, createdAt: true }
     });
   } catch (error) {
     console.error("Failed to fetch users:", error);
@@ -20,6 +18,9 @@ export async function getUsers() {
 }
 
 export async function updateUserRole(userId: string, activeRole: string) {
+  const admin = await requireAdmin();
+  if (!["ADMIN", "STUDENT", "PARENT"].includes(activeRole)) return { success: false, error: "Invalid role." };
+  if (admin.id === userId && activeRole !== "ADMIN") return { success: false, error: "Ask another administrator to change your role." };
   try {
     await prisma.user.update({
       where: { id: userId },
@@ -34,6 +35,7 @@ export async function updateUserRole(userId: string, activeRole: string) {
 }
 
 export async function updateUserAgency(userId: string, isAgency: boolean, agencyName: string | null) {
+  await requireAdmin();
   try {
     await prisma.user.update({
       where: { id: userId },
@@ -48,6 +50,8 @@ export async function updateUserAgency(userId: string, isAgency: boolean, agency
 }
 
 export async function deleteUser(userId: string) {
+  const admin = await requireAdmin();
+  if (admin.id === userId) return { success: false, error: "You cannot delete your own administrator account." };
   try {
     await prisma.user.delete({
       where: { id: userId },
@@ -61,8 +65,9 @@ export async function deleteUser(userId: string) {
 }
 
 export async function getUserDetails(id: string) {
+  await requireAdmin();
   try {
-    return await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id },
       include: {
         applications: {
@@ -78,8 +83,10 @@ export async function getUserDetails(id: string) {
         notifications: {
           orderBy: { dueDate: 'asc' }
         },
+        enrollments: { include: { program: { select: { title: true } } } },
         leads: {
           include: {
+            notifications: { orderBy: { dueDate: "asc" } },
             activities: {
               orderBy: { createdAt: 'desc' }
             }
@@ -87,6 +94,9 @@ export async function getUserDetails(id: string) {
         }
       }
     });
+    if (!user) return null;
+    const { password, sessionVersion, ...safeUser } = user;
+    return { ...safeUser, notifications: Array.from(new Map([...safeUser.notifications, ...safeUser.leads.flatMap(lead => lead.notifications)].map(item => [item.id,item])).values()).sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()) };
   } catch (error) {
     console.error("Failed to fetch user details:", error);
     return null;

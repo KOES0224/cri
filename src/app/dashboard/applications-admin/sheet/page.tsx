@@ -20,14 +20,14 @@ export default async function SpreadsheetPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pt-24 md:pt-32">
-      <div className="px-6 py-4 bg-white border-b border-gray-200 flex items-center justify-between sticky top-0 md:top-20 z-40">
+    <div className="bg-gray-50 flex flex-col">
+      <div className="px-6 py-4 bg-white border-b border-gray-200 flex items-center justify-between ">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/applications-admin" className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Application Pipeline Tracker</h1>
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Applications spreadsheet</h1>
             <p className="text-xs font-medium text-gray-500">Interactive Spreadsheet View</p>
           </div>
         </div>

@@ -1,213 +1,34 @@
+import CompleteReminder from "./CompleteReminder";
 import Link from "next/link";
-import { Users, BookOpen, Settings, LayoutTemplate, PhoneCall, Bell, MessageSquare, Tag, CheckCircle2, ArrowRight, ClipboardCheck } from "lucide-react";
-import { getActiveNotifications, getRecentLeadActivities } from "@/app/actions/crm";
-import { getAdminApplications } from "@/app/actions/adminApplications";
+import { ArrowUpRight, ClipboardCheck, Inbox, BookOpen, Bell, ArrowRight } from "lucide-react";
+import { getAdminOverview } from "@/lib/admin-overview";
+import { adminStatusLabel } from "@/lib/admin-navigation";
 import { formatKST } from "@/lib/formatKST";
 
 export default async function AdminDashboard({ name }: { name: string }) {
-  const activeAlarms = await getActiveNotifications();
-  const recentLogs = await getRecentLeadActivities(10);
-  const recentApps = await getAdminApplications(5);
-
-  return (
-    <>
-      <div className="mb-8 flex md:flex-row flex-col justify-between items-start md:items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Admin Portal
-          </h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Manage users, applications, and public website content.
-          </p>
-        </div>
-        <div className="mt-4 md:mt-0 flex space-x-3">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-            Administrator
-          </span>
-        </div>
+  const data = await getAdminOverview();
+  const today = formatKST(new Date(), "yyyy-MM-dd");
+  const cards = [
+    { label: "Pending applications", count: data.pending, href: "/dashboard/applications-admin?status=PENDING", icon: ClipboardCheck },
+    { label: "New inquiries", count: data.inquiries, href: "/dashboard/leads?status=NEW", icon: Inbox },
+    { label: "Published programs", count: data.published, href: "/dashboard/programs", icon: BookOpen },
+  ];
+  return <div className="space-y-7">
+    <header className="flex flex-wrap items-end justify-between gap-4"><div><p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">Workspace</p><h1 className="text-3xl font-bold tracking-tight">Overview</h1><p className="mt-2 text-sm text-slate-500">Welcome, {name}. Review applications, follow up on inquiries and keep programs up to date.</p></div><span className="text-xs text-slate-500">{formatKST(new Date(), "MMM d, yyyy")} · Korea time</span></header>
+    <div className="grid gap-4 sm:grid-cols-3">{cards.map(card => <Link key={card.label} href={card.href} prefetch={false} className="rounded-2xl border border-slate-200 bg-white p-5 transition-colors hover:border-blue-300"><div className="flex justify-between text-slate-500"><card.icon aria-hidden="true" size={20} /><ArrowUpRight aria-hidden="true" size={16} /></div><p className="mt-4 text-3xl font-bold tabular-nums">{card.count}</p><p className="mt-1 text-sm text-slate-600">{card.label}</p></Link>)}</div>
+    {(data.overduePayments.length > 0 || data.interviews.length > 0) && <section className="rounded-2xl border border-amber-200 bg-amber-50/40 p-5"><h2 className="font-semibold">Needs attention</h2><p className="mt-1 text-xs text-slate-500">Up to six overdue payment follow-ups and six interviews in the next 24 hours.</p><ul className="mt-3 grid gap-3 md:grid-cols-2">{data.overduePayments.map(app => <li key={app.id}><Link prefetch={false} href={`/dashboard/users/${app.user.id}`} className="block rounded-xl border border-amber-100 bg-white p-3 text-sm"><strong>{app.user.name || app.user.email}</strong><p className="mt-1 text-amber-800">Payment follow-up overdue · {app.paymentDeadline && formatKST(app.paymentDeadline, "MMM d")}</p><p className="mt-1 text-xs text-slate-500">{app.program.title}</p></Link></li>)}{data.interviews.map(app => <li key={app.id}><Link prefetch={false} href={`/dashboard/users/${app.user.id}`} className="block rounded-xl border border-slate-200 bg-white p-3 text-sm"><strong>{app.user.name || app.user.email}</strong><p className="mt-1 text-blue-700">Interview · {app.interviewDate && formatKST(app.interviewDate, "MMM d, h:mm a")} KST</p><p className="mt-1 text-xs text-slate-500">{app.program.title}</p></Link></li>)}</ul></section>}
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,1fr)]">
+      <div className="space-y-6">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-5"><h2 className="font-semibold">Recent applications</h2><Link href="/dashboard/applications-admin" prefetch={false} className="inline-flex items-center gap-1 text-sm font-medium text-blue-700">View applications<ArrowRight aria-hidden="true" size={14} /></Link></div>
+          {data.applications.length === 0 ? <p className="p-8 text-sm text-slate-500">No applications yet. New submissions will appear here.</p> : <ul className="divide-y divide-slate-100">{data.applications.map(app => <li key={app.id} className="p-5"><div className="flex flex-wrap items-start justify-between gap-2"><Link href={`/dashboard/users/${app.user.id}`} prefetch={false} className="font-semibold hover:text-blue-700">{app.user.name || app.user.email}</Link><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${app.status === "PENDING" ? "bg-amber-50 text-amber-800" : app.status === "ACCEPTED" ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{adminStatusLabel(app.status)}</span></div><p className="mt-1 text-sm text-slate-600">{app.program.title}</p><p className="mt-2 text-xs text-slate-400">{formatKST(app.createdAt, "MMM d, yyyy")}</p></li>)}</ul>}
+        </section>
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white"><div className="flex justify-between gap-3 border-b border-slate-100 p-5"><h2 className="font-semibold">Inquiry activity</h2><Link href="/dashboard/leads" prefetch={false} className="text-sm font-medium text-blue-700">View inquiries</Link></div>{data.activity.length === 0 ? <p className="p-8 text-sm text-slate-500">No inquiry activity yet.</p> : <ul className="divide-y divide-slate-100">{data.activity.map(log => <li key={log.id} className="p-5"><div className="flex flex-wrap justify-between gap-2"><Link href={`/dashboard/leads/${log.leadId}`} prefetch={false} className="text-sm font-semibold hover:text-blue-700">{log.lead.name}</Link><span className="text-xs text-slate-400">{formatKST(log.createdAt,"MMM d, h:mm a")}</span></div><p className="mt-2 line-clamp-2 break-words text-sm text-slate-600">{log.content}</p><p className="mt-2 text-xs text-slate-400">{log.adminName} · {adminStatusLabel(log.action)}</p></li>)}</ul>}</section>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <Link href="/dashboard/users" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer block">
-          <div className="p-3 rounded-xl bg-blue-50 text-blue-600 w-fit mb-4">
-            <Users className="h-6 w-6" />
-          </div>
-          <h3 className="text-lg font-bold text-gray-900">User Management</h3>
-          <p className="text-sm text-gray-500 mt-1">View and edit student and parent accounts.</p>
-        </Link>
-        
-        <Link href="/dashboard/programs" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer block">
-          <div className="p-3 rounded-xl bg-green-50 text-green-600 w-fit mb-4">
-            <BookOpen className="h-6 w-6" />
-          </div>
-          <h3 className="text-lg font-bold text-gray-900">Program Management</h3>
-          <p className="text-sm text-gray-500 mt-1">Create or update research programs.</p>
-        </Link>
-
-        <Link href="/dashboard/cms" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer block">
-          <div className="p-3 rounded-xl bg-purple-50 text-purple-600 w-fit mb-4">
-            <LayoutTemplate className="h-6 w-6" />
-          </div>
-          <h3 className="text-lg font-bold text-gray-900">Content Management</h3>
-          <p className="text-sm text-gray-500 mt-1">Edit public website pages and articles.</p>
-        </Link>
-
-        <Link href="/dashboard/settings" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer block">
-          <div className="p-3 rounded-xl bg-gray-100 text-gray-600 w-fit mb-4">
-            <Settings className="h-6 w-6" />
-          </div>
-          <h3 className="text-lg font-bold text-gray-900">Settings</h3>
-          <p className="text-sm text-gray-500 mt-1">Configure global portal settings.</p>
-        </Link>
-      </div>
-
-      <div className="mb-10 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100 bg-orange-50/30 flex justify-between items-center">
-           <h3 className="text-lg font-bold tracking-tight text-gray-900 flex items-center">
-             <ClipboardCheck className="w-5 h-5 mr-2 text-orange-600" />
-             Recent Applications
-           </h3>
-           <Link href="/dashboard/applications-admin" className="text-xs font-bold text-orange-600 hover:text-orange-800 transition-colors flex items-center bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">
-              Manage All Applications <ArrowRight className="w-3.5 h-3.5 ml-1" />
-           </Link>
-        </div>
-        <div className="p-0">
-           {recentApps.length === 0 ? (
-              <div className="text-center text-gray-500 py-10 text-sm">No new applications yet.</div>
-           ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider">
-                    <tr>
-                      <th className="px-6 py-3 font-semibold">Applicant</th>
-                      <th className="px-6 py-3 font-semibold">Program</th>
-                      <th className="px-6 py-3 font-semibold">Date</th>
-                      <th className="px-6 py-3 font-semibold">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {recentApps.map(app => (
-                       <tr key={app.id} className="hover:bg-gray-50/50 transition-colors">
-                         <td className="px-6 py-4 font-bold text-gray-900 flex items-center gap-2">
-                           {app.user.image ? (
-                             <img src={app.user.image} className="w-6 h-6 rounded-full" alt="" />
-                           ) : (
-                             <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-[10px]">
-                               {app.user.name?.charAt(0).toUpperCase() || 'U'}
-                             </div>
-                           )}
-                           <Link href={`/dashboard/users/${app.user.id}`} className="hover:text-blue-600 transition-colors">{app.user.name}</Link>
-                         </td>
-                         <td className="px-6 py-4 text-gray-600 font-medium">{app.program.title}</td>
-                         <td className="px-6 py-4 text-gray-500">{formatKST(new Date(app.createdAt), 'MMM d, yyyy')}</td>
-                         <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wider ${app.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' : app.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}`}>
-                              {app.status}
-                            </span>
-                         </td>
-                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-           )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-        
-        {/* Left Column: Recent Activity Log */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col max-h-[600px]">
-          <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center sticky top-0 z-10">
-             <h3 className="text-lg font-bold tracking-tight text-gray-900 flex items-center">
-               <MessageSquare className="w-5 h-5 mr-2 text-blue-600" />
-               Recent CRM Activity
-             </h3>
-             <Link href="/dashboard/leads" className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center bg-blue-50 px-3 py-1.5 rounded-lg">
-                View All Leads <ArrowRight className="w-3.5 h-3.5 ml-1" />
-             </Link>
-          </div>
-          <div className="p-6 overflow-y-auto flex-1">
-             {recentLogs.length === 0 ? (
-                <div className="text-center text-gray-500 py-10 text-sm">No recent activity found.</div>
-             ) : (
-                <div className="space-y-6">
-                  {recentLogs.map((log: any) => (
-                    <div key={log.id} className="relative pl-6 border-l-2 border-gray-100">
-                      <span className={`absolute -left-[9px] top-0 bg-white p-1 rounded-full border shadow-sm ${log.action === "STATUS_CHANGE" ? 'border-purple-200' : 'border-blue-200'}`}>
-                        {log.action === "STATUS_CHANGE" ? (
-                          <Tag className="w-3 h-3 text-purple-500" />
-                        ) : (
-                          <CheckCircle2 className="w-3 h-3 text-blue-500" />
-                        )}
-                      </span>
-                      <div className="flex flex-col">
-                        <div className="flex justify-between items-start">
-                           <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-gray-900">{log.adminName}</span>
-                              <span className="text-xs text-gray-400">on</span>
-                              <Link href={`/dashboard/leads/${log.leadId}`} className="text-xs font-bold text-blue-600 hover:underline">
-                                {log.lead.name}
-                              </Link>
-                           </div>
-                           <span className="text-xs font-medium text-gray-400">{formatKST(new Date(log.createdAt), 'MMM d, h:mm a')}</span>
-                        </div>
-                        <p className={`mt-1.5 text-sm ${log.action === 'STATUS_CHANGE' ? 'font-bold text-purple-700' : 'text-gray-600'} leading-relaxed`}>
-                           {log.content}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-             )}
-          </div>
-        </div>
-
-        {/* Right Column: Scheduled Alarms */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col max-h-[600px]">
-          <div className="px-6 py-5 border-b border-rose-100 bg-rose-50/50 flex justify-between items-center sticky top-0 z-10">
-             <h3 className="text-lg font-bold tracking-tight text-rose-900 flex items-center">
-               <Bell className="w-5 h-5 mr-2 text-rose-600" />
-               Scheduled Alarms
-             </h3>
-             <span className="text-xs font-black bg-rose-200 text-rose-800 px-2.5 py-1 rounded-full shadow-sm">
-                {activeAlarms.length} Active
-             </span>
-          </div>
-          <div className="p-6 overflow-y-auto flex-1 bg-rose-50/10">
-             {activeAlarms.length === 0 ? (
-                <div className="text-center text-gray-500 py-10 text-sm">You have no upcoming alarms.</div>
-             ) : (
-                <div className="space-y-4">
-                  {activeAlarms.map((alarm: any) => {
-                    const isToday = new Date(alarm.dueDate).toDateString() === new Date().toDateString();
-                    return (
-                    <Link href={`/dashboard/leads/${alarm.leadId}`} key={alarm.id} className="block group">
-                      <div className={`bg-white border ${isToday ? 'border-rose-400 bg-rose-50/50' : 'border-gray-200'} p-4 rounded-xl shadow-sm hover:shadow-md hover:border-rose-300 transition-all`}>
-                        <div className="flex justify-between items-center mb-2">
-                           <span className="text-sm font-bold text-gray-900 group-hover:text-rose-600 transition-colors">
-                             {alarm.lead.name}
-                           </span>
-                           <span className={`text-xs font-bold ${isToday ? 'text-white bg-rose-500 border-rose-500 shadow-sm animate-[pulse_2s_infinite]' : 'text-rose-600 bg-rose-50 border-rose-100'} px-2 py-1 rounded-lg border flex items-center`}>
-                             {isToday ? 'Today' : `Due ${formatKST(new Date(alarm.dueDate), 'MMM d')}`}
-                           </span>
-                        </div>
-                        <p className="text-sm text-gray-600 font-medium mb-3">{alarm.message}</p>
-                        <div className="flex justify-between items-center text-xs text-gray-400">
-                           <span>Set by {alarm.adminName}</span>
-                           <span className="text-blue-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                             View Lead →
-                           </span>
-                        </div>
-                      </div>
-                    </Link>
-                  )})}
-                </div>
-             )}
-          </div>
-        </div>
-
-      </div>
-    </>
-  );
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white"><div className="border-b border-slate-100 p-5"><h2 className="flex items-center gap-2 font-semibold"><Bell aria-hidden="true" size={18} />Follow-up reminders<span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs">{data.reminders}</span></h2><p className="mt-2 text-xs text-slate-500">Unread reminders, earliest first. Includes overdue items.{data.reminders > 20 ? " Showing the first 20; open a person's record to manage their reminders." : ""}</p></div>{data.followups.length === 0 ? <p className="p-8 text-sm text-slate-500">You’re all caught up. No unread reminders.</p> : <ul className="max-h-[680px] divide-y divide-slate-100 overflow-y-auto">{data.followups.map(item => {
+        const day = formatKST(item.dueDate, "yyyy-MM-dd");
+        const href = item.leadId ? `/dashboard/leads/${item.leadId}` : item.userId ? `/dashboard/users/${item.userId}` : "/dashboard/leads";
+        return <li key={item.id}><Link href={href} prefetch={false} className="block p-5 hover:bg-slate-50"><div className="flex flex-wrap justify-between gap-2"><span className="text-sm font-semibold">{item.lead?.name || item.user?.name || item.user?.email || "Follow-up"}</span><span className={`text-xs font-semibold ${day < today ? "text-rose-700" : day === today ? "text-amber-700" : "text-slate-500"}`}>{day < today ? "Overdue" : day === today ? "Today" : formatKST(item.dueDate, "MMM d")}</span></div><p className="mt-2 break-words text-sm text-slate-600">{item.message}</p><p className="mt-2 text-xs text-slate-400">{formatKST(item.dueDate, "MMM d, h:mm a")} KST</p></Link><div className="px-5 pb-4"><CompleteReminder id={item.id} /></div></li>;
+      })}</ul>}</section>
+    </div>
+  </div>;
 }

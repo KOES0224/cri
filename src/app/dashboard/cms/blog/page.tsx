@@ -24,7 +24,7 @@ export default async function AdminBlogPage() {
           Back to CMS Hub
         </Link>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
-          News & Articles
+          Articles
         </h1>
         <p className="mt-2 text-sm text-gray-500">
           Create, edit, and publish content to the public blog.

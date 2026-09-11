@@ -37,6 +37,12 @@ export async function getLeads() {
 export async function createLead(name: string, email?: string) {
   const session = await requireAdmin();
   if (!name.trim()) return { success: false, error: "Name is required" };
+  name = name.trim();
+  email = email?.trim().toLowerCase();
+  if (email) {
+    const duplicate = await prisma.lead.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: { id: true } });
+    if (duplicate) return { success: false, error: "An inquiry with this email already exists. Open it to review the history before adding another.", existingLeadId: duplicate.id };
+  }
 
   try {
     let linkedUserId = null;
@@ -90,8 +96,9 @@ export async function getLeadDetails(id: string) {
 export async function updateLeadDetails(id: string, data: any) {
   const session = await requireAdmin();
   try {
+    const current = await prisma.lead.findUnique({ where: { id }, select: { userId: true } });
     let linkedUserId = undefined;
-    if (data.email) {
+    if (!current?.userId && data.email) {
       const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
       if (existingUser) linkedUserId = existingUser.id;
     }
@@ -123,6 +130,7 @@ export async function updateLeadDetails(id: string, data: any) {
 export async function updateLeadStatus(id: string, status: string) {
   const session = await requireAdmin();
 
+  if (!["NEW", "CONTACTED", "MET", "ENROLLED", "WAITLISTED", "REJECTED"].includes(status)) return { success: false, error: "Invalid inquiry status." };
   const currentLead = await prisma.lead.findUnique({ where: { id } });
   if (!currentLead) throw new Error("Lead not found");
 
@@ -277,28 +285,24 @@ export async function manuallyLinkLeadToUser(leadId: string, emailOrCode: string
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { email: emailOrCode },
-          { studentCode: emailOrCode }
+          { email: { equals: emailOrCode.trim(), mode: "insensitive" } },
+          { studentCode: emailOrCode.trim() }
         ]
       }
     });
 
     if (!user) return { success: false, error: "No user found matching that email or code." };
 
-    await prisma.lead.update({
-      where: { id: leadId },
-      data: {
-        userId: user.id,
-        activities: {
-          create: {
-            action: "NOTE_ADDED",
-            adminName: session.user.name || "Admin",
-            content: `Manually linked Lead to User Account: ${user.name} (${user.email}).`,
-          }
-        }
-      }
+    await prisma.$transaction(async tx => {
+      const lead = await tx.lead.findUnique({ where: { id: leadId } });
+      if (!lead) throw new Error("Inquiry not found.");
+      if (lead.userId === user.id) return;
+      if (lead.userId) throw new Error("This inquiry is already linked to another account. Review that connection first.");
+      const updated = await tx.lead.updateMany({ where: { id: leadId, userId: null }, data: { userId: user.id } });
+      if (updated.count !== 1) throw new Error("This inquiry was linked by another administrator. Refresh to see the latest record.");
+      await tx.leadActivity.create({ data: { leadId, action: "NOTE_ADDED", adminName: session.user.name || "Administrator", content: `Linked inquiry to ${user.name || user.email} (${user.id}) by ${session.user.id}.` } });
     });
-
+    revalidatePath(`/dashboard/users/${user.id}`);
     revalidatePath(`/dashboard/leads/${leadId}`);
     return { success: true };
   } catch (error: any) {

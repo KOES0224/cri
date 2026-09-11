@@ -25,7 +25,7 @@ type ProgramFormProps = {
     capacity?: number | null;
     professors?: { id: string; name: string }[];
   };
-  professors?: { id: string; name: string; role?: string; university?: string; bio?: string; courseTitle?: string; courseDescription?: string; idealStudents?: string; potentialTopics?: string }[];
+  professors?: { id: string; name: string; role?: string | null; university?: string | null; bio?: string | null; courseTitle?: string | null; courseDescription?: string | null; idealStudents?: string | null; potentialTopics?: string | null }[];
   onSuccess?: () => void;
   onCancel?: () => void;
 };
@@ -301,7 +301,7 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
             <option value="Winter Online Research Program">Winter Online Research Program</option>
             <option value="Projects">Projects</option>
             <option value="Competitions">Competitions</option>
-            <option value="Internship">Interns / Internships</option>
+            <option value="Internship">Internships</option>
             <option value="Other">Other</option>
           </select>
         </div>

@@ -173,7 +173,7 @@ export default function LandingClientForm() {
         {/* LANDING TAB */}
         {activeTab === "Landing" && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-100 pb-4">Landing Page Setup</h2>
+            <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-100 pb-4">Homepage Setup</h2>
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Starred Pill Badge</label>
