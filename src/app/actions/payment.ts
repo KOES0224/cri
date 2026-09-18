@@ -12,7 +12,7 @@ import { revalidatePath } from 'next/cache';
 
 export async function beginApplicationCheckout(programId: string, input: unknown) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return { error: 'Sign in before applying.' };
+  if (!session?.user?.id || session.user.role !== 'STUDENT') return { error: 'Sign in with a student account before applying.' };
   if (!process.env.TOSS_SECRET_KEY || !process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY) return { error: 'Online payment is unavailable. Contact admissions before paying.' };
   const parsed = applicationSchema.safeParse(input);
   if (!parsed.success) return { error: `Check the application fields and word limits: ${parsed.error.issues[0]?.path.join('.') || 'application'}.` };
@@ -86,6 +86,7 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
         ] },
       } });
       await tx.applicationCheckout.update({ where: { id: orderId }, data: { status: 'COMPLETED', applicationId: app.id, formData: {} } });
+      await tx.applicationDraft.deleteMany({where: {userId: session.user.id, programId: order.programId}});
       return app.id;
     });
     // Only the completed application is exported; payment keys and card details are never included.

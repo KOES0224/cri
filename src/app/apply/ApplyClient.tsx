@@ -1,667 +1,166 @@
-"use client";
+'use client';
 
-import { beginApplicationCheckout } from "@/app/actions/payment";
-import { APPLICATION_CHARGE_LABEL } from "@/lib/application-fee";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { 
-  BookOpen, 
-  Send, 
-  User, 
-  ChevronLeft, 
-  ChevronRight, 
-  UploadCloud, 
-  CheckCircle2, 
-  AlertCircle, 
-  Sparkles, 
-  Loader2,
-  CreditCard,
-  ShieldCheck,
-  Lock,
-  ArrowRight,
-  FileText,
-  GraduationCap
-} from "lucide-react";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { beginApplicationCheckout } from '@/app/actions/payment';
+import { saveApplicationDraft } from '@/app/actions/applicationDrafts';
+import { applicationErrors, applicationLabels, personalFields } from '@/lib/application-validation';
+import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
+import { programKind } from '@/lib/program-policy';
 
-type ApplyClientProps = {
-  program: any;
-  user: any;
-  savedDraft?: Record<string, string>;
-};
+type Program = { id: string; title: string; category: string; tuition: number | null; professors: { id: string; name: string; university: string | null }[] };
+type Props = { program: Program; user: { id: string; name?: string | null; email?: string | null }; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean };
+const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100';
+const actionClass = 'rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50';
 
-export default function ApplyClient({ program, user, savedDraft }: ApplyClientProps) {
-  const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [uploadingResume, setUploadingResume] = useState(false);
+export default function ApplyClient({ program, user, savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable }: Props) {
+  const parts = (user.name || '').trim().split(/\s+/);
+  const [form, setForm] = useState<Record<string, string>>({ studentFirstName: parts[0] || '', studentLastName: parts.slice(1).join(' '), studentEmail: user.email || '', studentLevel: 'SCHOOL', studentPhone: '', parentFirstName: '', parentLastName: '', parentEmail: '', parentPhone: '', school: '', gradYear: '', gender: '', tShirtSize: '', photoConsent: '', resumeUrl: '', initialTopicIdeas: '', areaOfInterest: '', essay: '', shortAnswer: '', firstChoiceProfessor: program.professors[0]?.name || '', secondChoiceProfessor: '', thirdChoiceProfessor: '', previousResearch: '', howLearned: '', ...savedDraft });
+  const [step, setStep] = useState(checkoutPending ? 3 : Math.min(3, Math.max(1, draftStep)));
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [filename, setFilename] = useState(resumeFilename);
+  const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
+  const [savedAt, setSavedAt] = useState(draftSavedAt || '');
+  const [saveError, setSaveError] = useState('');
+  const version = useRef(draftVersion);
+  const conflict = useRef(false);
+  const initial = useRef(true);
+  const mounted = useRef(true);
+  const revision = useRef(0);
+  const savedRevision = useRef(0);
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const [checkoutStarted, setCheckoutStarted] = useState(checkoutPending);
+  const paymentLock = useRef(false);
+  const checkoutRef = useRef(checkoutPending);
+  const locked = checkoutStarted || busy;
+  const summer = ['seoul', 'global'].includes(programKind(program.category));
 
-  const nameParts = user?.name ? user.name.trim().split(/\s+/) : [];
-  const defaultFirstName = nameParts[0] || "";
-  const defaultLastName = nameParts.slice(1).join(" ") || "";
-  const defaultProfessor = program?.professors?.[0]?.name || "";
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => {
+    const preventLoss = (event: BeforeUnloadEvent) => { if (revision.current !== savedRevision.current && !checkoutPending) { event.preventDefault(); event.returnValue = ''; } };
+    window.addEventListener('beforeunload', preventLoss);
+    return () => window.removeEventListener('beforeunload', preventLoss);
+  }, [checkoutPending]);
 
-  const [formData, setFormData] = useState({
-    studentFirstName: defaultFirstName,
-    studentLastName: defaultLastName,
-    gender: "",
-    studentEmail: user.email || "",
-    tShirtSize: "",
-    studentPhone: "",
-    parentFirstName: "",
-    parentLastName: "",
-    parentEmail: "",
-    parentPhone: "",
-    school: "",
-    gradYear: "",
-    photoConsent: "",
-    resumeUrl: "",
-    initialTopicIdeas: "",
-    areaOfInterest: "",
-    essay: "",
-    shortAnswer: "",
-    firstChoiceProfessor: defaultProfessor,
-    secondChoiceProfessor: "",
-    thirdChoiceProfessor: "",
-    previousResearch: "",
-    howLearned: "",
-    ...savedDraft,
-  });
-
-  // Clear legacy cross-account drafts. Application details now remain on the server.
-  useEffect(() => { try { localStorage.removeItem("cri_apply_draft"); sessionStorage.removeItem("cri_apply_draft"); } catch {} }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
-    
-    if (file.type !== "application/pdf" || file.size > 5 * 1024 * 1024) {
-      alert("Please upload a PDF resume up to 5 MB.");
-      return;
-    }
-
-    setUploadingResume(true);
-    const uploadData = new FormData();
-    uploadData.append('file', file);
-
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: uploadData,
-      });
-
-      if (!response.ok) throw new Error("Upload failed");
-      
-      const blob = await response.json();
-      setFormData(prev => ({ ...prev, resumeUrl: blob.url }));
-    } catch (err) {
-      console.error(err);
-      alert("Failed to upload resume. Please try again.");
-    } finally {
-      setUploadingResume(false);
-    }
-  };
-
-  const nextStep = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    setStep(prev => prev + 1);
-  };
-  
-  const prevStep = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    setStep(prev => prev - 1);
-  };
-
-  // Launch Toss Payments Checkout for the $50 USD Application Fee
-  const handleTossCheckout = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
-      if (!clientKey) throw new Error("Online payment is unavailable. Please contact admissions.");
-      const order = await beginApplicationCheckout(program.id, formData);
-      if (order.error || !order.orderId) throw new Error(order.error || "Unable to prepare checkout.");
-      const tossPayments = await loadTossPayments(clientKey);
-      const payment = tossPayments.payment({ customerKey: user.id });
-      const orderId = order.orderId;
-      const candidateName = `${formData.studentFirstName} ${formData.studentLastName}`.trim() || user.name || "Applicant";
-
-      await payment.requestPayment({
-        method: "CARD",
-        amount: {
-          currency: order.currency!,
-          value: order.amount!
-        },
-        orderId,
-        orderName: order.orderName!,
-        successUrl: `${window.location.origin}/apply/payment-success?programId=${program.id}`,
-        failUrl: `${window.location.origin}/apply/payment-fail?programId=${program.id}`,
-        customerEmail: formData.studentEmail || user.email,
-        customerName: candidateName,
-      });
-    } catch (err: any) {
-      console.error("Toss checkout error:", err);
-      // If user closed the popup, handle gracefully
-      if (err.code === "USER_CANCEL") {
-        setError("Payment was cancelled. You can try again whenever you are ready.");
-      } else {
-        setError(err.message || "Failed to launch payment window. Please try again.");
+  const persist = useCallback((snapshot: Record<string, string>, currentStep: number, currentRevision: number) => {
+    const task = queue.current.then(async () => {
+      if (conflict.current || checkoutRef.current) return false;
+      if (mounted.current) setSaveState('saving');
+      try {
+        const result = await saveApplicationDraft(program.id, snapshot, currentStep, version.current);
+        if (!result.success) {
+          conflict.current = Boolean(result.conflict);
+          if (mounted.current) { setSaveState('error'); setSaveError(result.error); }
+          return false;
+        }
+        version.current = result.version;
+        savedRevision.current = currentRevision;
+        if (mounted.current) { setSavedAt(result.savedAt); setSaveError(''); setSaveState(revision.current === currentRevision ? 'saved' : 'unsaved'); }
+        return true;
+      } catch {
+        if (mounted.current) { setSaveState('error'); setSaveError('Draft not saved. Check your connection, then retry before leaving.'); }
+        return false;
       }
-      setLoading(false);
+    });
+    queue.current = task;
+    return task;
+  }, [program.id, checkoutPending]);
+
+  useEffect(() => {
+    if (initial.current) { initial.current = false; return; }
+    if (checkoutStarted || busy) return;
+    const currentRevision = revision.current;
+    const timer = setTimeout(() => { void persist(form, step, currentRevision); }, 900);
+    return () => clearTimeout(timer);
+  }, [form, step, checkoutStarted, busy, persist]);
+
+  function update(key: string, value: string) {
+    revision.current += 1;
+    setSaveState('unsaved');
+    setForm(previous => ({ ...previous, [key]: value, ...(key === 'studentLevel' && value === 'UNIVERSITY' ? {parentFirstName: '', parentLastName: '', parentEmail: '', parentPhone: ''} : {}) }));
+    setErrors(previous => { const copy = { ...previous }; delete copy[key]; return copy; });
+  }
+  function move(next: number) {
+    if (next > step) {
+      const issues = applicationErrors(form, step);
+      if (Object.keys(issues).length) { setErrors(issues); setNotice('Please check the highlighted fields.'); requestAnimationFrame(() => document.getElementById(`apply-${Object.keys(issues)[0]}`)?.focus()); return; }
     }
-  };
+    revision.current += 1;
+    setSaveState('unsaved'); setStep(next); setNotice(''); setErrors({});
+    requestAnimationFrame(() => titleRef.current?.focus());
+  }
+  async function upload(file?: File) {
+    if (!file) return;
+    if (file.type !== 'application/pdf' || file.size > 5 * 1024 * 1024 || file.size === 0) { setErrors(previous => ({ ...previous, resumeUrl: 'Choose a PDF up to 5 MB.' })); return; }
+    setUploading(true);
+    try {
+      const data = new FormData(); data.set('file', file);
+      const response = await fetch('/api/upload', { method: 'POST', body: data });
+      if (!response.ok) throw new Error(await response.text());
+      const document = await response.json(); update('resumeUrl', document.url); setFilename(file.name);
+    } catch (error) { setErrors(previous => ({ ...previous, resumeUrl: error instanceof Error ? error.message : 'Upload failed. Retry without leaving this page.' })); }
+    finally { setUploading(false); }
+  }
+  async function checkout() {
+    if (paymentLock.current) return;
+    const issues = applicationErrors(form);
+    if (Object.keys(issues).length) { setErrors(issues); setStep(personalFields.includes(Object.keys(issues)[0]) ? 1 : 2); setNotice('Please complete the highlighted fields before paying.'); return; }
+    paymentLock.current = true;
+    setBusy(true); setNotice('');
+    try {
+      if (!checkoutRef.current && !await persist(form, step, revision.current)) throw new Error('Save your draft successfully before starting payment.');
+      const key = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+      if (!key || !paymentAvailable) throw new Error('Online payment is currently unavailable. Your draft is saved; contact admissions for assistance.');
+      const order = await beginApplicationCheckout(program.id, form);
+      if (order.error || !order.orderId) throw new Error(order.error || 'Unable to prepare payment.');
+      checkoutRef.current = true; setCheckoutStarted(true);
+      const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+      const sdk = await loadTossPayments(key);
+      await sdk.payment({ customerKey: user.id }).requestPayment({ method: 'CARD', amount: { currency: order.currency!, value: order.amount! }, orderId: order.orderId, orderName: order.orderName!, successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`, failUrl: `${window.location.origin}/apply/payment-fail?programId=${encodeURIComponent(program.id)}`, customerEmail: form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim() });
+    } catch (error) { setNotice(error instanceof Error ? error.message : 'Payment was not completed. Check your payment provider before retrying.'); }
+    finally { paymentLock.current = false; setBusy(false); }
+  }
+  function field(key: string, options: { type?: string; optional?: boolean; multiline?: boolean; words?: number; choices?: [string, string][]; hint?: string } = {}) {
+    const id = `apply-${key}`, error = errors[key];
+    const common = { id, name: key, value: form[key] || '', disabled: locked, 'aria-invalid': Boolean(error), 'aria-describedby': `${id}-help`, onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => update(key, event.target.value), className: `${inputClass} ${error ? 'border-red-500' : ''}` };
+    return <div key={key} className={options.multiline ? 'sm:col-span-2' : ''}><label htmlFor={id} className="mb-2 block text-sm font-semibold text-slate-800">{applicationLabels[key]}{!options.optional && ' *'}</label>
+      {options.choices ? <select {...common}><option value="">Select…</option>{options.choices.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select> : options.multiline ? <textarea {...common} rows={options.words === 500 ? 7 : 4} maxLength={20000} /> : <input {...common} type={options.type || 'text'} maxLength={key.includes('Email') ? 254 : 200} />}
+      <div id={`${id}-help`} className="mt-1 text-xs leading-relaxed">{options.words && <p className={(form[key]?.trim().split(/\s+/).filter(Boolean).length || 0) > options.words ? 'text-red-700' : 'text-slate-500'}>{form[key]?.trim().split(/\s+/).filter(Boolean).length || 0} / {options.words} words</p>}{options.hint && <p className="text-slate-500">{options.hint}</p>}{error && <p className="text-red-700">{error}</p>}</div>
+    </div>;
+  }
 
-  const professors = program.professors || [];
-
-  return (
-    <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-6">
-      <div className="max-w-3xl mx-auto">
-        <aside className="bg-blue-50 border border-blue-100 p-5 rounded-2xl mb-6 text-sm text-blue-950">
-          {savedDraft && <p className="mb-3 font-semibold">Your saved checkout application has been restored. To revise it, contact admissions before paying.</p>}
-          <p><strong>Program tuition:</strong> {program.tuition != null ? `$${program.tuition.toLocaleString()} USD` : 'Available on inquiry'}.</p>
-          <p className="mt-2"><strong>Separate application fee:</strong> USD 50. The current checkout charges {APPLICATION_CHARGE_LABEL}; this is the application fee only, not tuition. Check this amount before paying.</p>
-          <p className="mt-2">Prepare your academic details, PDF CV, research interests and written responses. Your application is recorded after payment is confirmed. <Link href="/admissions" className="underline">Application guide</Link> · <Link href="/privacy" className="underline">Privacy information</Link></p>
-        </aside>
-         <Link href={`/research/program/${program.id}`} className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-8">
-           <ChevronLeft className="w-4 h-4 mr-1" />
-           Back to Program Details
-         </Link>
-         
-         {/* Apple-style 4-Step Progress Bar */}
-         <div className="mb-8 flex justify-between items-center relative">
-           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-200/80 rounded-full z-0"></div>
-           <div 
-             className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 rounded-full z-0 transition-all duration-500 ease-out" 
-             style={{ width: `${((step - 1) / 3) * 100}%` }}
-           ></div>
-           
-           {[1, 2, 3, 4].map(s => (
-             <div 
-               key={s} 
-               className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
-                 step >= s 
-                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105' 
-                   : 'bg-white border-2 border-gray-200 text-gray-400'
-               }`}
-             >
-               {s}
-             </div>
-           ))}
-         </div>
-
-         {/* Form Card */}
-         <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-xl border border-gray-100/80 relative overflow-hidden transition-all">
-            <AnimatePresence mode="wait">
-              {step === 1 && (
-                <motion.div
-                  key="step-1"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  {section1(step, nextStep)}
-                </motion.div>
-              )}
-
-              {step === 2 && (
-                <motion.div
-                  key="step-2"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  {section2(step, formData, handleChange, nextStep, prevStep)}
-                </motion.div>
-              )}
-
-              {step === 3 && (
-                <motion.div
-                  key="step-3"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  {section3(step, formData, handleChange, handleFileUpload, uploadingResume, nextStep, prevStep, professors)}
-                </motion.div>
-              )}
-
-              {step === 4 && (
-                <motion.div
-                  key="step-4"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  {section4(step, program, formData, user, handleTossCheckout, loading, error, prevStep)}
-                </motion.div>
-              )}
-            </AnimatePresence>
-         </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Step 1: Program Guidelines & Introduction ──
-function section1(step: number, nextStep: () => void) {
-  if (step !== 1) return null;
-  return (
-    <div>
-      <div className="flex items-center justify-center w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl mb-6 shadow-sm">
-        <BookOpen className="w-8 h-8" />
-      </div>
-      <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-4">A Journey to Academic Excellence</h1>
-      <p className="text-gray-500 mb-8 font-medium leading-relaxed">
-        Application Results: Announced within 14 days of submission.
-        <br/><br/>
-        Please submit your application as early as possible to be considered for the program. Best of luck!
-        <br/><br/>
-        All applicant responses will be treated with utmost confidentiality, and the information provided will be kept strictly confidential to ensure the privacy and integrity of the application process.
-      </p>
-      <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 mb-8 flex items-start">
-         <AlertCircle className="w-6 h-6 text-blue-600 mr-3 shrink-0" />
-         <p className="text-sm text-blue-800 font-medium">Contact Number: +82) 02-6203-8999<br/>Email: support@cri.kr</p>
-      </div>
-
-      <button onClick={nextStep} className="w-full h-14 bg-black text-white hover:bg-gray-800 rounded-2xl font-bold flex items-center justify-center transition-all shadow-lg hover:shadow-xl cursor-pointer">
-        Begin Application <ChevronRight className="w-5 h-5 ml-2" />
-      </button>
-    </div>
-  );
-}
-
-// ── Step 2: Personal Information ──
-function section2(step: number, formData: any, handleChange: any, nextStep: () => void, prevStep: () => void) {
-  if (step !== 2) return null;
-  return (
-    <div>
-      <h2 className="text-2xl font-black text-gray-900 mb-2">Personal Information</h2>
-      <p className="text-gray-500 text-sm mb-8">This section serves as a comprehensive overview of your academic background and personal details.</p>
-      
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="apply-studentFirstName" className="block text-sm font-bold text-gray-700 mb-2">Student's First Name *</label>
-            <input id="apply-studentFirstName" type="text" name="studentFirstName" value={formData.studentFirstName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
-          </div>
-          <div>
-            <label htmlFor="apply-studentLastName" className="block text-sm font-bold text-gray-700 mb-2">Student's Last Name *</label>
-            <input id="apply-studentLastName" type="text" name="studentLastName" value={formData.studentLastName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="apply-gender" className="block text-sm font-bold text-gray-700 mb-2">Gender *</label>
-            <select id="apply-gender" name="gender" value={formData.gender} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
-              <option value="">Select...</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="apply-tShirtSize" className="block text-sm font-bold text-gray-700 mb-2">T-Shirt Size *</label>
-            <select id="apply-tShirtSize" name="tShirtSize" value={formData.tShirtSize} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
-              <option value="">Select...</option>
-              <option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option>
-              <option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="apply-studentEmail" className="block text-sm font-bold text-gray-700 mb-2">Student's Email *</label>
-            <input id="apply-studentEmail" type="email" name="studentEmail" value={formData.studentEmail} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
-          </div>
-          <div>
-            <label htmlFor="apply-studentPhone" className="block text-sm font-bold text-gray-700 mb-2">Student's Phone / WhatsApp *</label>
-            <input id="apply-studentPhone" type="text" name="studentPhone" value={formData.studentPhone} onChange={handleChange} required placeholder="e.g. +1 555-0123 / +82 10-1234-5678" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
-          </div>
-        </div>
-
-        <hr className="border-gray-100 my-6" />
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="apply-parentFirstName" className="block text-sm font-bold text-gray-700 mb-2">Parent's First Name *</label>
-            <input id="apply-parentFirstName" type="text" name="parentFirstName" value={formData.parentFirstName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
-          </div>
-          <div>
-            <label htmlFor="apply-parentLastName" className="block text-sm font-bold text-gray-700 mb-2">Parent's Last Name *</label>
-            <input id="apply-parentLastName" type="text" name="parentLastName" value={formData.parentLastName} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="apply-parentEmail" className="block text-sm font-bold text-gray-700 mb-2">Parent's Email *</label>
-            <input id="apply-parentEmail" type="email" name="parentEmail" value={formData.parentEmail} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
-          </div>
-          <div>
-            <label htmlFor="apply-parentPhone" className="block text-sm font-bold text-gray-700 mb-2">Parent's Phone *</label>
-            <input id="apply-parentPhone" type="text" name="parentPhone" value={formData.parentPhone} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
-          </div>
-        </div>
-
-        <hr className="border-gray-100 my-6" />
-
-        <div>
-          <label htmlFor="apply-school" className="block text-sm font-bold text-gray-700 mb-2">School/Institution *</label>
-          <input id="apply-school" type="text" name="school" value={formData.school} onChange={handleChange} required placeholder="e.g. Phillips Exeter Academy, Anglo-Chinese School, Seoul Int'l School" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="apply-gradYear" className="block text-sm font-bold text-gray-700 mb-2">Expected Grad Year *</label>
-            <select id="apply-gradYear" name="gradYear" value={formData.gradYear} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
-              <option value="">Select...</option>
-              <option value="2026">2026</option><option value="2027">2027</option>
-              <option value="2028">2028</option><option value="2029">2029</option>
-              <option value="2030">2030</option><option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="apply-photoConsent" className="block text-sm font-bold text-gray-700 mb-2">Photo/Video Consent *</label>
-            <select id="apply-photoConsent" name="photoConsent" value={formData.photoConsent} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
-              <option value="">Select...</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex gap-4 mt-8">
-        <button onClick={prevStep} className="w-1/3 h-14 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-2xl font-bold flex items-center justify-center transition-all cursor-pointer">
-          Back
-        </button>
-        <button onClick={nextStep} 
-          disabled={!formData.studentFirstName || !formData.studentEmail || !formData.school}
-          className="w-2/3 h-14 bg-black text-white disabled:bg-gray-400 hover:bg-gray-800 rounded-2xl font-bold flex items-center justify-center transition-all shadow-lg hover:shadow-xl cursor-pointer">
-          Next Step <ChevronRight className="w-5 h-5 ml-2" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Step 3: Academic Proposal & Essays ──
-function section3(
-  step: number, 
-  formData: any, 
-  handleChange: any, 
-  handleFileUpload: any, 
-  uploadingResume: boolean, 
-  nextStep: () => void, 
-  prevStep: () => void, 
-  professors: any[]
-) {
-  if (step !== 3) return null;
-  return (
-    <div>
-      <h2 className="text-2xl font-black text-gray-900 mb-2">Research Interest</h2>
-      <p className="text-gray-500 text-sm mb-8">This section aims to understand your specific research interests and preferences for research advisors.</p>
-      
-      <div className="space-y-6">
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Resume Upload (PDF Only) *</label>
-          <div className="w-full p-6 border-2 border-dashed border-gray-200 rounded-2xl text-center bg-gray-50 hover:bg-gray-100 transition-colors relative cursor-pointer group">
-            <input aria-label="Upload CV as PDF, up to 5 MB" type="file" accept=".pdf" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required={!formData.resumeUrl} />
-            <div className="flex flex-col items-center justify-center">
-              {uploadingResume ? (
-                <div className="w-8 h-8 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin"></div>
-              ) : formData.resumeUrl ? (
-                <>
-                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mb-2" />
-                  <span className="text-sm font-bold text-emerald-700">Resume Uploaded Successfully!</span>
-                  <span className="text-xs text-gray-500 mt-1">Click to replace file</span>
-                </>
-              ) : (
-                <>
-                  <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-blue-500 transition-colors mb-2" />
-                  <span className="text-sm font-bold text-gray-700">Click or drag PDF to upload</span>
-                  <p className="text-xs text-gray-500 mt-2">Must include your current GPA</p>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div>
-           <label htmlFor="apply-initialTopicIdeas" className="block text-sm font-bold text-gray-700 mb-2">Initial Research Topic Ideas *</label>
-           <textarea id="apply-initialTopicIdeas" name="initialTopicIdeas" rows={3} value={formData.initialTopicIdeas} onChange={handleChange} required placeholder="Briefly describe your areas of interest..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
-        </div>
-
-        <div>
-           <label htmlFor="apply-areaOfInterest" className="block text-sm font-bold text-gray-700 mb-2">Primary Area of Interest *</label>
-           <input id="apply-areaOfInterest" type="text" name="areaOfInterest" value={formData.areaOfInterest} onChange={handleChange} required placeholder="e.g. Computer Science, Artificial Intelligence, Bioengineering" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none font-medium" />
-        </div>
-
-        <div>
-           <label htmlFor="apply-essay" className="block text-sm font-bold text-gray-700 mb-2">Essay: Why are you interested? (Max 500w) *</label>
-           <textarea id="apply-essay" name="essay" rows={5} value={formData.essay} onChange={handleChange} required placeholder="Highlight relevant experiences or aspirations..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
-        </div>
-
-        <div>
-           <label htmlFor="apply-shortAnswer" className="block text-sm font-bold text-gray-700 mb-2">Short Answer: Goals Alignment (Max 150w) *</label>
-           <textarea id="apply-shortAnswer" name="shortAnswer" rows={3} value={formData.shortAnswer} onChange={handleChange} required placeholder="How does this align with your professional goals?" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
-        </div>
-
-        <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 space-y-4">
-          <h3 className="font-bold text-blue-900 mb-2">Professor Preferences</h3>
-          <div>
-            <label htmlFor="apply-firstChoiceProfessor" className="block text-xs font-bold text-blue-800 mb-1">First Choice *</label>
-            <select id="apply-firstChoiceProfessor" name="firstChoiceProfessor" value={formData.firstChoiceProfessor} onChange={handleChange} required className="w-full px-4 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none bg-white text-sm font-medium">
-              <option value="">Select First Choice...</option>
-              {professors.map((p: any) => <option key={p.id} value={p.name}>{p.name} ({p.university}, {p.role})</option>)}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="apply-secondChoiceProfessor" className="block text-xs font-bold text-blue-800 mb-1">Second Choice</label>
-            <select id="apply-secondChoiceProfessor" name="secondChoiceProfessor" value={formData.secondChoiceProfessor} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none bg-white text-sm font-medium">
-              <option value="">Select Second Choice (Optional)...</option>
-              {professors.map((p: any) => <option key={p.id} value={p.name}>{p.name} ({p.university}, {p.role})</option>)}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="apply-thirdChoiceProfessor" className="block text-xs font-bold text-blue-800 mb-1">Third Choice</label>
-            <select id="apply-thirdChoiceProfessor" name="thirdChoiceProfessor" value={formData.thirdChoiceProfessor} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none bg-white text-sm font-medium">
-              <option value="">Select Third Choice (Optional)...</option>
-              {professors.map((p: any) => <option key={p.id} value={p.name}>{p.name} ({p.university}, {p.role})</option>)}
-            </select>
-          </div>
-        </div>
-
-        <div>
-           <label htmlFor="apply-previousResearch" className="block text-sm font-bold text-gray-700 mb-2">Past Research Experience *</label>
-           <textarea id="apply-previousResearch" name="previousResearch" rows={3} value={formData.previousResearch} onChange={handleChange} required placeholder="If yes, describe contributions (or write 'None')..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none resize-none font-medium text-sm" />
-        </div>
-
-        <div>
-          <label htmlFor="apply-howLearned" className="block text-sm font-bold text-gray-700 mb-2">How did you learn about this program? *</label>
-          <select id="apply-howLearned" name="howLearned" value={formData.howLearned} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 transition-all outline-none bg-white font-medium">
-            <option value="">Select...</option>
-            <option value="University/College Announcement">University/College Announcement</option>
-            <option value="Academic Advisor Recommendation">Academic Advisor Recommendation</option>
-            <option value="Online Advertisement">Online Advertisement</option>
-            <option value="Social Media">Social Media</option>
-            <option value="Referral">Referral from a Current/Past Participant</option>
-            <option value="Conference or Event">Conference or Event</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-
-        <div className="flex gap-4 pt-4">
-          <button type="button" onClick={prevStep} className="w-1/3 h-14 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-2xl font-bold flex items-center justify-center transition-all cursor-pointer">
-            Back
-          </button>
-          <button
-            type="button"
-            onClick={nextStep}
-            disabled={!formData.resumeUrl || !formData.essay || !formData.areaOfInterest || !formData.firstChoiceProfessor}
-            className="w-2/3 h-14 bg-black text-white hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-2xl font-bold flex items-center justify-center transition-all shadow-lg hover:shadow-xl cursor-pointer"
-          >
-            Review & Payment ($50 USD) <ChevronRight className="w-5 h-5 ml-2" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Step 4: Review & Payment ($50.00 USD) ──
-function section4(
-  step: number,
-  program: any,
-  formData: any,
-  user: any,
-  handleTossCheckout: () => void,
-  loading: boolean,
-  error: string,
-  prevStep: () => void
-) {
-  if (step !== 4) return null;
-
-  const candidateName = `${formData.studentFirstName} ${formData.studentLastName}`.trim() || user.name || "Student";
-
-  return (
-    <div>
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-          <CreditCard className="w-6 h-6" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Review & Application Fee</h2>
-          <p className="text-gray-500 text-xs">Verify your dossier and submit the evaluation fee</p>
-        </div>
-      </div>
-
-      {/* Application Summary Box */}
-      <div className="bg-gray-50/80 rounded-2xl p-6 border border-gray-100 space-y-4 my-6">
-        <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-          <GraduationCap className="w-4 h-4 text-blue-600" />
-          Dossier Overview
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div>
-            <span className="text-gray-400 block font-medium">Applicant Name</span>
-            <span className="font-bold text-gray-800 text-sm">{candidateName}</span>
-          </div>
-          <div>
-            <span className="text-gray-400 block font-medium">Email</span>
-            <span className="font-semibold text-gray-800">{formData.studentEmail}</span>
-          </div>
-          <div>
-            <span className="text-gray-400 block font-medium">Target Program</span>
-            <span className="font-bold text-blue-700">{program.title}</span>
-          </div>
-          <div>
-            <span className="text-gray-400 block font-medium">1st Choice Professor</span>
-            <span className="font-semibold text-gray-800">{formData.firstChoiceProfessor || "Not Specified"}</span>
-          </div>
-          <div>
-            <span className="text-gray-400 block font-medium">School & Grad Year</span>
-            <span className="font-semibold text-gray-800">{formData.school} (Class of {formData.gradYear})</span>
-          </div>
-          <div>
-            <span className="text-gray-400 block font-medium">Academic Resume</span>
-            <span className="font-bold text-emerald-700 inline-flex items-center">
-              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> PDF Attached
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Fee Breakdown */}
-      <div className="bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/30 rounded-2xl p-6 border border-blue-100/80 space-y-4 mb-6">
-        <div className="flex justify-between items-center pb-4 border-b border-blue-100">
-          <div>
-            <h4 className="font-bold text-gray-900 text-sm">Application & Evaluation Fee</h4>
-            <p className="text-xs text-gray-500 mt-0.5">Faculty dossier review, interview scheduling & administrative processing</p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-black text-gray-900">$50.00 <span className="text-xs font-bold text-blue-600">USD</span></div>
-            <div className="text-[11px] text-gray-400 font-mono">≈ ₩68,000 KRW</div>
-          </div>
-        </div>
-
-        {/* Payment Features Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
-          <div className="flex items-center text-gray-600">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 mr-2 shrink-0" />
-            <span>Bank-grade 256-bit encryption</span>
-          </div>
-          <div className="flex items-center text-gray-600">
-            <CreditCard className="w-4 h-4 text-blue-600 mr-2 shrink-0" />
-            <span>Visa, MasterCard, Amex & Korean cards</span>
-          </div>
-          <div className="flex items-center text-gray-600">
-            <FileText className="w-4 h-4 text-indigo-600 mr-2 shrink-0" />
-            <span>Instant official card receipt emailed</span>
-          </div>
-          <div className="flex items-center text-gray-600">
-            <Lock className="w-4 h-4 text-purple-600 mr-2 shrink-0" />
-            <span>Direct deposit to corporate bank</span>
-          </div>
-        </div>
-      </div>
-
-      {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-medium border border-red-100 mb-6 flex items-start">
-          <AlertCircle className="w-5 h-5 mr-2 shrink-0 mt-0.5" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Action Buttons */}
-      <div className="flex gap-4">
-        <button
-          type="button"
-          onClick={prevStep}
-          disabled={loading}
-          className="w-1/3 h-14 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-2xl font-bold flex items-center justify-center transition-all cursor-pointer disabled:opacity-50"
-        >
-          Back
-        </button>
-
-        <button
-          type="button"
-          onClick={handleTossCheckout}
-          disabled={loading}
-          className="w-2/3 h-14 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 hover:from-blue-700 hover:via-blue-800 hover:to-indigo-700 text-white rounded-2xl font-bold flex items-center justify-center transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35 cursor-pointer disabled:opacity-75 disabled:cursor-wait"
-        >
-          {loading ? (
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Opening Secure Payment...
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-2">
-              Pay $50.00 USD & Submit
-              <ArrowRight className="w-5 h-5" />
-            </span>
-          )}
-        </button>
-      </div>
-
-      <p className="text-center text-[11px] text-gray-400 mt-4">
-        By clicking Pay & Submit, you agree to our admissions evaluation terms. 0% VAT applies for overseas applicants.
-      </p>
-    </div>
-  );
+  return <div className="min-h-screen bg-slate-50 px-4 pb-20 pt-32 sm:px-6"><div className="mx-auto max-w-3xl">
+    <Link href={`/research/program/${program.id}`} onClick={event => { if (revision.current !== savedRevision.current && !confirm('Some changes are not saved. Leave this page?')) event.preventDefault(); }} className="text-sm text-slate-600 underline">Back to program</Link>
+    <header className="my-6"><p className="text-xs font-semibold uppercase tracking-widest text-blue-700">Application</p><h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{program.title}</h1><p className="mt-3 text-sm text-slate-600">Application fee: <strong>{APPLICATION_CHARGE_LABEL}</strong>. Program tuition: <strong>{program.tuition == null ? 'Contact admissions' : `$${program.tuition.toLocaleString()} USD`}</strong>, payable separately after admission.</p><p className="mt-2 text-sm text-slate-600">Your application is submitted only after the application fee is confirmed. Saving a draft does not reserve a place. <Link href="/admissions" className="text-blue-700 underline">Steps and fees</Link> · <Link href="/privacy" className="text-blue-700 underline">Privacy</Link> · <Link href="/refunds" className="text-blue-700 underline">Cancellation &amp; refunds</Link></p></header>
+    {!paymentAvailable && <div role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">Online payment is currently unavailable. You can prepare and save your application, then <Link href="/contact" className="underline">contact admissions</Link> before paying.</div>}
+    {checkoutStarted && <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm">Your existing checkout has been restored. Review the saved information and resume payment. To correct it or resolve an expired checkout, <Link href="/contact" className="underline">contact admissions</Link> before paying again.</div>}
+    <ol aria-label="Application progress" className="mb-5 grid grid-cols-3 gap-2">{['Personal details','Research interests','Review and pay'].map((label, index) => <li key={label} aria-current={step === index + 1 ? 'step' : undefined} className={`rounded-xl border px-3 py-3 text-xs font-semibold sm:text-sm ${step === index + 1 ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-500'}`}>{index + 1}. {label}</li>)}</ol>
+    {!checkoutStarted && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs"><span role="status" className={saveState === 'error' ? 'text-red-700' : 'text-slate-600'}>{saveState === 'saving' ? 'Saving your draft…' : saveState === 'unsaved' ? 'Unsaved changes' : saveState === 'error' ? saveError : savedAt ? `Draft saved to your account · ${new Date(savedAt).toLocaleTimeString()}` : 'Drafts save automatically as you type.'}</span><button type="button" onClick={() => void persist(form, step, revision.current)} disabled={saveState === 'saving' || busy} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-semibold disabled:opacity-50">Save draft</button></div>}
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"><h2 ref={titleRef} tabIndex={-1} className="mb-6 text-xl font-bold text-slate-900 outline-none">{['Personal details','Research interests','Review your application'][step - 1]}</h2>
+      {notice && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{notice}</div>}
+      {step === 1 && <div className="grid gap-5 sm:grid-cols-2">
+        {field('studentLevel', { choices: [['SCHOOL','School student'],['UNIVERSITY','University student']] })}{field('school')}
+        {field('studentFirstName')}{field('studentLastName')}{field('studentEmail', { type: 'email' })}{field('studentPhone', { type: 'tel' })}
+        {field('gradYear', { hint: 'Enter the year you expect to graduate from your current school or university.' })}{field('gender', { optional: true, choices: [['Female','Female'],['Male','Male'],['Other','Other'],['Prefer not to say','Prefer not to say']] })}
+        {form.studentLevel !== 'UNIVERSITY' && <><p className="text-sm text-slate-600 sm:col-span-2">Parent or guardian contact for school students.</p>{field('parentFirstName')}{field('parentLastName')}{field('parentEmail', { type: 'email' })}{field('parentPhone', { type: 'tel' })}</>}
+        {summer && field('tShirtSize', { optional: true, choices: ['XXS','XS','S','M','L','XL','XXL'].map(value => [value,value]) })}
+        {field('photoConsent', { choices: [['No','Do not use my photo or video'],['Yes','Allow use in CRI program publicity']], hint: 'This choice concerns CRI program publicity and does not affect admissions review. School students should discuss this with a parent or guardian.' })}
+      </div>}
+      {step === 2 && <div className="grid gap-5 sm:grid-cols-2"><div className="sm:col-span-2"><label htmlFor="apply-resumeUrl" className="mb-2 block text-sm font-semibold">Academic resume (PDF) *</label><input id="apply-resumeUrl" type="file" accept="application/pdf" disabled={uploading || locked} aria-invalid={Boolean(errors.resumeUrl)} aria-describedby="resume-help" onChange={event => void upload(event.target.files?.[0])} className={inputClass} /><p id="resume-help" className="mt-2 text-xs text-slate-500">PDF up to 5 MB. Include your current GPA if available. Files are private to you and authorized administrators.</p>{uploading && <p role="status" className="mt-2 text-sm">Uploading…</p>}{form.resumeUrl && <a href={form.resumeUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block break-all text-sm text-blue-700 underline">{filename || 'View uploaded resume'}</a>}{errors.resumeUrl && <p role="alert" className="mt-2 text-sm text-red-700">{errors.resumeUrl}</p>}</div>
+        {field('areaOfInterest')}{field('initialTopicIdeas', { multiline: true, hint: 'A finished proposal is not required. Explain what you would like to investigate.' })}{field('essay', { multiline: true, words: 500 })}{field('shortAnswer', { multiline: true, words: 150 })}
+        {['firstChoiceProfessor','secondChoiceProfessor','thirdChoiceProfessor'].map((key, index) => field(key, { optional: index > 0, choices: program.professors.map(professor => [professor.name, `${professor.name}${professor.university ? ` (${professor.university})` : ''}`]) }))}
+        {program.professors.length === 0 && <p className="text-sm text-amber-800 sm:col-span-2">No faculty selection is currently available. Save your draft and contact admissions before paying.</p>}
+        {field('previousResearch', { optional: true, multiline: true, hint: 'You may leave this blank if you have no previous research experience.' })}{field('howLearned', { optional: true })}
+      </div>}
+      {step === 3 && <div className="space-y-6">{[1,2].map(section => <div key={section} className="rounded-xl border border-slate-200 p-4"><div className="mb-4 flex items-center justify-between gap-3"><h3 className="font-semibold">{section === 1 ? 'Personal details' : 'Research interests'}</h3>{!checkoutStarted && <button type="button" disabled={busy} onClick={() => move(section)} className="text-sm font-semibold text-blue-700 underline">Edit {section === 1 ? 'personal details' : 'research interests'}</button>}</div><dl className="space-y-4">{Object.keys(applicationLabels).filter(key => personalFields.includes(key) === (section === 1)).filter(key => !(form.studentLevel === 'UNIVERSITY' && key.startsWith('parent')) && !(key === 'tShirtSize' && !summer)).map(key => <div key={key}><dt className="text-xs font-semibold text-slate-500">{applicationLabels[key]}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-900">{key === 'resumeUrl' ? <a href={form[key]} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">{filename || 'View uploaded PDF'}</a> : key === 'studentLevel' ? form[key] === 'UNIVERSITY' ? 'University student' : 'School student' : form[key] || 'Not provided'}</dd></div>)}</dl></div>)}
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5"><p className="text-sm font-semibold">Application review service</p><p className="mt-2 text-2xl font-bold">{APPLICATION_CHARGE_LABEL}</p><p className="mt-3 text-sm leading-relaxed">This is the application review fee for the program above. Program tuition is separate. The payment window will request this exact KRW amount. Any foreign-currency conversion is handled by your card issuer.</p><p className="mt-3 text-sm">Payment is processed by Toss Payments. Available cards are shown in its payment window. <Link href="/admissions" className="underline">Read the service and fee information</Link> and <Link href="/refunds" className="underline">cancellation and refund policy</Link>. Payment alone does not establish that review services have begun.</p></div>
+      </div>}
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">Back</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? 'Continue to research interests' : 'Review application'}</button> : <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable} className={actionClass}>{busy ? 'Opening payment…' : `Pay ${APPLICATION_CHARGE_LABEL} and submit`}</button>}</div>
+      <p className="mt-6 text-xs leading-relaxed text-slate-500">Need help? <a href="mailto:support@cri.kr" className="underline">support@cri.kr</a>. If a payment appears on your card but submission is unclear, contact us before paying again.</p>
+    </section>
+  </div></div>;
 }

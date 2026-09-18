@@ -25,6 +25,7 @@ model User {
   applications Application[]
   applicationDocuments ApplicationDocument[]
   applicationCheckouts ApplicationCheckout[]
+  applicationDrafts ApplicationDraft[]
   enrollments  Enrollment[]
   submissions  AssignmentSubmission[]
   messagesSent Message[]     @relation("SentMessages")
@@ -389,5 +390,18 @@ model ApplicationCheckout {
   expiresAt     DateTime
   createdAt     DateTime @default(now())
   user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, programId])
+}
+
+// Private, resumable application drafts; versions prevent lost updates across tabs.
+model ApplicationDraft {
+  id String @id @default(cuid())
+  userId String
+  programId String
+  formData Json
+  step Int @default(1)
+  version Int @default(1)
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([userId, programId])
 }

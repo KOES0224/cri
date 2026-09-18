@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { admissionState } from "@/lib/program-policy";
 import { prisma } from "@/lib/prisma";
-import { applicationSchema } from '@/lib/application-validation';
+import { applicationSchema, applicationDraftSchema } from '@/lib/application-validation';
 import ApplyClient from "./ApplyClient";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,8 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
   if (!session?.user?.id) {
     redirect(`/auth/login?callbackUrl=${encodeURIComponent(`/apply?programId=${programId || ""}`)}`);
   }
+
+  if (session.user.role !== "STUDENT") redirect("/dashboard");
 
   if (!programId) {
     redirect("/research");
@@ -42,6 +44,8 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
       }
     })
   ]);
+
+  if (existing) redirect("/dashboard/applications");
 
   if (!program || admissionState(program) !== "OPEN") {
     redirect("/research");
@@ -77,7 +81,13 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
     professors: Array.from(uniqueProfessorsMap.values())
   };
 
-  const pending = await prisma.applicationCheckout.findUnique({where: {userId_programId: {userId: session.user.id, programId}}});
-  const draft = pending?.status === 'PENDING' ? applicationSchema.safeParse(pending.formData) : null;
-  return <ApplyClient program={programWithProfessors} user={session.user} savedDraft={draft?.success ? draft.data : undefined} />;
+  const [pending, saved] = await Promise.all([
+    prisma.applicationCheckout.findUnique({where: {userId_programId: {userId: session.user.id, programId}}}),
+    prisma.applicationDraft.findUnique({where: {userId_programId: {userId: session.user.id, programId}}}),
+  ]);
+  const checkoutPending = pending?.status === 'PENDING';
+  const parsed = checkoutPending ? applicationSchema.safeParse(pending.formData) : applicationDraftSchema.safeParse(saved?.formData);
+  const savedDraft = parsed.success ? Object.fromEntries(Object.entries(parsed.data).filter((entry): entry is [string, string] => typeof entry[1] === 'string')) : undefined;
+  const document = savedDraft?.resumeUrl ? await prisma.applicationDocument.findFirst({where: {id: savedDraft.resumeUrl.split('/').pop(), userId: session.user.id}}) : null;
+  return <ApplyClient program={programWithProfessors} user={session.user} savedDraft={savedDraft} draftVersion={saved?.version} draftStep={saved?.step} draftSavedAt={saved?.updatedAt.toISOString()} checkoutPending={checkoutPending} resumeFilename={document?.filename} paymentAvailable={Boolean(process.env.TOSS_SECRET_KEY && process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY)} />;
 }

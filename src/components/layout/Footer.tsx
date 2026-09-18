@@ -135,23 +135,28 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-blue-400 shrink-0" />
-                <a href="tel:02-6203-8999" className="hover:text-white transition-colors">
-                  +82 02-6203-8999
+                <a href="tel:+82262038999" className="hover:text-white transition-colors">
+                  +82 2-6203-8999
                 </a>
               </li>
               <li className="flex items-start gap-2.5 text-xs text-gray-400 pt-1 leading-relaxed">
                 <MapPin className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <span>
-                  53, Nonhyeon-ro 153-gil, Gangnam-gu, Seoul, Republic of Korea
+                  06036 · 53, Nonhyeon-ro 153-gil, Gangnam-gu, Seoul, Republic of Korea
                 </span>
               </li>
             </ul>
           </div>
         </div>
 
+        <div className="mb-6 border-t border-gray-800 pt-6 text-sm leading-relaxed text-gray-400">
+          <p className="font-semibold text-gray-200">Elite Research Co., Ltd.</p>
+          <p>Business registration number: 863-87-02851</p>
+        </div>
+
         {/* Bottom Bar: Copyright & Accreditations */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <div className="flex flex-wrap gap-4"><Link href="/admissions" className="underline">Application guide</Link><Link href="/privacy" className="underline">Privacy information</Link></div>
+          <div className="flex flex-wrap gap-4"><Link href="/admissions" className="underline">Application guide</Link><Link href="/privacy" className="underline">Privacy information</Link><Link href="/refunds" className="underline">Cancellation &amp; refunds</Link></div>
           <p>© 2026 CRI Global. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <span>The Academic Standard for Student Research</span>

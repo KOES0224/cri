@@ -1,3 +1,4 @@
+import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -172,7 +173,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
            
            {/* Sidebar */}
            <div className="lg:col-span-1">
-              <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl sticky top-32">
+              <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl">
                  <h3 className="text-xl font-bold text-gray-900 mb-6">Program Details</h3>
 
                  {program.professors && program.professors.length > 0 && (
@@ -266,7 +267,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                        <span className="font-black text-gray-900 text-sm">$50 USD</span>
                      </div>
                      <p className="text-xs text-blue-900/70 leading-relaxed font-normal">
-                       Covers admissions committee evaluation & interview scheduling. Payable via card upon submission.
+                       Online card charge: {APPLICATION_CHARGE_LABEL}. Covers application review; tuition is separate.
                      </p>
                    </div>
                  )}
@@ -281,7 +282,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                  <p className="text-center text-xs text-gray-400 mt-4 px-4">
                    Applications are reviewed for research readiness and fit. A place is confirmed only after an admissions decision.
                  </p>
-                 <Link href="/admissions" className="block text-center text-blue-700 underline mt-4 text-sm">Application steps and fee information</Link>
+                 <Link href="/admissions" className="block text-center text-blue-700 underline mt-4 text-sm">Application steps and fee information</Link><Link href="/refunds" className="block text-center text-blue-700 underline mt-3 text-sm">Cancellation and refund policy</Link>
                  {!open && <Link href="/research" className="block text-center text-blue-700 underline mt-4">Browse upcoming programs</Link>}
               </div>
            </div>
@@ -297,7 +298,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                 <CreditCard className="w-3 h-3 text-blue-600" />
                 <span>Application fee · separate from tuition</span>
               </div>
-              <p className="font-black text-gray-900 text-lg leading-tight">$50 <span className="text-xs font-semibold text-gray-500">USD</span></p>
+              <p className="font-black text-gray-900 text-lg leading-tight">{APPLICATION_CHARGE_LABEL}</p>
             </div>
             <div className="flex-1">
               <ApplyButton programId={program.id} className="h-12 text-base shadow-md" />

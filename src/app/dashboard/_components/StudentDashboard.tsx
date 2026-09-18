@@ -61,7 +61,7 @@ export default function StudentDashboard({
             <Clock className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Pending Tasks</p>
+            <p className="text-sm font-medium text-gray-500">Applications & Tasks</p>
             <p className="text-2xl font-bold text-gray-900">{totalPending}</p>
           </div>
         </button>
@@ -100,7 +100,7 @@ export default function StudentDashboard({
             </Link>
           </div>
           <div className="p-6 text-center text-gray-500 text-sm">
-            <p>You have not applied for any programs yet.</p>
+            {totalApplications > 0 ? <><p className="font-semibold text-gray-900">{totalApplications} submitted application{totalApplications === 1 ? '' : 's'}</p><Link href="/dashboard/applications" className="mt-3 inline-block text-blue-700 underline">View decisions, next steps and submitted details</Link></> : <p>You have not applied for any programs yet.</p>}
             <Link href="/research" className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium justify-center rounded-md text-white bg-black hover:bg-gray-800 transition-colors w-full sm:w-auto">
               Browse Programs
             </Link>
@@ -172,7 +172,7 @@ export default function StudentDashboard({
           </div>
         </section>
 
-      {/* Pending Tasks Modal */}
+      {/* Applications & Tasks Modal */}
       {isPendingModalOpen && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
@@ -185,7 +185,7 @@ export default function StudentDashboard({
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
               <h3 className="text-lg font-bold text-gray-900 flex items-center">
                 <Clock className="w-5 h-5 mr-2 text-orange-500" />
-                Pending Tasks
+                Applications & Tasks
               </h3>
               <button onClick={() => setIsPendingModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="w-5 h-5" />

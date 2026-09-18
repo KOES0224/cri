@@ -41,7 +41,7 @@ export default async function DashboardPage() {
     activePrograms = await prisma.enrollment.count({
       where: { 
         userId: session.user.id, 
-        status: { in: ["ONGOING", "ACCEPTED"] } 
+        status: "ONGOING" 
       }
     });
 

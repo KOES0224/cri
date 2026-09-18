@@ -15,6 +15,7 @@ const {allowRequest}=require('../src/lib/request-limit');
 const {POST:upload}=require('../src/app/api/upload/route');
 const {GET:readDocument}=require('../src/app/api/documents/[id]/route');
 const {POST:recover}=require('../src/app/api/auth/recovery/route');
+const {saveApplicationDraft}=require('../src/app/actions/applicationDrafts');
 const {beginApplicationCheckout,finalizePaidApplication}=require('../src/app/actions/payment');
 const {createProgram}=require('../src/app/actions/programs');
 const {authOptions}=require('../src/lib/auth');
@@ -38,6 +39,15 @@ test('real database: access control, private upload, checkout idempotency and pa
   assert.equal((await read()).status,200); assert.equal((await read()).headers.get('Cache-Control'),'private, no-store');
   session.user.id=otherId; assert.equal((await read()).status,404); session.user.id=userId;
   const input={studentFirstName:'A',studentLastName:'B',studentEmail:'a@example.test',studentPhone:'123',parentFirstName:'C',parentLastName:'D',parentEmail:'d@example.test',parentPhone:'456',school:'School',gradYear:'2028',gender:'Prefer not to say',tShirtSize:'M',photoConsent:'No',resumeUrl:documentUrl,initialTopicIdeas:'My topic',areaOfInterest:'Biology',essay:'My interests',shortAnswer:'My question',firstChoiceProfessor:'Professor',secondChoiceProfessor:'',thirdChoiceProfessor:'',previousResearch:'',howLearned:''};
+  const draft = await saveApplicationDraft(openId, {studentFirstName:'Draft only'}, 1, 0);
+  assert.equal(draft.success,true); assert.equal(draft.version,1);
+  assert.equal((await saveApplicationDraft(openId,{studentFirstName:'Stale'},1,0)).conflict,true);
+  assert.equal((await saveApplicationDraft(openId,{studentFirstName:'Saved revision'},2,1)).version,2);
+  assert.equal((await saveApplicationDraft(openId,{studentFirstName:'Stale revision'},1,1)).conflict,true);
+  session.user.id=otherId;
+  assert.equal((await saveApplicationDraft(openId,{resumeUrl:documentUrl},1,0)).success,false);
+  session.user.id=userId;
+  assert.equal((await saveApplicationDraft(closedId,{studentFirstName:'Closed'},1,0)).success,false);
   process.env.TOSS_SECRET_KEY='synthetic-test';process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY='synthetic-test';
   assert.match((await beginApplicationCheckout(closedId,input)).error,/no longer accepting/);
   const order=await beginApplicationCheckout(openId,input); assert.ok(order.orderId); assert.equal(order.amount,68000);
@@ -53,6 +63,7 @@ test('real database: access control, private upload, checkout idempotency and pa
   assert.ok((await finalizePaidApplication({...callback,amount:1})).error);assert.equal(confirms,0);
   session.user.id=otherId; assert.ok((await finalizePaidApplication(callback)).error); session.user.id=userId;
   const completed=await finalizePaidApplication(callback);assert.equal(completed.success,true);
+  assert.equal(await db.applicationDraft.count({where:{userId,programId:openId}}),0);
   const repeated=await finalizePaidApplication(callback);assert.equal(repeated.applicationId,completed.applicationId);assert.equal(confirms,1);
   assert.equal(await db.application.count({where:{userId,programId:openId}}),1);
   const elevated=await authOptions.callbacks.jwt({token:{id:userId,role:'STUDENT',sessionVersion:0},trigger:'update',session:{role:'ADMIN'}});assert.equal(elevated.role,'STUDENT');
@@ -61,7 +72,7 @@ test('real database: access control, private upload, checkout idempotency and pa
   const reset=()=>recover(new Request('http://localhost/api/auth/recovery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:raw,password:'New-local-test-password'})}));
   assert.equal((await reset()).status,200);assert.equal((await reset()).status,400);
   const revoked=await authOptions.callbacks.jwt({token:{id:userId,role:'STUDENT',sessionVersion:0}});assert.equal(revoked.role,'REVOKED');assert.equal(revoked.id,'');
- } finally {
+ } catch (error) { console.error(error); throw error; } finally {
   globalThis.fetch=realFetch;
   await db.application.deleteMany({where:{userId}});
   await db.verificationToken.deleteMany({where:{identifier:userId}});
