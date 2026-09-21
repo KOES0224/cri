@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { safeCallbackUrl } from "@/lib/auth-input";
+import { applicantRoleFromParam } from "@/lib/applicant";
+import { PASSWORD_MIN_LENGTH } from "@/lib/password-policy";
 import { signIn } from "next-auth/react";
 
 function ErrorAlert() {
@@ -34,7 +36,9 @@ function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<"STUDENT" | "PARENT">("STUDENT");
+  // Preselected by the application start page (?role=PARENT) so parents are not registered as students by default.
+  const [role, setRole] = useState<"STUDENT" | "PARENT">(() => applicantRoleFromParam(searchParams.get("role")));
+  const applying = callbackUrl.startsWith("/apply");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -81,7 +85,8 @@ function RegisterForm() {
   }
 
   const handleOAuthSignIn = (provider: string) => {
-    signIn(provider, { callbackUrl });
+    // Google accounts choose their role on the onboarding page, then continue to the same destination.
+    signIn(provider, { callbackUrl: `/onboarding?role=${role}&callbackUrl=${encodeURIComponent(callbackUrl)}` });
   };
 
   return (
@@ -95,10 +100,10 @@ function RegisterForm() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
-          Create an Account
+          {applying ? "Create an account to apply" : "Create an Account"}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Join the CRI portal to track applications and programs
+          {applying ? "Your application opens right after this step. Drafts are saved to this account." : "Join the CRI portal to track applications and programs"}
         </p>
       </div>
 
@@ -109,7 +114,7 @@ function RegisterForm() {
             <ErrorAlert />
           </Suspense>
 
-          <p className="text-sm text-gray-600 mb-6">New applicant? <Link href="/admissions" className="text-blue-700 underline">Review the application steps, preparation checklist and fees</Link> before you begin.</p>
+          {!applying && <p className="text-sm text-gray-600 mb-6">New applicant? <Link href="/admissions" className="text-blue-700 underline">Review the application steps, preparation checklist and fees</Link> before you begin.</p>}
           <form aria-busy={loading} className="space-y-6" onSubmit={onSubmit}>
             <div>
               <label className="block text-sm font-medium text-gray-700">I am a...</label>
@@ -169,7 +174,7 @@ function RegisterForm() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   required
-                  minLength={12} maxLength={72} aria-describedby="password-help"
+                  minLength={PASSWORD_MIN_LENGTH} maxLength={72} aria-describedby="password-help"
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10"
                 />
                 <button
@@ -184,7 +189,7 @@ function RegisterForm() {
               </div>
             </div>
 
-            <p id="password-help" className="text-sm text-gray-600">Use at least 12 characters. A long, unique passphrase is recommended. <Link href="/privacy" className="text-blue-700 underline">How we use account information</Link></p>
+            <p id="password-help" className="text-sm text-gray-600">At least {PASSWORD_MIN_LENGTH} characters. A longer, unique passphrase is stronger. <Link href="/privacy" className="text-blue-700 underline">How we use account information</Link></p>
             {error && (
               <div role="alert" className="text-sm font-medium text-red-600">
                 {error}
@@ -197,7 +202,7 @@ function RegisterForm() {
                 disabled={loading}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors disabled:opacity-50"
               >
-                {loading ? "Creating..." : "Create Account"}
+                {loading ? "Creating..." : applying ? "Create account and continue" : "Create Account"}
               </button>
             </div>
           </form>

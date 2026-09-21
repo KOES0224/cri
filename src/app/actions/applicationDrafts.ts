@@ -4,9 +4,10 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { applicationDraftSchema } from '@/lib/application-validation';
 import { admissionState } from '@/lib/program-policy';
+import { canApply } from '@/lib/applicant';
 export async function saveApplicationDraft(programId: string, input: unknown, step: number, expectedVersion: number) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== 'STUDENT') return { success: false as const, error: 'Sign in with your student account to save.' };
+  if (!session?.user?.id || !canApply(session.user.role)) return { success: false as const, error: 'Sign in with your student or parent account to save.' };
   const parsed = applicationDraftSchema.safeParse(input);
   if (!parsed.success || !Number.isInteger(step) || step < 1 || step > 3 || !Number.isInteger(expectedVersion) || expectedVersion < 0) return { success: false as const, error: 'The draft could not be saved. Check your entries.' };
   try {
@@ -20,7 +21,7 @@ export async function saveApplicationDraft(programId: string, input: unknown, st
     if (parsed.data.resumeUrl) {
       if (!/^\/api\/documents\/[a-z0-9]+$/.test(parsed.data.resumeUrl)) return { success: false as const, error: 'Upload a PDF using this application form.' };
       const document = await prisma.applicationDocument.findFirst({ where: { id: parsed.data.resumeUrl.split('/').pop(), userId }, select: { id: true } });
-      if (!document) return { success: false as const, error: 'Upload the resume using this student account.' };
+      if (!document) return { success: false as const, error: 'Upload the resume using this account.' };
     }
     const version = expectedVersion + 1;
     if (expectedVersion === 0) {

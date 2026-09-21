@@ -5,14 +5,18 @@ import Link from "next/link";
 import { FileText, Clock, ExternalLink, CheckCircle2, ChevronRight, XCircle, AlertCircle } from "lucide-react";
 import { applicationLabels } from '@/lib/application-validation';
 import StudentLayout from "../_components/StudentLayout";
+import ParentLayout from "../_components/ParentLayout";
+import { canApply } from "@/lib/applicant";
 import { prisma } from "@/lib/prisma";
 
 export default async function ApplicationsPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session || session.user.role !== "STUDENT") {
+  if (!session || !canApply(session.user.role)) {
     redirect("/dashboard");
   }
+  // Parents see the same application tracker inside their own portal shell.
+  const Layout = session.user.role === "PARENT" ? ParentLayout : StudentLayout;
 
   // Fetch applications from Prisma natively
   const applications = await prisma.application.findMany({
@@ -27,7 +31,7 @@ export default async function ApplicationsPage() {
   const drafts = await prisma.applicationDraft.findMany({where:{userId:session.user.id},orderBy:{updatedAt:'desc'}});
   const draftPrograms = await prisma.program.findMany({where:{id:{in:drafts.map(d=>d.programId)}},select:{id:true,title:true}});
   return (
-    <StudentLayout>
+    <Layout>
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px]">
         <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
            <div>
@@ -35,7 +39,7 @@ export default async function ApplicationsPage() {
                <FileText className="h-5 w-5 mr-2 text-orange-600" />
                My Applications
              </h3>
-             <p className="text-sm text-gray-500 mt-1">Track the status of your research program applications.</p>
+             <p className="text-sm text-gray-500 mt-1">{session.user.role === "PARENT" ? "Track the research program applications you submitted for your student." : "Track the status of your research program applications."}</p>
            </div>
         </div>
         
@@ -46,7 +50,7 @@ export default async function ApplicationsPage() {
              <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/30">
                 <Clock className="h-10 w-10 text-gray-300 mb-3" />
                 <p className="text-gray-900 font-medium">No Applications Yet</p>
-                <p className="text-sm text-gray-500 mt-1 max-w-sm mb-6">You haven't applied to any CRI research programs. Browse our offerings to find a mentor matching your interests.</p>
+                <p className="text-sm text-gray-500 mt-1 max-w-sm mb-6">{session.user.role === "PARENT" ? "No applications have been submitted from this account yet. Browse the programs to apply for your student." : "You haven't applied to any CRI research programs. Browse our offerings to find a mentor matching your interests."}</p>
                 <Link href="/research" className="flex items-center px-6 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
                   Explore Programs
                   <ExternalLink className="h-4 w-4 ml-2" />
@@ -155,6 +159,6 @@ export default async function ApplicationsPage() {
            )}
         </div>
       </div>
-    </StudentLayout>
+    </Layout>
   );
 }

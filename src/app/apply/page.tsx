@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { admissionState } from "@/lib/program-policy";
 import { prisma } from "@/lib/prisma";
 import { applicationSchema, applicationDraftSchema } from '@/lib/application-validation';
+import { canApply } from "@/lib/applicant";
 import ApplyClient from "./ApplyClient";
 
 export const dynamic = "force-dynamic";
@@ -15,10 +16,12 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    redirect(`/auth/login?callbackUrl=${encodeURIComponent(`/apply?programId=${programId || ""}`)}`);
+    // Anonymous visitors see what the application involves and choose student / parent before creating an account.
+    redirect(`/apply/start?programId=${encodeURIComponent(programId || "")}`);
   }
 
-  if (session.user.role !== "STUDENT") redirect("/dashboard");
+  // Students apply for themselves; parents and guardians apply on behalf of a student. Admins do not apply.
+  if (!canApply(session.user.role)) redirect("/dashboard");
 
   if (!programId) {
     redirect("/research");
@@ -49,10 +52,6 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
 
   if (!program || admissionState(program) !== "OPEN") {
     redirect("/research");
-  }
-
-  if (existing) {
-    redirect("/dashboard/applications");
   }
 
   // Fetch all professors within that category group for mentee selection
@@ -89,5 +88,5 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
   const parsed = checkoutPending ? applicationSchema.safeParse(pending.formData) : applicationDraftSchema.safeParse(saved?.formData);
   const savedDraft = parsed.success ? Object.fromEntries(Object.entries(parsed.data).filter((entry): entry is [string, string] => typeof entry[1] === 'string')) : undefined;
   const document = savedDraft?.resumeUrl ? await prisma.applicationDocument.findFirst({where: {id: savedDraft.resumeUrl.split('/').pop(), userId: session.user.id}}) : null;
-  return <ApplyClient program={programWithProfessors} user={session.user} savedDraft={savedDraft} draftVersion={saved?.version} draftStep={saved?.step} draftSavedAt={saved?.updatedAt.toISOString()} checkoutPending={checkoutPending} resumeFilename={document?.filename} paymentAvailable={Boolean(process.env.TOSS_SECRET_KEY && process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY)} />;
+  return <ApplyClient program={programWithProfessors} user={session.user} applicantRole={session.user.role} savedDraft={savedDraft} draftVersion={saved?.version} draftStep={saved?.step} draftSavedAt={saved?.updatedAt.toISOString()} checkoutPending={checkoutPending} resumeFilename={document?.filename} paymentAvailable={Boolean(process.env.TOSS_SECRET_KEY && process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY)} />;
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { allowRequest } from "@/lib/request-limit";
-import { validNewPassword } from "@/lib/password-policy";
+import { validNewPassword, PASSWORD_MIN_LENGTH } from "@/lib/password-policy";
 import * as z from "zod";
 
 function generateStudentCode() {
@@ -14,16 +14,17 @@ export async function POST(request: Request) {
     const body = await request.json();
     
     const registerSchema = z.object({
-      name: z.string().trim().min(2).max(100),
-      email: z.string().trim().toLowerCase().email().max(254),
-      password: z.string().refine(validNewPassword, "Use at least 12 characters, up to 72 bytes"),
-      role: z.enum(["STUDENT", "PARENT"]),
+      name: z.string().trim().min(2, "Enter your full name.").max(100, "Name is too long."),
+      email: z.string().trim().toLowerCase().email("Enter a valid email address.").max(254),
+      password: z.string().refine(validNewPassword, `Use at least ${PASSWORD_MIN_LENGTH} characters (up to 72 bytes).`),
+      role: z.enum(["STUDENT", "PARENT"], { message: "Choose whether you are a student or a parent / guardian." }),
     });
 
     const parsed = registerSchema.safeParse(body);
     
     if (!parsed.success) {
-      return new NextResponse("Validation Error: Invalid Input", { status: 400 });
+      // Tell the person which field to fix instead of a generic validation error.
+      return new NextResponse(parsed.error.issues[0]?.message || "Please check the form and try again.", { status: 400 });
     }
 
     const { name, email, password, role } = parsed.data;
