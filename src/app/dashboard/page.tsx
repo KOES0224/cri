@@ -30,12 +30,14 @@ export default async function DashboardPage() {
   let upcomingEventsData: any = [];
   let parentApplications: any[] = [];
   let parentDrafts: any[] = [];
+  let linkedStudents: any[] = [];
 
   if (role === "PARENT") {
-    // Parents apply on behalf of students; show what they have submitted and any unfinished drafts.
-    [parentApplications, parentDrafts] = await Promise.all([
+    // Parents and agencies apply on behalf of students and follow their linked students' programs.
+    [parentApplications, parentDrafts, linkedStudents] = await Promise.all([
       prisma.application.findMany({ where: { userId: session.user.id }, include: { program: { select: { title: true } } }, orderBy: { createdAt: "desc" }, take: 5 }),
       prisma.applicationDraft.findMany({ where: { userId: session.user.id }, orderBy: { updatedAt: "desc" }, take: 5 }),
+      prisma.user.findMany({ where: { parentId: session.user.id }, select: { id: true, name: true, email: true, enrollments: { select: { status: true, program: { select: { title: true } } } } }, orderBy: { name: "asc" } }),
     ]);
   }
 
@@ -89,6 +91,7 @@ export default async function DashboardPage() {
           name={name}
           applications={parentApplications.map((app) => ({ id: app.id, title: app.program?.title || "Application", status: app.status, stage: app.stage, submittedAt: app.createdAt.toISOString() }))}
           drafts={parentDrafts.map((draft) => ({ programId: draft.programId, updatedAt: draft.updatedAt.toISOString() }))}
+          students={linkedStudents.map((student) => ({ id: student.id, name: student.name || student.email, ongoing: student.enrollments.filter((e: any) => e.status === "ONGOING").length, upcoming: student.enrollments.filter((e: any) => e.status === "ACCEPTED").length, completed: student.enrollments.filter((e: any) => e.status === "PAST").length, current: student.enrollments.find((e: any) => e.status === "ONGOING")?.program.title || null }))}
         />
       )}
       {isStudent && (

@@ -23,6 +23,7 @@ model User {
   accounts     Account[]
   sessions     Session[]
   applications Application[]
+  studentApplications Application[] @relation("ApplicationStudent")
   applicationDocuments ApplicationDocument[]
   applicationCheckouts ApplicationCheckout[]
   applicationDrafts ApplicationDraft[]
@@ -126,6 +127,10 @@ model Application {
   interviewComments     String?   @db.Text
   generalComments       String?   @db.Text
 
+  // The student account this application is for, when a parent or agency applied on the student's behalf.
+  studentId        String?
+  student          User?             @relation("ApplicationStudent", fields: [studentId], references: [id], onDelete: SetNull)
+
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   program          Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
   steps            ApplicationStep[]
@@ -135,6 +140,7 @@ model Application {
   @@unique([userId, programId])
   @@index([userId])
   @@index([programId])
+  @@index([studentId])
 }
 
 model ApplicationStep {

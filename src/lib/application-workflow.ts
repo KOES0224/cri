@@ -21,7 +21,9 @@ export async function changeApplication(id: string, input: unknown, actor: { id:
     const current = await tx.application.findUnique({ where: { id } });
     if (!current) throw new Error("Application not found.");
     if (current.updatedAt.getTime() !== new Date(expectedUpdatedAt).getTime()) throw new Error("This record changed since you opened it. Refresh before saving again.");
-    const enrollment = await tx.enrollment.findUnique({ where: { userId_programId: { userId: current.userId, programId: current.programId } } });
+    // Enrollment belongs to the student account when a guardian applied on the student's behalf.
+    const learnerId = current.studentId ?? current.userId;
+    const enrollment = await tx.enrollment.findUnique({ where: { userId_programId: { userId: learnerId, programId: current.programId } } });
     let status = patch.status ?? current.status;
     let stage = patch.stage ?? current.stage;
     if (patch.status && patch.status !== current.status) stage = status === "ACCEPTED" ? "PAYMENT" : status === "REJECTED" ? "REJECTED" : "REVIEW";
@@ -36,9 +38,9 @@ export async function changeApplication(id: string, input: unknown, actor: { id:
     const changed = await tx.application.updateMany({ where: { id, updatedAt: current.updatedAt }, data: next });
     if (changed.count !== 1) throw new Error("Another administrator updated this record. Refresh before saving again.");
     if (status === "ACCEPTED" && (!enrollment || enrollment.status === "ACCEPTED")) {
-      await tx.enrollment.upsert({ where: { userId_programId: { userId: current.userId, programId: current.programId } }, create: { userId: current.userId, programId: current.programId, status: stage === "ENROLLED" ? "ONGOING" : "ACCEPTED" }, update: { status: stage === "ENROLLED" ? "ONGOING" : "ACCEPTED" } });
+      await tx.enrollment.upsert({ where: { userId_programId: { userId: learnerId, programId: current.programId } }, create: { userId: learnerId, programId: current.programId, status: stage === "ENROLLED" ? "ONGOING" : "ACCEPTED" }, update: { status: stage === "ENROLLED" ? "ONGOING" : "ACCEPTED" } });
     } else if (status !== "ACCEPTED") {
-      await tx.enrollment.deleteMany({ where: { userId: current.userId, programId: current.programId, status: "ACCEPTED" } });
+      await tx.enrollment.deleteMany({ where: { userId: learnerId, programId: current.programId, status: "ACCEPTED" } });
     }
     const before = Object.fromEntries(Object.keys(next).filter(key => key !== "updatedAt").map(key => [key, current[key as keyof typeof current]]));
     const { updatedAt, ...after } = next;

@@ -18,7 +18,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
     ...(q ? {OR:[{user:{name:{contains:q,mode:"insensitive"}}},{user:{email:{contains:q,mode:"insensitive"}}},{user:{studentCode:{contains:q,mode:"insensitive"}}},{program:{title:{contains:q,mode:"insensitive"}}}]} : {}),
   };
   const [applications,total] = await Promise.all([
-    prisma.application.findMany({where,take:25,skip:(page-1)*25,orderBy:[{createdAt:"desc"},{id:"desc"}],select:{id:true,status:true,updatedAt:true,createdAt:true,user:{select:{id:true,name:true,email:true,image:true,studentCode:true}},program:{select:{id:true,title:true}},steps:{orderBy:{order:"asc"}}}}),
+    prisma.application.findMany({where,take:25,skip:(page-1)*25,orderBy:[{createdAt:"desc"},{id:"desc"}],select:{id:true,status:true,updatedAt:true,createdAt:true,user:{select:{id:true,name:true,email:true,image:true,studentCode:true,role:true}},studentId:true,student:{select:{id:true,name:true,studentCode:true}},program:{select:{id:true,title:true}},steps:{orderBy:{order:"asc"}}}}),
     prisma.application.count({where}),
   ]);
   return <AdminLayout><header className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-3xl font-bold tracking-tight">Applications</h1><p className="mt-2 text-sm text-slate-500">Review submissions, update decisions and track each applicant’s next steps.</p></div><Link prefetch={false} href="/dashboard/applications-admin/sheet" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold hover:bg-slate-50">Spreadsheet view</Link></header>
