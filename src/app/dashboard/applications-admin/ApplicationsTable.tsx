@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import StudentAccountControl from "./StudentAccountControl";
 import { format } from "date-fns";
 import { 
   MessageSquare, 
@@ -174,10 +175,13 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
                             {app.user.name?.charAt(0).toUpperCase() || 'U'}
                           </div>
                         )}
-                        <Link href={`/dashboard/users/${app.user.id}`} className="hover:text-blue-600 transition-colors">
-                          <div className="font-bold">{app.user.name}</div>
-                          <div className="text-xs text-gray-400 font-mono mt-0.5">{app.user.studentCode || 'No Code'}</div>
-                        </Link>
+                        <div>
+                          <Link href={`/dashboard/users/${app.user.id}`} className="hover:text-blue-600 transition-colors">
+                            <div className="font-bold">{app.user.name}</div>
+                            <div className="text-xs text-gray-400 font-mono mt-0.5">{app.user.role === 'PARENT' ? 'Parent / agency' : app.user.studentCode || 'No Code'}</div>
+                          </Link>
+                          <StudentAccountControl application={app} />
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-600">

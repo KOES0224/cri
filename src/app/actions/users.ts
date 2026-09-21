@@ -84,6 +84,8 @@ export async function getUserDetails(id: string) {
           orderBy: { dueDate: 'asc' }
         },
         enrollments: { include: { program: { select: { title: true } } } },
+        parent: { select: { id: true, name: true, email: true, isAgency: true, agencyName: true } },
+        children: { select: { id: true, name: true, email: true, studentCode: true }, orderBy: { name: 'asc' } },
         leads: {
           include: {
             notifications: { orderBy: { dueDate: "asc" } },

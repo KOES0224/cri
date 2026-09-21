@@ -5,6 +5,7 @@ import { GraduationCap, LayoutDashboard, FileText, ArrowRight, Send } from "luci
 
 type ParentApplication = { id: string; title: string; status: string; stage: string; submittedAt: string };
 type ParentDraft = { programId: string; updatedAt: string };
+type LinkedStudent = { id: string; name: string; ongoing: number; upcoming: number; completed: number; current: string | null };
 
 function statusLabel(app: ParentApplication) {
   if (app.status === "ACCEPTED") return { text: app.stage === "ENROLLED" ? "Registered" : "Accepted · registration pending", cls: "bg-green-100 text-green-800" };
@@ -12,7 +13,8 @@ function statusLabel(app: ParentApplication) {
   return { text: "Under review", cls: "bg-orange-100 text-orange-800" };
 }
 
-export default function ParentDashboard({ name, applications = [], drafts = [] }: { name: string; applications?: ParentApplication[]; drafts?: ParentDraft[] }) {
+export default function ParentDashboard({ name, applications = [], drafts = [], students = [] }: { name: string; applications?: ParentApplication[]; drafts?: ParentDraft[]; students?: LinkedStudent[] }) {
+  const ongoing = students.reduce((sum, s) => sum + s.ongoing, 0);
   return (
     <>
       <div className="mb-8 flex md:flex-row flex-col justify-between items-start md:items-center">
@@ -97,9 +99,25 @@ export default function ParentDashboard({ name, applications = [], drafts = [] }
             </div>
             <h2 className="text-xl font-bold">Linked Students</h2>
           </div>
-          <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-100">
-             <p className="text-gray-500 text-sm">If your student has their own CRI account, admissions can link it to yours so you both see program progress. <Link href="/contact" className="text-blue-700 underline">Ask admissions</Link>.</p>
-          </div>
+          {students.length === 0 ? (
+            <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-100">
+              <p className="text-gray-500 text-sm mb-4">No students linked yet. Enter your student's 8-digit code to see their programs and feedback.</p>
+              <Link href="/dashboard/linked" className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">Link a student</Link>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {students.map((student) => (
+                <li key={student.id} className="py-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-gray-900">{student.name}</p>
+                    <p className="text-xs text-gray-500">{student.current ? `In progress: ${student.current}` : student.upcoming ? `${student.upcoming} upcoming program${student.upcoming > 1 ? "s" : ""}` : student.completed ? `${student.completed} completed` : "No programs yet"}</p>
+                  </div>
+                  <Link href={`/dashboard/linked/${student.id}`} className="text-sm font-semibold text-purple-700 hover:underline inline-flex items-center">Progress <ArrowRight className="h-4 w-4 ml-1" /></Link>
+                </li>
+              ))}
+              <li className="pt-3"><Link href="/dashboard/linked" className="text-sm text-gray-500 hover:text-gray-900 underline">Manage linked students</Link></li>
+            </ul>
+          )}
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
@@ -109,9 +127,16 @@ export default function ParentDashboard({ name, applications = [], drafts = [] }
             </div>
             <h2 className="text-xl font-bold">Academic Overview</h2>
           </div>
-          <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-100 h-32 flex items-center justify-center">
-            <p className="text-gray-400 text-sm">Program progress appears here once a student is enrolled.</p>
-          </div>
+          {ongoing === 0 ? (
+            <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-100 h-32 flex items-center justify-center">
+              <p className="text-gray-400 text-sm">Program progress appears here once a linked student is enrolled.</p>
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+              <p className="text-4xl font-black text-gray-900">{ongoing}</p>
+              <p className="text-sm text-gray-500 mt-1">program{ongoing > 1 ? "s" : ""} in progress across {students.length} linked student{students.length > 1 ? "s" : ""}. Open a student to see assignments, grades and mentor feedback.</p>
+            </div>
+          )}
         </div>
       </div>
 

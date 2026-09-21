@@ -117,3 +117,21 @@ export async function sendApplicationConfirmation(app: PaidApplication) {
   ].join('\n');
   return send({ to: recipients, subject: `We received your application · ${app.programTitle}`, text, replyTo: ADMISSIONS_INBOX });
 }
+
+/** A student account was created (or linked) by admissions for an application submitted by a guardian. */
+export async function sendStudentAccountWelcome(input: { to: string; studentName: string; programTitle?: string | null; guardianName?: string | null; created: boolean }) {
+  const text = [
+    `Hi ${input.studentName || 'there'},`,
+    ``,
+    input.created
+      ? `CRI Admissions created a student account for you${input.programTitle ? ` for "${input.programTitle}"` : ''}${input.guardianName ? `, linked to ${input.guardianName}'s account` : ''}.`
+      : `Your CRI student account has been linked to ${input.guardianName ? `${input.guardianName}'s` : 'a guardian'} account${input.programTitle ? ` for "${input.programTitle}"` : ''}.`,
+    ``,
+    input.created ? `To sign in for the first time, open ${SITE_URL}/auth/recovery, enter this email address and set your password. Then sign in at ${SITE_URL}/auth/login.` : `Sign in at ${SITE_URL}/auth/login to see your programs, assignments and feedback.`,
+    ``,
+    `Your guardian can follow your program progress from their own portal. Questions: reply to this email or write to support@cri.kr.`,
+    ``,
+    `CRI Admissions`,
+  ].join('\n');
+  return send({ to: input.to, subject: input.created ? 'Your CRI student account' : 'Your CRI account was linked to a guardian', text, replyTo: ADMISSIONS_INBOX });
+}

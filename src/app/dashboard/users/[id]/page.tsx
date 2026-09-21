@@ -8,6 +8,7 @@ import { ArrowLeft, User, Mail, Phone, Calendar, ClipboardCheck, MessageSquare, 
 import { format } from "date-fns";
 import UserActivityTimeline from "./UserActivityTimeline";
 import UserApplicationsList from "./UserApplicationsList";
+import GuardianLinkPanel from "./GuardianLinkPanel";
 
 export default async function AdminUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -51,6 +52,7 @@ export default async function AdminUserProfilePage({ params }: { params: Promise
         
         {/* Left Column: Details */}
         <div className="lg:col-span-1 space-y-6">
+          <GuardianLinkPanel user={{ id: user.id, role: user.role }} guardian={user.parent} children={user.children} />
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
               <h3 className="text-lg font-bold text-gray-900 flex items-center">

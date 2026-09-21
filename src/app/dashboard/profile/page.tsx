@@ -24,7 +24,20 @@ export default async function ProfilePage() {
 
   const isGoogle = user.accounts.some(acc => acc.provider === "google");
 
-  const FormComponent = <ProfileForm user={{ name: user.name || "", email: user.email, isGoogle }} />;
+  const FormComponent = (
+    <>
+      {role === "STUDENT" && user.studentCode && (
+        <div className="mb-6 rounded-2xl border border-purple-100 bg-purple-50/60 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Your student code</p>
+            <p className="text-xs text-gray-600 mt-0.5">Give this code to your parent, guardian or agency so they can link their account and follow your programs and feedback.</p>
+          </div>
+          <span className="font-mono text-2xl font-black tracking-[0.2em] text-purple-800 bg-white border border-purple-200 rounded-xl px-4 py-2 select-all">{user.studentCode}</span>
+        </div>
+      )}
+      <ProfileForm user={{ name: user.name || "", email: user.email, isGoogle }} />
+    </>
+  );
 
   if (role === "ADMIN") {
     return <AdminLayout>{FormComponent}</AdminLayout>;
