@@ -11,7 +11,6 @@ export default function ApplyLoading() {
           <div className="relative z-10 w-10 h-10 rounded-full bg-blue-600/30 flex items-center justify-center font-bold text-sm text-transparent">1</div>
           <div className="relative z-10 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-transparent">2</div>
           <div className="relative z-10 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-transparent">3</div>
-          <div className="relative z-10 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-transparent">4</div>
         </div>
 
         {/* Main Card Skeleton */}

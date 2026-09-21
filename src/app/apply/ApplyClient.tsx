@@ -9,13 +9,18 @@ import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
 import { programKind } from '@/lib/program-policy';
 
 type Program = { id: string; title: string; category: string; tuition: number | null; professors: { id: string; name: string; university: string | null }[] };
-type Props = { program: Program; user: { id: string; name?: string | null; email?: string | null }; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean };
+type Props = { program: Program; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean };
 const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100';
 const actionClass = 'rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50';
 
-export default function ApplyClient({ program, user, savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable }: Props) {
+export default function ApplyClient({ program, user, applicantRole = 'STUDENT', savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable }: Props) {
   const parts = (user.name || '').trim().split(/\s+/);
-  const [form, setForm] = useState<Record<string, string>>({ studentFirstName: parts[0] || '', studentLastName: parts.slice(1).join(' '), studentEmail: user.email || '', studentLevel: 'SCHOOL', studentPhone: '', parentFirstName: '', parentLastName: '', parentEmail: '', parentPhone: '', school: '', gradYear: '', gender: '', tShirtSize: '', photoConsent: '', resumeUrl: '', initialTopicIdeas: '', areaOfInterest: '', essay: '', shortAnswer: '', firstChoiceProfessor: program.professors[0]?.name || '', secondChoiceProfessor: '', thirdChoiceProfessor: '', previousResearch: '', howLearned: '', ...savedDraft });
+  // A parent or guardian account applies on behalf of a student: prefill the guardian contact, not the student fields.
+  const parentApplying = applicantRole === 'PARENT';
+  const prefill = parentApplying
+    ? { studentFirstName: '', studentLastName: '', studentEmail: '', parentFirstName: parts[0] || '', parentLastName: parts.slice(1).join(' '), parentEmail: user.email || '' }
+    : { studentFirstName: parts[0] || '', studentLastName: parts.slice(1).join(' '), studentEmail: user.email || '', parentFirstName: '', parentLastName: '', parentEmail: '' };
+  const [form, setForm] = useState<Record<string, string>>({ ...prefill, studentLevel: 'SCHOOL', studentPhone: '', parentPhone: '', school: '', gradYear: '', gender: '', tShirtSize: '', photoConsent: '', resumeUrl: '', initialTopicIdeas: '', areaOfInterest: '', essay: '', shortAnswer: '', firstChoiceProfessor: program.professors[0]?.name || '', secondChoiceProfessor: '', thirdChoiceProfessor: '', previousResearch: '', howLearned: '', ...savedDraft });
   const [step, setStep] = useState(checkoutPending ? 3 : Math.min(3, Math.max(1, draftStep)));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState('');
@@ -120,7 +125,7 @@ export default function ApplyClient({ program, user, savedDraft, draftVersion = 
       checkoutRef.current = true; setCheckoutStarted(true);
       const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
       const sdk = await loadTossPayments(key);
-      await sdk.payment({ customerKey: user.id }).requestPayment({ method: 'CARD', amount: { currency: order.currency!, value: order.amount! }, orderId: order.orderId, orderName: order.orderName!, successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`, failUrl: `${window.location.origin}/apply/payment-fail?programId=${encodeURIComponent(program.id)}`, customerEmail: form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim() });
+      await sdk.payment({ customerKey: user.id }).requestPayment({ method: 'CARD', amount: { currency: order.currency!, value: order.amount! }, orderId: order.orderId, orderName: order.orderName!, successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`, failUrl: `${window.location.origin}/apply/payment-fail?programId=${encodeURIComponent(program.id)}`, customerEmail: user.email || form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim() });
     } catch (error) { setNotice(error instanceof Error ? error.message : 'Payment was not completed. Check your payment provider before retrying.'); }
     finally { paymentLock.current = false; setBusy(false); }
   }
@@ -143,6 +148,7 @@ export default function ApplyClient({ program, user, savedDraft, draftVersion = 
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"><h2 ref={titleRef} tabIndex={-1} className="mb-6 text-xl font-bold text-slate-900 outline-none">{['Personal details','Research interests','Review your application'][step - 1]}</h2>
       {notice && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{notice}</div>}
       {step === 1 && <div className="grid gap-5 sm:grid-cols-2">
+        {parentApplying && <p className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-950 sm:col-span-2">You are applying on behalf of a student. Enter the <strong>student's</strong> details below; your own contact details go in the parent or guardian section.</p>}
         {field('studentLevel', { choices: [['SCHOOL','School student'],['UNIVERSITY','University student']] })}{field('school')}
         {field('studentFirstName')}{field('studentLastName')}{field('studentEmail', { type: 'email' })}{field('studentPhone', { type: 'tel' })}
         {field('gradYear', { hint: 'Enter the year you expect to graduate from your current school or university.' })}{field('gender', { optional: true, choices: [['Female','Female'],['Male','Male'],['Other','Other'],['Prefer not to say','Prefer not to say']] })}

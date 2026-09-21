@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { admissionState } from '@/lib/program-policy';
+import { canApply } from '@/lib/applicant';
 import { APPLICATION_CHARGE } from '@/lib/application-fee';
 import { applicationSchema } from '@/lib/application-validation';
 import { allowRequest } from '@/lib/request-limit';
@@ -12,7 +13,7 @@ import { revalidatePath } from 'next/cache';
 
 export async function beginApplicationCheckout(programId: string, input: unknown) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== 'STUDENT') return { error: 'Sign in with a student account before applying.' };
+  if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.' };
   if (!process.env.TOSS_SECRET_KEY || !process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY) return { error: 'Online payment is unavailable. Contact admissions before paying.' };
   const parsed = applicationSchema.safeParse(input);
   if (!parsed.success) return { error: `Check the application fields and word limits: ${parsed.error.issues[0]?.path.join('.') || 'application'}.` };

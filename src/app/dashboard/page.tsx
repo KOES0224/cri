@@ -28,6 +28,16 @@ export default async function DashboardPage() {
   let pendingApplicationsData: any = [];
   let pendingAssignmentsData: any = [];
   let upcomingEventsData: any = [];
+  let parentApplications: any[] = [];
+  let parentDrafts: any[] = [];
+
+  if (role === "PARENT") {
+    // Parents apply on behalf of students; show what they have submitted and any unfinished drafts.
+    [parentApplications, parentDrafts] = await Promise.all([
+      prisma.application.findMany({ where: { userId: session.user.id }, include: { program: { select: { title: true } } }, orderBy: { createdAt: "desc" }, take: 5 }),
+      prisma.applicationDraft.findMany({ where: { userId: session.user.id }, orderBy: { updatedAt: "desc" }, take: 5 }),
+    ]);
+  }
 
   if (isStudent) {
     unreadCount = await getGlobalUnreadCount();
@@ -74,7 +84,13 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-10">
-      {role === "PARENT" && <ParentDashboard name={name} />}
+      {role === "PARENT" && (
+        <ParentDashboard
+          name={name}
+          applications={parentApplications.map((app) => ({ id: app.id, title: app.program?.title || "Application", status: app.status, stage: app.stage, submittedAt: app.createdAt.toISOString() }))}
+          drafts={parentDrafts.map((draft) => ({ programId: draft.programId, updatedAt: draft.updatedAt.toISOString() }))}
+        />
+      )}
       {isStudent && (
         <Suspense fallback={<div>Loading dashboard overview...</div>}>
           <StudentDashboard 
