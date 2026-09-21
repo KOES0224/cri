@@ -1,9 +1,18 @@
 import { prisma } from "@/lib/prisma";
-import { motion } from "framer-motion";
 import { GraduationCap, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { curatedSuccessStories } from "@/lib/curated-blog";
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Student Success | CRI",
+  description:
+    "Meet CRI students who turned their questions into research, presentations, publications, competition milestones and new academic opportunities.",
+  path: "/success",
+});
+
 export default async function SuccessPage() {
   const stories = await prisma.successStory.findMany({
     orderBy: { createdAt: "desc" }

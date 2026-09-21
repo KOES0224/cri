@@ -3,9 +3,18 @@ import { Briefcase, Network, Sparkles, TrendingUp } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import InternshipListClient from "./_components/InternshipListClient";
 import { getSiteContent } from "@/app/actions/siteContent";
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
 // Revalidate this page every hour (or use dynamic rendering if you prefer real-time updates)
 export const revalidate = 3600;
+
+export const metadata: Metadata = pageMetadata({
+  title: "Internships | CRI",
+  description:
+    "Industry and laboratory internships for qualified CRI scholars, introduced through a private partner network after an individual consultation.",
+  path: "/intern",
+});
 
 export default async function InternPage() {
   const contentReq = await getSiteContent("landing");
