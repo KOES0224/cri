@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, GraduationCap } from "lucide-react";
 import { format } from "date-fns";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import { curatedSuccessStories } from "@/lib/curated-blog";
 
 export default async function SuccessStoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -19,7 +20,15 @@ export default async function SuccessStoryPage({ params }: { params: Promise<{ s
     });
   }
 
-  if (!story) return notFound();
+  if (!story) {
+    const curated = curatedSuccessStories.find((candidate) => candidate.slug === slug || candidate.id === slug);
+    if (!curated) return notFound();
+    story = {
+      ...curated,
+      createdAt: new Date(curated.createdAt),
+      updatedAt: new Date(curated.updatedAt),
+    };
+  }
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-32">
@@ -47,7 +56,7 @@ export default async function SuccessStoryPage({ params }: { params: Promise<{ s
                 <GraduationCap className="w-5 h-5 mr-2" /> {story.university}
               </span>
               <span className="font-medium bg-gray-100 px-4 py-2 rounded-full text-gray-700">Major: {story.major}</span>
-              <span className="text-gray-400">Accepted {format(new Date(story.createdAt), 'yyyy')}</span>
+              <span className="text-gray-400">Reported {format(new Date(story.createdAt), 'yyyy')}</span>
             </div>
             
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Research Profile</h2>
