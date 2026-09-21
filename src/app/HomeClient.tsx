@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, UserCheck, Award, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
+import OpenProgramsSection from "@/components/OpenProgramsSection";
+import type { OpenProgramCard } from "@/lib/open-programs";
 
-export default function HomeClient({ content }: { content: Record<string, string> }) {
+export default function HomeClient({ content, openPrograms = [] }: { content: Record<string, string>; openPrograms?: OpenProgramCard[] }) {
+  const openCount = openPrograms.length;
   return (
     <div className="flex flex-col min-h-screen bg-[#FAFAFA] font-sans overflow-hidden">
       
@@ -124,14 +127,24 @@ export default function HomeClient({ content }: { content: Record<string, string
             transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
             className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-8"
           >
-            <Link href="/research" className="w-full sm:w-auto px-10 py-4 bg-white text-gray-900 font-bold rounded-full hover:bg-gray-100 shadow-[0_0_30px_rgba(255,255,255,0.3)] flex items-center justify-center group hover-lift click-press">
-              Explore Programs
+            <Link href="#open-programs" className="w-full sm:w-auto px-10 py-4 bg-white text-gray-900 font-bold rounded-full hover:bg-gray-100 shadow-[0_0_30px_rgba(255,255,255,0.3)] flex items-center justify-center group hover-lift click-press">
+              {openCount > 0 ? `See ${openCount} open program${openCount === 1 ? "" : "s"}` : "See programs & apply"}
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link href="/auth/login" className="w-full sm:w-auto px-10 py-4 bg-white/10 backdrop-blur-md text-white border border-white/20 font-medium rounded-full hover:bg-white/20 flex items-center justify-center hover-lift click-press">
-              Student Portal
+            <Link href="/research" className="w-full sm:w-auto px-10 py-4 bg-white/10 backdrop-blur-md text-white border border-white/20 font-medium rounded-full hover:bg-white/20 flex items-center justify-center hover-lift click-press">
+              Explore all programs
             </Link>
           </motion.div>
+          {openCount > 0 && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.5 }}
+              className="text-sm text-gray-400 font-medium"
+            >
+              Applications are open now. Small cohorts of 5–10 students, reviewed on a rolling basis.
+            </motion.p>
+          )}
         </div>
       </section>
 
@@ -152,6 +165,9 @@ export default function HomeClient({ content }: { content: Record<string, string
           </div>
         </div>
       </section>
+
+      {/* Open cohorts: the primary conversion path */}
+      <OpenProgramsSection programs={openPrograms} className="bg-[#FAFAFA]" />
 
       {/* Philosophy Section */}
       <section className="pt-24 pb-32 relative z-10 bg-white">
@@ -203,6 +219,32 @@ export default function HomeClient({ content }: { content: Record<string, string
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Closing CTA */}
+      <section className="relative z-10 bg-white px-6 pb-32">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="max-w-5xl mx-auto relative rounded-[3rem] overflow-hidden bg-gray-950 text-center py-20 md:py-24 px-8 border border-gray-800"
+        >
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-2xl bg-gradient-to-b from-blue-500/20 to-transparent blur-[100px] pointer-events-none"></div>
+          <div className="relative z-10 max-w-2xl mx-auto space-y-8">
+            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">Ready to start your own research?</h2>
+            <p className="text-xl text-gray-400">
+              Choose a cohort above and apply online, or tell admissions what you want to investigate and we will suggest a program and mentor.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
+              <Link href="#open-programs" className="px-8 py-4 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-all shadow-xl shadow-white/10 inline-flex items-center justify-center">
+                {openCount > 0 ? "Apply to an open program" : "See programs"} <ArrowRight className="ml-2 w-4 h-4" />
+              </Link>
+              <Link href="/contact" className="px-8 py-4 bg-white/10 text-white border border-white/20 font-bold rounded-xl hover:bg-white/20 transition-all inline-flex items-center justify-center">
+                Ask admissions
+              </Link>
+            </div>
+          </div>
+        </motion.div>
       </section>
     </div>
   );

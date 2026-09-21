@@ -106,12 +106,12 @@ export default function Navbar() {
                 <Link href="/auth/login" className={`text-sm font-semibold transition-colors ${navTextClass}`}>
                   Sign in
                 </Link>
-                <Link 
-                  href="/auth/login" 
+                <Link
+                  href="/research#open-programs"
                   className={`group relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden hover-lift click-press transition-all text-white bg-black hover:bg-gray-800`}
                 >
                   <span className="relative flex items-center">
-                    Portal <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    Apply now <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </Link>
               </div>
@@ -150,9 +150,14 @@ export default function Navbar() {
                 <button onClick={() => signOut()} className="text-left text-sm font-semibold text-red-600 p-2 rounded-lg hover:bg-red-50">Sign out</button>
               </>
             ) : (
-              <Link href="/auth/login" className="flex items-center justify-center p-3 text-sm font-semibold text-white bg-black rounded-xl">
-                Access Portal
-              </Link>
+              <>
+                <Link href="/research#open-programs" className="flex items-center justify-center p-3 text-sm font-semibold text-white bg-black rounded-xl">
+                  Apply now
+                </Link>
+                <Link href="/auth/login" className="flex items-center justify-center p-3 text-sm font-semibold text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50">
+                  Sign in to portal
+                </Link>
+              </>
             )}
           </div>
         </div>
