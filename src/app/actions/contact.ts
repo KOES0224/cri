@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { allowRequest } from '@/lib/request-limit';
+import { notifyContactInquiry } from '@/lib/notify';
 import { z } from 'zod';
 const schema = z.object({
   firstName: z.string().trim().min(1).max(100), lastName: z.string().trim().max(100),
@@ -17,10 +18,13 @@ export async function submitContactForm(input: z.input<typeof schema>) {
     if (!await allowRequest('contact', data.email, 5, 600)) return { success: false, error: 'Please wait a few minutes before sending another inquiry.' };
     const session = await getServerSession(authOptions);
     const program = data.programId ? await prisma.program.findFirst({ where: { id: data.programId, isPublished: true }, select: { title: true } }) : null;
-    await prisma.lead.create({ data: {
-      userId: session?.user?.id || null, name: `${data.firstName} ${data.lastName}`.trim(), email: data.email,
+    const name = `${data.firstName} ${data.lastName}`.trim();
+    const lead = await prisma.lead.create({ data: {
+      userId: session?.user?.id || null, name, email: data.email,
       notes: [data.topic === 'internship' ? 'Private internship consultation' : '', program ? `Program: ${program.title}` : '', data.message].filter(Boolean).join('\n\n'), status: 'NEW',
     } });
+    // The lead is saved; the email to admissions is best effort and never fails the request.
+    await notifyContactInquiry({ name, email: data.email, message: data.message, topic: data.topic || undefined, programTitle: program?.title, leadId: lead.id });
     return { success: true };
   } catch { return { success: false, error: 'Your message could not be sent. Please try again or email support@cri.kr.' }; }
 }

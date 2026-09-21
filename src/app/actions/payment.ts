@@ -10,6 +10,7 @@ import { applicationSchema } from '@/lib/application-validation';
 import { allowRequest } from '@/lib/request-limit';
 import { confirmTossPayment, findConfirmedTossPayment } from '@/lib/toss';
 import { revalidatePath } from 'next/cache';
+import { notifyApplicationReceived, sendApplicationConfirmation } from '@/lib/notify';
 
 export async function beginApplicationCheckout(programId: string, input: unknown) {
   const session = await getServerSession(authOptions);
@@ -71,6 +72,7 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
     const confirmed = recovered.success ? recovered : await confirmTossPayment(paymentKey, orderId, order.amount);
     if (!confirmed.success || !confirmed.paymentData) return { error: confirmed.error || 'Payment could not be confirmed. Please try again or contact support.' };
     const payment = confirmed.paymentData;
+    let created = false;
     const applicationId = await prisma.$transaction(async tx => {
       // Lock the order to make duplicate provider callbacks idempotent.
       await tx.$queryRaw`SELECT "id" FROM "ApplicationCheckout" WHERE "id" = ${orderId} FOR UPDATE`;
@@ -88,6 +90,7 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
       } });
       await tx.applicationCheckout.update({ where: { id: orderId }, data: { status: 'COMPLETED', applicationId: app.id, formData: {} } });
       await tx.applicationDraft.deleteMany({where: {userId: session.user.id, programId: order.programId}});
+      created = true;
       return app.id;
     });
     // Only the completed application is exported; payment keys and card details are never included.
@@ -96,6 +99,12 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
       const { syncApplicationToGoogleSheet } = await import('@/lib/googleSheets');
       await syncApplicationToGoogleSheet({ application: app, user: session.user, program: app.program, formData: JSON.parse(app.content || '{}') });
     } catch { console.error('Application saved; spreadsheet sync requires retry.'); }
+    // Notify admissions and confirm to the family once, on the callback that created the application.
+    // Best effort: the application and charge are already committed.
+    if (created) try {
+      const details = { applicationId, programTitle: program?.title || 'CRI program', accountEmail: session.user.email, form: order.formData as Record<string, unknown>, payment: { orderId, amount: payment.totalAmount, currency: payment.currency, receiptUrl: payment.receiptUrl } };
+      await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);
+    } catch { console.error('Application saved; notification emails failed.'); }
     revalidatePath('/dashboard', 'layout');
     return { success: true, applicationId, receiptUrl: payment.receiptUrl };
   } catch {
