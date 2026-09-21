@@ -9,9 +9,11 @@ interface ApplyButtonProps {
   programId: string;
   programTitle?: string;
   className?: string;
+  label?: string;
+  pendingLabel?: string;
 }
 
-export default function ApplyButton({ programId, programTitle, className = "" }: ApplyButtonProps) {
+export default function ApplyButton({ programId, programTitle, className = "", label = "Apply for Program", pendingLabel = "Loading Application..." }: ApplyButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -37,11 +39,11 @@ export default function ApplyButton({ programId, programTitle, className = "" }:
       {isPending ? (
         <span className="inline-flex items-center gap-2.5 text-white/95 text-base font-semibold tracking-wide animate-pulse">
           <Loader2 className="w-5 h-5 animate-spin text-white" />
-          Loading Application...
+          {pendingLabel}
         </span>
       ) : (
         <span className="inline-flex items-center text-white">
-          Apply for Program
+          {label}
           <ChevronRight className="ml-2 h-5 w-5 group-hover/btn:translate-x-1.5 transition-transform duration-200" />
         </span>
       )}

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
+import { getDictionary, getLocale } from "@/i18n";
 
-export default function Footer() {
+export default async function Footer() {
+  const t = getDictionary(await getLocale()).footer;
   return (
     <footer className="bg-gray-950 text-white pt-20 pb-16 px-6 relative z-10 overflow-hidden border-t border-gray-900">
       {/* Background Ambience */}
@@ -16,10 +18,10 @@ export default function Footer() {
               CRI<span className="text-blue-500">.</span>
             </Link>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white/95 max-w-xl leading-tight">
-              Building the next generation of academic contributors.
+              {t.tagline}
             </h2>
             <p className="text-gray-400 text-base sm:text-lg max-w-2xl leading-relaxed pt-2">
-              CRI connects high-achieving secondary school scholars with distinguished Ivy League and world-class faculty for rigorous, publishable capstone research and academic distinction.
+              {t.blurb}
             </p>
           </div>
 
@@ -28,14 +30,14 @@ export default function Footer() {
               href="/research"
               className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-950 font-bold rounded-full hover:bg-gray-100 transition-all shadow-lg hover:shadow-white/10 hover-lift click-press"
             >
-              Explore Research Cohorts
+              {t.exploreCohorts}
               <ArrowUpRight className="ml-2 w-5 h-5 text-gray-950" />
             </Link>
             <Link
               href="/contact"
               className="inline-flex items-center justify-center px-8 py-4 bg-white/5 text-white/90 border border-white/10 font-semibold rounded-full hover:bg-white/10 transition-all click-press"
             >
-              Contact Admissions Board
+              {t.contactBoard}
             </Link>
           </div>
         </div>
@@ -44,26 +46,26 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 lg:gap-12 pb-16 border-b border-gray-900">
           {/* Column 1: Programs */}
           <div className="space-y-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Research Programs</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.programsHeading}</p>
             <ul className="space-y-3 text-sm">
               <li>
                 <Link href="/research/winter" className="text-gray-300 hover:text-white transition-colors">
-                  Winter Online Research Program
+                  {t.winter}
                 </Link>
               </li>
               <li>
                 <Link href="/research/summer-camp" className="text-gray-300 hover:text-white transition-colors">
-                  Seoul & Global Research Programs
+                  {t.summer}
                 </Link>
               </li>
               <li>
                 <Link href="/research/1-on-1" className="text-gray-300 hover:text-white transition-colors">
-                  1-on-1 Advanced Research Program
+                  {t.oneOnOne}
                 </Link>
               </li>
               <li>
                 <Link href="/research" className="text-gray-300 hover:text-white transition-colors">
-                  Browse All Syllabi
+                  {t.browseAll}
                 </Link>
               </li>
             </ul>
@@ -71,26 +73,26 @@ export default function Footer() {
 
           {/* Column 2: Pathways */}
           <div className="space-y-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Student Pathways</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.pathwaysHeading}</p>
             <ul className="space-y-3 text-sm">
               <li>
                 <Link href="/projects" className="text-gray-300 hover:text-white transition-colors">
-                  Student Portfolios
+                  {t.portfolios}
                 </Link>
               </li>
               <li>
                 <Link href="/intern" className="text-gray-300 hover:text-white transition-colors">
-                  Internship Fellowships
+                  {t.internships}
                 </Link>
               </li>
               <li>
                 <Link href="/success" className="text-gray-300 hover:text-white transition-colors">
-                  Admissions Success
+                  {t.admissionsSuccess}
                 </Link>
               </li>
               <li>
                 <Link href="/blog" className="text-gray-300 hover:text-white transition-colors">
-                  Research Insights & Blog
+                  {t.blog}
                 </Link>
               </li>
             </ul>
@@ -98,26 +100,26 @@ export default function Footer() {
 
           {/* Column 3: Admissions & Portal */}
           <div className="space-y-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Admissions & Portal</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.admissionsHeading}</p>
             <ul className="space-y-3 text-sm">
               <li>
                 <Link href="/auth/login" className="text-gray-300 hover:text-white transition-colors">
-                  Student / Parent Sign In
+                  {t.signIn}
                 </Link>
               </li>
               <li>
                 <Link href="/auth/register" className="text-gray-300 hover:text-white transition-colors">
-                  Create Applicant Account
+                  {t.createAccount}
                 </Link>
               </li>
               <li>
                 <Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors">
-                  Applicant Portal
+                  {t.portal}
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="text-gray-300 hover:text-white transition-colors">
-                  Inquiry & Consultation
+                  {t.inquiry}
                 </Link>
               </li>
             </ul>
@@ -125,7 +127,7 @@ export default function Footer() {
 
           {/* Column 4: Contact & Office */}
           <div className="space-y-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contact & Office</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.contactHeading}</p>
             <ul className="space-y-3 text-sm text-gray-300">
               <li className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-blue-400 shrink-0" />
@@ -142,7 +144,7 @@ export default function Footer() {
               <li className="flex items-start gap-2.5 text-xs text-gray-400 pt-1 leading-relaxed">
                 <MapPin className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <span>
-                  06036 · 53, Nonhyeon-ro 153-gil, Gangnam-gu, Seoul, Republic of Korea
+                  {t.address}
                 </span>
               </li>
             </ul>
@@ -150,17 +152,17 @@ export default function Footer() {
         </div>
 
         <div className="mb-6 border-t border-gray-800 pt-6 text-sm leading-relaxed text-gray-400">
-          <p className="font-semibold text-gray-200">Elite Research Co., Ltd.</p>
-          <p>Business registration number: 863-87-02851</p>
+          <p className="font-semibold text-gray-200">{t.company}</p>
+          <p>{t.businessNumber}</p>
         </div>
 
         {/* Bottom Bar: Copyright & Accreditations */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <div className="flex flex-wrap gap-4"><Link href="/admissions" className="underline">Application guide</Link><Link href="/privacy" className="underline">Privacy information</Link><Link href="/refunds" className="underline">Cancellation &amp; refunds</Link></div>
-          <p>© 2026 CRI Global. All rights reserved.</p>
+          <div className="flex flex-wrap gap-4"><Link href="/admissions" className="underline">{t.applicationGuide}</Link><Link href="/privacy" className="underline">{t.privacy}</Link><Link href="/refunds" className="underline">{t.refunds}</Link></div>
+          <p>{t.copyright}</p>
           <div className="flex items-center gap-6">
-            <span>The Academic Standard for Student Research</span>
-            <span>Selective Admissions</span>
+            <span>{t.standard}</span>
+            <span>{t.selective}</span>
           </div>
         </div>
       </div>

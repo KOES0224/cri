@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { ArrowLeft, Clock, Calendar, ChevronRight, Filter } from "lucide-react";
-import { admissionState, admissionLabel, programFacts, programKind, programDate } from "@/lib/program-policy";
+import { admissionState, programKind } from "@/lib/program-policy";
+import { formatProgramDateRange, programFactsLocalized } from "@/lib/program-facts-i18n";
+import { useT } from "@/i18n/client";
 import ResearchGuide from "@/components/ResearchGuide";
 import { useState, useEffect } from "react";
 
@@ -17,6 +19,8 @@ export default function ResearchProgramsClient({
   description: string,
   categoryFilter: string | string[]
 }) {
+  const { t, locale } = useT();
+  const copy = t.programList;
   const [activeTab, setActiveTab] = useState("ALL");
   
   const [now, setNow] = useState(() => new Date());
@@ -42,7 +46,7 @@ export default function ResearchProgramsClient({
       <div className="max-w-7xl mx-auto px-6">
         <Link href="/research" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-12">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Programs
+          {copy.back}
         </Link>
 
         <div className="max-w-3xl mb-12">
@@ -58,25 +62,25 @@ export default function ResearchProgramsClient({
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-10 pb-4">
            <div className="flex items-center text-sm font-bold text-gray-400 uppercase tracking-wider mr-4">
-             <Filter className="w-4 h-4 mr-2" /> Filter
+             <Filter className="w-4 h-4 mr-2" /> {copy.filter}
            </div>
            <button 
              aria-pressed={activeTab === "ALL"} onClick={() => setActiveTab("ALL")}
              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${activeTab === "ALL" ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
            >
-             All Programs
+             {copy.all}
            </button>
            <button 
              aria-pressed={activeTab === "OPEN"} onClick={() => setActiveTab("OPEN")}
              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${activeTab === "OPEN" ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-blue-50"}`}
            >
-             Accepting Applications
+             {copy.accepting}
            </button>
            <button 
              aria-pressed={activeTab === "CLOSED"} onClick={() => setActiveTab("CLOSED")}
              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${activeTab === "CLOSED" ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
            >
-             Closed / Completed
+             {copy.closed}
            </button>
         </div>
 
@@ -85,13 +89,13 @@ export default function ResearchProgramsClient({
              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gray-50 text-gray-400 mb-4">
                <Clock className="h-8 w-8" />
              </div>
-             <h3 className="text-2xl font-bold text-gray-900 mb-2">No Programs Found</h3>
-             <p className="text-gray-500 max-w-md mx-auto">There are currently no research programs matching this criteria. Please check back later.</p>
+             <h3 className="text-2xl font-bold text-gray-900 mb-2">{copy.emptyTitle}</h3>
+             <p className="text-gray-500 max-w-md mx-auto">{copy.emptyBody}</p>
            </div>
         ) : (
           <div className="space-y-6">
             {filteredPrograms.map((program) => {
-              const facts = programFacts(program);
+              const facts = programFactsLocalized(program, locale);
               const prof = program.professors && program.professors.length > 0 ? program.professors[0] : null;
 
               // Disciplinary badge determination
@@ -139,18 +143,18 @@ export default function ResearchProgramsClient({
                     {/* Top Row: Faculty Badge & Large University Crest */}
                     <div className="flex items-center justify-between gap-3 mb-5 z-10 relative">
                       <span className="text-[10px] uppercase font-black tracking-widest text-slate-300 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
-                        Faculty Mentor
+                        {copy.facultyMentor}
                       </span>
 
                       {/* University Logo Badge */}
                       {prof?.universityLogo ? (
                         <div 
                           className="h-10 px-3 rounded-xl bg-white/95 backdrop-blur-md border border-white/20 shadow-md flex items-center justify-center max-w-[130px]"
-                          title={prof.university || "Institution Crest"}
+                          title={prof.university || copy.institutionCrest}
                         >
                           <img
                             src={prof.universityLogo}
-                            alt={prof.university || "Institution"}
+                            alt={prof.university || copy.institution}
                             className="max-h-8 max-w-full object-contain"
                           />
                         </div>
@@ -184,10 +188,10 @@ export default function ResearchProgramsClient({
                     {/* Bottom: Professor Name & Academic Rank (Zero Text Redundancy) */}
                     <div className="mt-5 pt-4 border-t border-white/10 z-10 relative">
                       <div className="font-black text-white text-xl sm:text-2xl leading-tight truncate">
-                        {prof?.name || "Distinguished Faculty"}
+                        {prof?.name || copy.distinguishedFaculty}
                       </div>
                       <div className="text-xs sm:text-sm text-slate-300 font-medium leading-snug mt-1 line-clamp-2">
-                        {prof?.role || "Faculty Mentor"}
+                        {prof?.role || copy.facultyMentor}
                       </div>
                       {/* Show text university only if no logo exists */}
                       {!prof?.universityLogo && prof?.university && (
@@ -205,11 +209,11 @@ export default function ResearchProgramsClient({
                       {admissionState(program, now) === "OPEN" ? (
                         <span className="inline-flex items-center px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black uppercase tracking-wider rounded-full border border-emerald-200">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
-                          Accepting Applications
+                          {copy.accepting}
                         </span>
                       ) : (
                         <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-black uppercase tracking-wider rounded-full">
-                          Closed / Completed
+                          {copy.closed}
                         </span>
                       )}
 
@@ -223,7 +227,7 @@ export default function ResearchProgramsClient({
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100/80">
                           {facts.format}
                         </span>
-                        {facts.capacity != null && <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">Max {facts.capacity} Students</span>}
+                        {facts.capacity != null && <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">{copy.maxStudents(facts.capacity)}</span>}
                       </div>
                     </div>
 
@@ -246,13 +250,12 @@ export default function ResearchProgramsClient({
                       <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
                         <div className="flex items-center text-gray-700 font-semibold bg-gray-50 px-3.5 py-2 rounded-xl border border-gray-100">
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          {facts.kind === 'individual' ? 'Flexible start · typically 2–4 months' : program.startDate ? programDate(program.startDate) : 'Schedule available on inquiry'}
-                          {facts.kind !== 'individual' && program.endDate ? ` – ${programDate(program.endDate)}` : ''}
+                          {facts.kind === 'individual' ? t.facts.flexibleStart : program.startDate ? formatProgramDateRange(program.startDate, program.endDate, locale) : copy.scheduleOnInquiry}
                         </div>
 
                         {program.tuition && (
                           <div className="font-black text-gray-900 text-base bg-emerald-50 text-emerald-900 border border-emerald-100 px-3.5 py-1.5 rounded-xl">
-                            Tuition ${program.tuition.toLocaleString()} <span className="text-xs font-bold text-emerald-700">USD</span>
+                            {copy.tuition} ${program.tuition.toLocaleString()} <span className="text-xs font-bold text-emerald-700">USD</span>
                           </div>
                         )}
 
@@ -275,7 +278,7 @@ export default function ResearchProgramsClient({
                         href={`/research/program/${program.id}`} 
                         className="h-12 px-7 rounded-2xl bg-gray-900 hover:bg-black text-white text-sm font-bold transition-all inline-flex items-center justify-center group/btn shadow-sm hover:shadow-md focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 shrink-0 whitespace-nowrap"
                       >
-                        Explore Program
+                        {copy.explore}
                         <ChevronRight className="ml-2 h-4 w-4 text-gray-400 group-hover/btn:translate-x-1 group-hover/btn:text-white transition-all" />
                       </Link>
                     </div>

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import ResearchProgramsClient from "../_components/ResearchProgramsClient";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { getDictionary, getLocale } from "@/i18n";
 
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function OneOnOneResearchPage() {
+  const t = getDictionary(await getLocale()).hubPages.oneOnOne;
   const programs = await prisma.program.findMany({
     where: { 
       isPublished: true,
@@ -26,8 +28,8 @@ export default async function OneOnOneResearchPage() {
   return (
     <ResearchProgramsClient 
       programs={programs}
-      title="1-on-1 Advanced Research Program"
-      description="Advanced research built around the student’s interests and schedule, online or in person. Typically 2–4 months; some projects finish within a month and others take longer. Contact us to discuss readiness, mentorship hours and your research plan."
+      title={t.title}
+      description={t.description}
       categoryFilter={["1-on-1", "Research", "Mentorship"]}
     />
   );

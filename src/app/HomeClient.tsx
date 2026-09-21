@@ -5,8 +5,10 @@ import { ArrowRight, BookOpen, UserCheck, Award, ArrowUpRight } from "lucide-rea
 import { motion } from "framer-motion";
 import OpenProgramsSection from "@/components/OpenProgramsSection";
 import type { OpenProgramCard } from "@/lib/open-programs";
+import { useT } from "@/i18n/client";
 
 export default function HomeClient({ content, openPrograms = [] }: { content: Record<string, string>; openPrograms?: OpenProgramCard[] }) {
+  const { t } = useT();
   const openCount = openPrograms.length;
   return (
     <div className="flex flex-col min-h-screen bg-[#FAFAFA] font-sans overflow-hidden">
@@ -78,7 +80,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
               <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
             </div>
             <span className="text-white/90 font-semibold tracking-wide text-sm">
-              Move cursor here to reveal
+              {t.home.reveal}
             </span>
           </motion.div>
         </div>
@@ -95,7 +97,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
             </span>
-            {content.landing_pill_badge || "Student-led Research Programs"}
+            {content.landing_pill_badge || t.home.pillBadge}
           </motion.div>
           
           <motion.h1 
@@ -104,10 +106,10 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
             transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
             className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[1.1] drop-shadow-2xl"
           >
-            {content.landing_hero_title || "Interests Taken"} <br className="hidden md:block" />
+            {content.landing_hero_title || t.home.heroTitle} <br className="hidden md:block" />
             {(content.landing_hero_title_highlight || !content.landing_hero_title) && (
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 block mt-2 md:mt-0 md:inline">
-                {content.landing_hero_title_highlight || "Seriously."}
+                {content.landing_hero_title_highlight || t.home.heroHighlight}
               </span>
             )}
           </motion.h1>
@@ -118,7 +120,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
             className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-medium whitespace-pre-line"
           >
-            {content.landing_hero_subtitle || "CRI is a guided research environment where genuine interests are developed into academic work that can be examined, defended, and evaluated."}
+            {content.landing_hero_subtitle || t.home.heroSubtitle}
           </motion.p>
           
           <motion.div 
@@ -128,11 +130,11 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
             className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-8"
           >
             <Link href="#open-programs" className="w-full sm:w-auto px-10 py-4 bg-white text-gray-900 font-bold rounded-full hover:bg-gray-100 shadow-[0_0_30px_rgba(255,255,255,0.3)] flex items-center justify-center group hover-lift click-press">
-              {openCount > 0 ? `See ${openCount} open program${openCount === 1 ? "" : "s"}` : "See programs & apply"}
+              {openCount > 0 ? t.home.seeOpen(openCount) : t.home.seePrograms}
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link href="/research" className="w-full sm:w-auto px-10 py-4 bg-white/10 backdrop-blur-md text-white border border-white/20 font-medium rounded-full hover:bg-white/20 flex items-center justify-center hover-lift click-press">
-              Explore all programs
+              {t.home.exploreAll}
             </Link>
           </motion.div>
           {openCount > 0 && (
@@ -142,7 +144,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
               transition={{ duration: 0.7, delay: 0.5 }}
               className="text-sm text-gray-400 font-medium"
             >
-              Applications are open now. Small cohorts of 5–10 students, reviewed on a rolling basis.
+              {t.home.openNote}
             </motion.p>
           )}
         </div>
@@ -153,15 +155,15 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
         <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col md:flex-row justify-center items-stretch divide-y md:divide-y-0 md:divide-x divide-gray-100">
           <div className="flex-1 text-center w-full py-10 md:py-12 lg:py-14 px-6 md:px-8 lg:px-12 flex flex-col items-center justify-start">
             <h3 className="text-5xl lg:text-6xl font-black text-gray-900 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat1_number || "100%"}</h3>
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{content.landing_stat1_label || "Admissions Success"}</p>
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{content.landing_stat1_label || t.home.stat1Label}</p>
           </div>
           <div className="flex-1 text-center w-full py-10 md:py-12 lg:py-14 px-6 md:px-8 lg:px-12 flex flex-col items-center justify-start">
             <h3 className="text-5xl lg:text-6xl font-black text-blue-600 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat2_number || "#1"}</h3>
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{content.landing_stat2_label || "Research Institute"}</p>
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{content.landing_stat2_label || t.home.stat2Label}</p>
           </div>
           <div className="flex-1 text-center w-full py-10 md:py-12 lg:py-14 px-6 md:px-8 lg:px-12 flex flex-col items-center justify-start">
             <h3 className="text-5xl lg:text-6xl font-black text-purple-600 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat3_number || "50+"}</h3>
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{content.landing_stat3_label || "Ivy Mentors"}</p>
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{content.landing_stat3_label || t.home.stat3Label}</p>
           </div>
         </div>
       </section>
@@ -174,27 +176,24 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
         <div className="absolute top-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-24 max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-6">The Standard for <span className="italic font-serif text-blue-600 tracking-normal">Research</span></h2>
-            <p className="text-xl text-gray-500 leading-relaxed font-medium">Not every idea becomes research. At CRI, work is recognized as research only when it meets strict conditions.</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-6">{t.home.philosophyTitle.before}<span className="italic font-serif text-blue-600 tracking-normal">{t.home.philosophyTitle.word}</span>{t.home.philosophyTitle.after}</h2>
+            <p className="text-xl text-gray-500 leading-relaxed font-medium">{t.home.philosophyIntro}</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
             {[
               {
-                title: "A Question That Can Be Examined",
-                description: "Research begins with a question—not an opinion or a topic. Claims must be examinable through data, texts, observation, or scholarship.",
+                ...t.home.philosophy[0],
                 icon: <BookOpen className="h-7 w-7 text-indigo-600" />,
                 gradient: "from-blue-50 to-indigo-50"
               },
               {
-                title: "A Method That Holds",
-                description: "Without method, work does not move forward. Research requires a structure that allows assumptions to be questioned and decisions revisited.",
+                ...t.home.philosophy[1],
                 icon: <UserCheck className="h-7 w-7 text-purple-600" />,
                 gradient: "from-indigo-50 to-purple-50"
               },
               {
-                title: "A Contribution, Not a Summary",
-                description: "Research is not a recap of what already exists. It must clarify what changes, what is added, or what becomes newly understood.",
+                ...t.home.philosophy[2],
                 icon: <Award className="h-7 w-7 text-pink-600" />,
                 gradient: "from-purple-50 to-pink-50"
               }
@@ -231,16 +230,16 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
         >
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-2xl bg-gradient-to-b from-blue-500/20 to-transparent blur-[100px] pointer-events-none"></div>
           <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">Ready to start your own research?</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">{t.home.ctaTitle}</h2>
             <p className="text-xl text-gray-400">
-              Choose a cohort above and apply online, or tell admissions what you want to investigate and we will suggest a program and mentor.
+              {t.home.ctaBody}
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
               <Link href="#open-programs" className="px-8 py-4 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-all shadow-xl shadow-white/10 inline-flex items-center justify-center">
-                {openCount > 0 ? "Apply to an open program" : "See programs"} <ArrowRight className="ml-2 w-4 h-4" />
+                {openCount > 0 ? t.home.ctaApply : t.home.ctaSee} <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
               <Link href="/contact" className="px-8 py-4 bg-white/10 text-white border border-white/20 font-bold rounded-xl hover:bg-white/20 transition-all inline-flex items-center justify-center">
-                Ask admissions
+                {t.home.ctaAsk}
               </Link>
             </div>
           </div>

@@ -6,9 +6,12 @@ import { Menu, X, ArrowRight, UserCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { getGlobalUnreadCount } from "@/app/actions/messages";
+import { useT } from "@/i18n/client";
+import LanguageToggle from "./LanguageToggle";
 
 export default function Navbar() {
   const { data: session } = useSession();
+  const { t } = useT();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [globalUnread, setGlobalUnread] = useState(0);
@@ -61,30 +64,31 @@ export default function Navbar() {
             
             <div className="hidden lg:flex items-center ml-12 space-x-6">
               <Link href="/research" className={`text-sm font-semibold transition-colors ${navTextClass}`}>
-                Research
+                {t.nav.research}
               </Link>
               <Link href="/projects" className={`text-sm font-semibold transition-colors ${navTextClass}`}>
-                Projects
+                {t.nav.projects}
               </Link>
               <Link href="/intern" className={`text-sm font-semibold transition-colors ${navTextClass}`}>
-                Intern
+                {t.nav.intern}
               </Link>
               <Link href="/success" className={`text-sm font-semibold transition-colors whitespace-nowrap ${navTextClass}`}>
-                Student Success
+                {t.nav.success}
               </Link>
               <Link href="/blog" className={`text-sm font-semibold transition-colors ${navTextClass}`}>
-                Blog
+                {t.nav.blog}
               </Link>
               <Link href="/contact" className={`text-sm font-semibold transition-colors ${navTextClass}`}>
-                Contact
+                {t.nav.contact}
               </Link>
             </div>
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <LanguageToggle />
             {session ? (
               <div className="flex items-center space-x-3 bg-gray-50/80 backdrop-blur-md rounded-full p-1 pr-4 border border-gray-200">
-                <Link href="/dashboard" aria-label="Open your dashboard" className="relative flex items-center justify-center h-8 w-8 rounded-full bg-white shadow-sm border border-gray-100 text-blue-600 hover:ring-2 hover:ring-blue-100 transition-all">
+                <Link href="/dashboard" aria-label={t.nav.openDashboard} className="relative flex items-center justify-center h-8 w-8 rounded-full bg-white shadow-sm border border-gray-100 text-blue-600 hover:ring-2 hover:ring-blue-100 transition-all">
                   <UserCircle className="w-5 h-5" />
                   {globalUnread > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -94,24 +98,24 @@ export default function Navbar() {
                   )}
                 </Link>
                 <Link href="/dashboard" className="text-sm font-semibold text-gray-700 hover:text-black transition-colors">
-                  Dashboard
+                  {t.nav.dashboard}
                 </Link>
                 <div className="w-px h-4 bg-gray-300 mx-2"></div>
                 <button onClick={() => signOut()} className="text-sm font-medium text-red-500 hover:text-red-700 transition-colors click-press">
-                  Sign out
+                  {t.nav.signOut}
                 </button>
               </div>
             ) : (
               <div className="flex items-center space-x-4">
                 <Link href="/auth/login" className={`text-sm font-semibold transition-colors ${navTextClass}`}>
-                  Sign in
+                  {t.nav.signIn}
                 </Link>
                 <Link
                   href="/research#open-programs"
                   className={`group relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-full overflow-hidden hover-lift click-press transition-all text-white bg-black hover:bg-gray-800`}
                 >
                   <span className="relative flex items-center">
-                    Apply now <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    {t.nav.applyNow} <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </Link>
               </div>
@@ -121,7 +125,7 @@ export default function Navbar() {
           <div className="flex items-center lg:hidden">
             <button
               ref={menuButton}
-              aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-label={isOpen ? t.nav.closeMenu : t.nav.openMenu}
               aria-expanded={isOpen}
               aria-controls="mobile-navigation"
               onClick={() => setIsOpen(!isOpen)}
@@ -137,25 +141,27 @@ export default function Navbar() {
       {isOpen && (
         <div id="mobile-navigation" onClick={(event) => { if ((event.target as HTMLElement).closest("a")) setIsOpen(false); }} className="absolute top-full left-0 w-full px-4 mt-2 max-h-[calc(100dvh-110px)] overflow-y-auto">
           <div className="p-4 bg-white/95 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-2xl flex flex-col space-y-3">
-            <Link href="/research" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">Research</Link>
-            <Link href="/projects" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">Projects</Link>
-            <Link href="/intern" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">Intern</Link>
-            <Link href="/success" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">Student Success</Link>
-            <Link href="/blog" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">Blog</Link>
-            <Link href="/contact" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">Contact</Link>
+            <Link href="/research" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.research}</Link>
+            <Link href="/projects" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.projects}</Link>
+            <Link href="/intern" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.intern}</Link>
+            <Link href="/success" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.success}</Link>
+            <Link href="/blog" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.blog}</Link>
+            <Link href="/contact" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.contact}</Link>
+            <div className="h-px bg-gray-100 my-2"></div>
+            <LanguageToggle className="px-2 py-1" />
             <div className="h-px bg-gray-100 my-2"></div>
             {session ? (
               <>
-                <Link href="/dashboard" className="text-sm font-semibold text-blue-600 p-2 rounded-lg bg-blue-50/50 hover:bg-blue-50">Dashboard</Link>
-                <button onClick={() => signOut()} className="text-left text-sm font-semibold text-red-600 p-2 rounded-lg hover:bg-red-50">Sign out</button>
+                <Link href="/dashboard" className="text-sm font-semibold text-blue-600 p-2 rounded-lg bg-blue-50/50 hover:bg-blue-50">{t.nav.dashboard}</Link>
+                <button onClick={() => signOut()} className="text-left text-sm font-semibold text-red-600 p-2 rounded-lg hover:bg-red-50">{t.nav.signOut}</button>
               </>
             ) : (
               <>
                 <Link href="/research#open-programs" className="flex items-center justify-center p-3 text-sm font-semibold text-white bg-black rounded-xl">
-                  Apply now
+                  {t.nav.applyNow}
                 </Link>
                 <Link href="/auth/login" className="flex items-center justify-center p-3 text-sm font-semibold text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50">
-                  Sign in to portal
+                  {t.nav.signInPortal}
                 </Link>
               </>
             )}
