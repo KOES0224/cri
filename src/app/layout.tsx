@@ -7,6 +7,8 @@ import PublicOnly from "@/components/layout/PublicOnly";
 import Footer from "@/components/layout/Footer";
 import Analytics from "@/components/Analytics";
 import { SITE_URL } from "@/lib/seo";
+import { getLocale } from "@/i18n";
+import { LocaleProvider } from "@/i18n/client";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,23 +41,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <AppProvider>
-          <PublicOnly><Navbar /></PublicOnly>
-          <main className="flex-1">
-            {children}
-          </main>
-          <PublicOnly><Footer /></PublicOnly>
-        </AppProvider>
+        <LocaleProvider locale={locale}>
+          <AppProvider>
+            <PublicOnly><Navbar /></PublicOnly>
+            <main className="flex-1">
+              {children}
+            </main>
+            <PublicOnly><Footer /></PublicOnly>
+          </AppProvider>
+        </LocaleProvider>
         <Analytics />
       </body>
     </html>
