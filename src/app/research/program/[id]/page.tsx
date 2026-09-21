@@ -10,16 +10,37 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import ApplyButton from "./ApplyButton";
 import TrackProgramView from "./TrackProgramView";
+import { cache } from "react";
+import type { Metadata } from "next";
+import { pageMetadata, summarize } from "@/lib/seo";
 
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
 
+// Shared between generateMetadata and the page so the request runs once per render.
+const getProgram = cache((id: string) =>
+  prisma.program.findUnique({
+    where: { id },
+    include: { professors: true },
+  })
+);
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const program = await getProgram(id);
+  if (!program || !program.isPublished) return {};
+
+  return pageMetadata({
+    title: `${program.title} | CRI`,
+    description: summarize(program.description),
+    path: `/research/program/${program.id}`,
+    image: program.professors[0]?.imageUrl,
+  });
+}
+
 export default async function ProgramDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const program = await prisma.program.findUnique({
-    where: { id: resolvedParams.id },
-    include: { professors: true }
-  });
+  const program = await getProgram(resolvedParams.id);
 
   if (!program || !program.isPublished) {
     notFound();

@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import PublicOnly from "@/components/layout/PublicOnly";
 import Footer from "@/components/layout/Footer";
 import Analytics from "@/components/Analytics";
+import { SITE_URL } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,6 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  // Pages that export their own metadata override this with their own path.
+  alternates: { canonical: "/" },
   title: "CRI | Premium Research Programs for Students",
   description: "CRI offers student-led research guided by university professors. Develop an original research question from your interests and write your own paper through in-person summer, online winter, or individual programs.",
   openGraph: {
