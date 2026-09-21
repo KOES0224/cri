@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, Users, MapPin, Tag, ChevronRight, CheckCircle2, CreditCard } from "lucide-react";
-import { admissionState, admissionLabel, programFacts, programHref, programDate } from "@/lib/program-policy";
+import { admissionState, programHref } from "@/lib/program-policy";
+import { admissionLabelLocalized, formatProgramDateRange, programFactsLocalized } from "@/lib/program-facts-i18n";
+import { getDictionary, getLocale } from "@/i18n";
 import ResearchGuide from "@/components/ResearchGuide";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -46,15 +48,18 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
     notFound();
   }
 
-  const facts = programFacts(program);
+  const locale = await getLocale();
+  const t = getDictionary(locale).programDetail;
+  const facts = programFactsLocalized(program, locale);
   const open = admissionState(program) === "OPEN";
+  const admissionLabel = admissionLabelLocalized(program, locale);
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-36 lg:pb-32">
       <TrackProgramView programId={program.id} programTitle={program.title} open={open} />
       <div className="max-w-7xl mx-auto px-6">
         <Link href={programHref(program.category)} className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-10">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Programs
+          {t.back}
         </Link>
         
         <div className="grid lg:grid-cols-3 gap-12">
@@ -63,11 +68,11 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
               <div className="flex flex-wrap gap-2 mb-6">
                  {open ? (
                    <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider rounded-full flex items-center">
-                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Applications Open
+                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> {t.applicationsOpen}
                    </span>
                  ) : (
                    <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider rounded-full">
-                     {admissionLabel(program)}
+                     {admissionLabel}
                    </span>
                  )}
                  <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider rounded-full">
@@ -90,27 +95,27 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                  </p>
                  
                  <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm mb-12">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6">Program Overview</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6">{t.overview}</h3>
                     <div className="space-y-6">
                        <div className="flex items-start">
                           <CheckCircle2 className="h-6 w-6 text-blue-500 mr-4 shrink-0 mt-0.5" />
                           <div>
-                             <h4 className="font-bold text-gray-900 text-lg">Rigorous Methodology</h4>
-                             <p className="text-gray-600 mt-1">Develop advanced data collection and analysis skills under strict academic standards.</p>
+                             <h4 className="font-bold text-gray-900 text-lg">{t.overviewItems[0].title}</h4>
+                             <p className="text-gray-600 mt-1">{t.overviewItems[0].body}</p>
                           </div>
                        </div>
                        <div className="flex items-start">
                           <CheckCircle2 className="h-6 w-6 text-blue-500 mr-4 shrink-0 mt-0.5" />
                           <div>
-                             <h4 className="font-bold text-gray-900 text-lg">Publication Output</h4>
-                             <p className="text-gray-600 mt-1">Students author their own research manuscript. Journal submission and acceptance are separate steps, not guaranteed outcomes.</p>
+                             <h4 className="font-bold text-gray-900 text-lg">{t.overviewItems[1].title}</h4>
+                             <p className="text-gray-600 mt-1">{t.overviewItems[1].body}</p>
                           </div>
                        </div>
                        <div className="flex items-start">
                           <CheckCircle2 className="h-6 w-6 text-blue-500 mr-4 shrink-0 mt-0.5" />
                           <div>
-                             <h4 className="font-bold text-gray-900 text-lg">Expert Mentorship</h4>
-                             <p className="text-gray-600 mt-1">Direct feedback and ongoing guidance from scholars active at top global institutions.</p>
+                             <h4 className="font-bold text-gray-900 text-lg">{t.overviewItems[2].title}</h4>
+                             <p className="text-gray-600 mt-1">{t.overviewItems[2].body}</p>
                           </div>
                        </div>
                     </div>
@@ -130,7 +135,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
 
                  {program.professors && program.professors.length > 0 && (
                    <div className="space-y-8">
-                     <h3 className="text-3xl font-bold text-gray-900 mb-6">Course Curriculum</h3>
+                     <h3 className="text-3xl font-bold text-gray-900 mb-6">{t.curriculum}</h3>
                      {program.professors.map((prof: any) => (
                        <div key={prof.id} className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-blue-100 shadow-md">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-100">
@@ -143,15 +148,15 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                                 </div>
                               )}
                               <div>
-                                <h4 className="text-xl font-bold text-gray-900 leading-tight">{prof.courseTitle || 'Research Project Seminar'}</h4>
-                                <p className="text-sm text-blue-600 font-semibold mt-1">Led by {prof.name}</p>
+                                <h4 className="text-xl font-bold text-gray-900 leading-tight">{prof.courseTitle || t.defaultCourseTitle}</h4>
+                                <p className="text-sm text-blue-600 font-semibold mt-1">{t.ledBy(prof.name)}</p>
                                 <p className="text-xs text-gray-500 font-normal">{prof.role} {prof.university ? `• ${prof.university}` : ''}</p>
                               </div>
                             </div>
 
                             {prof.universityLogo && (
                               <div className="sm:self-center shrink-0 bg-gray-50 p-2.5 rounded-2xl border border-gray-100">
-                                <img src={prof.universityLogo} alt={prof.university || "Institute Logo"} className="h-10 max-w-[120px] object-contain" />
+                                <img src={prof.universityLogo} alt={prof.university || t.instituteLogo} className="h-10 max-w-[120px] object-contain" />
                               </div>
                             )}
                           </div>
@@ -170,19 +175,19 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 border-t border-gray-100 pt-6 mt-6">
                            {facts.professorHours && (
                              <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex flex-col justify-center">
-                               <p className="text-xs font-bold text-blue-800 uppercase tracking-widest mb-1">Professor Hours</p>
+                               <p className="text-xs font-bold text-blue-800 uppercase tracking-widest mb-1">{t.professorHours}</p>
                                <p className="text-gray-900 font-semibold">{facts.professorHours}</p>
                              </div>
                            )}
                            {facts.taHours && (
                              <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col justify-center">
-                               <p className="text-xs font-bold text-indigo-800 uppercase tracking-widest mb-1">TA Mentoring Hours</p>
+                               <p className="text-xs font-bold text-indigo-800 uppercase tracking-widest mb-1">{t.taHours}</p>
                                <p className="text-gray-900 font-semibold">{facts.taHours}</p>
                              </div>
                            )}
                            {program.courseSchedule && (
                              <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 flex flex-col justify-center">
-                               <p className="text-xs font-bold text-amber-800 uppercase tracking-widest mb-1">Schedule</p>
+                               <p className="text-xs font-bold text-amber-800 uppercase tracking-widest mb-1">{t.schedule}</p>
                                <p className="text-gray-900 font-semibold">{program.courseSchedule}</p>
                              </div>
                            )}
@@ -197,11 +202,11 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
            {/* Sidebar */}
            <div className="lg:col-span-1">
               <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl">
-                 <h3 className="text-xl font-bold text-gray-900 mb-6">Program Details</h3>
+                 <h3 className="text-xl font-bold text-gray-900 mb-6">{t.details}</h3>
 
                  {program.professors && program.professors.length > 0 && (
                    <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-blue-50/60 to-indigo-50/40 border border-blue-100">
-                     <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider mb-3">Faculty Mentor</p>
+                     <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider mb-3">{t.facultyMentor}</p>
                      <div className="flex items-center gap-3">
                        {program.professors[0].imageUrl ? (
                          <img
@@ -224,10 +229,10 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                      </div>
                      {program.professors[0].universityLogo && (
                        <div className="mt-3 pt-3 border-t border-blue-100/70 flex items-center justify-between">
-                         <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Affiliation</span>
+                         <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400">{t.affiliation}</span>
                          <img
                            src={program.professors[0].universityLogo}
-                           alt={program.professors[0].university || "Logo"}
+                           alt={program.professors[0].university || t.logo}
                            className="h-6 max-w-[90px] object-contain"
                          />
                        </div>
@@ -239,10 +244,9 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                     <div className="flex items-center text-gray-700">
                        <Calendar className="h-5 w-5 mr-4 text-blue-600 shrink-0" />
                        <div>
-                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Duration</p>
+                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.duration}</p>
                          <p className="font-medium">
-                           {facts.kind === 'individual' ? facts.duration : program.startDate ? programDate(program.startDate) : 'Schedule available on inquiry'}
-                           {facts.kind !== 'individual' && program.endDate ? ` – ${programDate(program.endDate)}` : ''}
+                           {facts.kind === 'individual' ? facts.duration : program.startDate ? formatProgramDateRange(program.startDate, program.endDate, locale) : t.scheduleOnInquiry}
                          </p>
                        </div>
                     </div>
@@ -253,9 +257,9 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                     <div className="flex items-center text-gray-700">
                        <Users className="h-5 w-5 mr-4 text-blue-600 shrink-0" />
                        <div>
-                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Cohort Capacity</p>
+                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.capacity}</p>
                          <p className="font-semibold text-gray-900">
-                           {facts.capacity} Students
+                           {t.students(facts.capacity)}
                          </p>
                        </div>
                     </div>
@@ -266,7 +270,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                     <div className="flex items-center text-gray-700">
                        <MapPin className="h-5 w-5 mr-4 text-blue-600 shrink-0" />
                        <div>
-                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Delivery Format</p>
+                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.format}</p>
                          <p className="font-semibold text-gray-900">
                            {facts.format}
                          </p>
@@ -275,9 +279,9 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                  </div>
                  
                  <div className="rounded-2xl bg-gray-50 border border-gray-200 p-4 mb-4">
-                   <p className="font-bold text-gray-900">Program tuition</p>
-                   <p className="text-xl font-bold">{program.tuition != null ? `$${program.tuition.toLocaleString()} USD` : 'Available on inquiry'}</p>
-                   <p className="text-sm text-gray-600 mt-2">Tuition is separate from the $50 USD application fee. Ask admissions about payment timing, inclusions and cancellation terms before applying.</p>
+                   <p className="font-bold text-gray-900">{t.tuition}</p>
+                   <p className="text-xl font-bold">{program.tuition != null ? `$${program.tuition.toLocaleString()} USD` : t.availableOnInquiry}</p>
+                   <p className="text-sm text-gray-600 mt-2">{t.tuitionNote}</p>
                  </div>
                  {/* Application Fee Notice */}
                  {open && (
@@ -285,28 +289,28 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                      <div className="flex items-center justify-between mb-1.5">
                        <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
                          <CreditCard className="w-3.5 h-3.5 text-blue-600" />
-                         Application Fee
+                         {t.applicationFee}
                        </span>
                        <span className="font-black text-gray-900 text-sm">$50 USD</span>
                      </div>
                      <p className="text-xs text-blue-900/70 leading-relaxed font-normal">
-                       Online card charge: {APPLICATION_CHARGE_LABEL}. Covers application review; tuition is separate.
+                       {t.feeNote(APPLICATION_CHARGE_LABEL)}
                      </p>
                    </div>
                  )}
 
                  {open ? (
-                   <ApplyButton programId={program.id} programTitle={program.title} />
+                   <ApplyButton programId={program.id} programTitle={program.title} label={t.apply} pendingLabel={t.applyLoading} />
                  ) : (
                    <div className="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl text-center font-bold text-lg border border-gray-200">
-                     {admissionLabel(program)}
+                     {admissionLabel}
                    </div>
                  )}
                  <p className="text-center text-xs text-gray-400 mt-4 px-4">
-                   Applications are reviewed for research readiness and fit. A place is confirmed only after an admissions decision.
+                   {t.reviewNote}
                  </p>
-                 <Link href="/admissions" className="block text-center text-blue-700 underline mt-4 text-sm">Application steps and fee information</Link><Link href="/refunds" className="block text-center text-blue-700 underline mt-3 text-sm">Cancellation and refund policy</Link>
-                 {!open && <Link href="/research" className="block text-center text-blue-700 underline mt-4">Browse upcoming programs</Link>}
+                 <Link href="/admissions" className="block text-center text-blue-700 underline mt-4 text-sm">{t.stepsLink}</Link><Link href="/refunds" className="block text-center text-blue-700 underline mt-3 text-sm">{t.refundsLink}</Link>
+                 {!open && <Link href="/research" className="block text-center text-blue-700 underline mt-4">{t.browseUpcoming}</Link>}
               </div>
            </div>
         </div>
@@ -319,12 +323,12 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
             <div className="min-w-0 max-w-[48%]">
               <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                 <CreditCard className="w-3 h-3 text-blue-600" />
-                <span>Application fee · separate from tuition</span>
+                <span>{t.feeSeparate}</span>
               </div>
               <p className="font-black text-gray-900 text-lg leading-tight">{APPLICATION_CHARGE_LABEL}</p>
             </div>
             <div className="flex-1">
-              <ApplyButton programId={program.id} programTitle={program.title} className="h-12 text-base shadow-md" />
+              <ApplyButton programId={program.id} programTitle={program.title} label={t.apply} pendingLabel={t.applyLoading} className="h-12 text-base shadow-md" />
             </div>
           </div>
         </div>

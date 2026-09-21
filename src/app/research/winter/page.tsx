@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import ResearchProgramsClient from "../_components/ResearchProgramsClient";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { getDictionary, getLocale } from "@/i18n";
 
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function WinterResearchPage() {
+  const t = getDictionary(await getLocale()).hubPages.winter;
   const programs = await prisma.program.findMany({
     where: {
       isPublished: true,
@@ -25,8 +27,8 @@ export default async function WinterResearchPage() {
   return (
     <ResearchProgramsClient 
       programs={programs}
-      title="Winter Online Research Program"
-      description="Online research during winter break, recommended for students in Grades 9–12; university students may also participate. Up to 5 students per cohort, with 10 professor hours and 30 TA hours."
+      title={t.title}
+      description={t.description}
       categoryFilter={["Winter Online", "Winter"]}
     />
   );

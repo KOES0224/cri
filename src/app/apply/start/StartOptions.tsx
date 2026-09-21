@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { GraduationCap, Users, ArrowRight } from "lucide-react";
 import type { ApplicantRole } from "@/lib/applicant";
+import { useT } from "@/i18n/client";
 
 function GoogleIcon() {
   return (
@@ -19,6 +20,8 @@ function GoogleIcon() {
 
 /** Account gate for the application: pick who is applying, then create an account or sign in and land straight back in the form. */
 export default function StartOptions({ applyUrl }: { applyUrl: string }) {
+  const { t } = useT();
+  const copy = t.applyStart;
   const [role, setRole] = useState<ApplicantRole>("STUDENT");
   const [busy, setBusy] = useState(false);
   const registerUrl = `/auth/register?role=${role}&callbackUrl=${encodeURIComponent(applyUrl)}`;
@@ -28,13 +31,13 @@ export default function StartOptions({ applyUrl }: { applyUrl: string }) {
 
   return (
     <aside className="lg:sticky lg:top-28 self-start rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-      <h2 className="text-lg font-bold text-slate-900">Who is applying?</h2>
-      <p className="mt-1 text-sm text-slate-500">An account keeps the draft, the payment receipt and the admissions decision in one place.</p>
+      <h2 className="text-lg font-bold text-slate-900">{copy.who}</h2>
+      <p className="mt-1 text-sm text-slate-500">{copy.whyAccount}</p>
 
-      <div className="mt-5 grid grid-cols-2 gap-3" role="radiogroup" aria-label="Applicant type">
+      <div className="mt-5 grid grid-cols-2 gap-3" role="radiogroup" aria-label={copy.applicantType}>
         {([
-          ["STUDENT", "I am the student", GraduationCap],
-          ["PARENT", "Parent or guardian", Users],
+          ["STUDENT", copy.student, GraduationCap],
+          ["PARENT", copy.parent, Users],
         ] as const).map(([value, label, Icon]) => (
           <button
             key={value}
@@ -51,13 +54,13 @@ export default function StartOptions({ applyUrl }: { applyUrl: string }) {
       </div>
       <p className="mt-3 text-xs leading-relaxed text-slate-500">
         {role === "PARENT"
-          ? "You will enter the student's details in the form and your own contact as parent or guardian. The application and decision stay in your account."
-          : "School students also provide a parent or guardian contact in the form."}
+          ? copy.parentNote
+          : copy.studentNote}
       </p>
 
       <div className="mt-6 space-y-3">
         <Link href={registerUrl} className="flex w-full items-center justify-center rounded-xl bg-slate-900 px-5 py-3.5 text-sm font-semibold text-white hover:bg-black">
-          Create account and start <ArrowRight className="ml-2 h-4 w-4" />
+          {copy.createAccount} <ArrowRight className="ml-2 h-4 w-4" />
         </Link>
         <button
           type="button"
@@ -65,12 +68,12 @@ export default function StartOptions({ applyUrl }: { applyUrl: string }) {
           onClick={() => { setBusy(true); void signIn("google", { callbackUrl: googleCallback }); }}
           className="flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
         >
-          <GoogleIcon /> Continue with Google
+          <GoogleIcon /> {copy.google}
         </button>
       </div>
 
       <p className="mt-6 text-center text-sm text-slate-600">
-        Already have an account? <Link href={loginUrl} className="font-semibold text-slate-900 underline">Sign in</Link>
+        {copy.already} <Link href={loginUrl} className="font-semibold text-slate-900 underline">{copy.signIn}</Link>
       </p>
     </aside>
   );
