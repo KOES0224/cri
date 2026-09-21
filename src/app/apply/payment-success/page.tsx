@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { finalizePaidApplication } from "@/app/actions/payment";
 import { CheckCircle2, Loader2, AlertCircle, ExternalLink, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { trackEvent } from "@/lib/analytics";
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -45,6 +46,7 @@ function PaymentSuccessContent() {
           applicationId: res.applicationId,
           receiptUrl: res.receiptUrl,
         });
+        trackEvent("application_submitted", { program_id: programId || undefined, order_id: orderId, value: Number(amountStr), currency: "KRW" });
         setLoading(false);
         // Clean up draft storage
         try {

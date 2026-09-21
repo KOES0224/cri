@@ -8,6 +8,7 @@ import { safeCallbackUrl } from "@/lib/auth-input";
 import { applicantRoleFromParam } from "@/lib/applicant";
 import { PASSWORD_MIN_LENGTH } from "@/lib/password-policy";
 import { signIn } from "next-auth/react";
+import { trackEvent } from "@/lib/analytics";
 
 function ErrorAlert() {
   const searchParams = useSearchParams();
@@ -64,6 +65,7 @@ function RegisterForm() {
         return;
       }
 
+      trackEvent("sign_up", { role, method: "credentials" });
       // Auto login after successful registration
       const loginRes = await signIn("credentials", {
         email,

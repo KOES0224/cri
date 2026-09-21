@@ -7,6 +7,7 @@ import { saveApplicationDraft } from '@/app/actions/applicationDrafts';
 import { applicationErrors, applicationLabels, personalFields } from '@/lib/application-validation';
 import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
 import { programKind } from '@/lib/program-policy';
+import { trackEvent } from '@/lib/analytics';
 
 type Program = { id: string; title: string; category: string; tuition: number | null; professors: { id: string; name: string; university: string | null }[] };
 type Props = { program: Program; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean };
@@ -95,6 +96,7 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
       if (Object.keys(issues).length) { setErrors(issues); setNotice('Please check the highlighted fields.'); requestAnimationFrame(() => document.getElementById(`apply-${Object.keys(issues)[0]}`)?.focus()); return; }
     }
     revision.current += 1;
+    if (next > step) trackEvent('application_step', { program_id: program.id, step: next });
     setSaveState('unsaved'); setStep(next); setNotice(''); setErrors({});
     requestAnimationFrame(() => titleRef.current?.focus());
   }
@@ -123,6 +125,7 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
       const order = await beginApplicationCheckout(program.id, form);
       if (order.error || !order.orderId) throw new Error(order.error || 'Unable to prepare payment.');
       checkoutRef.current = true; setCheckoutStarted(true);
+      trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
       const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
       const sdk = await loadTossPayments(key);
       await sdk.payment({ customerKey: user.id }).requestPayment({ method: 'CARD', amount: { currency: order.currency!, value: order.amount! }, orderId: order.orderId, orderName: order.orderName!, successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`, failUrl: `${window.location.origin}/apply/payment-fail?programId=${encodeURIComponent(program.id)}`, customerEmail: user.email || form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim() });
