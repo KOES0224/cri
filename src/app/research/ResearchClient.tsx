@@ -6,16 +6,16 @@ import ResearchGuide from "@/components/ResearchGuide";
 import OpenProgramsSection from "@/components/OpenProgramsSection";
 import type { OpenProgramCard } from "@/lib/open-programs";
 import { motion } from "framer-motion";
+import { useT } from "@/i18n/client";
 
 export default function ResearchClient({ content, openPrograms = [] }: { content: Record<string, string>; openPrograms?: OpenProgramCard[] }) {
+  const { t } = useT();
+  const copy = t.research;
   const hubs = [
     {
       id: "seoul",
-      title: "Seoul Research Program & Global Research Program",
-      subtitle: "In-person summer research",
+      ...copy.hubs.seoul,
       icon: <Globe className="w-8 h-8 text-purple-500" />,
-      description: "In-person summer research for rising Grade 9 through university students. Develop a question from your own interests and write your own paper with professor and TA guidance.",
-      features: ["30 professor hours + 20 TA hours", "Up to 10 students per cohort", "Seoul and global in-person programs"],
       href: "/research/summer-camp",
       imageUrl: content.research_seoul_image || "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=2069&auto=format&fit=crop",
       highlight: false,
@@ -31,11 +31,8 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
     },
     {
       id: "winter",
-      title: "Winter Online Research Program",
-      subtitle: "Online during winter break",
+      ...copy.hubs.winter,
       icon: <Laptop className="w-8 h-8 text-teal-500" />,
-      description: "An online research program during winter break, recommended for students in Grades 9–12. University students may also participate. Your interests guide the research question and student-authored paper.",
-      features: ["10 professor hours + 30 TA hours", "Up to 5 students per cohort", "Online instruction and research guidance"],
       href: "/research/winter",
       imageUrl: content.research_winter_image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop",
       highlight: false,
@@ -51,11 +48,8 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
     },
     {
       id: "1-on-1",
-      title: "1-on-1 Advanced Research Program",
-      subtitle: "Advanced Research Program",
+      ...copy.hubs.oneOnOne,
       icon: <BookOpen className="w-8 h-8 text-blue-500" />,
-      description: "For students ready for advanced, independent research. Work online or in person around your schedule, usually over 2–4 months. Projects may finish within a month or take longer; research readiness matters more than age.",
-      features: ["Your interests shape your research question", "Flexible start and individualized pacing", "Contact admissions for mentorship hours and fees"],
       href: "/research/1-on-1",
       imageUrl: content.research_1on1_image || "https://images.unsplash.com/photo-1576086213369-97a306d36557?q=80&w=2080&auto=format&fit=crop",
       highlight: true,
@@ -91,7 +85,7 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
             className="inline-flex items-center px-4 py-2 rounded-full text-xs font-bold text-white bg-white/10 border border-white/20 mb-8 shadow-lg backdrop-blur-md uppercase tracking-wider"
           >
             <Star className="w-4 h-4 mr-2 fill-blue-400 text-blue-400" />
-            {content.research_pill_badge || "Elite Curriculum Portals"}
+            {content.research_pill_badge || copy.pillBadge}
           </motion.div>
           <motion.h1 
              initial={{ opacity: 0, y: 30 }}
@@ -99,7 +93,7 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
              transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
              className="text-6xl md:text-7xl font-black text-white tracking-tighter mb-6 leading-tight drop-shadow-xl"
           >
-            {content.research_hero_title || "Pioneering"} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">{content.research_hero_highlight || "Research"}</span>
+            {content.research_hero_title || copy.heroTitle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">{content.research_hero_highlight || copy.heroHighlight}</span>
           </motion.h1>
           <motion.p 
              initial={{ opacity: 0, y: 30 }}
@@ -107,7 +101,7 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
              transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
             className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed font-medium"
           >
-            {content.research_hero_subtitle || "Select a research environment below to explore available specializations, esteemed mentors, and active applications."}
+            {content.research_hero_subtitle || copy.heroSubtitle}
           </motion.p>
         </div>
       </div>
@@ -115,8 +109,8 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
       {/* Cohorts accepting applications right now */}
       <OpenProgramsSection
         programs={openPrograms}
-        heading="Cohorts accepting applications"
-        intro="These programs are open now. Each one is a small cohort led by a faculty mentor; explore the details and apply online. The three program formats are explained below."
+        heading={copy.openHeading}
+        intro={copy.openIntro}
         className="bg-white border-b border-gray-100"
       />
 
@@ -128,22 +122,22 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
               <div className="w-16 h-16 bg-white border border-gray-100 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform group-hover:bg-blue-50 group-hover:text-blue-600">
                 <CheckCircle2 className="w-8 h-8 text-gray-400 group-hover:text-blue-600 transition-colors" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">Rigorous Methodology</h3>
-              <p className="text-gray-600 leading-relaxed">We don't do superficial projects. Our students learn deeply technical, verifiable, and academically sound methodologies.</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">{copy.philosophy[0].title}</h3>
+              <p className="text-gray-600 leading-relaxed">{copy.philosophy[0].description}</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="flex flex-col items-center md:items-start group">
               <div className="w-16 h-16 bg-white border border-gray-100 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform group-hover:bg-purple-50 group-hover:text-purple-600">
                 <Users className="w-8 h-8 text-gray-400 group-hover:text-purple-600 transition-colors" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">Elite Mentorship</h3>
-              <p className="text-gray-600 leading-relaxed">Work directly with active researchers and tenured professors from the world's most prestigious institutions.</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">{copy.philosophy[1].title}</h3>
+              <p className="text-gray-600 leading-relaxed">{copy.philosophy[1].description}</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }} className="flex flex-col items-center md:items-start group">
               <div className="w-16 h-16 bg-white border border-gray-100 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform group-hover:bg-teal-50 group-hover:text-teal-600">
                 <Award className="w-8 h-8 text-gray-400 group-hover:text-teal-600 transition-colors" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">Publish-Ready</h3>
-              <p className="text-gray-600 leading-relaxed">The ultimate goal is tangible output. We structure programs to yield papers ready for high-school and undergraduate journals.</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">{copy.philosophy[2].title}</h3>
+              <p className="text-gray-600 leading-relaxed">{copy.philosophy[2].description}</p>
             </motion.div>
           </div>
         </div>
@@ -184,7 +178,7 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
 
                 <div className="pt-4">
                   <Link href={hub.href} className="inline-flex items-center px-8 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-gray-800 hover:scale-105 hover:shadow-xl transition-all duration-300 group">
-                    View programs
+                    {copy.viewPrograms}
                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
@@ -218,14 +212,14 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
         >
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-2xl bg-gradient-to-b from-blue-500/20 to-transparent blur-[100px] pointer-events-none"></div>
           <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">Ready to begin your deep dive?</h2>
-            <p className="text-xl text-gray-400">Join a global network of ambitious high school scholars actively contributing to academic literature.</p>
+            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">{copy.ctaTitle}</h2>
+            <p className="text-xl text-gray-400">{copy.ctaBody}</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
               <Link href="#open-programs" className="px-8 py-4 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 hover:scale-105 transition-all shadow-xl shadow-white/10 inline-flex items-center justify-center">
-                {openPrograms.length > 0 ? "Apply to an open program" : "See programs"} <ArrowRight className="ml-2 w-4 h-4" />
+                {openPrograms.length > 0 ? copy.ctaApply : copy.ctaSee} <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
               <Link href="/contact" className="px-8 py-4 bg-white/10 text-white border border-white/20 font-bold rounded-xl hover:bg-white/20 transition-all inline-flex items-center justify-center">
-                Contact Admissions
+                {copy.ctaContact}
               </Link>
             </div>
           </div>

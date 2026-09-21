@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { admissionState, programFacts, programDate, programKind } from "@/lib/program-policy";
+import { admissionState, programFacts, programDate, programKind, type ProgramKind } from "@/lib/program-policy";
 
 /** Plain, serialisable card data for cohorts that are accepting applications right now. */
 export type OpenProgramCard = {
@@ -8,6 +8,10 @@ export type OpenProgramCard = {
   description: string;
   season: string;
   format: string;
+  /** Program kind plus raw ISO dates so client components can localize season/format/dateLabel. */
+  kind: ProgramKind;
+  startDate: string | null;
+  endDate: string | null;
   capacity: number | null;
   dateLabel: string | null;
   tuition: number | null;
@@ -47,6 +51,9 @@ export async function getOpenPrograms(limit = 6): Promise<OpenProgramCard[]> {
           description: p.description,
           season: facts.name,
           format: facts.format,
+          kind: facts.kind,
+          startDate: p.startDate ? new Date(p.startDate).toISOString() : null,
+          endDate: p.endDate ? new Date(p.endDate).toISOString() : null,
           capacity: facts.capacity ?? null,
           dateLabel,
           tuition: p.tuition ?? null,

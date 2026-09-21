@@ -4,12 +4,14 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, MapPin, Users, MessageCircle } from "lucide-react";
 import type { OpenProgramCard } from "@/lib/open-programs";
+import { useT } from "@/i18n/client";
+import { formatProgramDateRange, programFormatLocalized, programNameLocalized } from "@/lib/program-facts-i18n";
 
 export default function OpenProgramsSection({
   programs,
-  eyebrow = "Now accepting applications",
-  heading = "Choose a cohort and apply",
-  intro = "Every program starts from your own interests and ends with a paper you wrote. Pick a mentor and dates that fit, then apply online in about 20 minutes.",
+  eyebrow,
+  heading,
+  intro,
   className = "",
 }: {
   programs: OpenProgramCard[];
@@ -18,6 +20,11 @@ export default function OpenProgramsSection({
   intro?: string;
   className?: string;
 }) {
+  const { t, locale } = useT();
+  const copy = t.openPrograms;
+  eyebrow ??= copy.eyebrow;
+  heading ??= copy.heading;
+  intro ??= copy.intro;
   return (
     <section id="open-programs" className={`relative z-10 scroll-mt-28 py-24 md:py-32 px-6 ${className}`}>
       <div className="max-w-7xl mx-auto">
@@ -33,17 +40,17 @@ export default function OpenProgramsSection({
         {programs.length === 0 ? (
           <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-10 md:p-14 grid md:grid-cols-[1fr_auto] gap-8 items-center">
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">Next cohorts are announced here first.</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">{copy.emptyTitle}</h3>
               <p className="text-gray-500 text-lg leading-relaxed max-w-xl">
-                Applications for the next season are not open yet. Tell admissions what you want to investigate and we will contact you as soon as dates and mentors are confirmed. 1-on-1 research starts any time.
+                {copy.emptyBody}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row md:flex-col gap-3 shrink-0">
               <Link href="/contact?topic=next-cohort" className="inline-flex items-center justify-center px-7 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-colors">
-                Ask admissions <ArrowRight className="ml-2 w-4 h-4" />
+                {copy.askAdmissions} <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
               <Link href="/research/1-on-1" className="inline-flex items-center justify-center px-7 py-4 bg-white border border-gray-200 text-gray-800 font-bold rounded-2xl hover:bg-gray-50 transition-colors">
-                1-on-1 research
+                {copy.oneOnOne}
               </Link>
             </div>
           </div>
@@ -52,6 +59,13 @@ export default function OpenProgramsSection({
             {programs.map((program, i) => {
               const prof = program.professor;
               const initials = prof?.name ? prof.name.split(" ").map((n) => n[0]).slice(0, 2).join("") : "CRI";
+              const season = programNameLocalized(program.kind, program.season, locale);
+              const format = programFormatLocalized(program.kind, program.format, locale);
+              const dateLabel = program.kind === "individual"
+                ? t.facts.flexibleStart
+                : program.startDate
+                  ? formatProgramDateRange(program.startDate, program.endDate, locale)
+                  : program.dateLabel;
               return (
                 <motion.article
                   key={program.id}
@@ -64,11 +78,11 @@ export default function OpenProgramsSection({
                   <div className="p-7 flex flex-col gap-5 flex-1">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-[11px] font-black uppercase tracking-wider text-gray-500 bg-gray-100 px-3 py-1 rounded-full truncate">
-                        {program.season}
+                        {season}
                       </span>
                       <span className="inline-flex items-center text-[11px] font-black uppercase tracking-wider text-emerald-700 shrink-0">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-                        Open
+                        {copy.open}
                       </span>
                     </div>
 
@@ -81,13 +95,13 @@ export default function OpenProgramsSection({
                         </div>
                       )}
                       <div className="min-w-0">
-                        <div className="font-bold text-gray-900 truncate">{prof?.name || "Distinguished Faculty"}</div>
+                        <div className="font-bold text-gray-900 truncate">{prof?.name || copy.distinguishedFaculty}</div>
                         <div className="text-sm text-gray-500 truncate">
-                          {prof?.university || prof?.role || "Faculty Mentor"}
+                          {prof?.university || prof?.role || copy.facultyMentor}
                         </div>
                       </div>
                       {prof?.universityLogo && (
-                        <img src={prof.universityLogo} alt={prof.university || "Institution"} className="ml-auto h-8 max-w-[80px] object-contain shrink-0" />
+                        <img src={prof.universityLogo} alt={prof.university || copy.institution} className="ml-auto h-8 max-w-[80px] object-contain shrink-0" />
                       )}
                     </div>
 
@@ -101,12 +115,12 @@ export default function OpenProgramsSection({
                     </div>
 
                     <ul className="mt-auto space-y-2 text-sm text-gray-700 font-medium">
-                      {program.dateLabel && (
-                        <li className="flex items-center"><Calendar className="w-4 h-4 mr-2.5 text-gray-400 shrink-0" />{program.dateLabel}</li>
+                      {dateLabel && (
+                        <li className="flex items-center"><Calendar className="w-4 h-4 mr-2.5 text-gray-400 shrink-0" />{dateLabel}</li>
                       )}
-                      <li className="flex items-center"><MapPin className="w-4 h-4 mr-2.5 text-gray-400 shrink-0" />{program.format}</li>
+                      <li className="flex items-center"><MapPin className="w-4 h-4 mr-2.5 text-gray-400 shrink-0" />{format}</li>
                       {program.capacity != null && (
-                        <li className="flex items-center"><Users className="w-4 h-4 mr-2.5 text-gray-400 shrink-0" />Up to {program.capacity} students</li>
+                        <li className="flex items-center"><Users className="w-4 h-4 mr-2.5 text-gray-400 shrink-0" />{copy.upTo(program.capacity)}</li>
                       )}
                     </ul>
                   </div>
@@ -116,14 +130,14 @@ export default function OpenProgramsSection({
                       {program.tuition ? (
                         <>
                           <span className="font-black text-gray-900 text-lg">${program.tuition.toLocaleString()}</span>
-                          <span className="text-gray-500 font-semibold ml-1">USD tuition</span>
+                          <span className="text-gray-500 font-semibold ml-1">{copy.usdTuition}</span>
                         </>
                       ) : (
-                        <span className="text-gray-500 font-semibold">Tuition on inquiry</span>
+                        <span className="text-gray-500 font-semibold">{copy.tuitionOnInquiry}</span>
                       )}
                     </div>
                     <span className="relative z-10 inline-flex items-center h-11 px-5 rounded-xl bg-gray-900 group-hover:bg-blue-600 text-white text-sm font-bold transition-colors shrink-0">
-                      View &amp; apply <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      {copy.viewApply} <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
                 </motion.article>
@@ -133,11 +147,11 @@ export default function OpenProgramsSection({
         )}
 
         <div className="mt-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 text-sm text-gray-500 font-medium">
-          <span>Applications are reviewed for research readiness and fit. The $50 USD application fee is separate from tuition.</span>
+          <span>{copy.reviewNote}</span>
           <div className="flex items-center gap-5 shrink-0">
-            <Link href="/admissions" className="font-bold text-gray-900 hover:text-blue-600 transition-colors">How applying works</Link>
+            <Link href="/admissions" className="font-bold text-gray-900 hover:text-blue-600 transition-colors">{copy.howApplying}</Link>
             <Link href="/contact" className="inline-flex items-center font-bold text-gray-900 hover:text-blue-600 transition-colors">
-              <MessageCircle className="w-4 h-4 mr-1.5" /> Ask a question
+              <MessageCircle className="w-4 h-4 mr-1.5" /> {copy.askQuestion}
             </Link>
           </div>
         </div>
