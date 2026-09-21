@@ -2,9 +2,9 @@ import Link from 'next/link';
 export const metadata = { title: 'Cancellation & Refund Policy | CRI' };
 const english = [
 'CRI programs have limited enrollment. Upon registration, faculty and TA schedules and student-specific research preparation are arranged.',
-'The application fee pays for admissions review services, including application assessment, and is separate from program tuition. Before payment, the company provides information about the service, when it begins and any conditions limiting withdrawal. Once admissions review services have actually begun, withdrawal from those services may be restricted to the extent permitted by applicable law.',
-'When a program is cancelled by a participant, the refund amount is calculated by distinguishing services actually provided from services not yet provided. Sending materials or reserving a place alone does not exclude the entire price of unprovided services from a refund.',
-'Consumer rights concerning services not provided by the company or performance that differs from the contract, and rights to withdrawal, termination and refunds under applicable law, remain protected.'
+'The application fee is consideration for admissions review services, including review of the application, and is separate from program tuition. Before payment, the company explains the service, when it begins, and any statutory limits on withdrawal. After the admissions review service has actually begun, the right of withdrawal may be limited to the extent permitted by applicable law.',
+'If a participant cancels a program, the refund is calculated by distinguishing services already provided from services not yet provided. The full price of services that have not been provided is not excluded from a refund solely because materials were sent or a place was reserved.',
+'The consumer\'s rights under applicable law, including rights relating to services not provided, performance that differs from the contract, withdrawal, termination, and refunds, remain protected.'
 ];
 const korean = [
 'CRI 프로그램은 정원제로 운영되며, 등록에 따라 교수·TA 일정과 학생별 연구 준비가 진행됩니다.',
