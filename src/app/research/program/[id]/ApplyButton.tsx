@@ -3,19 +3,22 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Loader2 } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 interface ApplyButtonProps {
   programId: string;
+  programTitle?: string;
   className?: string;
 }
 
-export default function ApplyButton({ programId, className = "" }: ApplyButtonProps) {
+export default function ApplyButton({ programId, programTitle, className = "" }: ApplyButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleApplyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isPending) return;
+    trackEvent("apply_click", { program_id: programId, program_title: programTitle });
 
     startTransition(() => {
       router.push(`/apply?programId=${programId}`);

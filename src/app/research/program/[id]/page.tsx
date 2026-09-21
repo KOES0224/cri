@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import ApplyButton from "./ApplyButton";
+import TrackProgramView from "./TrackProgramView";
 
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
   const open = admissionState(program) === "OPEN";
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-36 lg:pb-32">
+      <TrackProgramView programId={program.id} programTitle={program.title} open={open} />
       <div className="max-w-7xl mx-auto px-6">
         <Link href={programHref(program.category)} className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-10">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -273,7 +275,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                  )}
 
                  {open ? (
-                   <ApplyButton programId={program.id} />
+                   <ApplyButton programId={program.id} programTitle={program.title} />
                  ) : (
                    <div className="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl text-center font-bold text-lg border border-gray-200">
                      {admissionLabel(program)}
@@ -301,7 +303,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
               <p className="font-black text-gray-900 text-lg leading-tight">{APPLICATION_CHARGE_LABEL}</p>
             </div>
             <div className="flex-1">
-              <ApplyButton programId={program.id} className="h-12 text-base shadow-md" />
+              <ApplyButton programId={program.id} programTitle={program.title} className="h-12 text-base shadow-md" />
             </div>
           </div>
         </div>

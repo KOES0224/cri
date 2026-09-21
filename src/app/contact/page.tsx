@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { submitContactForm } from "@/app/actions/contact";
+import { trackEvent } from "@/lib/analytics";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
@@ -46,6 +47,7 @@ export default function ContactPage() {
     const res = await submitContactForm({ ...formData, topic: params.get("topic") || "", programId: params.get("programId") || "" });
     if (res.success) {
       setStatus("success");
+      trackEvent("contact_submitted", { topic: params.get("topic") || undefined, program_id: params.get("programId") || undefined });
       setFormData({ firstName: "", lastName: "", email: "", message: "" });
     } else {
       setStatus("error");

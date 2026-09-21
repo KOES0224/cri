@@ -5,6 +5,7 @@ import AppProvider from "@/components/layout/AppProvider";
 import Navbar from "@/components/layout/Navbar";
 import PublicOnly from "@/components/layout/PublicOnly";
 import Footer from "@/components/layout/Footer";
+import Analytics from "@/components/Analytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,6 +52,7 @@ export default function RootLayout({
           </main>
           <PublicOnly><Footer /></PublicOnly>
         </AppProvider>
+        <Analytics />
       </body>
     </html>
   );

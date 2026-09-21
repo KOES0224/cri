@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { safeCallbackUrl } from "@/lib/auth-input";
 import { signIn } from "next-auth/react";
+import { trackEvent } from "@/lib/analytics";
 
 function ErrorAlert() {
   const searchParams = useSearchParams();
@@ -60,6 +61,7 @@ function RegisterForm() {
         return;
       }
 
+      trackEvent("sign_up", { role, method: "credentials" });
       // Auto login after successful registration
       const loginRes = await signIn("credentials", {
         email,
