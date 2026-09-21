@@ -45,3 +45,6 @@ next-env.d.ts
 # node binaries / downloads
 node-v*
 *.tar.gz
+
+# local Claude Code launch config
+/.claude/

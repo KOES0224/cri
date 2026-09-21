@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Globe, Laptop, Star, CheckCircle2, Award, Users } from "lucide-react";
 import ResearchGuide from "@/components/ResearchGuide";
+import OpenProgramsSection from "@/components/OpenProgramsSection";
+import type { OpenProgramCard } from "@/lib/open-programs";
 import { motion } from "framer-motion";
 
-export default function ResearchClient({ content }: { content: Record<string, string> }) {
+export default function ResearchClient({ content, openPrograms = [] }: { content: Record<string, string>; openPrograms?: OpenProgramCard[] }) {
   const hubs = [
     {
       id: "seoul",
@@ -110,6 +112,14 @@ export default function ResearchClient({ content }: { content: Record<string, st
         </div>
       </div>
 
+      {/* Cohorts accepting applications right now */}
+      <OpenProgramsSection
+        programs={openPrograms}
+        heading="Cohorts accepting applications"
+        intro="These programs are open now. Each one is a small cohort led by a faculty mentor; explore the details and apply online. The three program formats are explained below."
+        className="bg-white border-b border-gray-100"
+      />
+
       {/* Philosophy Section */}
       <div className="py-24 bg-gray-50/50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6">
@@ -210,8 +220,11 @@ export default function ResearchClient({ content }: { content: Record<string, st
           <div className="relative z-10 max-w-2xl mx-auto space-y-8">
             <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">Ready to begin your deep dive?</h2>
             <p className="text-xl text-gray-400">Join a global network of ambitious high school scholars actively contributing to academic literature.</p>
-            <div className="flex justify-center gap-4 pt-4">
-              <Link href="/contact" className="px-8 py-4 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 hover:scale-105 transition-all shadow-xl shadow-white/10">
+            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+              <Link href="#open-programs" className="px-8 py-4 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 hover:scale-105 transition-all shadow-xl shadow-white/10 inline-flex items-center justify-center">
+                {openPrograms.length > 0 ? "Apply to an open program" : "See programs"} <ArrowRight className="ml-2 w-4 h-4" />
+              </Link>
+              <Link href="/contact" className="px-8 py-4 bg-white/10 text-white border border-white/20 font-bold rounded-xl hover:bg-white/20 transition-all inline-flex items-center justify-center">
                 Contact Admissions
               </Link>
             </div>
