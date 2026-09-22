@@ -137,9 +137,9 @@ export default function OpenProgramsSection({
                         <span className="text-gray-500 font-semibold">{copy.tuitionOnInquiry}</span>
                       )}
                     </div>
-                    <span className="relative z-10 inline-flex items-center h-11 px-5 rounded-xl bg-gray-900 group-hover:bg-blue-600 text-white text-sm font-bold transition-colors shrink-0">
+                    <Link href={`/research/program/${program.id}`} className="relative z-10 inline-flex items-center h-11 px-5 rounded-xl bg-gray-900 group-hover:bg-blue-600 text-white text-sm font-bold transition-colors shrink-0">
                       {copy.viewApply} <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </span>
+                    </Link>
                   </div>
                 </motion.article>
               );
