@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // next dev otherwise appends generated agent rules to CLAUDE.md / AGENTS.md on every start.
+  agentRules: false,
   serverExternalPackages: ['googleapis', 'xlsx'],
   images: {
     qualities: [60, 75],
