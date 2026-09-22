@@ -5,6 +5,7 @@ import { admissionState } from "@/lib/program-policy";
 import { prisma } from "@/lib/prisma";
 import { applicationSchema, applicationDraftSchema } from '@/lib/application-validation';
 import { canApply } from "@/lib/applicant";
+import { APPLICATION_FEE_ENABLED } from "@/lib/application-fee";
 import ApplyClient from "./ApplyClient";
 
 export const dynamic = "force-dynamic";
@@ -84,7 +85,8 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
     prisma.applicationCheckout.findUnique({where: {userId_programId: {userId: session.user.id, programId}}}),
     prisma.applicationDraft.findUnique({where: {userId_programId: {userId: session.user.id, programId}}}),
   ]);
-  const checkoutPending = pending?.status === 'PENDING';
+  // While the fee is switched off, an old unfinished checkout must not lock the form; the free path clears it on submit.
+  const checkoutPending = APPLICATION_FEE_ENABLED && pending?.status === 'PENDING';
   const parsed = checkoutPending ? applicationSchema.safeParse(pending.formData) : applicationDraftSchema.safeParse(saved?.formData);
   const savedDraft = parsed.success ? Object.fromEntries(Object.entries(parsed.data).filter((entry): entry is [string, string] => typeof entry[1] === 'string')) : undefined;
   const document = savedDraft?.resumeUrl ? await prisma.applicationDocument.findFirst({where: {id: savedDraft.resumeUrl.split('/').pop(), userId: session.user.id}}) : null;

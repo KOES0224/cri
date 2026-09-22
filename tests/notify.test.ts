@@ -14,4 +14,6 @@ test('notification helpers are best effort when email is not configured', async 
   assert.equal((await sendApplicationConfirmation(details)).sent, false);
   // No valid recipient is reported, not thrown.
   assert.equal((await sendApplicationConfirmation({ ...details, accountEmail: null, form: {} })).error, 'no valid recipient');
+  // Free submissions carry no payment block.
+  assert.equal((await notifyApplicationReceived({ ...details, payment: null })).sent, false);
 });

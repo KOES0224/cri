@@ -64,7 +64,7 @@ type PaidApplication = {
   programTitle: string;
   accountEmail?: string | null;
   form: Record<string, unknown>;
-  payment: { orderId: string; amount: number; currency: string; receiptUrl?: string | null };
+  payment: { orderId: string; amount: number; currency: string; receiptUrl?: string | null } | null;
 };
 
 function str(value: unknown) { return typeof value === 'string' ? value.trim() : ''; }
@@ -75,7 +75,7 @@ export async function notifyApplicationReceived(app: PaidApplication) {
   const student = `${str(f.studentFirstName)} ${str(f.studentLastName)}`.trim() || 'Unknown student';
   const parent = `${str(f.parentFirstName)} ${str(f.parentLastName)}`.trim();
   const lines = [
-    `A new application has been submitted and the application fee was paid.`,
+    app.payment ? `A new application has been submitted and the application fee was paid.` : `A new application has been submitted (no application fee).`,
     ``,
     `Program: ${app.programTitle}`,
     `Student: ${student}${str(f.school) ? ` · ${str(f.school)}` : ''}${str(f.gradYear) ? ` · class of ${str(f.gradYear)}` : ''}`,
@@ -85,7 +85,7 @@ export async function notifyApplicationReceived(app: PaidApplication) {
     `Area of interest: ${str(f.areaOfInterest) || '-'}`,
     `First-choice professor: ${str(f.firstChoiceProfessor) || '-'}`,
     ``,
-    `Fee: ${app.payment.amount.toLocaleString()} ${app.payment.currency} · order ${app.payment.orderId}${app.payment.receiptUrl ? ` · receipt ${app.payment.receiptUrl}` : ''}`,
+    app.payment ? `Fee: ${app.payment.amount.toLocaleString()} ${app.payment.currency} · order ${app.payment.orderId}${app.payment.receiptUrl ? ` · receipt ${app.payment.receiptUrl}` : ''}` : `Fee: none (waived)`,
     ``,
     `Review: ${SITE_URL}/dashboard/applications-admin`,
   ].filter((line): line is string => line !== null);
@@ -100,15 +100,15 @@ export async function sendApplicationConfirmation(app: PaidApplication) {
   const text = [
     `Hi ${student},`,
     ``,
-    `Thank you. Your application to "${app.programTitle}" has been received and the application fee has been confirmed.`,
+    app.payment ? `Thank you. Your application to "${app.programTitle}" has been received and the application fee has been confirmed.` : `Thank you. Your application to "${app.programTitle}" has been received.`,
     ``,
     `What happens next:`,
     `1. Admissions reviews the application for research readiness and fit (usually within about a week).`,
     `2. We may invite you to a short admissions interview.`,
     `3. You receive a decision by email and in your CRI portal.`,
     ``,
-    `Payment: ${app.payment.amount.toLocaleString()} ${app.payment.currency} · order ${app.payment.orderId}${app.payment.receiptUrl ? `\nReceipt: ${app.payment.receiptUrl}` : ''}`,
-    `The application fee covers admissions review and is separate from program tuition, which is only due after admission.`,
+    app.payment ? `Payment: ${app.payment.amount.toLocaleString()} ${app.payment.currency} · order ${app.payment.orderId}${app.payment.receiptUrl ? `\nReceipt: ${app.payment.receiptUrl}` : ''}` : `There was no application fee.`,
+    `Program tuition is only due after admission.`,
     ``,
     `Track your application: ${SITE_URL}/dashboard/applications`,
     `Questions: reply to this email or write to support@cri.kr.`,

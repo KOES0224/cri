@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, MapPin, Users, MessageCircle } from "lucide-react";
 import type { OpenProgramCard } from "@/lib/open-programs";
+import { APPLICATION_FEE_ENABLED } from "@/lib/application-fee";
 import { useT } from "@/i18n/client";
 import { formatProgramDateRange, programFormatLocalized, programNameLocalized } from "@/lib/program-facts-i18n";
 
@@ -147,7 +148,7 @@ export default function OpenProgramsSection({
         )}
 
         <div className="mt-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 text-sm text-gray-500 font-medium">
-          <span>{copy.reviewNote}</span>
+          <span>{APPLICATION_FEE_ENABLED ? copy.reviewNote : copy.reviewNoteFree}</span>
           <div className="flex items-center gap-5 shrink-0">
             <Link href="/admissions" className="font-bold text-gray-900 hover:text-blue-600 transition-colors">{copy.howApplying}</Link>
             <Link href="/contact" className="inline-flex items-center font-bold text-gray-900 hover:text-blue-600 transition-colors">

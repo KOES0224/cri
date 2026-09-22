@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { canApply } from "@/lib/applicant";
 import { admissionState } from "@/lib/program-policy";
 import { formatProgramDateRange, programFactsLocalized } from "@/lib/program-facts-i18n";
-import { APPLICATION_CHARGE_LABEL } from "@/lib/application-fee";
+import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from "@/lib/application-fee";
 import { getDictionary, getLocale } from "@/i18n";
 import StartOptions from "./StartOptions";
 
@@ -40,7 +40,7 @@ export default async function ApplyStartPage({ searchParams }: { searchParams: P
     { icon: Users, text: t.checklist.details },
     { icon: FileText, text: t.checklist.resume },
     { icon: Save, text: t.checklist.essays },
-    { icon: CreditCard, text: t.checklist.fee(APPLICATION_CHARGE_LABEL) },
+    { icon: CreditCard, text: APPLICATION_FEE_ENABLED ? t.checklist.fee(APPLICATION_CHARGE_LABEL) : t.checklist.free },
   ];
 
   return (

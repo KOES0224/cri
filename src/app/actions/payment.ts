@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { admissionState } from '@/lib/program-policy';
 import { canApply } from '@/lib/applicant';
-import { APPLICATION_CHARGE } from '@/lib/application-fee';
+import { APPLICATION_CHARGE, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
 import { applicationSchema } from '@/lib/application-validation';
 import { allowRequest } from '@/lib/request-limit';
 import { confirmTossPayment, findConfirmedTossPayment } from '@/lib/toss';
@@ -15,6 +15,7 @@ import { notifyApplicationReceived, sendApplicationConfirmation } from '@/lib/no
 export async function beginApplicationCheckout(programId: string, input: unknown) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.' };
+  if (!APPLICATION_FEE_ENABLED) return { error: 'No application fee is required. Submit the application without payment.' };
   if (!process.env.TOSS_SECRET_KEY || !process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY) return { error: 'Online payment is unavailable. Contact admissions before paying.' };
   const parsed = applicationSchema.safeParse(input);
   if (!parsed.success) return { error: `Check the application fields and word limits: ${parsed.error.issues[0]?.path.join('.') || 'application'}.` };
@@ -109,5 +110,60 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
     return { success: true, applicationId, receiptUrl: payment.receiptUrl };
   } catch {
     return { error: 'We could not finish recording your application. If a charge appears, do not pay again. Contact support@cri.kr with your order reference.' };
+  }
+}
+
+/**
+ * Free submission path, used while APPLICATION_FEE_ENABLED is off. Same validation and admission
+ * checks as the paid checkout; the application is created directly with the fee marked as waived.
+ */
+export async function submitApplicationWithoutFee(programId: string, input: unknown) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.' };
+  if (APPLICATION_FEE_ENABLED) return { error: 'An application fee is required for this program. Please continue to payment.' };
+  const parsed = applicationSchema.safeParse(input);
+  if (!parsed.success) return { error: `Check the application fields and word limits: ${parsed.error.issues[0]?.path.join('.') || 'application'}.` };
+  try {
+    if (!await allowRequest('submit', session.user.id, 5, 600)) return { error: 'Please wait a moment before submitting again.' };
+    const [program, document, existing] = await Promise.all([
+      prisma.program.findUnique({ where: { id: programId } }),
+      prisma.applicationDocument.findFirst({ where: { id: parsed.data.resumeUrl.split('/').pop(), userId: session.user.id }, select: { id: true } }),
+      prisma.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId } } }),
+    ]);
+    if (!program || admissionState(program) !== 'OPEN') return { error: 'This program is no longer accepting applications. Please choose an available program.' };
+    if (!document) return { error: 'Please upload your CV again using this account.' };
+    if (existing) return { success: true, applicationId: existing.id, duplicate: true };
+    const submittedAt = new Date();
+    const applicationId = await prisma.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${session.user.id + ':' + programId}))`;
+      const again = await tx.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { id: true } });
+      if (again) return again.id;
+      const app = await tx.application.create({ data: {
+        userId: session.user.id, programId, status: 'PENDING', stage: 'REVIEW', expectedWaitDays: 7,
+        content: JSON.stringify({ ...parsed.data, payment: { feeStatus: 'WAIVED', amount: 0, currency: 'USD', submittedAt: submittedAt.toISOString() } }),
+        steps: { create: [
+          { title: 'Application Submitted', status: 'COMPLETED', order: 1, date: submittedAt },
+          { title: 'Admissions Review', status: 'IN_PROGRESS', order: 2 },
+          { title: 'Admissions Interview', status: 'UPCOMING', order: 3 },
+          { title: 'Final Decision', status: 'UPCOMING', order: 4 },
+        ] },
+      } });
+      await tx.applicationDraft.deleteMany({ where: { userId: session.user.id, programId } });
+      await tx.applicationCheckout.deleteMany({ where: { userId: session.user.id, programId, status: 'PENDING' } });
+      return app.id;
+    });
+    try {
+      const app = await prisma.application.findUniqueOrThrow({ where: { id: applicationId }, include: { program: true, user: true } });
+      const { syncApplicationToGoogleSheet } = await import('@/lib/googleSheets');
+      await syncApplicationToGoogleSheet({ application: app, user: session.user, program: app.program, formData: JSON.parse(app.content || '{}') });
+    } catch { console.error('Application saved; spreadsheet sync requires retry.'); }
+    try {
+      const details = { applicationId, programTitle: program.title, accountEmail: session.user.email, form: parsed.data as Record<string, unknown>, payment: null };
+      await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);
+    } catch { console.error('Application saved; notification emails failed.'); }
+    revalidatePath('/dashboard', 'layout');
+    return { success: true, applicationId };
+  } catch {
+    return { error: 'We could not submit your application. Your draft is saved; please try again or contact support@cri.kr.' };
   }
 }
