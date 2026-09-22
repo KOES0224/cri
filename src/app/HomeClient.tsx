@@ -6,10 +6,17 @@ import { motion } from "framer-motion";
 import OpenProgramsSection from "@/components/OpenProgramsSection";
 import type { OpenProgramCard } from "@/lib/open-programs";
 import { useT } from "@/i18n/client";
+import type { MentorUniversity } from "@/lib/home-data";
+import HowItWorks from "@/components/home/HowItWorks";
+import UniversitiesStrip from "@/components/home/UniversitiesStrip";
+import FaqSection from "@/components/home/FaqSection";
+import MobileApplyBar from "@/components/home/MobileApplyBar";
 
-export default function HomeClient({ content, openPrograms = [] }: { content: Record<string, string>; openPrograms?: OpenProgramCard[] }) {
-  const { t } = useT();
+export default function HomeClient({ content, openPrograms = [], universities = [] }: { content: Record<string, string>; openPrograms?: OpenProgramCard[]; universities?: MentorUniversity[] }) {
+  const { t, locale } = useT();
   const openCount = openPrograms.length;
+  // CMS landing text is English. In another locale use a `<key>_<locale>` CMS value if the admin added one, else the dictionary.
+  const cms = (key: string) => (locale === "en" ? content[key] : content[`${key}_${locale}`]) || "";
   return (
     <div className="flex flex-col min-h-screen bg-[#FAFAFA] font-sans overflow-hidden">
       
@@ -97,7 +104,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
             </span>
-            {content.landing_pill_badge || t.home.pillBadge}
+            {cms("landing_pill_badge") || t.home.pillBadge}
           </motion.div>
           
           <motion.h1 
@@ -106,10 +113,10 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
             transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
             className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[1.1] drop-shadow-2xl"
           >
-            {content.landing_hero_title || t.home.heroTitle} <br className="hidden md:block" />
-            {(content.landing_hero_title_highlight || !content.landing_hero_title) && (
+            {cms("landing_hero_title") || t.home.heroTitle} <br className="hidden md:block" />
+            {(cms("landing_hero_title_highlight") || !content.landing_hero_title) && (
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 block mt-2 md:mt-0 md:inline">
-                {content.landing_hero_title_highlight || t.home.heroHighlight}
+                {cms("landing_hero_title_highlight") || t.home.heroHighlight}
               </span>
             )}
           </motion.h1>
@@ -120,7 +127,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
             className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-medium whitespace-pre-line"
           >
-            {content.landing_hero_subtitle || t.home.heroSubtitle}
+            {cms("landing_hero_subtitle") || t.home.heroSubtitle}
           </motion.p>
           
           <motion.div 
@@ -168,8 +175,14 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
         </div>
       </section>
 
+      {/* Where the mentors teach */}
+      <UniversitiesStrip universities={universities} />
+
       {/* Open cohorts: the primary conversion path */}
       <OpenProgramsSection programs={openPrograms} className="bg-[#FAFAFA]" />
+
+      {/* Three steps to a decision */}
+      <HowItWorks />
 
       {/* Philosophy Section */}
       <section className="pt-24 pb-32 relative z-10 bg-white">
@@ -220,6 +233,9 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
         </div>
       </section>
 
+      {/* FAQ */}
+      <FaqSection />
+
       {/* Closing CTA */}
       <section className="relative z-10 bg-white px-6 pb-32">
         <motion.div
@@ -245,6 +261,8 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
           </div>
         </motion.div>
       </section>
+
+      <MobileApplyBar openCount={openCount} />
     </div>
   );
 }

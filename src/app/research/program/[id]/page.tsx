@@ -1,4 +1,4 @@
-import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
+import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -281,10 +281,16 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                  <div className="rounded-2xl bg-gray-50 border border-gray-200 p-4 mb-4">
                    <p className="font-bold text-gray-900">{t.tuition}</p>
                    <p className="text-xl font-bold">{program.tuition != null ? `$${program.tuition.toLocaleString()} USD` : t.availableOnInquiry}</p>
-                   <p className="text-sm text-gray-600 mt-2">{t.tuitionNote}</p>
+                   <p className="text-sm text-gray-600 mt-2">{APPLICATION_FEE_ENABLED ? t.tuitionNote : t.free.tuitionNote}</p>
                  </div>
-                 {/* Application Fee Notice */}
-                 {open && (
+                 {/* Application Fee Notice (or the no-fee notice while the fee is switched off) */}
+                 {open && !APPLICATION_FEE_ENABLED && (
+                   <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4 text-left">
+                     <p className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />{t.free.title}</p>
+                     <p className="text-xs text-emerald-900/80 leading-relaxed mt-1.5">{t.free.body}</p>
+                   </div>
+                 )}
+                 {open && APPLICATION_FEE_ENABLED && (
                    <div className="bg-gradient-to-br from-blue-50/90 to-indigo-50/70 border border-blue-100/90 rounded-2xl p-4 mb-4 text-left shadow-xs">
                      <div className="flex items-center justify-between mb-1.5">
                        <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -307,7 +313,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                    </div>
                  )}
                  <p className="text-center text-xs text-gray-400 mt-4 px-4">
-                   {t.reviewNote}
+                   {APPLICATION_FEE_ENABLED ? t.reviewNote : t.free.reviewNote}
                  </p>
                  <Link href="/admissions" className="block text-center text-blue-700 underline mt-4 text-sm">{t.stepsLink}</Link><Link href="/refunds" className="block text-center text-blue-700 underline mt-3 text-sm">{t.refundsLink}</Link>
                  {!open && <Link href="/research" className="block text-center text-blue-700 underline mt-4">{t.browseUpcoming}</Link>}
@@ -323,9 +329,9 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
             <div className="min-w-0 max-w-[48%]">
               <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                 <CreditCard className="w-3 h-3 text-blue-600" />
-                <span>{t.feeSeparate}</span>
+                <span>{APPLICATION_FEE_ENABLED ? t.feeSeparate : t.free.badge}</span>
               </div>
-              <p className="font-black text-gray-900 text-lg leading-tight">{APPLICATION_CHARGE_LABEL}</p>
+              <p className="font-black text-gray-900 text-lg leading-tight">{APPLICATION_FEE_ENABLED ? APPLICATION_CHARGE_LABEL : (program.tuition != null ? `$${program.tuition.toLocaleString()} USD` : t.availableOnInquiry)}</p>
             </div>
             <div className="flex-1">
               <ApplyButton programId={program.id} programTitle={program.title} label={t.apply} pendingLabel={t.applyLoading} className="h-12 text-base shadow-md" />

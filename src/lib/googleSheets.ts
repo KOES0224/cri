@@ -56,7 +56,7 @@ export function formatApplicationForSheet(
 
   const payment = formData.payment || {};
   const feeStatus = payment.feeStatus || (formData.paymentKey ? "PAID" : "PAID ($50 USD)");
-  const feeAmount = payment.amount ? `$${payment.amount} ${payment.currency || "USD"}` : "$50.00 USD";
+  const feeAmount = payment.feeStatus === "WAIVED" ? "Waived" : payment.amount ? `${payment.amount.toLocaleString()} ${payment.currency || "USD"}` : "$50.00 USD";
   const receiptUrl = payment.receiptUrl || "";
   const orderId = payment.orderId || "";
 

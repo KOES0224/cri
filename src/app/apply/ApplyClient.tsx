@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { beginApplicationCheckout } from '@/app/actions/payment';
+import { useRouter } from 'next/navigation';
+import { beginApplicationCheckout, submitApplicationWithoutFee } from '@/app/actions/payment';
 import { saveApplicationDraft } from '@/app/actions/applicationDrafts';
 import { applicationErrors, applicationLabels, personalFields } from '@/lib/application-validation';
-import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
+import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
 import { programKind } from '@/lib/program-policy';
 import { trackEvent } from '@/lib/analytics';
 import { useT } from '@/i18n/client';
@@ -17,6 +18,8 @@ const actionClass = 'rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text
 
 export default function ApplyClient({ program, user, applicantRole = 'STUDENT', savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable }: Props) {
   const { t } = useT();
+  const router = useRouter();
+  const feeEnabled = APPLICATION_FEE_ENABLED;
   const copy = t.apply;
   const label = (key: string) => copy.fields[key] ?? applicationLabels[key];
   const parts = (user.name || '').trim().split(/\s+/);
@@ -116,6 +119,21 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
     } catch (error) { setErrors(previous => ({ ...previous, resumeUrl: error instanceof Error ? error.message : 'Upload failed. Retry without leaving this page.' })); }
     finally { setUploading(false); }
   }
+  async function submitFree() {
+    if (paymentLock.current) return;
+    const issues = applicationErrors(form);
+    if (Object.keys(issues).length) { setErrors(issues); setStep(personalFields.includes(Object.keys(issues)[0]) ? 1 : 2); setNotice('Please complete the highlighted fields before submitting.'); return; }
+    paymentLock.current = true;
+    setBusy(true); setNotice('');
+    try {
+      if (!await persist(form, step, revision.current)) throw new Error('Save your draft successfully before submitting.');
+      const result = await submitApplicationWithoutFee(program.id, form);
+      if (result.error || !result.applicationId) throw new Error(result.error || 'Unable to submit the application.');
+      savedRevision.current = revision.current;
+      trackEvent('application_submitted', { program_id: program.id, program_title: program.title, value: 0, currency: 'USD' });
+      router.push(`/apply/submitted?programId=${encodeURIComponent(program.id)}`);
+    } catch (error) { setNotice(error instanceof Error ? error.message : 'The application was not submitted. Please try again.'); paymentLock.current = false; setBusy(false); }
+  }
   async function checkout() {
     if (paymentLock.current) return;
     const issues = applicationErrors(form);
@@ -147,10 +165,10 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
 
   return <div className="min-h-screen bg-slate-50 px-4 pb-20 pt-32 sm:px-6"><div className="mx-auto max-w-3xl">
     <Link href={`/research/program/${program.id}`} onClick={event => { if (revision.current !== savedRevision.current && !confirm(copy.leaveConfirm)) event.preventDefault(); }} className="text-sm text-slate-600 underline">{copy.back}</Link>
-    <header className="my-6"><p className="text-xs font-semibold uppercase tracking-widest text-blue-700">{copy.eyebrow}</p><h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{program.title}</h1><p className="mt-3 text-sm text-slate-600">{copy.feeLine.a}<strong>{APPLICATION_CHARGE_LABEL}</strong>{copy.feeLine.b}<strong>{program.tuition == null ? copy.contactAdmissions : `$${program.tuition.toLocaleString()} USD`}</strong>{copy.feeLine.c}</p><p className="mt-2 text-sm text-slate-600">{copy.submittedNote}<Link href="/admissions" className="text-blue-700 underline">{copy.stepsAndFees}</Link> · <Link href="/privacy" className="text-blue-700 underline">{copy.privacy}</Link> · <Link href="/refunds" className="text-blue-700 underline">{copy.refunds}</Link></p></header>
-    {!paymentAvailable && <div role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">{copy.paymentUnavailable.a}<Link href="/contact" className="underline">{copy.paymentUnavailable.link}</Link>{copy.paymentUnavailable.b}</div>}
+    <header className="my-6"><p className="text-xs font-semibold uppercase tracking-widest text-blue-700">{copy.eyebrow}</p><h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{program.title}</h1><p className="mt-3 text-sm text-slate-600">{feeEnabled ? <>{copy.feeLine.a}<strong>{APPLICATION_CHARGE_LABEL}</strong>{copy.feeLine.b}</> : copy.free.feeLine.a}<strong>{program.tuition == null ? copy.contactAdmissions : `$${program.tuition.toLocaleString()} USD`}</strong>{feeEnabled ? copy.feeLine.c : copy.free.feeLine.c}</p><p className="mt-2 text-sm text-slate-600">{feeEnabled ? copy.submittedNote : copy.free.submittedNote}<Link href="/admissions" className="text-blue-700 underline">{copy.stepsAndFees}</Link> · <Link href="/privacy" className="text-blue-700 underline">{copy.privacy}</Link> · <Link href="/refunds" className="text-blue-700 underline">{copy.refunds}</Link></p></header>
+    {feeEnabled && !paymentAvailable && <div role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">{copy.paymentUnavailable.a}<Link href="/contact" className="underline">{copy.paymentUnavailable.link}</Link>{copy.paymentUnavailable.b}</div>}
     {checkoutStarted && <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm">{copy.checkoutRestored.a}<Link href="/contact" className="underline">{copy.checkoutRestored.link}</Link>{copy.checkoutRestored.b}</div>}
-    <ol aria-label={copy.progress} className="mb-5 grid grid-cols-3 gap-2">{copy.progressSteps.map((label, index) => <li key={label} aria-current={step === index + 1 ? 'step' : undefined} className={`rounded-xl border px-3 py-3 text-xs font-semibold sm:text-sm ${step === index + 1 ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-500'}`}>{index + 1}. {label}</li>)}</ol>
+    <ol aria-label={copy.progress} className="mb-5 grid grid-cols-3 gap-2">{[copy.progressSteps[0], copy.progressSteps[1], feeEnabled ? copy.progressSteps[2] : copy.free.step3].map((label, index) => <li key={label} aria-current={step === index + 1 ? 'step' : undefined} className={`rounded-xl border px-3 py-3 text-xs font-semibold sm:text-sm ${step === index + 1 ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-500'}`}>{index + 1}. {label}</li>)}</ol>
     {!checkoutStarted && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs"><span role="status" className={saveState === 'error' ? 'text-red-700' : 'text-slate-600'}>{saveState === 'saving' ? copy.saving : saveState === 'unsaved' ? copy.unsaved : saveState === 'error' ? saveError : savedAt ? copy.savedAt(new Date(savedAt).toLocaleTimeString()) : copy.autosave}</span><button type="button" onClick={() => void persist(form, step, revision.current)} disabled={saveState === 'saving' || busy} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-semibold disabled:opacity-50">{copy.saveDraft}</button></div>}
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"><h2 ref={titleRef} tabIndex={-1} className="mb-6 text-xl font-bold text-slate-900 outline-none">{copy.headings[step - 1]}</h2>
       {notice && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{notice}</div>}
@@ -166,13 +184,14 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
       {step === 2 && <div className="grid gap-5 sm:grid-cols-2"><div className="sm:col-span-2"><label htmlFor="apply-resumeUrl" className="mb-2 block text-sm font-semibold">{copy.resumeLabel}</label><input id="apply-resumeUrl" type="file" accept="application/pdf" disabled={uploading || locked} aria-invalid={Boolean(errors.resumeUrl)} aria-describedby="resume-help" onChange={event => void upload(event.target.files?.[0])} className={inputClass} /><p id="resume-help" className="mt-2 text-xs text-slate-500">{copy.resumeHelp}</p>{uploading && <p role="status" className="mt-2 text-sm">{copy.uploading}</p>}{form.resumeUrl && <a href={form.resumeUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block break-all text-sm text-blue-700 underline">{filename || copy.viewResume}</a>}{errors.resumeUrl && <p role="alert" className="mt-2 text-sm text-red-700">{errors.resumeUrl}</p>}</div>
         {field('areaOfInterest')}{field('initialTopicIdeas', { multiline: true, hint: copy.topicHint })}{field('essay', { multiline: true, words: 500 })}{field('shortAnswer', { multiline: true, words: 150 })}
         {['firstChoiceProfessor','secondChoiceProfessor','thirdChoiceProfessor'].map((key, index) => field(key, { optional: index > 0, choices: program.professors.map(professor => [professor.name, `${professor.name}${professor.university ? ` (${professor.university})` : ''}`]) }))}
-        {program.professors.length === 0 && <p className="text-sm text-amber-800 sm:col-span-2">{copy.noFaculty}</p>}
+        {program.professors.length === 0 && <p className="text-sm text-amber-800 sm:col-span-2">{feeEnabled ? copy.noFaculty : copy.free.noFaculty}</p>}
         {field('previousResearch', { optional: true, multiline: true, hint: copy.previousHint })}{field('howLearned', { optional: true })}
       </div>}
       {step === 3 && <div className="space-y-6">{[1,2].map(section => <div key={section} className="rounded-xl border border-slate-200 p-4"><div className="mb-4 flex items-center justify-between gap-3"><h3 className="font-semibold">{section === 1 ? copy.headings[0] : copy.headings[1]}</h3>{!checkoutStarted && <button type="button" disabled={busy} onClick={() => move(section)} className="text-sm font-semibold text-blue-700 underline">{section === 1 ? copy.editPersonal : copy.editResearch}</button>}</div><dl className="space-y-4">{Object.keys(applicationLabels).filter(key => personalFields.includes(key) === (section === 1)).filter(key => !(form.studentLevel === 'UNIVERSITY' && key.startsWith('parent')) && !(key === 'tShirtSize' && !summer)).map(key => <div key={key}><dt className="text-xs font-semibold text-slate-500">{label(key)}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-900">{key === 'resumeUrl' ? <a href={form[key]} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">{filename || copy.viewPdf}</a> : key === 'studentLevel' ? form[key] === 'UNIVERSITY' ? copy.universityStudent : copy.schoolStudent : form[key] || copy.notProvided}</dd></div>)}</dl></div>)}
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5"><p className="text-sm font-semibold">{copy.feeBox.title}</p><p className="mt-2 text-2xl font-bold">{APPLICATION_CHARGE_LABEL}</p><p className="mt-3 text-sm leading-relaxed">{copy.feeBox.body1}</p><p className="mt-3 text-sm">{copy.feeBox.body2a}<Link href="/admissions" className="underline">{copy.feeBox.link1}</Link>{copy.feeBox.and}<Link href="/refunds" className="underline">{copy.feeBox.link2}</Link>{copy.feeBox.body2b}</p></div>
+        {!feeEnabled && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5"><p className="text-sm font-semibold text-emerald-900">{copy.free.box.title}</p><p className="mt-2 text-sm leading-relaxed text-emerald-900/80">{copy.free.box.body}</p></div>}
+        {feeEnabled && <div className="rounded-xl border border-blue-200 bg-blue-50 p-5"><p className="text-sm font-semibold">{copy.feeBox.title}</p><p className="mt-2 text-2xl font-bold">{APPLICATION_CHARGE_LABEL}</p><p className="mt-3 text-sm leading-relaxed">{copy.feeBox.body1}</p><p className="mt-3 text-sm">{copy.feeBox.body2a}<Link href="/admissions" className="underline">{copy.feeBox.link1}</Link>{copy.feeBox.and}<Link href="/refunds" className="underline">{copy.feeBox.link2}</Link>{copy.feeBox.body2b}</p></div>}
       </div>}
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable} className={actionClass}>{busy ? copy.openingPayment : copy.payAndSubmit(APPLICATION_CHARGE_LABEL)}</button>}</div>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable} className={actionClass}>{busy ? copy.openingPayment : copy.payAndSubmit(APPLICATION_CHARGE_LABEL)}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>
       <p className="mt-6 text-xs leading-relaxed text-slate-500">{copy.help.a}<a href="mailto:support@cri.kr" className="underline">support@cri.kr</a>{copy.help.b}</p>
     </section>
   </div></div>;

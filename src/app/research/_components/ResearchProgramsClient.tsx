@@ -89,8 +89,14 @@ export default function ResearchProgramsClient({
              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gray-50 text-gray-400 mb-4">
                <Clock className="h-8 w-8" />
              </div>
-             <h3 className="text-2xl font-bold text-gray-900 mb-2">{copy.emptyTitle}</h3>
-             <p className="text-gray-500 max-w-md mx-auto">{copy.emptyBody}</p>
+             <h3 className="text-2xl font-bold text-gray-900 mb-2">{activeTab === "CLOSED" ? copy.emptyTitle : copy.emptyNextTitle}</h3>
+             <p className="text-gray-500 max-w-md mx-auto">{activeTab === "CLOSED" ? copy.emptyBody : copy.emptyNextBody}</p>
+             {activeTab !== "CLOSED" && (
+               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                 <Link href={`/contact?topic=next-cohort`} className="inline-flex items-center px-6 py-3 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-black transition-colors">{copy.emptyAsk}</Link>
+                 <Link href={`/contact?topic=1-on-1`} className="inline-flex items-center px-6 py-3 bg-white border border-gray-200 text-gray-800 text-sm font-bold rounded-xl hover:bg-gray-50 transition-colors">{copy.emptyOneOnOne}</Link>
+               </div>
+             )}
            </div>
         ) : (
           <div className="space-y-6">
