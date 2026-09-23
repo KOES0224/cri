@@ -27,7 +27,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   scroll-behavior: smooth;
 }
 
@@ -87,3 +87,31 @@ body {
   outline: 3px solid #2563eb;
   outline-offset: 3px;
 }
+
+
+/* ---------- Korean typography ----------
+   Geist has no Hangul, so Korean text fell back to whatever the OS had (often Malgun Gothic on
+   Windows) with Latin-tuned letter-spacing. In Korean mode the whole page uses Pretendard (which
+   also covers Latin), words never break mid-word, and the tight/wide tracking utilities are
+   softened to values that suit Hangul. */
+html[lang="ko"] body {
+  --font-geist-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  font-family: var(--font-geist-sans);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-break: strict;
+}
+html[lang="ko"] .tracking-tighter { letter-spacing: -0.03em; }
+html[lang="ko"] .tracking-tight { letter-spacing: -0.015em; }
+html[lang="ko"] .tracking-wide { letter-spacing: 0; }
+html[lang="ko"] .tracking-wider { letter-spacing: 0.01em; }
+html[lang="ko"] .tracking-widest { letter-spacing: 0.04em; }
+html[lang="ko"] .font-serif { font-family: inherit; }
+html[lang="ko"] .font-serif.italic { font-style: normal; }
+html[lang="ko"] .font-black { font-weight: 800; }
+
+/* Hero entrance without hiding server-rendered text: the old framer-motion initial={opacity:0}
+   left the headline invisible until JavaScript ran (slow phones, crawlers, screenshots). */
+@keyframes hero-fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+.hero-fade-up { animation: hero-fade-up 0.7s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .hero-fade-up { animation: none; } }

@@ -67,6 +67,15 @@ export const en = {
     stat1Label: "Admissions Success",
     stat2Label: "Research Institute",
     stat3Label: "Ivy Mentors",
+    /** Translations of CMS stat labels, keyed by the exact English text stored in the CMS. */
+    cmsLabels: {
+      "Tenured Professors": "Tenured Professors",
+      "Unique Research": "Unique Research",
+      "admitted to TOP30": "admitted to TOP30",
+      "Admissions Success": "Admissions Success",
+      "Research Institute": "Research Institute",
+      "Ivy Mentors": "Ivy Mentors",
+    } as Record<string, string>,
     philosophyTitle: { before: "The Standard for ", word: "Research", after: "" },
     philosophyIntro: "Not every idea becomes research. At CRI, work is recognized as research only when it meets strict conditions.",
     philosophy: [

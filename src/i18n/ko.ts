@@ -69,6 +69,14 @@ export const ko: Dictionary = {
     stat1Label: "입시 성공률",
     stat2Label: "리서치 기관",
     stat3Label: "아이비리그 멘토",
+    cmsLabels: {
+      "Tenured Professors": "정교수 멘토진",
+      "Unique Research": "학생 연구 프로젝트",
+      "admitted to TOP30": "Top 30 대학 진학",
+      "Admissions Success": "입시 성공률",
+      "Research Institute": "리서치 기관",
+      "Ivy Mentors": "아이비리그 멘토",
+    } as Record<string, string>,
     philosophyTitle: { before: "", word: "연구", after: "의 기준" },
     philosophyIntro: "모든 아이디어가 연구가 되는 것은 아닙니다. CRI에서는 엄격한 조건을 충족하는 결과물만을 연구로 인정합니다.",
     philosophy: [
