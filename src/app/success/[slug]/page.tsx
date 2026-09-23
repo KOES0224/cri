@@ -28,14 +28,14 @@ export default async function SuccessStoryPage({ params }: Props) {
 
   const naverSource = story.externalLink?.includes("blog.naver.com");
   const locale = await getLocale();
-  const t = getDictionary(locale).editorial;
+  const t = getDictionary(locale).success;
   const more = (await getSuccessStoryCards()).filter((s) => s.id !== story.id).slice(0, 3);
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-32">
       <div className="max-w-4xl mx-auto px-6">
         <Link href="/success" className="inline-flex items-center text-gray-500 hover:text-gray-900 transition-colors mb-8 font-medium">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to all success stories
+          <ArrowLeft className="w-4 h-4 mr-2" /> {t.back}
         </Link>
 
         <p className="flex w-fit items-start gap-2 font-bold text-blue-700 bg-blue-50 px-4 py-2 rounded-2xl mb-6">
@@ -68,25 +68,25 @@ export default async function SuccessStoryPage({ params }: Props) {
         {story.externalLink && (
           <div className="mt-8 text-sm text-gray-500">
             <a href={story.externalLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-gray-900 underline-offset-4 hover:underline">
-              {naverSource ? t.koreanOriginal : "View the published research"} <ExternalLink className="w-4 h-4" />
+              {naverSource ? t.koreanOriginal : t.viewResearch} <ExternalLink className="w-4 h-4" />
             </a>
           </div>
         )}
 
         <div className="mt-10 rounded-3xl bg-gray-900 text-white p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <p className="text-2xl font-bold">Start your own research story</p>
-            <p className="text-gray-300 mt-2">Find a program and mentor that fit your question, or ask admissions for a recommendation.</p>
+            <p className="text-2xl font-bold">{t.storyCtaTitle}</p>
+            <p className="text-gray-300 mt-2">{t.storyCtaBody}</p>
           </div>
           <div className="flex flex-wrap gap-3 shrink-0">
-            <Link href="/research" className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors click-press">See programs</Link>
-            <Link href="/contact" className="border border-white/30 px-6 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors click-press">Ask admissions</Link>
+            <Link href="/research" className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors click-press">{t.seePrograms}</Link>
+            <Link href="/contact" className="border border-white/30 px-6 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors click-press">{t.askAdmissions}</Link>
           </div>
         </div>
 
         {more.length > 0 && (
           <section className="mt-20" aria-labelledby="more-heading">
-            <h2 id="more-heading" className="text-2xl font-black tracking-tight text-gray-900 mb-6">More student stories</h2>
+            <h2 id="more-heading" className="text-2xl font-black tracking-tight text-gray-900 mb-6">{t.moreStories}</h2>
             <div className="grid sm:grid-cols-3 gap-6">
               {more.map((item) => (
                 <Link key={item.id} href={`/success/${item.slug || item.id}`} className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col">
@@ -97,7 +97,7 @@ export default async function SuccessStoryPage({ params }: Props) {
                     <p className="text-xs font-bold text-blue-600 mb-2 line-clamp-1">{item.university}</p>
                     <p className="font-bold text-gray-900 leading-snug mb-3">{item.projectTitle}</p>
                     <span className="mt-auto inline-flex items-center text-sm font-bold text-blue-600">
-                      Read <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                      {t.read} <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
                 </Link>

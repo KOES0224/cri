@@ -12,7 +12,7 @@ const STYLES: Record<BlogCategory, { icon: LucideIcon; className: string }> = {
   "Science & Discovery": { icon: Atom, className: "from-cyan-600 to-teal-800" },
 };
 
-export default function EditorialCover({ category, size = "card" }: { category: string; size?: "card" | "hero" }) {
+export default function EditorialCover({ category, label, size = "card" }: { category: string; label?: string; size?: "card" | "hero" }) {
   const style = STYLES[category as BlogCategory] ?? { icon: BookOpen, className: "from-gray-600 to-gray-800" };
   const Icon = style.icon;
   return (
@@ -20,7 +20,7 @@ export default function EditorialCover({ category, size = "card" }: { category: 
       <Icon className={`absolute -right-6 -bottom-6 text-white/10 ${size === "hero" ? "w-72 h-72" : "w-40 h-40"}`} strokeWidth={1.25} />
       <div className="flex flex-col items-center gap-3 text-white/90">
         <Icon className={size === "hero" ? "w-14 h-14" : "w-10 h-10"} strokeWidth={1.5} />
-        <span className="text-xs font-bold uppercase tracking-[0.2em]">{category}</span>
+        <span className="text-xs font-bold uppercase tracking-[0.2em]">{label ?? category}</span>
       </div>
     </div>
   );

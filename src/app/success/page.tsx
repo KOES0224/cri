@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { getSuccessStoryCards } from "@/lib/public-data";
+import { getDictionary, getLocale } from "@/i18n";
 
 export const metadata: Metadata = pageMetadata({
   title: "Student Success | CRI",
@@ -14,18 +15,19 @@ export const metadata: Metadata = pageMetadata({
 
 export default async function SuccessPage() {
   const stories = await getSuccessStoryCards();
+  const t = getDictionary(await getLocale()).success;
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-32">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-6">Student Success</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">Meet students who turned their questions into research, presentations, publications, competition milestones, and new academic opportunities.</p>
+          <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-6">{t.title}</h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">{t.subtitle}</p>
         </div>
 
         {stories.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
-            <p className="text-xl text-gray-400 font-medium">Student stories are on their way.</p>
+            <p className="text-xl text-gray-400 font-medium">{t.empty}</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -49,7 +51,7 @@ export default async function SuccessPage() {
                   </p>
                   <div className="mt-5 pt-5 border-t border-gray-100">
                     <div className="inline-flex items-center text-sm font-bold text-blue-600 group-hover:text-blue-800 transition-colors">
-                      Read story <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      {t.readStory} <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </div>
@@ -60,12 +62,12 @@ export default async function SuccessPage() {
 
         <div className="mt-20 rounded-3xl bg-gray-900 text-white p-8 md:p-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <p className="text-2xl md:text-3xl font-bold">Every story here started with one question.</p>
-            <p className="text-gray-300 mt-2 max-w-xl">Bring yours. Faculty mentors and TAs help you shape it into research you can defend, write up, and share.</p>
+            <p className="text-2xl md:text-3xl font-bold">{t.listCtaTitle}</p>
+            <p className="text-gray-300 mt-2 max-w-xl">{t.listCtaBody}</p>
           </div>
           <div className="flex flex-wrap gap-3 shrink-0">
-            <Link href="/research" className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors click-press">See programs</Link>
-            <Link href="/contact" className="border border-white/30 px-6 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors click-press">Ask admissions</Link>
+            <Link href="/research" className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors click-press">{t.seePrograms}</Link>
+            <Link href="/contact" className="border border-white/30 px-6 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors click-press">{t.askAdmissions}</Link>
           </div>
         </div>
       </div>
