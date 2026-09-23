@@ -11,14 +11,15 @@ export default function MobileApplyBar({ openCount }: { openCount: number }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const target = document.getElementById("open-programs");
-    let overPrograms = false;
-    const update = () => setVisible(window.scrollY > window.innerHeight * 0.7 && !overPrograms);
-    const observer = target ? new IntersectionObserver(([entry]) => { overPrograms = entry.isIntersecting; update(); }, { threshold: 0.15 }) : null;
-    if (target && observer) observer.observe(target);
+    // Hide while the programs section or the footer is on screen (the bar would cover the footer's legal links).
+    const watched: Element[] = [document.getElementById("open-programs"), document.querySelector("footer")].filter((el): el is HTMLElement => el !== null);
+    const covering = new Set<Element>();
+    const update = () => setVisible(window.scrollY > window.innerHeight * 0.7 && covering.size === 0);
+    const observer = new IntersectionObserver((entries) => { for (const entry of entries) { if (entry.isIntersecting) covering.add(entry.target); else covering.delete(entry.target); } update(); }, { threshold: 0.05 });
+    watched.forEach((el) => observer.observe(el));
     window.addEventListener("scroll", update, { passive: true });
     update();
-    return () => { window.removeEventListener("scroll", update); observer?.disconnect(); };
+    return () => { window.removeEventListener("scroll", update); observer.disconnect(); };
   }, []);
 
   return (
