@@ -349,6 +349,71 @@ export const ko: Dictionary = {
     ask: "입학팀 문의",
     compare: "프로그램 비교",
   },
+  legal: {
+    privacy: {
+      metaTitle: "계정·문의 개인정보 안내 | CRI",
+      title: "계정 및 문의 개인정보 안내",
+      intro: "CRI는 제공해 주신 정보를 문의 응대, 계정 관리, 지원서 심사, 프로그램 운영에 사용합니다.",
+      provided: {
+        heading: "제공해 주시는 정보",
+        body: "계정 정보에는 이름, 이메일 주소, 계정 유형이 포함됩니다. 문의에는 연락처와 문의 내용이 포함됩니다. 지원서에는 학업 이력, 연구 관심사, 서술형 답변, 첨부 서류가 포함될 수 있습니다.",
+      },
+      access: {
+        heading: "계정 접속과 서비스 제공업체",
+        body: "계정 접속에는 세션 쿠키를 사용합니다. Google 로그인은 선택 사항입니다. 결제는 결제 화면에 표시된 결제 대행사를 통해 처리됩니다. CRI는 서비스 호스팅과 지원서 기록 관리를 위해 외부 서비스 제공업체를 이용합니다.",
+      },
+      requests: {
+        heading: "문의와 요청",
+        bodyA: "정보 이용, 보관, 열람, 정정, 삭제에 관한 문의는 ",
+        bodyB: "로 보내 주세요. 계정 관련 요청은 처리 전에 본인 확인이 필요할 수 있습니다.",
+        note: "문의에 비밀번호나 카드 정보는 적지 말아 주세요. 첨부 서류는 지원서의 업로드 기능을 이용해 주세요.",
+      },
+      contact: "CRI에 문의하기",
+    },
+    refunds: {
+      metaTitle: "취소 및 환불 규정 | CRI",
+      eyebrow: "입학 안내",
+      title: "취소 및 환불 안내",
+      company: "Elite Research Co., Ltd. · 사업자등록번호: 863-87-02851",
+      primaryLabel: "취소 및 환불 규정 (한국어)",
+      secondaryHeading: "Cancellation & refund policy (English)",
+      requestHeading: "취소·환불 요청 방법",
+      requestA: "이름, 프로그램명, 지원서 또는 주문 번호를 적어 ",
+      requestB: " 또는 ",
+      requestC: "로 연락해 주세요. 비밀번호나 카드 번호 전체는 보내지 말아 주세요.",
+      phone: "02-6203-8999",
+      guideLink: "지원 안내 및 비용",
+    },
+  },
+  system: {
+    site: {
+      title: "CRI | 교수와 함께하는 학생 리서치 프로그램",
+      description: "CRI는 대학 교수의 지도 아래 학생이 직접 연구를 진행하는 프로그램을 운영합니다. 관심 분야에서 자신만의 연구 질문을 세우고, 여름 대면·겨울 온라인·1:1 프로그램을 통해 자신의 논문을 직접 씁니다.",
+      ogTitle: "CRI | 학생 리서치 프로그램",
+      ogDescription: "대학 교수가 직접 지도하는 학생 리서치 프로그램입니다.",
+      ogLocale: "ko_KR",
+    },
+    meta: {
+      contact: {
+        title: "문의하기 | CRI",
+        description: "리서치 프로그램, 인턴십, 지원 자격, 일정, 수업료에 관해 입학팀에 문의해 주세요. 문의를 남기시면 이메일로 답변드립니다.",
+      },
+      applyStart: { title: "지원 시작하기 | CRI" },
+    },
+    notFound: {
+      title: "페이지를 찾을 수 없습니다",
+      body: "요청하신 페이지가 없거나 이동 또는 삭제되었을 수 있습니다.",
+      home: "홈으로 가기",
+      programs: "프로그램 보기",
+    },
+    error: {
+      title: "문제가 발생했습니다",
+      body: "페이지를 불러오는 중 예상치 못한 오류가 발생했습니다. 기술팀에 자동으로 전달되었습니다.",
+      retry: "다시 시도",
+      home: "홈으로 가기",
+      programs: "프로그램 보기",
+    },
+  },
   contact: {
     title: "문의하기",
     intro: "프로그램이 궁금하시거나 지원을 준비 중이시라면, 입학팀이 차근차근 안내해 드리겠습니다.",

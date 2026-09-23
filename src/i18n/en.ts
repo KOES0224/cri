@@ -348,6 +348,71 @@ export const en = {
     ask: "Ask admissions",
     compare: "Compare programs",
   },
+  legal: {
+    privacy: {
+      metaTitle: "Account & Inquiry Privacy Information | CRI",
+      title: "Account and inquiry privacy information",
+      intro: "CRI uses the information you provide to respond to inquiries, manage accounts, assess applications and administer programs.",
+      provided: {
+        heading: "Information you provide",
+        body: "Account information includes your name, email address and account type. Inquiries include your contact details and message. Applications may include academic background, research interests, written responses and supporting documents.",
+      },
+      access: {
+        heading: "Account access and service providers",
+        body: "Account access uses session cookies. Google sign-in is optional. Payments are handled through the payment provider shown at checkout. CRI uses service providers to host the service and manage application records.",
+      },
+      requests: {
+        heading: "Your questions and requests",
+        bodyA: "Contact ",
+        bodyB: " with questions about information use, retention, access, correction or deletion. Identity verification may be needed before an account-related request can be handled.",
+        note: "Do not include passwords or payment card details in inquiries. Use the designated application upload flow for supporting documents.",
+      },
+      contact: "Contact CRI",
+    },
+    refunds: {
+      metaTitle: "Cancellation & Refund Policy | CRI",
+      eyebrow: "Admissions information",
+      title: "Cancellation & refunds",
+      company: "Elite Research Co., Ltd. · Business registration number: 863-87-02851",
+      primaryLabel: "Cancellation and refund policy in English",
+      secondaryHeading: "취소 및 환불 안내",
+      requestHeading: "Request a cancellation or refund",
+      requestA: "Contact ",
+      requestB: " or ",
+      requestC: " with your name, program and application or order reference. Do not send passwords or full payment card details.",
+      phone: "+82 2-6203-8999",
+      guideLink: "Application guide and fees",
+    },
+  },
+  system: {
+    site: {
+      title: "CRI | Premium Research Programs for Students",
+      description: "CRI offers student-led research guided by university professors. Develop an original research question from your interests and write your own paper through in-person summer, online winter, or individual programs.",
+      ogTitle: "CRI | Premium Research Programs",
+      ogDescription: "Guided research programs with top university professors.",
+      ogLocale: "en_US",
+    },
+    meta: {
+      contact: {
+        title: "Contact | CRI",
+        description: "Ask CRI admissions about research programs, internships, eligibility, schedules and tuition. Send a message and we will reply by email.",
+      },
+      applyStart: { title: "Start your application | CRI" },
+    },
+    notFound: {
+      title: "Page Not Found",
+      body: "We couldn't find the page you're looking for. It might have been moved or deleted.",
+      home: "Go back home",
+      programs: "Browse programs",
+    },
+    error: {
+      title: "Something went wrong!",
+      body: "An unexpected server error occurred while loading this page. Our engineering team has been notified.",
+      retry: "Try again",
+      home: "Go home",
+      programs: "Browse programs",
+    },
+  },
   contact: {
     title: "Get in Touch",
     intro: "Whether you have a question about our programs, or are ready to apply, our admissions team is here to guide you.",

@@ -3,8 +3,12 @@
 import { useEffect } from "react";
 import { AlertTriangle, Home } from "lucide-react";
 import Link from "next/link";
+import { useT } from "@/i18n/client";
 
 export default function ErrorBoundary({ error, reset }: { error: Error & { digest?: string }, reset: () => void }) {
+  const { t } = useT();
+  const copy = t.system.error;
+
   useEffect(() => {
     console.error("Global crash caught:", error);
   }, [error]);
@@ -15,19 +19,20 @@ export default function ErrorBoundary({ error, reset }: { error: Error & { diges
         <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
           <AlertTriangle className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">Something went wrong!</h2>
-        <p className="text-gray-600 mb-8 leading-relaxed">
-          An unexpected server error occurred while loading this page. Our engineering team has been notified.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button 
-            onClick={() => reset()} 
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">{copy.title}</h2>
+        <p className="text-gray-600 mb-8 leading-relaxed">{copy.body}</p>
+        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4">
+          <button
+            onClick={() => reset()}
             className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-colors"
           >
-            Try again
+            {copy.retry}
           </button>
           <Link href="/" className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-sm font-bold rounded-xl text-white bg-black hover:bg-gray-800 transition-colors shadow-sm">
-            <Home className="mr-2 w-4 h-4" /> Go home
+            <Home className="mr-2 w-4 h-4" /> {copy.home}
+          </Link>
+          <Link href="/research" className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            {copy.programs}
           </Link>
         </div>
       </div>
