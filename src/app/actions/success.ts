@@ -6,8 +6,9 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { TAGS } from "@/lib/public-data";
 
 export async function getSuccessStories() {
+  // Outside the try: Next's dynamic-rendering signal (headers) and the auth error must propagate unchanged.
+  await requireAdmin();
   try {
-    await requireAdmin();
     return await prisma.successStory.findMany({
       orderBy: { createdAt: "desc" },
     });
