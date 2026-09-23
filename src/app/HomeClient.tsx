@@ -6,13 +6,12 @@ import { motion } from "framer-motion";
 import OpenProgramsSection from "@/components/OpenProgramsSection";
 import type { OpenProgramCard } from "@/lib/open-programs";
 import { useT } from "@/i18n/client";
-import type { MentorUniversity } from "@/lib/home-data";
 import HowItWorks from "@/components/home/HowItWorks";
 import UniversitiesStrip from "@/components/home/UniversitiesStrip";
 import FaqSection from "@/components/home/FaqSection";
 import MobileApplyBar from "@/components/home/MobileApplyBar";
 
-export default function HomeClient({ content, openPrograms = [], universities = [] }: { content: Record<string, string>; openPrograms?: OpenProgramCard[]; universities?: MentorUniversity[] }) {
+export default function HomeClient({ content, openPrograms = [] }: { content: Record<string, string>; openPrograms?: OpenProgramCard[] }) {
   const { t, locale } = useT();
   const openCount = openPrograms.length;
   // CMS landing text is English. In another locale use a `<key>_<locale>` CMS value if the admin added one, else the dictionary.
@@ -114,7 +113,7 @@ export default function HomeClient({ content, openPrograms = [], universities = 
             className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[1.1] drop-shadow-2xl"
           >
             {cms("landing_hero_title") || t.home.heroTitle} <br className="hidden md:block" />
-            {(cms("landing_hero_title_highlight") || !content.landing_hero_title) && (
+            {(cms("landing_hero_title_highlight") || !cms("landing_hero_title")) && (
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 block mt-2 md:mt-0 md:inline">
                 {cms("landing_hero_title_highlight") || t.home.heroHighlight}
               </span>
@@ -176,7 +175,7 @@ export default function HomeClient({ content, openPrograms = [], universities = 
       </section>
 
       {/* Where the mentors teach */}
-      <UniversitiesStrip universities={universities} />
+      <UniversitiesStrip />
 
       {/* Open cohorts: the primary conversion path */}
       <OpenProgramsSection programs={openPrograms} className="bg-[#FAFAFA]" />
