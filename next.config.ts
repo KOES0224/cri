@@ -20,17 +20,21 @@ const LEGACY_ARTICLES: [string, string][] = [
 
 const nextConfig: NextConfig = {
   async redirects() {
-    // criglobal.org is the canonical host. The old Vercel production aliases keep working only as
-    // permanent redirects, so sessions, OAuth callbacks and shared links all live on one domain.
+    // criglobal.org is the canonical host. The old Vercel production aliases and cri.kr (once it is attached
+    // to the project) keep working only as permanent redirects, so sessions, OAuth callbacks and shared links
+    // all live on one domain. src/proxy.ts then sends Korean visitors on to /ko.
     // Preview deployments (cri-portal-git-*, cri-portal-<hash>-*) are not matched.
     return [
-      ...["cri-portal-2024.vercel.app", "cri-portal.vercel.app"].map((host) => ({
+      ...["cri-portal-2024.vercel.app", "cri-portal.vercel.app", "cri.kr", "www.cri.kr"].map((host) => ({
         source: "/:path*",
         has: [{ type: "host" as const, value: host }],
         destination: "https://criglobal.org/:path*",
         permanent: true,
       })),
-      ...LEGACY_ARTICLES.map(([source, destination]) => ({ source, destination, permanent: true })),
+      ...LEGACY_ARTICLES.flatMap(([source, destination]) => [
+        { source, destination, permanent: true },
+        { source: `/ko${source}`, destination: `/ko${destination}`, permanent: true },
+      ]),
     ];
   },
   // next dev otherwise appends generated agent rules to CLAUDE.md / AGENTS.md on every start.

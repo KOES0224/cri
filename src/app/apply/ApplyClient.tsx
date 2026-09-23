@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link from "@/i18n/link";
 import { useRouter } from 'next/navigation';
 import { beginApplicationCheckout, submitApplicationWithoutFee } from '@/app/actions/payment';
 import { saveApplicationDraft } from '@/app/actions/applicationDrafts';

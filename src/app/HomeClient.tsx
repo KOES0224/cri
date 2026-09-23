@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { ArrowRight, BookOpen, UserCheck, Award, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 import OpenProgramsSection from "@/components/OpenProgramsSection";

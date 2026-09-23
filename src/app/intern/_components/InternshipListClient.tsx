@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { Search, MapPin, Building, Calendar, ArrowRight } from "lucide-react";
 
 type Program = {

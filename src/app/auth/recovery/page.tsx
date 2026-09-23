@@ -1,7 +1,7 @@
 "use client";
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import Link from "@/i18n/link";
 import { useT } from '@/i18n/client';
 import type { Dictionary } from '@/i18n/config';
 

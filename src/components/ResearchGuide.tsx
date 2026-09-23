@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from "@/i18n/link";
 import { ArrowUpRight, BookOpen } from 'lucide-react';
 import { programFactsLocalized } from '@/lib/program-facts-i18n';
 import { useT } from '@/i18n/client';

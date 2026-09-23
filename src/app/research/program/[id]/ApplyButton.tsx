@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { ChevronRight } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { ArrowLeft, Building2, Briefcase, MapPin, CheckCircle2, ChevronRight, Calendar } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 

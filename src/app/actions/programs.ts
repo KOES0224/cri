@@ -1,6 +1,7 @@
 "use server";
 
-import { inventoryFacts } from "@/lib/program-policy";
+import { inventoryFacts, programHref } from "@/lib/program-policy";
+import { notifySearchEngines } from "@/lib/indexnow";
 import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -32,6 +33,12 @@ export async function getProgramById(id: string) {
     return null;
   }
 }
+
+/** Program detail plus the listing pages that show it, for IndexNow. */
+const programPaths = (program: { id: string; category: string }) =>
+  program.category === "Internship"
+    ? [`/intern/${program.id}`, "/intern"]
+    : [`/research/program/${program.id}`, "/research", programHref(program.category), "/"];
 
 const revalidateProgramPaths = () => {
   revalidateTag(TAGS.programs, "max");
@@ -72,6 +79,7 @@ export async function createProgram(data: {
       },
     });
     revalidateProgramPaths();
+    notifySearchEngines(programPaths(program));
     return { success: true, program };
   } catch (error) {
     console.error("Failed to create program:", error);
@@ -114,6 +122,7 @@ export async function updateProgram(
       },
     });
     revalidateProgramPaths();
+    notifySearchEngines(programPaths(program));
     return { success: true, program };
   } catch (error) {
     console.error("Failed to update program:", error);
@@ -129,6 +138,7 @@ export async function toggleProgramPublished(id: string, isPublished: boolean) {
       data: { isPublished },
     });
     revalidateProgramPaths();
+    notifySearchEngines(programPaths(program));
     return { success: true, program };
   } catch (error) {
     console.error("Failed to toggle program published status:", error);

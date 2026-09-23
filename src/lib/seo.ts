@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { getLocale, type Locale } from "@/i18n";
+import { localeAlternates } from "@/i18n/routing";
 
 /** Canonical public origin. Used for metadataBase, robots and the sitemap. */
 export const SITE_URL = "https://criglobal.org";
@@ -19,30 +21,47 @@ export function summarize(text: string | null | undefined, max = 155): string {
 type PageMeta = {
   title: string;
   description: string;
-  /** Site-relative path, e.g. "/research". */
+  /** Unprefixed site-relative path, e.g. "/research" (also for the Korean page). */
   path: string;
   /** Absolute or site-relative image URL; defaults to the site OG image. */
   image?: string | null;
+  type?: "website" | "article";
 };
 
+export const OG_LOCALE: Record<Locale, string> = { en: "en_US", ko: "ko_KR" };
+
+/** Canonical URL, hreflang alternates and OpenGraph URL/locale for a public page in the given locale. */
+export function localeMetadata(path: string, locale: Locale): Pick<Metadata, "alternates"> & { openGraph: { url: string; locale: string; alternateLocale?: string } } {
+  const alternates = localeAlternates(path, locale);
+  const translated = "languages" in alternates;
+  return {
+    alternates,
+    openGraph: {
+      url: alternates.canonical,
+      locale: OG_LOCALE[translated ? locale : "en"],
+      ...(translated ? { alternateLocale: OG_LOCALE[locale === "ko" ? "en" : "ko"] } : {}),
+    },
+  };
+}
+
 /**
- * Per-page metadata with a canonical URL and an explicit OpenGraph image.
+ * Per-page metadata with a canonical URL, hreflang alternates and an explicit OpenGraph image.
  * Next replaces the whole `openGraph` object per segment, so the image must
  * be set here or the root `opengraph-image.png` would be dropped.
  */
-export function pageMetadata({ title, description, path, image }: PageMeta): Metadata {
+export async function pageMetadata({ title, description, path, image, type = "website" }: PageMeta): Promise<Metadata> {
   const images = [image || DEFAULT_OG_IMAGE];
+  const { alternates, openGraph } = localeMetadata(path, await getLocale());
   return {
     title,
     description,
-    alternates: { canonical: path },
+    alternates,
     openGraph: {
+      ...openGraph,
       title,
       description,
-      url: path,
       siteName: "CRI",
-      locale: "en_US",
-      type: "website",
+      type,
       images,
     },
     twitter: {
