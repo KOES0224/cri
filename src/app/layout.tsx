@@ -8,7 +8,7 @@ import PublicOnly from "@/components/layout/PublicOnly";
 import Footer from "@/components/layout/Footer";
 import Analytics from "@/components/Analytics";
 import { SITE_URL } from "@/lib/seo";
-import { getLocale } from "@/i18n";
+import { getDictionary, getLocale } from "@/i18n";
 import { LocaleProvider } from "@/i18n/client";
 
 const geistSans = Geist({
@@ -21,26 +21,29 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  // Pages that export their own metadata override this with their own path.
-  alternates: { canonical: "/" },
-  title: "CRI | Premium Research Programs for Students",
-  description: "CRI offers student-led research guided by university professors. Develop an original research question from your interests and write your own paper through in-person summer, online winter, or individual programs.",
-  openGraph: {
-    title: "CRI | Premium Research Programs",
-    description: "Guided research programs with top university professors.",
-    url: "https://criglobal.org",
-    siteName: "CRI",
-    locale: "en_US",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "CRI | Premium Research Programs",
-    description: "Guided research programs with top university professors.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const site = getDictionary(await getLocale()).system.site;
+  return {
+    metadataBase: new URL(SITE_URL),
+    // Pages that export their own metadata override this with their own path.
+    alternates: { canonical: "/" },
+    title: site.title,
+    description: site.description,
+    openGraph: {
+      title: site.ogTitle,
+      description: site.ogDescription,
+      url: "https://criglobal.org",
+      siteName: "CRI",
+      locale: site.ogLocale,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: site.ogTitle,
+      description: site.ogDescription,
+    },
+  };
+}
 
 export default async function RootLayout({
   children,

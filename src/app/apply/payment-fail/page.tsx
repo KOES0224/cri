@@ -4,11 +4,14 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, RotateCcw, MessageSquare, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useT } from "@/i18n/client";
 
 function PaymentFailContent() {
+  const { t } = useT();
+  const copy = t.payment.fail;
   const searchParams = useSearchParams();
   const code = searchParams.get("code") || "PAYMENT_CANCELLED";
-  const message = searchParams.get("message") || "The payment window was closed or the transaction was cancelled.";
+  const message = searchParams.get("message") || copy.defaultMessage;
   const programId = searchParams.get("programId");
 
   return (
@@ -18,13 +21,11 @@ function PaymentFailContent() {
           <AlertCircle className="w-8 h-8" />
         </div>
 
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Payment Incomplete</h2>
-        <p className="text-gray-500 text-sm leading-relaxed mb-6">
-          Payment was not confirmed on this page. Check your card or payment provider before retrying. Your saved checkout application can be resumed with the same account; contact admissions if it has expired.
-        </p>
+        <h2 className="text-2xl font-black text-gray-900 mb-2">{copy.title}</h2>
+        <p className="text-gray-500 text-sm leading-relaxed mb-6">{copy.body}</p>
 
         <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 text-xs text-left mb-6 font-mono text-gray-600">
-          <span className="font-bold text-gray-800 block mb-1">Status Code: {code}</span>
+          <span className="font-bold text-gray-800 block mb-1">{copy.statusCode} {code}</span>
           <span className="text-gray-500">{message}</span>
         </div>
 
@@ -34,7 +35,7 @@ function PaymentFailContent() {
             className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold flex items-center justify-center transition-all shadow-lg shadow-blue-500/25"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
-            Return to Application
+            {copy.retry}
           </Link>
 
           <Link
@@ -42,7 +43,7 @@ function PaymentFailContent() {
             className="w-full h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-sm flex items-center justify-center transition-colors"
           >
             <MessageSquare className="w-4 h-4 mr-2" />
-            Contact Support
+            {copy.contact}
           </Link>
         </div>
       </div>

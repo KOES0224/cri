@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -13,7 +14,9 @@ import StartOptions from "./StartOptions";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Start your application | CRI" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: getDictionary(await getLocale()).system.meta.applyStart.title };
+}
 
 export default async function ApplyStartPage({ searchParams }: { searchParams: Promise<{ programId?: string }> }) {
   const { programId } = await searchParams;
