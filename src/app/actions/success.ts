@@ -1,9 +1,13 @@
 "use server";
 
+import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { TAGS } from "@/lib/public-data";
 
 export async function getSuccessStories() {
+  // Outside the try: Next's dynamic-rendering signal (headers) and the auth error must propagate unchanged.
+  await requireAdmin();
   try {
     return await prisma.successStory.findMany({
       orderBy: { createdAt: "desc" },
@@ -25,6 +29,7 @@ export async function createSuccessStory(data: {
   externalLink?: string | null;
 }) {
   try {
+    await requireAdmin();
     const { slug, ...rest } = data;
     const story = await prisma.successStory.create({
       data: {
@@ -34,6 +39,7 @@ export async function createSuccessStory(data: {
     });
     revalidatePath("/dashboard/cms/success");
     revalidatePath("/success");
+    revalidateTag(TAGS.successStories, "max");
     return { success: true, story };
   } catch (error) {
     console.error("Failed to create success story:", error);
@@ -55,6 +61,7 @@ export async function updateSuccessStory(
   }>
 ) {
   try {
+    await requireAdmin();
     const { slug, ...rest } = data;
     const story = await prisma.successStory.update({
       where: { id },
@@ -65,6 +72,7 @@ export async function updateSuccessStory(
     });
     revalidatePath("/dashboard/cms/success");
     revalidatePath("/success");
+    revalidateTag(TAGS.successStories, "max");
     return { success: true, story };
   } catch (error) {
     console.error("Failed to update success story:", error);
@@ -74,11 +82,13 @@ export async function updateSuccessStory(
 
 export async function deleteSuccessStory(id: string) {
   try {
+    await requireAdmin();
     await prisma.successStory.delete({
       where: { id },
     });
     revalidatePath("/dashboard/cms/success");
     revalidatePath("/success");
+    revalidateTag(TAGS.successStories, "max");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete success story:", error);

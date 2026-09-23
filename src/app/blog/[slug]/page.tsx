@@ -1,77 +1,124 @@
-import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import type { Metadata } from "next";
+import { ArrowLeft, ArrowRight, Clock, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
-import { curatedPosts } from "@/lib/curated-blog";
+import EditorialCover from "@/components/EditorialCover";
+import { getPost, getPublishedPostCards } from "@/lib/public-data";
+import { pageMetadata, summarize } from "@/lib/seo";
+import { getDictionary, getLocale } from "@/i18n";
 
-export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  
-  // Query db prioritizing custom slug, fallback to cuid ID
-  let post = await prisma.post.findUnique({
-    where: { slug: slug }
+type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const post = await getPost((await params).slug);
+  if (!post) return {};
+  return pageMetadata({
+    title: `${post.title} | CRI`,
+    description: summarize(post.excerpt || post.content),
+    path: `/blog/${post.slug || post.id}`,
+    image: post.imageUrl,
   });
+}
 
-  if (!post) {
-    post = await prisma.post.findUnique({
-      where: { id: slug }
-    });
-  }
+function readingMinutes(markdown: string) {
+  const words = markdown.replace(/!\[[^\]]*\]\([^)]*\)/g, "").split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 230));
+}
 
-  if (!post) {
-    const curated = curatedPosts.find((candidate) => candidate.slug === slug || candidate.id === slug);
-    if (!curated) return notFound();
-    post = {
-      ...curated,
-      publishedAt: new Date(curated.publishedAt),
-      createdAt: new Date(curated.createdAt),
-      eventDate: null,
-      updatedAt: new Date(curated.createdAt),
-    };
-  }
+export default async function BlogPostPage({ params }: Props) {
+  const { slug } = await params;
+  const post = await getPost(slug);
   if (!post) return notFound();
-  const resolvedPost = post;
+
+  const locale = await getLocale();
+  const t = getDictionary(locale).blog;
+  const label = (category: string) => t.categories[category] ?? category;
+  const date = format(new Date(post.publishedAt ?? post.createdAt), t.dateFormat);
+  const naverSource = post.externalLink?.includes("blog.naver.com");
+  const related = (await getPublishedPostCards())
+    .filter((p) => p.id !== post.id && p.category === post.category)
+    .slice(0, 3);
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-32">
       <div className="max-w-4xl mx-auto px-6">
         <Link href="/blog" className="inline-flex items-center text-gray-500 hover:text-gray-900 transition-colors mb-8 font-medium">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to all articles
+          <ArrowLeft className="w-4 h-4 mr-2" /> {t.back}
         </Link>
-        
-        <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-6 leading-[1.1]">{resolvedPost.title}</h1>
-        
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-10">
-          <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{resolvedPost.category}</span>
-          <span className="font-medium">{resolvedPost.author}</span>
-          <span>•</span>
-          <span>{resolvedPost.publishedAt ? format(new Date(resolvedPost.publishedAt), 'MMMM d, yyyy') : format(new Date(resolvedPost.createdAt), 'MMMM d, yyyy')}</span>
+
+        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-6">
+          <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{label(post.category)}</span>
+          <span>{date}</span>
+          <span aria-hidden="true">·</span>
+          <span className="inline-flex items-center gap-1"><Clock className="w-4 h-4" /> {t.minutesRead(readingMinutes(post.content))}</span>
         </div>
 
-        {resolvedPost.imageUrl && (
-           <div className="relative w-full aspect-[4/3] md:aspect-[16/9] mb-12 rounded-3xl overflow-hidden shadow-sm border border-gray-100 bg-white">
-             <Image src={resolvedPost.imageUrl} alt={resolvedPost.title} fill sizes="(max-width: 896px) 100vw, 896px" className="object-contain" unoptimized referrerPolicy="no-referrer" />
-           </div>
+        <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-6 leading-[1.1]">{post.title}</h1>
+        {post.excerpt && <p className="text-xl text-gray-600 leading-relaxed mb-10 max-w-3xl">{post.excerpt}</p>}
+        {locale === "ko" && naverSource && post.externalLink && (
+          <p className="-mt-4 mb-8 text-sm text-gray-600">
+            {t.koreanOriginalNote}{" "}
+            <a href={post.externalLink} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:underline">{t.koreanOriginal} →</a>
+          </p>
         )}
 
-        <article aria-label="Article">
-          <MarkdownRenderer content={resolvedPost.content} className="bg-white p-6 sm:p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm mt-8" />
+        <div className="relative w-full aspect-[16/9] mb-10 rounded-3xl overflow-hidden shadow-sm border border-gray-100 bg-gray-100">
+          {post.imageUrl ? (
+            <Image src={post.imageUrl} alt="" fill priority sizes="(max-width: 896px) 100vw, 896px" className="object-cover" referrerPolicy="no-referrer" />
+          ) : (
+            <EditorialCover category={post.category} label={label(post.category)} size="hero" />
+          )}
+        </div>
+
+        <article aria-label="Article" className="bg-white rounded-3xl border border-gray-100 shadow-sm px-6 py-10 sm:px-10 md:px-16 md:py-14">
+          <MarkdownRenderer content={post.content} className="mx-auto max-w-[44rem]" />
+
+          {post.externalLink && (
+            <div className="mx-auto max-w-[44rem] mt-12 pt-6 border-t border-gray-100 text-sm text-gray-500">
+              <a href={post.externalLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-gray-900 underline-offset-4 hover:underline">
+                {naverSource ? t.koreanOriginal : t.relatedPublication} <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          )}
         </article>
 
-        {resolvedPost.externalLink && (
-           <div className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500">
-             <a 
-               href={resolvedPost.externalLink} 
-               target="_blank" 
-               rel="noopener noreferrer" 
-               className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-gray-900"
-             >
-               {resolvedPost.id.startsWith("naver-") ? "Source: CRI’s original Korean article" : "Related publication"} <ExternalLink className="w-4 h-4" />
-             </a>
-           </div>
+        <div className="mt-10 rounded-3xl bg-gray-900 text-white p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <p className="text-2xl font-bold">{t.ctaTitle}</p>
+            <p className="text-gray-300 mt-2">{t.ctaBody}</p>
+          </div>
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <Link href="/research" className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors click-press">{t.seePrograms}</Link>
+            <Link href="/contact" className="border border-white/30 px-6 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors click-press">{t.askAdmissions}</Link>
+          </div>
+        </div>
+
+        {related.length > 0 && (
+          <section className="mt-20" aria-labelledby="related-heading">
+            <h2 id="related-heading" className="text-2xl font-black tracking-tight text-gray-900 mb-6">{t.moreIn(label(post.category))}</h2>
+            <div className="grid sm:grid-cols-3 gap-6">
+              {related.map((item) => (
+                <Link key={item.id} href={`/blog/${item.slug || item.id}`} className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col">
+                  <div className="relative h-36 bg-gray-100 overflow-hidden">
+                    {item.imageUrl ? (
+                      <Image src={item.imageUrl} alt="" fill sizes="(max-width: 640px) 100vw, 300px" className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <EditorialCover category={item.category} label={label(item.category)} />
+                    )}
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col">
+                    <p className="font-bold text-gray-900 leading-snug mb-3">{item.title}</p>
+                    <span className="mt-auto inline-flex items-center text-sm font-bold text-blue-600">
+                      {t.read} <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </div>

@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
-import { curatedPosts, curatedSuccessStories } from "@/lib/curated-blog";
 import { SITE_URL } from "@/lib/seo";
 
 // Re-generate at most once an hour; DB failures fall back to static routes only.
@@ -87,25 +86,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   ]);
 
-  // Curated entries ship in code (src/lib/curated-blog.ts) and render on the same routes.
-  const curated: Entry[] = [
-    ...curatedPosts.map((p) => ({
-      url: abs(`/blog/${p.slug}`),
-      lastModified: new Date(p.publishedAt),
-      changeFrequency: "monthly" as const,
-      priority: 0.5,
-    })),
-    ...curatedSuccessStories.map((s) => ({
-      url: abs(`/success/${s.slug}`),
-      lastModified: new Date(s.updatedAt),
-      changeFrequency: "monthly" as const,
-      priority: 0.5,
-    })),
-  ];
-
-  // De-duplicate by URL in case a curated slug was also saved to the DB.
+  // De-duplicate by URL (a post may be reachable by both slug and id).
   const seen = new Set<string>();
-  return [...staticEntries, ...programs, ...posts, ...stories, ...curated].filter((entry) => {
+  return [...staticEntries, ...programs, ...posts, ...stories].filter((entry) => {
     if (seen.has(entry.url)) return false;
     seen.add(entry.url);
     return true;

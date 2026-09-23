@@ -1,9 +1,13 @@
 "use server";
 
+import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { TAGS } from "@/lib/public-data";
 
 export async function getPosts() {
+  // Outside the try: Next's dynamic-rendering signal (headers) and the auth error must propagate unchanged.
+  await requireAdmin();
   try {
     return await prisma.post.findMany({
       orderBy: { createdAt: "desc" },
@@ -26,11 +30,13 @@ export async function createPost(data: {
   publishedAt?: Date | null;
 }) {
   try {
+    await requireAdmin();
     const post = await prisma.post.create({
       data,
     });
     revalidatePath("/dashboard/cms/blog");
     revalidatePath("/blog");
+    revalidateTag(TAGS.posts, "max");
     return { success: true, post };
   } catch (error) {
     console.error("Failed to create post:", error);
@@ -53,12 +59,14 @@ export async function updatePost(
   }>
 ) {
   try {
+    await requireAdmin();
     const post = await prisma.post.update({
       where: { id },
       data,
     });
     revalidatePath("/dashboard/cms/blog");
     revalidatePath("/blog");
+    revalidateTag(TAGS.posts, "max");
     return { success: true, post };
   } catch (error) {
     console.error("Failed to update post:", error);
@@ -68,11 +76,13 @@ export async function updatePost(
 
 export async function deletePost(id: string) {
   try {
+    await requireAdmin();
     await prisma.post.delete({
       where: { id },
     });
     revalidatePath("/dashboard/cms/blog");
     revalidatePath("/blog");
+    revalidateTag(TAGS.posts, "max");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete post:", error);

@@ -130,12 +130,12 @@ export default function SuccessStoryForm({ initialData, onSuccess, onCancel }: S
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">University *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">University or headline outcome *</label>
           <input
             type="text"
             name="university"
             required
-            placeholder="e.g. Stanford University"
+            placeholder="e.g. Stanford University, or Published in IJHSR"
             value={formData.university}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
@@ -156,7 +156,7 @@ export default function SuccessStoryForm({ initialData, onSuccess, onCancel }: S
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Project Title *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Story headline / project title *</label>
         <textarea
           name="projectTitle"
           required
