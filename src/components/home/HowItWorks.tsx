@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { motion } from "framer-motion";
 import { Search, FileText, CheckCircle2, ArrowRight } from "lucide-react";
 import { useT } from "@/i18n/client";

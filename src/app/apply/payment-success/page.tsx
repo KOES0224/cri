@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { finalizePaidApplication } from "@/app/actions/payment";
 import { CheckCircle2, Loader2, AlertCircle, ExternalLink, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { trackEvent } from "@/lib/analytics";
 import { APPLICATION_CHARGE_LABEL } from "@/lib/application-fee";
 import { useT } from "@/i18n/client";

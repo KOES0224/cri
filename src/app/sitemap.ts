@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/seo";
+import { hasKoreanContent, localizedPath } from "@/i18n/routing";
 
 // Re-generate at most once an hour; DB failures fall back to static routes only.
 export const revalidate = 3600;
@@ -28,6 +29,22 @@ const STATIC_ROUTES: Array<[path: string, priority: number, changeFrequency: Ent
 ];
 
 const abs = (path: string) => `${SITE_URL}${path}`;
+
+/**
+ * Pages with Korean content are listed at both URLs, each naming the other as its hreflang alternate.
+ * Pages whose body is English only are listed once; their /ko copy canonicalizes to the English URL.
+ */
+function withKorean(entry: Entry): Entry[] {
+  const path = entry.url.slice(SITE_URL.length) || "/";
+  if (!hasKoreanContent(path)) return [entry];
+  const en = abs(path);
+  const ko = abs(localizedPath(path, "ko"));
+  const alternates = { languages: { en, ko, "x-default": en } };
+  return [
+    { ...entry, url: en, alternates },
+    { ...entry, url: ko, alternates },
+  ];
+}
 
 /** Run a DB query for the sitemap; on any failure log and contribute nothing. */
 async function safely(label: string, query: () => Promise<Entry[]>): Promise<Entry[]> {
@@ -88,7 +105,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // De-duplicate by URL (a post may be reachable by both slug and id).
   const seen = new Set<string>();
-  return [...staticEntries, ...programs, ...posts, ...stories].filter((entry) => {
+  return [...staticEntries, ...programs, ...posts, ...stories].flatMap(withKorean).filter((entry) => {
     if (seen.has(entry.url)) return false;
     seen.add(entry.url);
     return true;

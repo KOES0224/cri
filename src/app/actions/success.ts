@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { TAGS } from "@/lib/public-data";
+import { notifySearchEngines } from "@/lib/indexnow";
 
 export async function getSuccessStories() {
   // Outside the try: Next's dynamic-rendering signal (headers) and the auth error must propagate unchanged.
@@ -40,6 +41,7 @@ export async function createSuccessStory(data: {
     revalidatePath("/dashboard/cms/success");
     revalidatePath("/success");
     revalidateTag(TAGS.successStories, "max");
+    notifySearchEngines([`/success/${story.slug}`, "/success"]);
     return { success: true, story };
   } catch (error) {
     console.error("Failed to create success story:", error);
@@ -73,6 +75,7 @@ export async function updateSuccessStory(
     revalidatePath("/dashboard/cms/success");
     revalidatePath("/success");
     revalidateTag(TAGS.successStories, "max");
+    notifySearchEngines([`/success/${story.slug}`, "/success"]);
     return { success: true, story };
   } catch (error) {
     console.error("Failed to update success story:", error);

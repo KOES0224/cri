@@ -8,7 +8,7 @@ import { ko } from "./ko";
 export const LOCALES = ["en", "ko"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
-export const LOCALE_COOKIE = "lang";
+export { LOCALE_COOKIE } from "./routing";
 
 export type Dictionary = typeof en;
 

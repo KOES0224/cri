@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { signIn } from "next-auth/react";
 import { GraduationCap, Users, ArrowRight } from "lucide-react";
 import type { ApplicantRole } from "@/lib/applicant";

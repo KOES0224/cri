@@ -1,17 +1,15 @@
 import { GraduationCap, ArrowRight, Award } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { getSuccessStoryCards } from "@/lib/public-data";
 import { getDictionary, getLocale } from "@/i18n";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Student Success | CRI",
-  description:
-    "Meet CRI students who turned their questions into research, presentations, publications, competition milestones and new academic opportunities.",
-  path: "/success",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const t = getDictionary(await getLocale()).success;
+  return pageMetadata({ title: `${t.title} | CRI`, description: t.subtitle, path: "/success" });
+}
 
 export default async function SuccessPage() {
   const stories = await getSuccessStoryCards();

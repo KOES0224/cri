@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { ArrowRight, BookOpen, Globe, Laptop, Star, CheckCircle2, Award, Users } from "lucide-react";
 import ResearchGuide from "@/components/ResearchGuide";
 import OpenProgramsSection from "@/components/OpenProgramsSection";

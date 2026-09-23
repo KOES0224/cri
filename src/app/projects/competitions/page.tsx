@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import Image from "next/image";
 import { ArrowLeft, ArrowUpRight, Trophy, ShieldCheck } from "lucide-react";
 

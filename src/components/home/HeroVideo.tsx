@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 /**
  * Background media for the hero. The poster paints immediately; the video is only fetched on
  * desktop-sized screens, after the page is idle, and never when the visitor asked to save data.
- * The current hero-bg.mp4 is ~70 MB, so loading it eagerly made every first visit feel slow.
+ * hero-bg.mp4 is a 720p, 1.5 Mbps H.264 encode without audio (~10 MB; the 1080p original was ~70 MB).
  */
 export default function HeroVideo({ src, poster = "/hero-poster.jpg", className = "" }: { src: string; poster?: string; className?: string }) {
   const [ready, setReady] = useState(false);

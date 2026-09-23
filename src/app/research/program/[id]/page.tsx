@@ -1,6 +1,6 @@
 import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
 import { getProgramById } from "@/lib/public-data";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, Users, MapPin, Tag, ChevronRight, CheckCircle2, CreditCard } from "lucide-react";
 import { admissionState, programHref } from "@/lib/program-policy";
@@ -15,6 +15,7 @@ import TrackProgramView from "./TrackProgramView";
 import { cache } from "react";
 import type { Metadata } from "next";
 import { pageMetadata, summarize } from "@/lib/seo";
+import { JsonLd, breadcrumbJsonLd, courseJsonLd } from "@/lib/structured-data";
 
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
@@ -48,8 +49,15 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
   const facts = programFactsLocalized(program, locale);
   const open = admissionState(program) === "OPEN";
   const admissionLabel = admissionLabelLocalized(program, locale);
+  const nav = getDictionary(locale).nav;
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-36 lg:pb-32">
+      <JsonLd
+        data={[
+          courseJsonLd(locale, program, facts.audience),
+          breadcrumbJsonLd(locale, [["CRI", "/"], [nav.research, "/research"], [program.title, `/research/program/${program.id}`]]),
+        ]}
+      />
       <TrackProgramView programId={program.id} programTitle={program.title} open={open} />
       <div className="max-w-7xl mx-auto px-6">
         <Link href={programHref(program.category)} className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-10">

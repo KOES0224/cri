@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, MapPin, Users, MessageCircle } from "lucide-react";
 import type { OpenProgramCard } from "@/lib/open-programs";

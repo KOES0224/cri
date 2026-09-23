@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { ArrowLeft, Clock, Calendar, ChevronRight, Filter } from "lucide-react";
 import { admissionState, programKind } from "@/lib/program-policy";
 import { formatProgramDateRange, programFactsLocalized } from "@/lib/program-facts-i18n";

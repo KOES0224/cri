@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { submitContactForm } from "@/app/actions/contact";
 import { trackEvent } from "@/lib/analytics";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { useT } from "@/i18n/client";
 
 export default function ContactPage() {

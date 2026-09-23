@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { TAGS } from "@/lib/public-data";
+import { notifySearchEngines } from "@/lib/indexnow";
 
 export async function getPosts() {
   // Outside the try: Next's dynamic-rendering signal (headers) and the auth error must propagate unchanged.
@@ -37,6 +38,7 @@ export async function createPost(data: {
     revalidatePath("/dashboard/cms/blog");
     revalidatePath("/blog");
     revalidateTag(TAGS.posts, "max");
+    notifySearchEngines([`/blog/${post.slug ?? post.id}`, "/blog"]);
     return { success: true, post };
   } catch (error) {
     console.error("Failed to create post:", error);
@@ -67,6 +69,7 @@ export async function updatePost(
     revalidatePath("/dashboard/cms/blog");
     revalidatePath("/blog");
     revalidateTag(TAGS.posts, "max");
+    notifySearchEngines([`/blog/${post.slug ?? post.id}`, "/blog"]);
     return { success: true, post };
   } catch (error) {
     console.error("Failed to update post:", error);

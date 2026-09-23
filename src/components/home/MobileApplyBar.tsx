@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { ArrowRight } from "lucide-react";
 import { useT } from "@/i18n/client";
 
