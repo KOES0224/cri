@@ -39,8 +39,8 @@ export default async function SuccessStoryPage({ params }: { params: Promise<{ s
         
         <div className="flex flex-col md:flex-row gap-8 items-start mb-12">
           {story.imageUrl ? (
-             <div className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden shadow-sm border border-gray-100 shrink-0">
-               <Image src={story.imageUrl} alt={story.name} fill className="object-cover" unoptimized={true} />
+             <div className="relative w-full aspect-[4/3] md:w-48 md:h-48 rounded-2xl overflow-hidden shadow-sm border border-gray-100 shrink-0 bg-white">
+               <Image src={story.imageUrl} alt={story.projectTitle} fill sizes="(max-width: 768px) 100vw, 192px" className="object-contain" unoptimized referrerPolicy="no-referrer" />
              </div>
           ) : (
              <div className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden shadow-sm border border-gray-100 shrink-0 flex items-center justify-center bg-gray-200">
@@ -67,18 +67,20 @@ export default async function SuccessStoryPage({ params }: { params: Promise<{ s
         </div>
 
         {story.description && (
-             <MarkdownRenderer content={story.description} className="bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm mt-12" />
+             <article aria-label="Student story">
+               <MarkdownRenderer content={story.description} className="bg-white p-6 sm:p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm mt-12" />
+             </article>
         )}
 
         {story.externalLink && (
-           <div className="mt-16 pt-8 border-t border-gray-200 text-center md:text-left">
+           <div className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500">
              <a 
                href={story.externalLink} 
                target="_blank" 
                rel="noopener noreferrer" 
-               className="bg-black text-white px-8 py-4 rounded-xl font-bold hover:bg-gray-800 transition-colors inline-flex items-center w-full sm:w-auto justify-center shadow-lg hover:shadow-xl hover:-translate-y-1"
+               className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-gray-900"
              >
-               View Published Research <ExternalLink className="w-5 h-5 ml-3" />
+               {story.id.startsWith("success-") ? "Source: CRI’s original Korean article" : "Related publication"} <ExternalLink className="w-4 h-4" />
              </a>
            </div>
         )}

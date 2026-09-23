@@ -44,7 +44,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-6 leading-[1.1]">{resolvedPost.title}</h1>
         
-        <div className="flex items-center gap-4 text-sm text-gray-500 mb-10">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-10">
           <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{resolvedPost.category}</span>
           <span className="font-medium">{resolvedPost.author}</span>
           <span>•</span>
@@ -52,22 +52,24 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
 
         {resolvedPost.imageUrl && (
-           <div className="relative w-full h-[400px] mb-12 rounded-3xl overflow-hidden shadow-sm border border-gray-100">
-             <Image src={resolvedPost.imageUrl} alt={resolvedPost.title} fill className="object-cover" unoptimized={true} />
+           <div className="relative w-full aspect-[4/3] md:aspect-[16/9] mb-12 rounded-3xl overflow-hidden shadow-sm border border-gray-100 bg-white">
+             <Image src={resolvedPost.imageUrl} alt={resolvedPost.title} fill sizes="(max-width: 896px) 100vw, 896px" className="object-contain" unoptimized referrerPolicy="no-referrer" />
            </div>
         )}
 
-        <MarkdownRenderer content={resolvedPost.content} className="bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm mt-8" />
+        <article aria-label="Article">
+          <MarkdownRenderer content={resolvedPost.content} className="bg-white p-6 sm:p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm mt-8" />
+        </article>
 
         {resolvedPost.externalLink && (
-           <div className="mt-16 pt-8 border-t border-gray-200">
+           <div className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500">
              <a 
                href={resolvedPost.externalLink} 
                target="_blank" 
                rel="noopener noreferrer" 
-               className="bg-black text-white px-8 py-4 rounded-xl font-bold hover:bg-gray-800 transition-colors inline-flex items-center w-full sm:w-auto justify-center click-press"
+               className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-gray-900"
              >
-               Read the full Original Publication <ExternalLink className="w-5 h-5 ml-3" />
+               {resolvedPost.id.startsWith("naver-") ? "Source: CRI’s original Korean article" : "Related publication"} <ExternalLink className="w-4 h-4" />
              </a>
            </div>
         )}
