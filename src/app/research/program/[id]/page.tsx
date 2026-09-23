@@ -1,5 +1,5 @@
 import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
-import { prisma } from "@/lib/prisma";
+import { getProgramById } from "@/lib/public-data";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, Users, MapPin, Tag, ChevronRight, CheckCircle2, CreditCard } from "lucide-react";
@@ -20,12 +20,7 @@ import { pageMetadata, summarize } from "@/lib/seo";
 export const dynamic = "force-dynamic";
 
 // Shared between generateMetadata and the page so the request runs once per render.
-const getProgram = cache((id: string) =>
-  prisma.program.findUnique({
-    where: { id },
-    include: { professors: true },
-  })
-);
+const getProgram = cache((id: string) => getProgramById(id));
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;

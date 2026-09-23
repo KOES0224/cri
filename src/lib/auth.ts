@@ -69,7 +69,12 @@ export const authOptions: NextAuthOptions = {
         }
       }
       
-      if (!user && token.id) {
+      // Re-read role / revocation state at most once a minute: every page load calls /api/auth/session,
+      // and a database round trip per call was a large part of the site's latency.
+      const checkedAt = typeof token.checkedAt === "number" ? token.checkedAt : 0;
+      const stale = Date.now() - checkedAt > 60_000;
+      if (!user && token.id && (stale || trigger === "update")) {
+        token.checkedAt = Date.now();
         const current = await prisma.user.findUnique({ where: { id: token.id as string }, select: { role: true, studentCode: true, sessionVersion: true } });
         if (!current || (token.sessionVersion ?? 0) !== current.sessionVersion) { token.id = ""; token.role = "REVOKED"; return token; }
         token.role = current.role;

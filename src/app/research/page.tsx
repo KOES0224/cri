@@ -1,4 +1,4 @@
-import { getSiteContent } from "@/app/actions/siteContent";
+import { getSiteContentDictionary } from "@/lib/public-data";
 import { getOpenPrograms } from "@/lib/open-programs";
 import ResearchClient from "./ResearchClient";
 import type { Metadata } from "next";
@@ -14,8 +14,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function ResearchPage() {
-  const [contentReq, openPrograms] = await Promise.all([getSiteContent("landing"), getOpenPrograms(9)]);
-  const content = contentReq.data || {};
+  const [content, openPrograms] = await Promise.all([getSiteContentDictionary("landing"), getOpenPrograms(9)]);
 
   return <ResearchClient content={content} openPrograms={openPrograms} />;
 }

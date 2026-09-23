@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { getPublishedPrograms } from "@/lib/public-data";
 import { admissionState, programFacts, programDate, programKind, type ProgramKind } from "@/lib/program-policy";
 
 /** Plain, serialisable card data for cohorts that are accepting applications right now. */
@@ -26,13 +26,11 @@ export type OpenProgramCard = {
 
 export async function getOpenPrograms(limit = 6): Promise<OpenProgramCard[]> {
   try {
-    const programs = await prisma.program.findMany({
-      where: { isPublished: true, status: "OPEN" },
-      include: { professors: true },
-      orderBy: [{ startDate: "asc" }, { order: "asc" }, { createdAt: "desc" }],
-    });
+    const programs = (await getPublishedPrograms()).filter((p) => p.status === "OPEN");
     const now = new Date();
     return programs
+      .slice()
+      .sort((a, b) => (a.startDate?.getTime() ?? Infinity) - (b.startDate?.getTime() ?? Infinity) || a.order - b.order)
       .filter((p) => !p.category.toLowerCase().includes("intern"))
       .filter((p) => admissionState(p, now) === "OPEN")
       .slice(0, limit)
