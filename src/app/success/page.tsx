@@ -23,7 +23,7 @@ export default async function SuccessPage() {
     createdAt: new Date(story.createdAt),
     updatedAt: new Date(story.updatedAt),
   }));
-  const allStories = [...curated, ...stories];
+  const allStories = [...curated, ...stories].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-32">
@@ -38,7 +38,7 @@ export default async function SuccessPage() {
             <Link href={`/success/${student.slug || student.id}`} key={student.id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all group flex flex-col relative h-full">
               <div className="h-48 bg-gray-200 relative items-center justify-center shrink-0">
                 {student.imageUrl ? (
-                  <Image src={student.imageUrl} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.name} fill unoptimized={true} />
+                  <Image src={student.imageUrl} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.projectTitle} fill sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw" unoptimized referrerPolicy="no-referrer" />
                 ) : (
                   <Image src={`https://api.dicebear.com/7.x/notionists/svg?seed=${student.name}&backgroundColor=e2e8f0`} className="object-cover group-hover:scale-105 transition-transform duration-500" alt={student.name} fill unoptimized={true} />
                 )}

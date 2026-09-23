@@ -11,7 +11,6 @@ type Post = {
   slug: string | null;
   title: string;
   excerpt: string | null;
-  content: string;
   category: string;
   author: string;
   imageUrl: string | null;

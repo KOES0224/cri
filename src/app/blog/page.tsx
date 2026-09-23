@@ -25,5 +25,11 @@ export default async function BlogPage() {
     createdAt: new Date(post.createdAt),
   }));
 
-  return <BlogClientPage posts={[...curated, ...posts]} />;
+  const cards = [...curated, ...posts]
+    .sort((a, b) => (b.publishedAt ?? b.createdAt).getTime() - (a.publishedAt ?? a.createdAt).getTime())
+    .map(({ id, slug, title, excerpt, category, author, imageUrl, publishedAt, createdAt }) => ({
+      id, slug, title, excerpt, category, author, imageUrl, publishedAt, createdAt,
+    }));
+
+  return <BlogClientPage posts={cards} />;
 }
