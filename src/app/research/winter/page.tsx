@@ -7,12 +7,10 @@ import { getDictionary, getLocale } from "@/i18n";
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Winter Online Research Program | CRI",
-  description:
-    "Online research during winter break for students in Grades 9–12; university students may also join. Up to 5 students per cohort, with 10 professor hours and 30 TA hours.",
-  path: "/research/winter",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const meta = getDictionary(await getLocale()).system.meta.winter;
+  return pageMetadata({ title: meta.title, description: meta.description, path: "/research/winter" });
+}
 
 export default async function WinterResearchPage() {
   const t = getDictionary(await getLocale()).hubPages.winter;

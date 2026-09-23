@@ -393,6 +393,11 @@ export const en = {
       ogLocale: "en_US",
     },
     meta: {
+      research: { title: "Research Programs | CRI", description: "Student-led research guided by university professors: in-person summer cohorts, an online winter program and 1-on-1 advanced research. Write your own paper." },
+      summer: { title: "Seoul & Global Research Program | CRI", description: "In-person summer research for rising Grade 9 through university students. Cohorts of up to 10, with 30 hours of professor instruction and 20 hours of TA guidance." },
+      winter: { title: "Winter Online Research Program | CRI", description: "Online research during winter break for students in Grades 9–12; university students may also join. Up to 5 students per cohort, with 10 professor hours and 30 TA hours." },
+      oneOnOne: { title: "1-on-1 Advanced Research Program | CRI", description: "Advanced research built around the student's interests and schedule, online or in person, with a university professor and TA. Typically 2–4 months." },
+      admissions: { title: "Application Guide & Fees | CRI", description: "How to apply to CRI research programs: steps, what to prepare, fees and tuition." },
       contact: {
         title: "Contact | CRI",
         description: "Ask CRI admissions about research programs, internships, eligibility, schedules and tuition. Send a message and we will reply by email.",
@@ -407,7 +412,7 @@ export const en = {
     },
     error: {
       title: "Something went wrong!",
-      body: "An unexpected server error occurred while loading this page. Our engineering team has been notified.",
+      body: "Something went wrong while loading this page. Please try again; if it keeps happening, email support@cri.kr.",
       retry: "Try again",
       home: "Go home",
       programs: "Browse programs",
