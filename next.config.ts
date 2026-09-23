@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    // criglobal.org is the canonical host. The old Vercel production aliases keep working only as
+    // permanent redirects, so sessions, OAuth callbacks and shared links all live on one domain.
+    // Preview deployments (cri-portal-git-*, cri-portal-<hash>-*) are not matched.
+    return ["cri-portal-2024.vercel.app", "cri-portal.vercel.app"].map((host) => ({
+      source: "/:path*",
+      has: [{ type: "host" as const, value: host }],
+      destination: "https://criglobal.org/:path*",
+      permanent: true,
+    }));
+  },
   // next dev otherwise appends generated agent rules to CLAUDE.md / AGENTS.md on every start.
   agentRules: false,
   serverExternalPackages: ['googleapis', 'xlsx'],
