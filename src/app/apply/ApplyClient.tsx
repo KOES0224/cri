@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { beginApplicationCheckout, submitApplicationWithoutFee } from '@/app/actions/payment';
 import { saveApplicationDraft } from '@/app/actions/applicationDrafts';
-import { applicationErrors, applicationLabels, personalFields } from '@/lib/application-validation';
+import { applicationErrorMessage, applicationErrors, applicationLabels, personalFields } from '@/lib/application-validation';
 import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
 import { programKind } from '@/lib/program-policy';
 import { trackEvent } from '@/lib/analytics';
@@ -22,6 +22,14 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
   const feeEnabled = APPLICATION_FEE_ENABLED;
   const copy = t.apply;
   const label = (key: string) => copy.fields[key] ?? applicationLabels[key];
+  // Validation and action results carry stable codes ("required", "words:500", "invalidFields:essay"); unknown values are shown as-is.
+  const errorText = (code: string) => {
+    const [name, argument] = code.split(':');
+    const entry = (copy.errors as Record<string, string | ((value: never) => string)>)[name];
+    if (typeof entry === 'function') return name === 'invalidFields' ? (entry as (field: string) => string)(label(argument) ?? argument) : (entry as (limit: number) => string)(Number(argument));
+    return entry ?? applicationErrorMessage(code);
+  };
+  const actionText = (result: { error?: string; code?: string }, fallback: string) => (result.code ? errorText(result.code) : result.error) || fallback;
   const parts = (user.name || '').trim().split(/\s+/);
   // A parent or guardian account applies on behalf of a student: prefill the guardian contact, not the student fields.
   const parentApplying = applicantRole === 'PARENT';
@@ -67,7 +75,7 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
         const result = await saveApplicationDraft(program.id, snapshot, currentStep, version.current);
         if (!result.success) {
           conflict.current = Boolean(result.conflict);
-          if (mounted.current) { setSaveState('error'); setSaveError(result.error); }
+          if (mounted.current) { setSaveState('error'); setSaveError(actionText(result, copy.notices.draftNotSaved)); }
           return false;
         }
         version.current = result.version;
@@ -75,12 +83,13 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
         if (mounted.current) { setSavedAt(result.savedAt); setSaveError(''); setSaveState(revision.current === currentRevision ? 'saved' : 'unsaved'); }
         return true;
       } catch {
-        if (mounted.current) { setSaveState('error'); setSaveError('Draft not saved. Check your connection, then retry before leaving.'); }
+        if (mounted.current) { setSaveState('error'); setSaveError(copy.notices.draftNotSaved); }
         return false;
       }
     });
     queue.current = task;
     return task;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- copy/actionText follow the locale, which is fixed for the page's lifetime.
   }, [program.id, checkoutPending]);
 
   useEffect(() => {
@@ -100,7 +109,7 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
   function move(next: number) {
     if (next > step) {
       const issues = applicationErrors(form, step);
-      if (Object.keys(issues).length) { setErrors(issues); setNotice('Please check the highlighted fields.'); requestAnimationFrame(() => document.getElementById(`apply-${Object.keys(issues)[0]}`)?.focus()); return; }
+      if (Object.keys(issues).length) { setErrors(issues); setNotice(copy.notices.checkFields); requestAnimationFrame(() => document.getElementById(`apply-${Object.keys(issues)[0]}`)?.focus()); return; }
     }
     revision.current += 1;
     if (next > step) trackEvent('application_step', { program_id: program.id, step: next });
@@ -109,49 +118,50 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
   }
   async function upload(file?: File) {
     if (!file) return;
-    if (file.type !== 'application/pdf' || file.size > 5 * 1024 * 1024 || file.size === 0) { setErrors(previous => ({ ...previous, resumeUrl: 'Choose a PDF up to 5 MB.' })); return; }
+    if (file.type !== 'application/pdf' || file.size > 5 * 1024 * 1024 || file.size === 0) { setErrors(previous => ({ ...previous, resumeUrl: copy.notices.pdfOnly })); return; }
     setUploading(true);
     try {
       const data = new FormData(); data.set('file', file);
       const response = await fetch('/api/upload', { method: 'POST', body: data });
-      if (!response.ok) throw new Error(await response.text());
+      // The route names the reason in X-Error-Code (a t.apply.errors key); the English body is the fallback.
+      if (!response.ok) throw new Error(response.headers.get('X-Error-Code') || await response.text() || copy.notices.uploadFailed);
       const document = await response.json(); update('resumeUrl', document.url); setFilename(file.name);
-    } catch (error) { setErrors(previous => ({ ...previous, resumeUrl: error instanceof Error ? error.message : 'Upload failed. Retry without leaving this page.' })); }
+    } catch (error) { setErrors(previous => ({ ...previous, resumeUrl: error instanceof Error && error.message ? errorText(error.message) : copy.notices.uploadFailed })); }
     finally { setUploading(false); }
   }
   async function submitFree() {
     if (paymentLock.current) return;
     const issues = applicationErrors(form);
-    if (Object.keys(issues).length) { setErrors(issues); setStep(personalFields.includes(Object.keys(issues)[0]) ? 1 : 2); setNotice('Please complete the highlighted fields before submitting.'); return; }
+    if (Object.keys(issues).length) { setErrors(issues); setStep(personalFields.includes(Object.keys(issues)[0]) ? 1 : 2); setNotice(copy.notices.completeBeforeSubmit); return; }
     paymentLock.current = true;
     setBusy(true); setNotice('');
     try {
-      if (!await persist(form, step, revision.current)) throw new Error('Save your draft successfully before submitting.');
+      if (!await persist(form, step, revision.current)) throw new Error(copy.notices.saveBeforeSubmit);
       const result = await submitApplicationWithoutFee(program.id, form);
-      if (result.error || !result.applicationId) throw new Error(result.error || 'Unable to submit the application.');
+      if (result.error || !result.applicationId) throw new Error(actionText(result, copy.notices.submitFailed));
       savedRevision.current = revision.current;
       trackEvent('application_submitted', { program_id: program.id, program_title: program.title, value: 0, currency: 'USD' });
       router.push(`/apply/submitted?programId=${encodeURIComponent(program.id)}`);
-    } catch (error) { setNotice(error instanceof Error ? error.message : 'The application was not submitted. Please try again.'); paymentLock.current = false; setBusy(false); }
+    } catch (error) { setNotice(error instanceof Error && error.message ? error.message : copy.notices.notSubmitted); paymentLock.current = false; setBusy(false); }
   }
   async function checkout() {
     if (paymentLock.current) return;
     const issues = applicationErrors(form);
-    if (Object.keys(issues).length) { setErrors(issues); setStep(personalFields.includes(Object.keys(issues)[0]) ? 1 : 2); setNotice('Please complete the highlighted fields before paying.'); return; }
+    if (Object.keys(issues).length) { setErrors(issues); setStep(personalFields.includes(Object.keys(issues)[0]) ? 1 : 2); setNotice(copy.notices.completeBeforePay); return; }
     paymentLock.current = true;
     setBusy(true); setNotice('');
     try {
-      if (!checkoutRef.current && !await persist(form, step, revision.current)) throw new Error('Save your draft successfully before starting payment.');
+      if (!checkoutRef.current && !await persist(form, step, revision.current)) throw new Error(copy.notices.saveBeforePay);
       const key = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
-      if (!key || !paymentAvailable) throw new Error('Online payment is currently unavailable. Your draft is saved; contact admissions for assistance.');
+      if (!key || !paymentAvailable) throw new Error(copy.notices.paymentUnavailable);
       const order = await beginApplicationCheckout(program.id, form);
-      if (order.error || !order.orderId) throw new Error(order.error || 'Unable to prepare payment.');
+      if (order.error || !order.orderId) throw new Error(actionText(order, copy.notices.preparePaymentFailed));
       checkoutRef.current = true; setCheckoutStarted(true);
       trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
       const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
       const sdk = await loadTossPayments(key);
       await sdk.payment({ customerKey: user.id }).requestPayment({ method: 'CARD', amount: { currency: order.currency!, value: order.amount! }, orderId: order.orderId, orderName: order.orderName!, successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`, failUrl: `${window.location.origin}/apply/payment-fail?programId=${encodeURIComponent(program.id)}`, customerEmail: user.email || form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim() });
-    } catch (error) { setNotice(error instanceof Error ? error.message : 'Payment was not completed. Check your payment provider before retrying.'); }
+    } catch (error) { setNotice(error instanceof Error && error.message ? error.message : copy.notices.paymentNotCompleted); }
     finally { paymentLock.current = false; setBusy(false); }
   }
   function field(key: string, options: { type?: string; optional?: boolean; multiline?: boolean; words?: number; choices?: [string, string][]; hint?: string } = {}) {
@@ -159,7 +169,7 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
     const common = { id, name: key, value: form[key] || '', disabled: locked, 'aria-invalid': Boolean(error), 'aria-describedby': `${id}-help`, onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => update(key, event.target.value), className: `${inputClass} ${error ? 'border-red-500' : ''}` };
     return <div key={key} className={options.multiline ? 'sm:col-span-2' : ''}><label htmlFor={id} className="mb-2 block text-sm font-semibold text-slate-800">{label(key)}{!options.optional && ' *'}</label>
       {options.choices ? <select {...common}><option value="">{copy.select}</option>{options.choices.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select> : options.multiline ? <textarea {...common} rows={options.words === 500 ? 7 : 4} maxLength={20000} /> : <input {...common} type={options.type || 'text'} maxLength={key.includes('Email') ? 254 : 200} />}
-      <div id={`${id}-help`} className="mt-1 text-xs leading-relaxed">{options.words && <p className={(form[key]?.trim().split(/\s+/).filter(Boolean).length || 0) > options.words ? 'text-red-700' : 'text-slate-500'}>{copy.words(form[key]?.trim().split(/\s+/).filter(Boolean).length || 0, options.words)}</p>}{options.hint && <p className="text-slate-500">{options.hint}</p>}{error && <p className="text-red-700">{error}</p>}</div>
+      <div id={`${id}-help`} className="mt-1 text-xs leading-relaxed">{options.words && <p className={(form[key]?.trim().split(/\s+/).filter(Boolean).length || 0) > options.words ? 'text-red-700' : 'text-slate-500'}>{copy.words(form[key]?.trim().split(/\s+/).filter(Boolean).length || 0, options.words)}</p>}{options.hint && <p className="text-slate-500">{options.hint}</p>}{error && <p className="text-red-700">{errorText(error)}</p>}</div>
     </div>;
   }
 
@@ -181,7 +191,7 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
         {summer && field('tShirtSize', { optional: true, choices: ['XXS','XS','S','M','L','XL','XXL'].map(value => [value,value]) })}
         {field('photoConsent', { choices: [['No',copy.photoNo],['Yes',copy.photoYes]], hint: copy.photoHint })}
       </div>}
-      {step === 2 && <div className="grid gap-5 sm:grid-cols-2"><div className="sm:col-span-2"><label htmlFor="apply-resumeUrl" className="mb-2 block text-sm font-semibold">{copy.resumeLabel}</label><input id="apply-resumeUrl" type="file" accept="application/pdf" disabled={uploading || locked} aria-invalid={Boolean(errors.resumeUrl)} aria-describedby="resume-help" onChange={event => void upload(event.target.files?.[0])} className={inputClass} /><p id="resume-help" className="mt-2 text-xs text-slate-500">{copy.resumeHelp}</p>{uploading && <p role="status" className="mt-2 text-sm">{copy.uploading}</p>}{form.resumeUrl && <a href={form.resumeUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block break-all text-sm text-blue-700 underline">{filename || copy.viewResume}</a>}{errors.resumeUrl && <p role="alert" className="mt-2 text-sm text-red-700">{errors.resumeUrl}</p>}</div>
+      {step === 2 && <div className="grid gap-5 sm:grid-cols-2"><div className="sm:col-span-2"><label htmlFor="apply-resumeUrl" className="mb-2 block text-sm font-semibold">{copy.resumeLabel}</label><input id="apply-resumeUrl" type="file" accept="application/pdf" disabled={uploading || locked} aria-invalid={Boolean(errors.resumeUrl)} aria-describedby="resume-help" onChange={event => void upload(event.target.files?.[0])} className={inputClass} /><p id="resume-help" className="mt-2 text-xs text-slate-500">{copy.resumeHelp}</p>{uploading && <p role="status" className="mt-2 text-sm">{copy.uploading}</p>}{form.resumeUrl && <a href={form.resumeUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block break-all text-sm text-blue-700 underline">{filename || copy.viewResume}</a>}{errors.resumeUrl && <p role="alert" className="mt-2 text-sm text-red-700">{errorText(errors.resumeUrl)}</p>}</div>
         {field('areaOfInterest')}{field('initialTopicIdeas', { multiline: true, hint: copy.topicHint })}{field('essay', { multiline: true, words: 500 })}{field('shortAnswer', { multiline: true, words: 150 })}
         {['firstChoiceProfessor','secondChoiceProfessor','thirdChoiceProfessor'].map((key, index) => field(key, { optional: index > 0, choices: program.professors.map(professor => [professor.name, `${professor.name}${professor.university ? ` (${professor.university})` : ''}`]) }))}
         {program.professors.length === 0 && <p className="text-sm text-amber-800 sm:col-span-2">{feeEnabled ? copy.noFaculty : copy.free.noFaculty}</p>}
