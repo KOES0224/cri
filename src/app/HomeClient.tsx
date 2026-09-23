@@ -61,7 +61,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
         <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
 
         {/* Desktop-only Hover Indicator Signage (Hidden on mobile, visible on desktop until hovered) */}
-        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-opacity duration-700 ease-in-out md:opacity-100 md:group-hover:opacity-0 md:group-focus-within:opacity-0 hidden md:flex">
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-opacity duration-700 ease-in-out hoverable:opacity-100 hoverable:group-hover:opacity-0 hoverable:group-focus-within:opacity-0 hidden hoverable:flex" aria-hidden="true">
           <motion.div 
             animate={{ y: [0, -10, 0] }}
             transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
@@ -79,7 +79,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
         </div>
 
         {/* Hero Content: Always visible on mobile, reveals on hover on desktop */}
-        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10 transition-opacity duration-700 ease-in-out opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto">
+        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-10 transition-opacity duration-700 ease-in-out opacity-100 hoverable:opacity-0 hoverable:group-hover:opacity-100 hoverable:group-focus-within:opacity-100 pointer-events-auto hoverable:pointer-events-none hoverable:group-hover:pointer-events-auto">
           <div
             className="hero-fade-up inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white/10 backdrop-blur-md text-white border border-white/20 shadow-lg"
           >
@@ -92,7 +92,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
           
           <h1
             style={{ animationDelay: "0.1s" }}
-            className="hero-fade-up text-6xl md:text-8xl font-black tracking-tighter text-white leading-[1.1] drop-shadow-2xl"
+            className={`hero-fade-up ${locale === "ko" ? "text-5xl md:text-7xl" : "text-6xl md:text-8xl"} font-black tracking-tighter text-white leading-[1.1] drop-shadow-2xl`}
           >
             {cms("landing_hero_title") || t.home.heroTitle} <br className="hidden md:block" />
             {(cms("landing_hero_title_highlight") || !cms("landing_hero_title")) && (
@@ -136,15 +136,15 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
       <section className="relative z-20 -mt-16 md:-mt-24 px-6 max-w-6xl mx-auto">
         <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col md:flex-row justify-center items-stretch divide-y md:divide-y-0 md:divide-x divide-gray-100">
           <div className="flex-1 text-center w-full py-10 md:py-12 lg:py-14 px-6 md:px-8 lg:px-12 flex flex-col items-center justify-start">
-            <h3 className="text-5xl lg:text-6xl font-black text-gray-900 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat1_number || "100%"}</h3>
+            <p className="text-5xl lg:text-6xl font-black text-gray-900 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat1_number || "100%"}</p>
             <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{statLabel("landing_stat1_label", t.home.stat1Label)}</p>
           </div>
           <div className="flex-1 text-center w-full py-10 md:py-12 lg:py-14 px-6 md:px-8 lg:px-12 flex flex-col items-center justify-start">
-            <h3 className="text-5xl lg:text-6xl font-black text-blue-600 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat2_number || "#1"}</h3>
+            <p className="text-5xl lg:text-6xl font-black text-blue-600 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat2_number || "#1"}</p>
             <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{statLabel("landing_stat2_label", t.home.stat2Label)}</p>
           </div>
           <div className="flex-1 text-center w-full py-10 md:py-12 lg:py-14 px-6 md:px-8 lg:px-12 flex flex-col items-center justify-start">
-            <h3 className="text-5xl lg:text-6xl font-black text-purple-600 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat3_number || "50+"}</h3>
+            <p className="text-5xl lg:text-6xl font-black text-purple-600 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat3_number || "50+"}</p>
             <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{statLabel("landing_stat3_label", t.home.stat3Label)}</p>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
         <div className="absolute top-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-24 max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-6">{t.home.philosophyTitle.before}<span className="italic font-serif text-blue-600 tracking-normal">{t.home.philosophyTitle.word}</span>{t.home.philosophyTitle.after}</h2>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-6">{t.home.philosophyTitle.before}<span className={locale === "ko" ? "text-blue-600" : "italic font-serif text-blue-600 tracking-normal"}>{t.home.philosophyTitle.word}</span>{t.home.philosophyTitle.after}</h2>
             <p className="text-xl text-gray-500 leading-relaxed font-medium">{t.home.philosophyIntro}</p>
           </div>
           

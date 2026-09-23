@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Hover-capable, desktop-width devices (mouse/trackpad). Touch tablets never match, so they get the content directly. */
+@custom-variant hoverable (@media (hover: hover) and (min-width: 768px));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -17,18 +20,19 @@
   --color-obsidianBlack: #000000;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* The site has no dark design: pin to light so OS dark mode never inverts inputs and bare pages. */
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  scroll-behavior: smooth;
 }
 
 /* Premium UI/UX Micro-Interactions */

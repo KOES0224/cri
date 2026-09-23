@@ -36,7 +36,7 @@ export default function LanguageToggle({ className = "" }: { className?: string 
             aria-pressed={locale === code}
             aria-label={t.language.switchTo[code]}
             disabled={pending}
-            className={`transition-colors disabled:opacity-60 ${locale === code ? "text-gray-900" : "text-gray-400 hover:text-gray-900"}`}
+            className={`inline-flex items-center min-h-8 px-1 rounded transition-colors disabled:opacity-60 ${locale === code ? "text-gray-900" : "text-gray-600 hover:text-gray-900"}`}
           >
             {LABELS[code]}
           </button>

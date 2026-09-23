@@ -80,9 +80,17 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                  )}
               </div>
               
-              <h1 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tighter mb-8 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-gray-900 tracking-tighter mb-6 leading-tight">
                 {program.title}
               </h1>
+
+              {/* Key facts for phones: dates, format, cohort size and tuition were far below the fold. */}
+              <dl className="lg:hidden grid grid-cols-2 gap-3 mb-8 text-sm">
+                <div className="rounded-2xl bg-white border border-gray-200 p-3"><dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{t.duration}</dt><dd className="mt-1 font-semibold text-gray-900">{facts.kind === "individual" ? facts.duration : program.startDate ? formatProgramDateRange(program.startDate, program.endDate, locale) : t.scheduleOnInquiry}</dd></div>
+                <div className="rounded-2xl bg-white border border-gray-200 p-3"><dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{t.format}</dt><dd className="mt-1 font-semibold text-gray-900">{facts.format}</dd></div>
+                {facts.capacity != null && <div className="rounded-2xl bg-white border border-gray-200 p-3"><dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{t.capacity}</dt><dd className="mt-1 font-semibold text-gray-900">{t.students(facts.capacity)}</dd></div>}
+                <div className="rounded-2xl bg-white border border-gray-200 p-3"><dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{t.tuition}</dt><dd className="mt-1 font-semibold text-gray-900">{program.tuition != null ? `$${program.tuition.toLocaleString()} USD` : t.availableOnInquiry}</dd></div>
+              </dl>
               
               <div className="prose prose-lg prose-gray max-w-none mb-12">
                  <p className="text-xl text-gray-600 leading-relaxed font-medium mb-8">
@@ -180,7 +188,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                                <p className="text-gray-900 font-semibold">{facts.taHours}</p>
                              </div>
                            )}
-                           {program.courseSchedule && (
+                           {program.courseSchedule && !/^\s*(tbd|tba|n\/a)\s*$/i.test(program.courseSchedule) && (
                              <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 flex flex-col justify-center">
                                <p className="text-xs font-bold text-amber-800 uppercase tracking-widest mb-1">{t.schedule}</p>
                                <p className="text-gray-900 font-semibold">{program.courseSchedule}</p>
@@ -195,7 +203,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
            </div>
            
            {/* Sidebar */}
-           <div className="lg:col-span-1">
+           <div className="lg:col-span-1 lg:sticky lg:top-28 self-start">
               <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl">
                  <h3 className="text-xl font-bold text-gray-900 mb-6">{t.details}</h3>
 

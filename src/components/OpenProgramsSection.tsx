@@ -78,7 +78,7 @@ export default function OpenProgramsSection({
                 >
                   <div className="p-7 flex flex-col gap-5 flex-1">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-[11px] font-black uppercase tracking-wider text-gray-500 bg-gray-100 px-3 py-1 rounded-full truncate">
+                      <span className="text-xs font-bold tracking-wide text-gray-600 bg-gray-100 px-3 py-1 rounded-full leading-tight">
                         {season}
                       </span>
                       <span className="inline-flex items-center text-[11px] font-black uppercase tracking-wider text-emerald-700 shrink-0">

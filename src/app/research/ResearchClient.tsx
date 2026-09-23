@@ -9,7 +9,9 @@ import { motion } from "framer-motion";
 import { useT } from "@/i18n/client";
 
 export default function ResearchClient({ content, openPrograms = [] }: { content: Record<string, string>; openPrograms?: OpenProgramCard[] }) {
-  const { t } = useT();
+  const { t, locale } = useT();
+  // CMS text is English; in another locale use a `<key>_<locale>` CMS value if present, else the dictionary.
+  const cms = (key: string) => (locale === "en" ? content[key] : content[`${key}_${locale}`]) || "";
   const copy = t.research;
   const hubs = [
     {
@@ -85,15 +87,15 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
             className="inline-flex items-center px-4 py-2 rounded-full text-xs font-bold text-white bg-white/10 border border-white/20 mb-8 shadow-lg backdrop-blur-md uppercase tracking-wider"
           >
             <Star className="w-4 h-4 mr-2 fill-blue-400 text-blue-400" />
-            {content.research_pill_badge || copy.pillBadge}
+            {cms("research_pill_badge") || copy.pillBadge}
           </motion.div>
           <motion.h1 
              initial={{ opacity: 0, y: 30 }}
              animate={{ opacity: 1, y: 0 }}
              transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
-             className="text-6xl md:text-7xl font-black text-white tracking-tighter mb-6 leading-tight drop-shadow-xl"
+             className={`${locale === "ko" ? "text-5xl md:text-6xl" : "text-6xl md:text-7xl"} font-black text-white tracking-tighter mb-6 leading-tight drop-shadow-xl`}
           >
-            {content.research_hero_title || copy.heroTitle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">{content.research_hero_highlight || copy.heroHighlight}</span>
+            {cms("research_hero_title") || copy.heroTitle} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">{cms("research_hero_highlight") || copy.heroHighlight}</span>
           </motion.h1>
           <motion.p 
              initial={{ opacity: 0, y: 30 }}
@@ -101,7 +103,7 @@ export default function ResearchClient({ content, openPrograms = [] }: { content
              transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
             className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed font-medium"
           >
-            {content.research_hero_subtitle || copy.heroSubtitle}
+            {cms("research_hero_subtitle") || copy.heroSubtitle}
           </motion.p>
         </div>
       </div>
