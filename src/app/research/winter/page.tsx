@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { getPublishedPrograms } from "@/lib/public-data";
 import ResearchProgramsClient from "../_components/ResearchProgramsClient";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
@@ -16,13 +16,7 @@ export const metadata: Metadata = pageMetadata({
 
 export default async function WinterResearchPage() {
   const t = getDictionary(await getLocale()).hubPages.winter;
-  const programs = await prisma.program.findMany({
-    where: {
-      isPublished: true,
-    },
-    include: { professors: true },
-    orderBy: [{ order: "asc" }, { createdAt: "desc" }]
-  });
+  const programs = await getPublishedPrograms();
 
   return (
     <ResearchProgramsClient 

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { getPublishedPrograms } from "@/lib/public-data";
 import ResearchProgramsClient from "../_components/ResearchProgramsClient";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
@@ -16,14 +16,8 @@ export const metadata: Metadata = pageMetadata({
 
 export default async function OneOnOneResearchPage() {
   const t = getDictionary(await getLocale()).hubPages.oneOnOne;
-  const programs = await prisma.program.findMany({
-    where: { 
-      isPublished: true,
-      category: { in: ["1-on-1", "Research", "Mentorship", "1-on-1 Advanced Research Program"] }
-    },
-    include: { professors: true },
-    orderBy: [{ order: "asc" }, { createdAt: "desc" }]
-  });
+  const oneOnOneCategories = new Set(["1-on-1", "Research", "Mentorship", "1-on-1 Advanced Research Program"]);
+  const programs = (await getPublishedPrograms()).filter((p) => oneOnOneCategories.has(p.category));
 
   return (
     <ResearchProgramsClient 

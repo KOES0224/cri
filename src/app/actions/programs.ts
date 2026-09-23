@@ -3,7 +3,8 @@
 import { inventoryFacts } from "@/lib/program-policy";
 import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { TAGS } from "@/lib/public-data";
 
 export async function getPrograms() {
   await requireAdmin();
@@ -33,6 +34,7 @@ export async function getProgramById(id: string) {
 }
 
 const revalidateProgramPaths = () => {
+  revalidateTag(TAGS.programs, "max");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/programs");
   revalidatePath("/research", "layout");

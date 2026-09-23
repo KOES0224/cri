@@ -1,7 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { TAGS } from "@/lib/public-data";
 
 export async function getSiteContent(page: string) {
   try {
@@ -36,6 +37,7 @@ export async function saveSiteContent(page: string, data: Record<string, string>
 
     await prisma.$transaction(promises);
 
+    revalidateTag(TAGS.siteContent, "max");
     revalidatePath("/");
     revalidatePath(`/dashboard/cms/${page}`);
 

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { ArrowLeft, Clock, FileText, Users, CreditCard, Save, CheckCircle2 } from "lucide-react";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getProgramById } from "@/lib/public-data";
 import { canApply } from "@/lib/applicant";
 import { admissionState } from "@/lib/program-policy";
 import { formatProgramDateRange, programFactsLocalized } from "@/lib/program-facts-i18n";
@@ -23,10 +23,7 @@ export default async function ApplyStartPage({ searchParams }: { searchParams: P
   const session = await getServerSession(authOptions);
   if (session?.user?.id) redirect(canApply(session.user.role) ? applyUrl : "/dashboard");
 
-  const program = await prisma.program.findUnique({
-    where: { id: programId },
-    include: { professors: { select: { name: true, university: true }, take: 1 } },
-  });
+  const program = await getProgramById(programId);
   if (!program || !program.isPublished || admissionState(program) !== "OPEN") redirect("/research");
 
   const locale = await getLocale();

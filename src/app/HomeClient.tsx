@@ -10,6 +10,7 @@ import HowItWorks from "@/components/home/HowItWorks";
 import UniversitiesStrip from "@/components/home/UniversitiesStrip";
 import FaqSection from "@/components/home/FaqSection";
 import MobileApplyBar from "@/components/home/MobileApplyBar";
+import HeroVideo from "@/components/home/HeroVideo";
 
 export default function HomeClient({ content, openPrograms = [] }: { content: Record<string, string>; openPrograms?: OpenProgramCard[] }) {
   const { t, locale } = useT();
@@ -34,15 +35,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
         <div className="absolute inset-0 z-0 overflow-hidden bg-black">
           {content.landing_hero_image ? (
             content.landing_hero_image.endsWith('.mp4') ? (
-              <video 
-                autoPlay 
-                loop 
-                muted 
-                playsInline 
-                className="absolute inset-0 w-full h-full object-cover opacity-50"
-              >
-                <source src={content.landing_hero_image} type="video/mp4" />
-              </video>
+              <HeroVideo src={content.landing_hero_image} className="absolute inset-0 w-full h-full object-cover opacity-50" />
             ) : (
               <img 
                 src={content.landing_hero_image} 
@@ -51,15 +44,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
               />
             )
           ) : (
-            <video 
-              autoPlay 
-              loop 
-              muted 
-              playsInline 
-              className="absolute inset-0 w-full h-full object-cover opacity-50"
-            >
-              <source src="/hero-bg.mp4" type="video/mp4" />
-            </video>
+            <HeroVideo src="/hero-bg.mp4" className="absolute inset-0 w-full h-full object-cover opacity-50" />
           )}
           
           <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60 to-transparent z-10"></div>

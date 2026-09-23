@@ -2,7 +2,8 @@
 
 import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { TAGS } from "@/lib/public-data";
 
 export async function getProfessors() {
   try {
@@ -17,6 +18,7 @@ export async function getProfessors() {
 }
 
 const revalidateProfessorPaths = () => {
+  revalidateTag(TAGS.professors, "max");
   revalidatePath("/dashboard/cms/professors");
   revalidatePath("/professors");
   revalidatePath("/research", "layout");
