@@ -1,28 +1,15 @@
-import { prisma } from "@/lib/prisma";
+export type MentorUniversity = { name: string; logo: string | null; height?: number };
 
-export type MentorUniversity = { name: string; logo: string | null };
-
-/** Universities of the faculty attached to published programs, de-duplicated, logos first. */
-export async function getMentorUniversities(limit = 12): Promise<MentorUniversity[]> {
-  try {
-    const professors = await prisma.professor.findMany({
-      where: { university: { not: null }, programs: { some: { isPublished: true } } },
-      select: { university: true, universityLogo: true },
-    });
-    const byName = new Map<string, MentorUniversity>();
-    for (const professor of professors) {
-      const name = professor.university?.trim();
-      if (!name) continue;
-      const key = name.toLowerCase();
-      const existing = byName.get(key);
-      if (!existing) byName.set(key, { name, logo: professor.universityLogo || null });
-      else if (!existing.logo && professor.universityLogo) existing.logo = professor.universityLogo;
-    }
-    return Array.from(byName.values())
-      .sort((a, b) => Number(Boolean(b.logo)) - Number(Boolean(a.logo)) || a.name.localeCompare(b.name))
-      .slice(0, limit);
-  } catch (error) {
-    console.error("Failed to load mentor universities:", error);
-    return [];
-  }
-}
+/**
+ * Fixed set shown in the home "Mentors teach at" strip. Wordmark images are the universities' own
+ * logos as hosted on Wikimedia Commons (rasterised thumbnails); each has a text fallback if the
+ * image fails to load. Edit this list to change the strip; the professor inventory is not consulted.
+ */
+export const FEATURED_UNIVERSITIES: MentorUniversity[] = [
+  { name: "Harvard University", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Harvard_University_logo.svg/500px-Harvard_University_logo.svg.png", height: 34 },
+  { name: "MIT", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/MIT_logo_2003-2023.svg/500px-MIT_logo_2003-2023.svg.png", height: 30 },
+  { name: "Princeton University", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Princeton_text_logo.svg/500px-Princeton_text_logo.svg.png", height: 30 },
+  { name: "Yale University", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Yale_University_logo.svg/500px-Yale_University_logo.svg.png", height: 30 },
+  { name: "UC Berkeley", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/University_of_California%2C_Berkeley_logo.svg/500px-University_of_California%2C_Berkeley_logo.svg.png", height: 34 },
+  { name: "University of Chicago", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/University_of_Chicago_wordmark.svg/500px-University_of_Chicago_wordmark.svg.png", height: 30 },
+];
