@@ -61,7 +61,7 @@ export default function ResearchProgramsClient({
         <ResearchGuide category={Array.isArray(categoryFilter) ? categoryFilter[0] : categoryFilter} />
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-10 pb-4">
-           <div className="flex items-center text-sm font-bold text-gray-400 uppercase tracking-wider mr-4">
+           <div className="hidden sm:flex items-center text-sm font-bold text-gray-500 uppercase tracking-wider mr-4">
              <Filter className="w-4 h-4 mr-2" /> {copy.filter}
            </div>
            <button 
@@ -139,10 +139,10 @@ export default function ResearchProgramsClient({
               return (
                 <div 
                   key={program.id}
-                  className="group bg-white rounded-3xl border border-gray-200/90 shadow-xs hover:shadow-2xl hover:border-blue-400/80 transition-all duration-300 flex flex-col xl:flex-row items-stretch overflow-hidden"
+                  className="group bg-white rounded-3xl border border-gray-200/90 shadow-xs hover:shadow-2xl hover:border-blue-400/80 transition-all duration-300 flex flex-col lg:flex-row items-stretch overflow-hidden"
                 >
                   {/* Left (Idea 4): Cinematic Faculty Sidebar with Large Portrait & University Crest */}
-                  <div className="xl:w-84 2xl:w-96 bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950 text-white p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden shrink-0">
+                  <div className="lg:w-64 xl:w-84 2xl:w-96 bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950 text-white p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden shrink-0">
                     {/* Background Subtle Accent Glow */}
                     <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -180,10 +180,10 @@ export default function ResearchProgramsClient({
                         <img
                           src={prof.imageUrl}
                           alt={prof.name}
-                          className="w-40 h-40 sm:w-44 sm:h-44 rounded-3xl object-cover border-2 border-white/20 shadow-2xl ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-500"
+                          className="w-32 h-32 xl:w-44 xl:h-44 rounded-3xl object-cover border-2 border-white/20 shadow-2xl ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-40 h-40 sm:w-44 sm:h-44 rounded-3xl bg-gradient-to-br from-slate-800 to-indigo-900 border-2 border-white/20 shadow-2xl flex items-center justify-center font-black text-4xl text-slate-200">
+                        <div className="w-32 h-32 xl:w-44 xl:h-44 rounded-3xl bg-gradient-to-br from-slate-800 to-indigo-900 border-2 border-white/20 shadow-2xl flex items-center justify-center font-black text-4xl text-slate-200">
                           {prof?.name
                             ? prof.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')
                             : "CRI"}

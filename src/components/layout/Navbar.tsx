@@ -84,7 +84,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <LanguageToggle />
             {session ? (
               <div className="flex items-center space-x-3 bg-gray-50/80 backdrop-blur-md rounded-full p-1 pr-4 border border-gray-200">
@@ -129,7 +129,7 @@ export default function Navbar() {
               aria-expanded={isOpen}
               aria-controls="mobile-navigation"
               onClick={() => setIsOpen(!isOpen)}
-              className={`p-2 -mr-2 focus:outline-none transition-colors ${'text-gray-700 hover:text-black'}`}
+              className="p-2 -mr-2 rounded-lg transition-colors text-gray-700 hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -141,12 +141,12 @@ export default function Navbar() {
       {isOpen && (
         <div id="mobile-navigation" onClick={(event) => { if ((event.target as HTMLElement).closest("a")) setIsOpen(false); }} className="absolute top-full left-0 w-full px-4 mt-2 max-h-[calc(100dvh-110px)] overflow-y-auto">
           <div className="p-4 bg-white/95 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-2xl flex flex-col space-y-3">
-            <Link href="/research" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.research}</Link>
-            <Link href="/projects" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.projects}</Link>
-            <Link href="/intern" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.intern}</Link>
-            <Link href="/success" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.success}</Link>
-            <Link href="/blog" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.blog}</Link>
-            <Link href="/contact" className="text-sm font-semibold text-gray-800 p-2 rounded-lg hover:bg-gray-50">{t.nav.contact}</Link>
+            <Link href="/research" className="text-sm font-semibold text-gray-800 px-2 py-3 rounded-lg hover:bg-gray-50">{t.nav.research}</Link>
+            <Link href="/projects" className="text-sm font-semibold text-gray-800 px-2 py-3 rounded-lg hover:bg-gray-50">{t.nav.projects}</Link>
+            <Link href="/intern" className="text-sm font-semibold text-gray-800 px-2 py-3 rounded-lg hover:bg-gray-50">{t.nav.intern}</Link>
+            <Link href="/success" className="text-sm font-semibold text-gray-800 px-2 py-3 rounded-lg hover:bg-gray-50">{t.nav.success}</Link>
+            <Link href="/blog" className="text-sm font-semibold text-gray-800 px-2 py-3 rounded-lg hover:bg-gray-50">{t.nav.blog}</Link>
+            <Link href="/contact" className="text-sm font-semibold text-gray-800 px-2 py-3 rounded-lg hover:bg-gray-50">{t.nav.contact}</Link>
             <div className="h-px bg-gray-100 my-2"></div>
             <LanguageToggle className="px-2 py-1" />
             <div className="h-px bg-gray-100 my-2"></div>

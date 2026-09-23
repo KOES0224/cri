@@ -92,7 +92,7 @@ function RegisterForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center pt-44 pb-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center pt-44 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="absolute top-28 left-6">
         <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -101,16 +101,16 @@ function RegisterForm() {
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
+        <h1 className="mt-6 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
           {applying ? "Create an account to apply" : "Create an Account"}
-        </h2>
+        </h1>
         <p className="mt-2 text-center text-sm text-gray-600">
           {applying ? "Your application opens right after this step. Drafts are saved to this account." : "Join the CRI portal to track applications and programs"}
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
+        <div className="bg-white py-8 px-5 shadow-sm rounded-2xl sm:px-10 border border-gray-200">
           
           <Suspense fallback={null}>
             <ErrorAlert />
