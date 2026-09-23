@@ -746,4 +746,8 @@ export const en = {
     /** Korean field labels are keyed by application field; English falls back to applicationLabels. */
     fields: {} as Record<string, string>,
   },
+  editorial: {
+    koreanOriginal: "Read the original Korean post on CRI's Naver blog",
+    koreanOriginalNote: "",
+  },
 };

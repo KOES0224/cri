@@ -1,8 +1,7 @@
-import { prisma } from "@/lib/prisma";
 import BlogClientPage from "./BlogClientPage";
-import { curatedPosts } from "@/lib/curated-blog";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { getPublishedPostCards } from "@/lib/public-data";
 
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
@@ -10,26 +9,10 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = pageMetadata({
   title: "Institute Blog | CRI",
   description:
-    "Articles, news and insights from CRI scholars and mentors on student research, publication and competitions.",
+    "Program news, faculty spotlights, admissions insights and practical research guides from CRI's scholars and mentors.",
   path: "/blog",
 });
 
 export default async function BlogPage() {
-  const posts = await prisma.post.findMany({
-    orderBy: { createdAt: "desc" }
-  });
-
-  const curated = curatedPosts.map((post) => ({
-    ...post,
-    publishedAt: new Date(post.publishedAt),
-    createdAt: new Date(post.createdAt),
-  }));
-
-  const cards = [...curated, ...posts]
-    .sort((a, b) => (b.publishedAt ?? b.createdAt).getTime() - (a.publishedAt ?? a.createdAt).getTime())
-    .map(({ id, slug, title, excerpt, category, author, imageUrl, publishedAt, createdAt }) => ({
-      id, slug, title, excerpt, category, author, imageUrl, publishedAt, createdAt,
-    }));
-
-  return <BlogClientPage posts={cards} />;
+  return <BlogClientPage posts={await getPublishedPostCards()} />;
 }

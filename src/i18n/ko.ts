@@ -766,4 +766,8 @@ export const ko: Dictionary = {
       howLearned: "CRI를 알게 된 경로",
     },
   },
+  editorial: {
+    koreanOriginal: "한국어 원문 보기 (CRI 네이버 블로그)",
+    koreanOriginalNote: "이 글은 CRI 네이버 블로그 게시물을 영어로 옮긴 것입니다.",
+  },
 };

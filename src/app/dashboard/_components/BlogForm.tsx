@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPost, updatePost } from "@/app/actions/blog";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import { BLOG_CATEGORIES } from "@/lib/blog-categories";
 
 type PostFormProps = {
   initialData?: {
@@ -33,7 +34,7 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
     slug: initialData?.slug || "",
     excerpt: initialData?.excerpt || "",
     content: initialData?.content || "",
-    category: initialData?.category || "Success Stories",
+    category: initialData?.category || BLOG_CATEGORIES[0],
     author: initialData?.author || "CRI Editorial",
     imageUrl: initialData?.imageUrl || "",
     externalLink: initialData?.externalLink || "",
@@ -214,11 +215,13 @@ export default function BlogForm({ initialData, onSuccess, onCancel }: PostFormP
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 transition-all outline-none bg-white"
           >
-            <option value="Success Stories">Success Stories</option>
-            <option value="University News">University News</option>
-            <option value="Study Abroad">Study Abroad</option>
-            <option value="Admissions Strategy">Admissions Strategy</option>
-            <option value="CRI Announcements">CRI Announcements</option>
+            {BLOG_CATEGORIES.map((category) => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+            {/* Keep an older category selectable so saving never silently changes it. */}
+            {!(BLOG_CATEGORIES as readonly string[]).includes(formData.category) && (
+              <option value={formData.category}>{formData.category}</option>
+            )}
           </select>
         </div>
         <div>
