@@ -8,8 +8,9 @@ import { NextResponse, type NextRequest } from "next/server";
  * handler, since proxy code must not share modules with the app) and rewrite unknown URLs to a path
  * no route matches, which Next answers with the site's not-found page and a 404.
  *
- * `pathname` is the app path without any locale prefix (e.g. "/blog/some-slug"). Returns the rewrite
- * for a missing record, or null when the request should continue normally.
+ * `pathname` is the app path without any locale prefix (e.g. "/blog/some-slug"). `init` carries the
+ * locale request headers from the proxy so the 404 page renders in the visitor's language. Returns the
+ * rewrite for a missing record, or null when the request should continue normally.
  */
 const ROUTES: [RegExp, string][] = [
   [/^\/blog\/([^/]+)$/, "blog"],
@@ -18,7 +19,11 @@ const ROUTES: [RegExp, string][] = [
   [/^\/intern\/([^/]+)$/, "intern"],
 ];
 
-export async function missingPageRewrite(request: NextRequest, pathname: string): Promise<NextResponse | null> {
+export async function missingPageRewrite(
+  request: NextRequest,
+  pathname: string,
+  init?: Parameters<typeof NextResponse.rewrite>[1],
+): Promise<NextResponse | null> {
   // Client-side navigations and prefetches (RSC requests) never show a status code; skip the lookup.
   if (request.headers.get("rsc") || request.nextUrl.searchParams.has("_rsc")) return null;
   if (request.method !== "GET" && request.method !== "HEAD") return null;
@@ -31,7 +36,7 @@ export async function missingPageRewrite(request: NextRequest, pathname: string)
       check.searchParams.set("kind", kind);
       check.searchParams.set("id", decodeURIComponent(match[1]));
       const res = await fetch(check, { signal: AbortSignal.timeout(2000) });
-      if (res.status === 404) return NextResponse.rewrite(new URL("/_not-found-content", request.url));
+      if (res.status === 404) return NextResponse.rewrite(new URL("/_not-found-content", request.url), init);
     } catch {
       // If the check itself fails, render the page as usual rather than risk hiding a real one.
     }

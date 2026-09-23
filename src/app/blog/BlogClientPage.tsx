@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Award } from "lucide-react";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { format } from "date-fns";
 import Image from "next/image";
 import EditorialCover from "@/components/EditorialCover";

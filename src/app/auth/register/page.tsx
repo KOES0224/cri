@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { safeCallbackUrl } from "@/lib/auth-input";
 import { applicantRoleFromParam } from "@/lib/applicant";

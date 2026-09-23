@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
-import Link from 'next/link';
+import Link from "@/i18n/link";
 import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
 import { getDictionary, getLocale } from '@/i18n';
 export async function generateMetadata(): Promise<Metadata> {

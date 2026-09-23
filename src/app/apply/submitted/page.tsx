@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { CheckCircle2, ArrowRight } from "lucide-react";
