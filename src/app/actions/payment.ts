@@ -12,23 +12,24 @@ import { confirmTossPayment, findConfirmedTossPayment } from '@/lib/toss';
 import { revalidatePath } from 'next/cache';
 import { notifyApplicationReceived, sendApplicationConfirmation } from '@/lib/notify';
 
+// `error` stays English for existing callers; `code` names a key in t.apply.errors so the form can show the visitor's language.
 export async function beginApplicationCheckout(programId: string, input: unknown) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.' };
-  if (!APPLICATION_FEE_ENABLED) return { error: 'No application fee is required. Submit the application without payment.' };
-  if (!process.env.TOSS_SECRET_KEY || !process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY) return { error: 'Online payment is unavailable. Contact admissions before paying.' };
+  if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.', code: 'applySignIn' };
+  if (!APPLICATION_FEE_ENABLED) return { error: 'No application fee is required. Submit the application without payment.', code: 'feeDisabled' };
+  if (!process.env.TOSS_SECRET_KEY || !process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY) return { error: 'Online payment is unavailable. Contact admissions before paying.', code: 'paymentUnavailable' };
   const parsed = applicationSchema.safeParse(input);
-  if (!parsed.success) return { error: `Check the application fields and word limits: ${parsed.error.issues[0]?.path.join('.') || 'application'}.` };
+  if (!parsed.success) { const field = parsed.error.issues[0]?.path.join('.') || 'application'; return { error: `Check the application fields and word limits: ${field}.`, code: `invalidFields:${field}` }; }
   try {
-    if (!await allowRequest('checkout', session.user.id, 5, 600)) return { error: 'Please wait before starting another checkout.' };
+    if (!await allowRequest('checkout', session.user.id, 5, 600)) return { error: 'Please wait before starting another checkout.', code: 'checkoutRateLimit' };
     const [program, document, existing] = await Promise.all([
       prisma.program.findUnique({ where: { id: programId } }),
       prisma.applicationDocument.findFirst({ where: { id: parsed.data.resumeUrl.split('/').pop(), userId: session.user.id }, select: { id: true } }),
       prisma.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId } } }),
     ]);
-    if (!program || admissionState(program) !== 'OPEN') return { error: 'This program is no longer accepting applications. Please choose an available program.' };
-    if (!document) return { error: 'Please upload your CV again using this account.' };
-    if (existing) return { error: 'You have already applied to this program. Check your dashboard.' };
+    if (!program || admissionState(program) !== 'OPEN') return { error: 'This program is no longer accepting applications. Please choose an available program.', code: 'programClosed' };
+    if (!document) return { error: 'Please upload your CV again using this account.', code: 'resumeMissing' };
+    if (existing) return { error: 'You have already applied to this program. Check your dashboard.', code: 'alreadyApplied' };
     const order = await prisma.$transaction(async tx => {
       // Only one active checkout per student/program can reach the provider.
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${session.user.id + ':' + programId}))`;
@@ -48,30 +49,30 @@ export async function beginApplicationCheckout(programId: string, input: unknown
     });
     return { orderId: order.id, amount: order.amount, currency: APPLICATION_CHARGE.currency, orderName: `${program.title.slice(0, 75)} — application fee` };
   } catch (error) {
-    if (error instanceof Error && error.message === 'CHECKOUT_CHANGED') return {error: 'An earlier checkout is pending. Reload to resume your saved application. Contact admissions to revise it before paying.'};
-    if (error instanceof Error && error.message === 'CHECKOUT_REVIEW') return {error: 'Your earlier checkout needs review. Contact admissions before paying again so we can check its payment status.'};
-    return { error: 'Unable to prepare checkout. Your payment has not been started. Please try again.' };
+    if (error instanceof Error && error.message === 'CHECKOUT_CHANGED') return {error: 'An earlier checkout is pending. Reload to resume your saved application. Contact admissions to revise it before paying.', code: 'checkoutChanged'};
+    if (error instanceof Error && error.message === 'CHECKOUT_REVIEW') return {error: 'Your earlier checkout needs review. Contact admissions before paying again so we can check its payment status.', code: 'checkoutReview'};
+    return { error: 'Unable to prepare checkout. Your payment has not been started. Please try again.', code: 'checkoutFailed' };
   }
 }
 
 export async function finalizePaidApplication({ paymentKey, orderId, amount }: { paymentKey: string; orderId: string; amount: number }) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return { error: 'Sign in with the account used for checkout.' };
-  if (typeof paymentKey !== 'string' || paymentKey.length > 500 || typeof orderId !== 'string' || orderId.length > 100) return { error: 'Invalid payment reference.' };
+  if (!session?.user?.id) return { error: 'Sign in with the account used for checkout.', code: 'checkoutSignIn' };
+  if (typeof paymentKey !== 'string' || paymentKey.length > 500 || typeof orderId !== 'string' || orderId.length > 100) return { error: 'Invalid payment reference.', code: 'paymentReference' };
   try {
     const order = await prisma.applicationCheckout.findUnique({ where: { id: orderId } });
-    if (!order || order.userId !== session.user.id || order.amount !== amount || amount !== APPLICATION_CHARGE.amount || order.currency !== APPLICATION_CHARGE.currency) return { error: 'Payment details could not be verified. Contact support if you have a receipt.' };
+    if (!order || order.userId !== session.user.id || order.amount !== amount || amount !== APPLICATION_CHARGE.amount || order.currency !== APPLICATION_CHARGE.currency) return { error: 'Payment details could not be verified. Contact support if you have a receipt.', code: 'paymentMismatch' };
     if (order.status === 'COMPLETED' && order.applicationId) return { success: true, applicationId: order.applicationId, receiptUrl: undefined };
     const program = await prisma.program.findUnique({ where: { id: order.programId } });
     // Recheck immediately before asking the payment provider to confirm the charge.
     const canCharge = program && admissionState(program) === 'OPEN' && order.expiresAt > new Date();
     const existing = await prisma.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId: order.programId } } });
-    if (existing) return { error: 'An application already exists. Check your dashboard before making another payment.' };
+    if (existing) return { error: 'An application already exists. Check your dashboard before making another payment.', code: 'alreadyAppliedPaid' };
     // A successful prior charge may be reconciled even after admissions close.
     const recovered = await findConfirmedTossPayment(orderId, order.amount);
-    if (!recovered.success && !canCharge) return {error: 'This checkout has expired or the program has closed. Contact support with your order reference before paying again.'};
+    if (!recovered.success && !canCharge) return {error: 'This checkout has expired or the program has closed. Contact support with your order reference before paying again.', code: 'checkoutExpired'};
     const confirmed = recovered.success ? recovered : await confirmTossPayment(paymentKey, orderId, order.amount);
-    if (!confirmed.success || !confirmed.paymentData) return { error: confirmed.error || 'Payment could not be confirmed. Please try again or contact support.' };
+    if (!confirmed.success || !confirmed.paymentData) return { error: confirmed.error || 'Payment could not be confirmed. Please try again or contact support.', code: 'paymentUnconfirmed' };
     const payment = confirmed.paymentData;
     let created = false;
     const applicationId = await prisma.$transaction(async tx => {
@@ -109,7 +110,7 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
     revalidatePath('/dashboard', 'layout');
     return { success: true, applicationId, receiptUrl: payment.receiptUrl };
   } catch {
-    return { error: 'We could not finish recording your application. If a charge appears, do not pay again. Contact support@cri.kr with your order reference.' };
+    return { error: 'We could not finish recording your application. If a charge appears, do not pay again. Contact support@cri.kr with your order reference.', code: 'finalizeFailed' };
   }
 }
 
@@ -119,19 +120,19 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
  */
 export async function submitApplicationWithoutFee(programId: string, input: unknown) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.' };
-  if (APPLICATION_FEE_ENABLED) return { error: 'An application fee is required for this program. Please continue to payment.' };
+  if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.', code: 'applySignIn' };
+  if (APPLICATION_FEE_ENABLED) return { error: 'An application fee is required for this program. Please continue to payment.', code: 'feeRequired' };
   const parsed = applicationSchema.safeParse(input);
-  if (!parsed.success) return { error: `Check the application fields and word limits: ${parsed.error.issues[0]?.path.join('.') || 'application'}.` };
+  if (!parsed.success) { const field = parsed.error.issues[0]?.path.join('.') || 'application'; return { error: `Check the application fields and word limits: ${field}.`, code: `invalidFields:${field}` }; }
   try {
-    if (!await allowRequest('submit', session.user.id, 5, 600)) return { error: 'Please wait a moment before submitting again.' };
+    if (!await allowRequest('submit', session.user.id, 5, 600)) return { error: 'Please wait a moment before submitting again.', code: 'submitRateLimit' };
     const [program, document, existing] = await Promise.all([
       prisma.program.findUnique({ where: { id: programId } }),
       prisma.applicationDocument.findFirst({ where: { id: parsed.data.resumeUrl.split('/').pop(), userId: session.user.id }, select: { id: true } }),
       prisma.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId } } }),
     ]);
-    if (!program || admissionState(program) !== 'OPEN') return { error: 'This program is no longer accepting applications. Please choose an available program.' };
-    if (!document) return { error: 'Please upload your CV again using this account.' };
+    if (!program || admissionState(program) !== 'OPEN') return { error: 'This program is no longer accepting applications. Please choose an available program.', code: 'programClosed' };
+    if (!document) return { error: 'Please upload your CV again using this account.', code: 'resumeMissing' };
     if (existing) return { success: true, applicationId: existing.id, duplicate: true };
     const submittedAt = new Date();
     const applicationId = await prisma.$transaction(async tx => {
@@ -164,6 +165,6 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
     revalidatePath('/dashboard', 'layout');
     return { success: true, applicationId };
   } catch {
-    return { error: 'We could not submit your application. Your draft is saved; please try again or contact support@cri.kr.' };
+    return { error: 'We could not submit your application. Your draft is saved; please try again or contact support@cri.kr.', code: 'submitFailed' };
   }
 }

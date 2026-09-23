@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from 'next/link';
 import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
 import { getDictionary, getLocale } from '@/i18n';
-export const metadata = { title: 'Application Guide & Fees | CRI' };
+export async function generateMetadata(): Promise<Metadata> {
+  const meta = getDictionary(await getLocale()).system.meta.admissions;
+  return pageMetadata({ title: meta.title, description: meta.description, path: '/admissions' });
+}
 export default async function AdmissionsPage() {
   const t = getDictionary(await getLocale()).admissions;
   return <article className="max-w-4xl mx-auto pt-36 pb-24 px-6 text-gray-700">
