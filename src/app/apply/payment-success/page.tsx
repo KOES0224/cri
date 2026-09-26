@@ -8,6 +8,7 @@ import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
 import { APPLICATION_CHARGE_LABEL } from "@/lib/application-fee";
 import { useT } from "@/i18n/client";
+import { metaTrack } from "@/lib/meta/pixel";
 
 function PaymentSuccessContent() {
   const { t } = useT();
@@ -41,10 +42,12 @@ function PaymentSuccessContent() {
       }
 
       try {
+      // The order id doubles as the Meta event id: reloads of this page and the server copy all deduplicate to one Purchase.
       const res = await finalizePaidApplication({
         paymentKey,
         orderId,
         amount: Number(amountStr),
+        eventId: orderId,
       });
 
       if (res.error) {
@@ -56,6 +59,7 @@ function PaymentSuccessContent() {
           receiptUrl: res.receiptUrl,
         });
         trackEvent("application_submitted", { program_id: programId || undefined, order_id: orderId, value: Number(amountStr), currency: "KRW" });
+        if (res.tracking) metaTrack("Purchase", res.tracking, orderId);
         setLoading(false);
         // Clean up draft storage
         try {

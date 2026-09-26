@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { safeEventId, sendMetaEvent } from "@/lib/meta/capi";
 
 // Error responses are plain-text stable codes (unauthorized | role | server) mapped to `auth.onboarding.errors` in src/i18n.
 function generateStudentCode() {
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { role } = body;
+    const { role, eventId } = body;
 
     if (role !== "STUDENT" && role !== "PARENT") {
       return new NextResponse("role", { status: 400 });
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
       }
     }
 
-    await prisma.user.update({
+    const user = await prisma.user.update({
       where: { email: session.user.email },
       data: {
         role,
@@ -44,7 +45,10 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, role, studentCode });
+    // Google sign-ups complete registration here; the browser fires the same event id.
+    const [firstName, ...rest] = (user.name || "").split(/\s+/);
+    const { data: tracking } = await sendMetaEvent({ name: "CompleteRegistration", eventId: safeEventId(eventId), person: { email: user.email, firstName, lastName: rest.join(" "), externalId: user.id }, data: { content_name: role.toLowerCase(), status: true } });
+    return NextResponse.json({ success: true, role, studentCode, tracking });
   } catch (error: any) {
     console.error("ONBOARDING_ERROR", error);
     return new NextResponse("server", { status: 500 });

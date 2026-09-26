@@ -10,14 +10,17 @@ import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/applica
 import { programKind } from '@/lib/program-policy';
 import { trackEvent } from '@/lib/analytics';
 import { useT } from '@/i18n/client';
+import { COUNTRY_CODES, countryName } from '@/lib/countries';
+import { metaTrack, metaTrackCustom, newEventId } from '@/lib/meta/pixel';
+import type { MetaCustomData } from '@/lib/meta/config';
 
 type Program = { id: string; title: string; category: string; tuition: number | null; professors: { id: string; name: string; university: string | null }[] };
-type Props = { program: Program; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean };
+type Props = { program: Program; content: MetaCustomData; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean };
 const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100';
 const actionClass = 'rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50';
 
-export default function ApplyClient({ program, user, applicantRole = 'STUDENT', savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable }: Props) {
-  const { t } = useT();
+export default function ApplyClient({ program, content, user, applicantRole = 'STUDENT', savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable }: Props) {
+  const { t, locale } = useT();
   const router = useRouter();
   const feeEnabled = APPLICATION_FEE_ENABLED;
   const copy = t.apply;
@@ -36,7 +39,7 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
   const prefill = parentApplying
     ? { studentFirstName: '', studentLastName: '', studentEmail: '', parentFirstName: parts[0] || '', parentLastName: parts.slice(1).join(' '), parentEmail: user.email || '' }
     : { studentFirstName: parts[0] || '', studentLastName: parts.slice(1).join(' '), studentEmail: user.email || '', parentFirstName: '', parentLastName: '', parentEmail: '' };
-  const [form, setForm] = useState<Record<string, string>>({ ...prefill, studentLevel: 'SCHOOL', studentPhone: '', parentPhone: '', school: '', gradYear: '', gender: '', tShirtSize: '', photoConsent: '', resumeUrl: '', initialTopicIdeas: '', areaOfInterest: '', essay: '', shortAnswer: '', firstChoiceProfessor: program.professors[0]?.name || '', secondChoiceProfessor: '', thirdChoiceProfessor: '', previousResearch: '', howLearned: '', ...savedDraft });
+  const [form, setForm] = useState<Record<string, string>>({ ...prefill, studentLevel: 'SCHOOL', residenceCountry: '', studentPhone: '', parentPhone: '', school: '', gradYear: '', gender: '', tShirtSize: '', photoConsent: '', resumeUrl: '', initialTopicIdeas: '', areaOfInterest: '', essay: '', shortAnswer: '', firstChoiceProfessor: program.professors[0]?.name || '', secondChoiceProfessor: '', thirdChoiceProfessor: '', previousResearch: '', howLearned: '', ...savedDraft });
   const [step, setStep] = useState(checkoutPending ? 3 : Math.min(3, Math.max(1, draftStep)));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState('');
@@ -61,6 +64,9 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
   const summer = ['seoul', 'global'].includes(programKind(program.category));
 
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  // Meta custom event: the form was opened (step 1); later steps are reported from move().
+  const started = useRef(false);
+  useEffect(() => { if (started.current || checkoutPending) return; started.current = true; metaTrackCustom('StartApplication', { ...content, step: 1 }); }, [checkoutPending, content]);
   useEffect(() => {
     const preventLoss = (event: BeforeUnloadEvent) => { if (revision.current !== savedRevision.current && !checkoutPending) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', preventLoss);
@@ -112,7 +118,7 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
       if (Object.keys(issues).length) { setErrors(issues); setNotice(copy.notices.checkFields); requestAnimationFrame(() => document.getElementById(`apply-${Object.keys(issues)[0]}`)?.focus()); return; }
     }
     revision.current += 1;
-    if (next > step) trackEvent('application_step', { program_id: program.id, step: next });
+    if (next > step) { trackEvent('application_step', { program_id: program.id, step: next }); metaTrackCustom('StartApplication', { ...content, step: next }); }
     setSaveState('unsaved'); setStep(next); setNotice(''); setErrors({});
     requestAnimationFrame(() => titleRef.current?.focus());
   }
@@ -137,10 +143,12 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
     setBusy(true); setNotice('');
     try {
       if (!await persist(form, step, revision.current)) throw new Error(copy.notices.saveBeforeSubmit);
-      const result = await submitApplicationWithoutFee(program.id, form);
+      const eventId = newEventId();
+      const result = await submitApplicationWithoutFee(program.id, form, { eventId });
       if (result.error || !result.applicationId) throw new Error(actionText(result, copy.notices.submitFailed));
       savedRevision.current = revision.current;
       trackEvent('application_submitted', { program_id: program.id, program_title: program.title, value: 0, currency: 'USD' });
+      if (!result.duplicate) metaTrack('SubmitApplication', result.tracking || content, eventId);
       router.push(`/apply/submitted?programId=${encodeURIComponent(program.id)}`);
     } catch (error) { setNotice(error instanceof Error && error.message ? error.message : copy.notices.notSubmitted); paymentLock.current = false; setBusy(false); }
   }
@@ -154,10 +162,12 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
       if (!checkoutRef.current && !await persist(form, step, revision.current)) throw new Error(copy.notices.saveBeforePay);
       const key = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
       if (!key || !paymentAvailable) throw new Error(copy.notices.paymentUnavailable);
-      const order = await beginApplicationCheckout(program.id, form);
+      const eventId = newEventId();
+      const order = await beginApplicationCheckout(program.id, form, { eventId });
       if (order.error || !order.orderId) throw new Error(actionText(order, copy.notices.preparePaymentFailed));
       checkoutRef.current = true; setCheckoutStarted(true);
       trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
+      metaTrack('InitiateCheckout', order.tracking, eventId);
       const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
       const sdk = await loadTossPayments(key);
       await sdk.payment({ customerKey: user.id }).requestPayment({ method: 'CARD', amount: { currency: order.currency!, value: order.amount! }, orderId: order.orderId, orderName: order.orderName!, successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`, failUrl: `${window.location.origin}/apply/payment-fail?programId=${encodeURIComponent(program.id)}`, customerEmail: user.email || form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim() });
@@ -185,6 +195,7 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
       {step === 1 && <div className="grid gap-5 sm:grid-cols-2">
         {parentApplying && <p className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-950 sm:col-span-2">{copy.parentApplying.a}<strong>{copy.parentApplying.strong}</strong>{copy.parentApplying.b}</p>}
         {field('studentLevel', { choices: [['SCHOOL',copy.schoolStudent],['UNIVERSITY',copy.universityStudent]] })}{field('school')}
+        {field('residenceCountry', { choices: COUNTRY_CODES.map(code => [code, countryName(code, locale)]) })}
         {field('studentFirstName')}{field('studentLastName')}{field('studentEmail', { type: 'email' })}{field('studentPhone', { type: 'tel' })}
         {field('gradYear', { hint: copy.gradYearHint })}{field('gender', { optional: true, choices: ['Female','Male','Other','Prefer not to say'].map(value => [value, copy.genders[value] ?? value]) })}
         {form.studentLevel !== 'UNIVERSITY' && <><p className="text-sm text-slate-600 sm:col-span-2">{copy.parentContactNote}</p>{field('parentFirstName')}{field('parentLastName')}{field('parentEmail', { type: 'email' })}{field('parentPhone', { type: 'tel' })}</>}
@@ -197,12 +208,13 @@ export default function ApplyClient({ program, user, applicantRole = 'STUDENT', 
         {program.professors.length === 0 && <p className="text-sm text-amber-800 sm:col-span-2">{feeEnabled ? copy.noFaculty : copy.free.noFaculty}</p>}
         {field('previousResearch', { optional: true, multiline: true, hint: copy.previousHint })}{field('howLearned', { optional: true })}
       </div>}
-      {step === 3 && <div className="space-y-6">{[1,2].map(section => <div key={section} className="rounded-xl border border-slate-200 p-4"><div className="mb-4 flex items-center justify-between gap-3"><h3 className="font-semibold">{section === 1 ? copy.headings[0] : copy.headings[1]}</h3>{!checkoutStarted && <button type="button" disabled={busy} onClick={() => move(section)} className="text-sm font-semibold text-blue-700 underline">{section === 1 ? copy.editPersonal : copy.editResearch}</button>}</div><dl className="space-y-4">{Object.keys(applicationLabels).filter(key => personalFields.includes(key) === (section === 1)).filter(key => !(form.studentLevel === 'UNIVERSITY' && key.startsWith('parent')) && !(key === 'tShirtSize' && !summer)).map(key => <div key={key}><dt className="text-xs font-semibold text-slate-500">{label(key)}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-900">{key === 'resumeUrl' ? <a href={form[key]} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">{filename || copy.viewPdf}</a> : key === 'studentLevel' ? form[key] === 'UNIVERSITY' ? copy.universityStudent : copy.schoolStudent : form[key] || copy.notProvided}</dd></div>)}</dl></div>)}
+      {step === 3 && <div className="space-y-6">{[1,2].map(section => <div key={section} className="rounded-xl border border-slate-200 p-4"><div className="mb-4 flex items-center justify-between gap-3"><h3 className="font-semibold">{section === 1 ? copy.headings[0] : copy.headings[1]}</h3>{!checkoutStarted && <button type="button" disabled={busy} onClick={() => move(section)} className="text-sm font-semibold text-blue-700 underline">{section === 1 ? copy.editPersonal : copy.editResearch}</button>}</div><dl className="space-y-4">{Object.keys(applicationLabels).filter(key => personalFields.includes(key) === (section === 1)).filter(key => !(form.studentLevel === 'UNIVERSITY' && key.startsWith('parent')) && !(key === 'tShirtSize' && !summer)).map(key => <div key={key}><dt className="text-xs font-semibold text-slate-500">{label(key)}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-900">{key === 'resumeUrl' ? <a href={form[key]} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">{filename || copy.viewPdf}</a> : key === 'studentLevel' ? form[key] === 'UNIVERSITY' ? copy.universityStudent : copy.schoolStudent : key === 'residenceCountry' && form[key] ? countryName(form[key] as (typeof COUNTRY_CODES)[number], locale) : form[key] || copy.notProvided}</dd></div>)}</dl></div>)}
         {!feeEnabled && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5"><p className="text-sm font-semibold text-emerald-900">{copy.free.box.title}</p><p className="mt-2 text-sm leading-relaxed text-emerald-900/80">{copy.free.box.body}</p></div>}
         {feeEnabled && <div className="rounded-xl border border-blue-200 bg-blue-50 p-5"><p className="text-sm font-semibold">{copy.feeBox.title}</p><p className="mt-2 text-2xl font-bold">{APPLICATION_CHARGE_LABEL}</p><p className="mt-3 text-sm leading-relaxed">{copy.feeBox.body1}</p><p className="mt-3 text-sm">{copy.feeBox.body2a}<Link href="/admissions" className="underline">{copy.feeBox.link1}</Link>{copy.feeBox.and}<Link href="/refunds" className="underline">{copy.feeBox.link2}</Link>{copy.feeBox.body2b}</p></div>}
       </div>}
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable} className={actionClass}>{busy ? copy.openingPayment : copy.payAndSubmit(APPLICATION_CHARGE_LABEL)}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>
       <p className="mt-6 text-xs leading-relaxed text-slate-500">{copy.help.a}<a href="mailto:support@cri.kr" className="underline">support@cri.kr</a>{copy.help.b}</p>
+      <p className="mt-2 text-xs leading-relaxed text-slate-500">{copy.adsNote}</p>
     </section>
   </div></div>;
 }

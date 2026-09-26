@@ -63,9 +63,9 @@ export default async function RootLayout({
               {children}
             </main>
             <PublicOnly><Footer /></PublicOnly>
+            <Analytics />
           </AppProvider>
         </LocaleProvider>
-        <Analytics />
       </body>
     </html>
   );

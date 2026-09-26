@@ -16,6 +16,8 @@ export default async function PrivacyPage() {
     <p>{t.provided.body}</p>
     <h2 className="text-2xl font-bold text-gray-900">{t.access.heading}</h2>
     <p>{t.access.body}</p>
+    <h2 className="text-2xl font-bold text-gray-900">{t.ads.heading}</h2>
+    <p>{t.ads.body}</p>
     <h2 className="text-2xl font-bold text-gray-900">{t.requests.heading}</h2>
     <p>{t.requests.bodyA}<a className="text-blue-700 underline" href="mailto:support@cri.kr">support@cri.kr</a>{t.requests.bodyB}</p>
     <p>{t.requests.note}</p>

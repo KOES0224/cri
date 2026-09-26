@@ -7,6 +7,7 @@ import { applicationSchema, applicationDraftSchema } from '@/lib/application-val
 import { canApply } from "@/lib/applicant";
 import { APPLICATION_FEE_ENABLED } from "@/lib/application-fee";
 import ApplyClient from "./ApplyClient";
+import { programContent } from "@/lib/meta/config";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
       include: {
         professors: {
           where: { acceptingMentees: true },
-          select: { id: true, name: true, university: true, role: true }
+          select: { id: true, name: true, university: true, role: true, relatedMajor: true, potentialTopics: true }
         }
       }
     }),
@@ -90,5 +91,5 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
   const parsed = checkoutPending ? applicationSchema.safeParse(pending.formData) : applicationDraftSchema.safeParse(saved?.formData);
   const savedDraft = parsed.success ? Object.fromEntries(Object.entries(parsed.data).filter((entry): entry is [string, string] => typeof entry[1] === 'string')) : undefined;
   const document = savedDraft?.resumeUrl ? await prisma.applicationDocument.findFirst({where: {id: savedDraft.resumeUrl.split('/').pop(), userId: session.user.id}}) : null;
-  return <ApplyClient program={programWithProfessors} user={session.user} applicantRole={session.user.role} savedDraft={savedDraft} draftVersion={saved?.version} draftStep={saved?.step} draftSavedAt={saved?.updatedAt.toISOString()} checkoutPending={checkoutPending} resumeFilename={document?.filename} paymentAvailable={Boolean(process.env.TOSS_SECRET_KEY && process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY)} />;
+  return <ApplyClient program={programWithProfessors} content={programContent(program)} user={session.user} applicantRole={session.user.role} savedDraft={savedDraft} draftVersion={saved?.version} draftStep={saved?.step} draftSavedAt={saved?.updatedAt.toISOString()} checkoutPending={checkoutPending} resumeFilename={document?.filename} paymentAvailable={Boolean(process.env.TOSS_SECRET_KEY && process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY)} />;
 }

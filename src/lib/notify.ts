@@ -82,6 +82,7 @@ export async function notifyApplicationReceived(app: PaidApplication) {
     `Student email: ${str(f.studentEmail) || '-'}  phone: ${str(f.studentPhone) || '-'}`,
     parent ? `Parent / guardian: ${parent} · ${str(f.parentEmail) || '-'} · ${str(f.parentPhone) || '-'}` : null,
     app.accountEmail ? `Account email: ${app.accountEmail}` : null,
+    str(f.residenceCountry) ? `Country of residence: ${str(f.residenceCountry)}` : null,
     `Area of interest: ${str(f.areaOfInterest) || '-'}`,
     `First-choice professor: ${str(f.firstChoiceProfessor) || '-'}`,
     ``,

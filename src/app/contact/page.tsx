@@ -7,18 +7,16 @@ import { trackEvent } from "@/lib/analytics";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useT } from "@/i18n/client";
+import { COUNTRY_CODES, countryName } from "@/lib/countries";
+import { metaTrack, newEventId } from "@/lib/meta/pixel";
 
 export default function ContactPage() {
   const { data: session, status: authStatus } = useSession();
-  const { t } = useT();
+  const { t, locale } = useT();
   const copy = t.contact;
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    message: "",
-  });
+  const emptyForm = { firstName: "", lastName: "", email: "", message: "", country: "", applicantType: "" };
+  const [formData, setFormData] = useState(emptyForm);
 
   // Pre-fill form when session loads
   useEffect(() => {
@@ -36,7 +34,7 @@ export default function ContactPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -47,11 +45,14 @@ export default function ContactPage() {
 
     try {
     const params = new URLSearchParams(window.location.search);
-    const res = await submitContactForm({ ...formData, topic: params.get("topic") || "", programId: params.get("programId") || "" });
+    // One id for the browser and server copies of the Lead event, so Meta deduplicates them.
+    const eventId = newEventId();
+    const res = await submitContactForm({ ...formData, country: formData.country as (typeof COUNTRY_CODES)[number], applicantType: formData.applicantType as "parent" | "student" | "other", eventId, topic: params.get("topic") || "", programId: params.get("programId") || "" });
     if (res.success) {
       setStatus("success");
-      trackEvent("contact_submitted", { topic: params.get("topic") || undefined, program_id: params.get("programId") || undefined });
-      setFormData({ firstName: "", lastName: "", email: "", message: "" });
+      trackEvent("contact_submitted", { topic: params.get("topic") || undefined, program_id: params.get("programId") || undefined, applicant_type: formData.applicantType, country: formData.country });
+      metaTrack("Lead", res.tracking, eventId);
+      setFormData(emptyForm);
     } else {
       setStatus("error");
       setErrorMessage(res.error || copy.genericError);
@@ -155,6 +156,32 @@ export default function ContactPage() {
                     className="w-full px-4 py-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
                   />
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="contact-country" className="block text-sm font-bold text-gray-700 mb-2">{copy.country}</label>
+                    <select
+                      required
+                      id="contact-country" name="country"
+                      value={formData.country}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-gray-50 text-gray-900 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    >
+                      <option value="">{copy.countryPlaceholder}</option>
+                      {COUNTRY_CODES.map((code) => <option key={code} value={code}>{countryName(code, locale)}</option>)}
+                    </select>
+                  </div>
+                  <fieldset>
+                    <legend className="block text-sm font-bold text-gray-700 mb-2">{copy.applicantType}</legend>
+                    <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2">
+                      {([["parent", copy.applicantParent], ["student", copy.applicantStudent], ["other", copy.applicantOther]] as const).map(([value, label]) => (
+                        <label key={value} className="inline-flex items-center gap-2 text-sm text-gray-800">
+                          <input required type="radio" name="applicantType" value={value} checked={formData.applicantType === value} onChange={handleChange} className="h-4 w-4 accent-blue-600" />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                </div>
                 <div>
                   <label htmlFor="contact-message" className="block text-sm font-bold text-gray-700 mb-2">{copy.message}</label>
                   <textarea 
@@ -168,6 +195,7 @@ export default function ContactPage() {
                   />
                 </div>
                 <p className="text-sm text-gray-600">{copy.requiredNote}<Link href="/privacy" className="underline text-blue-700">{copy.privacyLink}</Link></p>
+                <p className="text-xs text-gray-500">{copy.adsNote}</p>
                 <button 
                   disabled={status === "loading"} 
                   type="submit" 

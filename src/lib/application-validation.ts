@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { COUNTRY_CODES } from './countries';
 // Validation messages are stable codes (see applicationErrorMessages); the UI maps them to the visitor's language.
 const text = z.string({ message: 'required' });
 const required = text.trim().min(1, 'required').max(200, 'maxLength:200');
@@ -8,6 +9,7 @@ const essay = (words: number) => text.trim().min(1, 'required').max(words * 30, 
 export const applicationFields = z.object({
   studentFirstName: required, studentLastName: required, studentEmail: email, studentPhone: required,
   studentLevel: z.enum(['SCHOOL', 'UNIVERSITY'], { message: 'required' }).default('SCHOOL'),
+  residenceCountry: z.enum(COUNTRY_CODES, { message: 'required' }),
   parentFirstName: optional, parentLastName: optional, parentEmail: z.string().trim().max(254, 'maxLength:254').default(''), parentPhone: optional,
   school: required, gradYear: required, gender: optional, tShirtSize: optional,
   photoConsent: z.enum(['Yes', 'No'], { message: 'photoConsent' }),
@@ -28,10 +30,10 @@ export const applicationSchema = applicationFields.superRefine((data, ctx) => {
   }
 });
 export type ApplicationInput = z.input<typeof applicationFields>;
-export const personalFields = ['studentFirstName','studentLastName','studentEmail','studentPhone','studentLevel','parentFirstName','parentLastName','parentEmail','parentPhone','school','gradYear','gender','tShirtSize','photoConsent'];
+export const personalFields = ['studentFirstName','studentLastName','studentEmail','studentPhone','studentLevel','residenceCountry','parentFirstName','parentLastName','parentEmail','parentPhone','school','gradYear','gender','tShirtSize','photoConsent'];
 export const applicationLabels: Record<string, string> = {
   studentFirstName: 'First name', studentLastName: 'Last name', studentEmail: 'Student email', studentPhone: 'Student phone',
-  studentLevel: 'Academic level', parentFirstName: 'Parent / guardian first name', parentLastName: 'Parent / guardian last name', parentEmail: 'Parent / guardian email', parentPhone: 'Parent / guardian phone',
+  studentLevel: 'Academic level', residenceCountry: 'Country of residence', parentFirstName: 'Parent / guardian first name', parentLastName: 'Parent / guardian last name', parentEmail: 'Parent / guardian email', parentPhone: 'Parent / guardian phone',
   school: 'School / university', gradYear: 'Expected graduation year', gender: 'Gender (optional)', tShirtSize: 'T-shirt size (optional)', photoConsent: 'Photo / video permission',
   resumeUrl: 'Academic resume (PDF)', initialTopicIdeas: 'Research interests and topic ideas', areaOfInterest: 'Primary area of interest', essay: 'Why are you interested?', shortAnswer: 'Your research goals', firstChoiceProfessor: 'First-choice professor', secondChoiceProfessor: 'Second-choice professor', thirdChoiceProfessor: 'Third-choice professor', previousResearch: 'Past research experience', howLearned: 'How you heard about CRI',
 };
