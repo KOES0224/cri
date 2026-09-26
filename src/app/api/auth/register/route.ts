@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { allowRequest } from "@/lib/request-limit";
 import { validNewPassword } from "@/lib/password-policy";
 import * as z from "zod";
-import { safeEventId, sendMetaEvent } from "@/lib/meta/capi";
+import { sendMetaEvent } from "@/lib/meta/capi";
 
 /**
  * Error responses are plain-text stable codes (not sentences) so the client can show them in the visitor's language.
@@ -23,8 +23,6 @@ export async function POST(request: Request) {
       email: z.string().trim().toLowerCase().email("email").max(254, "email"),
       password: z.string().refine(validNewPassword, "password"),
       role: z.enum(["STUDENT", "PARENT"], { message: "role" }),
-      // Meta event id shared with the browser pixel's CompleteRegistration.
-      eventId: z.string().max(64).optional(),
     });
 
     const parsed = registerSchema.safeParse(body);
@@ -34,7 +32,7 @@ export async function POST(request: Request) {
       return new NextResponse(parsed.error.issues[0]?.message || "form", { status: 400 });
     }
 
-    const { name, email, password, role, eventId } = parsed.data;
+    const { name, email, password, role } = parsed.data;
 
     if (!await allowRequest("register", email, 5, 900)) return new NextResponse("rate", { status: 429 });
     const existingUser = await prisma.user.findUnique({
@@ -74,8 +72,9 @@ export async function POST(request: Request) {
     });
 
     const [firstName, ...rest] = name.split(/\s+/);
-    const { data: tracking } = await sendMetaEvent({ name: "CompleteRegistration", eventId: safeEventId(eventId), person: { email, firstName, lastName: rest.join(" "), externalId: user.id }, data: { content_name: role.toLowerCase(), status: true } });
-    return NextResponse.json({ id: user.id, email: user.email, role: user.role, studentCode: user.studentCode, tracking });
+    const { data: tracking } = await sendMetaEvent({ name: "CompleteRegistration", eventId: user.id, person: { email, firstName, lastName: rest.join(" "), externalId: user.id }, data: { content_name: role.toLowerCase(), status: true } });
+    // The new user id is the Meta event id; the browser fires CompleteRegistration with it.
+    return NextResponse.json({ id: user.id, email: user.email, role: user.role, studentCode: user.studentCode, tracking, eventId: user.id });
   } catch (error: any) {
     console.error("REGISTRATION_ERROR", error);
     return new NextResponse("server", { status: 500 });

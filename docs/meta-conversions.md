@@ -9,13 +9,19 @@ Pixel / dataset id `2270683237022393`. Code lives in `src/lib/meta/` and `src/co
 | PageView | every route change, real path | – | `MetaPixel` |
 | ViewContent | program detail | – | `TrackProgramView` |
 | StartApplication (custom, `step` 1–3) | apply form opened / step advanced | – | `ApplyClient` |
-| CompleteRegistration | sign-up (credentials + Google onboarding) | `/api/auth/register`, `/api/auth/onboard` | same `eventId` |
-| Lead | contact form success | `submitContactForm` | same `eventId` |
-| InitiateCheckout | Toss window requested | `beginApplicationCheckout` | same `eventId` |
-| SubmitApplication | free submission success | `submitApplicationWithoutFee` | same `eventId` |
-| Purchase | payment-success page | `finalizePaidApplication` | `eventId` = Toss order id (stable across reloads) |
+| CompleteRegistration | sign-up (credentials + Google onboarding) | `/api/auth/register`, `/api/auth/onboard` | user id |
+| Lead | contact form success | `submitContactForm` | lead id |
+| InitiateCheckout | Toss window requested | `beginApplicationCheckout` | checkout order id |
+| SubmitApplication | free submission success | `submitApplicationWithoutFee` | application id |
+| Purchase | payment-success page | `finalizePaidApplication` | Toss order id |
 
-The server action computes the parameters (`content_name` = "University - Professor - Field", `content_category`, `applicant_type`, `applicant_region`, `value`/`currency`, first-touch UTM) and returns them as `tracking`; the browser fires the pixel event with that object and the same `eventId`, so both copies are identical and Meta deduplicates them.
+The server decides the event id (the record's own id, so retries, reloads and resumed checkouts collapse to one event) and computes the parameters (`content_name` = "University - Professor - Field", `content_category`, `applicant_type`, `applicant_region`, `value`/`currency`, first-touch UTM). It returns both as `tracking` and `eventId`; the browser fires the pixel event with exactly those, so the two copies are identical and Meta deduplicates them.
+
+Browser events fired before the pixel has initialised (page-level mount effects run before the layout's `MetaPixel` effect) are buffered in `src/lib/meta/pixel.ts` and flushed right after `fbq('init')`, so ViewContent on a direct landing is never lost. `MetaPixel` does not wait for the client-side session: the root layout reads the session on the server and passes the SHA-256 hashed email and user id as advanced-matching keys.
+
+Known limitation: advanced-matching keys are set at pixel init, so a visitor who signs in without a full page load keeps anonymous browser events until the next hard navigation. The P0 conversions are matched through the server events (hashed email, phone, name, country, user id) regardless.
+
+`/apply/payment-success` removes the provider's `paymentKey`, `amount` and `paymentType` from the address bar before the pixel's PageView fires, and the server strips every query parameter except `programId`, `topic`, `role`, `step`, `fbclid` and `utm_*` from `event_source_url`.
 
 ## Environment (Vercel → Project → Environment Variables)
 
@@ -24,7 +30,7 @@ The server action computes the parameters (`content_name` = "University - Profes
 | `NEXT_PUBLIC_META_PIXEL_ID` | all | `2270683237022393` (already set) |
 | `META_CAPI_ACCESS_TOKEN` | Production only | Events Manager → Settings → Conversions API → Generate access token |
 | `META_TEST_EVENT_CODE` | Preview / temporary | `TESTxxxxx` from Events Manager → Test events; remove after verifying |
-| `META_CAPI_ALLOW_NON_PRODUCTION` | Preview only | `true` to let a preview send server events (used with a test code) |
+| `META_CAPI_ALLOW_NON_PRODUCTION` | Preview only | `true` to let a preview send server events; only honoured together with `META_TEST_EVENT_CODE` |
 | `NEXT_PUBLIC_META_ALLOWED_HOSTS` | optional | defaults to `criglobal.org,www.criglobal.org`; add `cri.kr,www.cri.kr` when that domain goes live |
 | `META_LEAD_VALUE_USD`, `META_SUBMIT_APPLICATION_VALUE_USD` | optional | estimated values for Lead / SubmitApplication |
 

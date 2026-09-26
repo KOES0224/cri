@@ -35,8 +35,8 @@ export function normalizePhone(phone: string | null | undefined, country?: strin
   const hasPlus = raw.startsWith("+");
   let digits = raw.replace(/\D/g, "");
   if (!digits) return undefined;
-  if (hasPlus) return validLength(digits);
-  if (digits.startsWith("00")) return validLength(digits.slice(2));
+  if (hasPlus) return validLength(dropTrunkZero(digits));
+  if (digits.startsWith("00")) return validLength(dropTrunkZero(digits.slice(2)));
   const cc = (country || "").trim().toUpperCase();
   let dial = DIAL_CODES[cc];
   if (!dial) {
@@ -51,6 +51,14 @@ export function normalizePhone(phone: string | null | undefined, country?: strin
   return validLength(dial + digits);
 }
 
+/** Dialling codes whose national numbers use a trunk "0" that must not appear in E.164 (e.g. "+82 010" → "8210"). */
+const TRUNK_ZERO_DIALS = Object.values(DIAL_CODES).filter((d) => d !== "1" && d !== "7").sort((a, b) => b.length - a.length);
+function dropTrunkZero(digits: string): string {
+  const dial = TRUNK_ZERO_DIALS.find((d) => digits.startsWith(d));
+  if (dial && digits[dial.length] === "0" && digits.length > dial.length + 8) return dial + digits.slice(dial.length + 1);
+  return digits;
+}
+
 function validLength(digits: string): string | undefined {
   return digits.length >= 8 && digits.length <= 15 ? digits : undefined;
 }
@@ -60,8 +68,9 @@ export function normalizeCountry(country: string | null | undefined): string | u
   return /^[a-z]{2}$/.test(v) ? v : undefined;
 }
 
+/** Meta wants names lowercase without punctuation or whitespace ("Mary-Ann O'Neil" → "maryannoneil"); letters in any script are kept. */
 export function normalizeName(name: string | null | undefined): string | undefined {
-  const v = (name || "").trim().toLowerCase().replace(/\s+/g, " ");
+  const v = (name || "").normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
   return v || undefined;
 }
 

@@ -35,8 +35,7 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
       where: { id: programId },
       include: {
         professors: {
-          where: { acceptingMentees: true },
-          select: { id: true, name: true, university: true, role: true, relatedMajor: true, potentialTopics: true }
+          select: { id: true, name: true, university: true, role: true, relatedMajor: true, potentialTopics: true, acceptingMentees: true }
         }
       }
     }),
@@ -68,7 +67,7 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
   });
 
   const uniqueProfessorsMap = new Map();
-  (program.professors || []).forEach(prof => {
+  (program.professors || []).filter(prof => prof.acceptingMentees).forEach(prof => {
     uniqueProfessorsMap.set(prof.id, prof);
   });
   relatedPrograms.forEach(p => {

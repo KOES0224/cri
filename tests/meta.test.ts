@@ -3,13 +3,16 @@ import assert from 'node:assert/strict';
 
 // The env module is imported first: the meta modules read their environment at load time.
 import './helpers/meta-env';
-import { normalizePhone, normalizeEmail, normalizeCountry, sha256 } from '../src/lib/meta/normalize';
+import { normalizePhone, normalizeEmail, normalizeCountry, normalizeName, sha256 } from '../src/lib/meta/normalize';
 import { applicantRegion, applicantTypeFromRole, metaHostAllowed, programContent, cleanCustomData, META_VALUES } from '../src/lib/meta/config';
-import { buildMetaPayload, metaServerEnabled, safeEventId, metaCustomData } from '../src/lib/meta/payload';
+import { buildMetaPayload, metaServerEnabled, safeEventId, metaCustomData, sanitizeSourceUrl } from '../src/lib/meta/payload';
 
 test('phone numbers become E.164 digits for the markets CRI recruits from', () => {
   assert.equal(normalizePhone('010-1234-5678', 'KR'), '821012345678');
   assert.equal(normalizePhone('+82 10-1234-5678'), '821012345678');
+  assert.equal(normalizePhone('+82 010-1234-5678'), '821012345678'); // trunk zero after the dial code
+  assert.equal(normalizePhone('+84 0912 345 678'), '84912345678');
+  assert.equal(normalizePhone('+1 (415) 555-0100'), '14155550100');
   assert.equal(normalizePhone('010 1234 5678'), '821012345678'); // no country: Korean pattern
   assert.equal(normalizePhone('(415) 555-0100', 'US'), '14155550100');
   assert.equal(normalizePhone('1 415 555 0100', 'US'), '14155550100');
@@ -29,6 +32,9 @@ test('emails and countries are normalised before hashing; invalid values are dro
   assert.equal(normalizeEmail('nope'), undefined);
   assert.equal(normalizeCountry('KR'), 'kr');
   assert.equal(normalizeCountry('Korea'), undefined);
+  assert.equal(normalizeName(" Mary-Ann O'Neil "), 'maryannoneil');
+  assert.equal(normalizeName('김 민준'), '김민준');
+  assert.equal(normalizeName('  '), undefined);
   assert.match(sha256('parent@example.com'), /^[0-9a-f]{64}$/);
 });
 
@@ -106,6 +112,17 @@ test('the Conversions API payload carries hashed identifiers, browser ids and th
   assert.deepEqual(event.custom_data, { utm_source: 'meta', utm_campaign: 'summer26', content_name: 'Emory University - David McMillon - Behavioral Economics', applicant_type: 'parent', applicant_region: 'KR', value: 25, currency: 'USD' });
   // The browser receives the same custom data so both copies of the event match.
   assert.deepEqual(cleanCustomData(metaCustomData(ctx, { value: 25, currency: 'USD' })), { utm_source: 'meta', utm_campaign: 'summer26', value: 25, currency: 'USD' });
+});
+
+test('event_source_url keeps attribution parameters and drops payment references and tokens', () => {
+  assert.equal(sanitizeSourceUrl('https://criglobal.org/apply/payment-success?programId=p1&paymentType=NORMAL&orderId=CRI_1&paymentKey=tviva20240101&amount=68000'), 'https://criglobal.org/apply/payment-success?programId=p1');
+  assert.equal(sanitizeSourceUrl('https://criglobal.org/research/program/p1?utm_source=meta&fbclid=abc#apply'), 'https://criglobal.org/research/program/p1?utm_source=meta&fbclid=abc');
+  assert.equal(sanitizeSourceUrl('https://criglobal.org/auth/reset?token=secret'), 'https://criglobal.org/auth/reset');
+  assert.equal(sanitizeSourceUrl('javascript:alert(1)'), undefined);
+  assert.equal(sanitizeSourceUrl(''), undefined);
+  const ctx = { host: 'criglobal.org', ip: null, userAgent: null, referer: 'https://criglobal.org/apply/payment-success?orderId=CRI_1&paymentKey=k&amount=1', fbp: null, fbc: null, attribution: {}, production: true };
+  const body = buildMetaPayload(ctx, { name: 'Purchase', eventId: 'CRI_1234567890' }) as { data: Array<Record<string, unknown>> };
+  assert.equal(body.data[0].event_source_url, 'https://criglobal.org/apply/payment-success');
 });
 
 test('missing identifiers are omitted rather than sent empty', () => {

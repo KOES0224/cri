@@ -504,7 +504,7 @@ export const ko: Dictionary = {
     messagePlaceholder: "궁금한 점을 자세히 적어 주세요...",
     requiredNote: "* 필수 항목입니다. 연락처와 문의 내용은 답변에만 사용합니다. 비밀번호, 카드 정보, 신분증은 적지 말아 주세요. ",
     privacyLink: "개인정보 안내",
-    adsNote: "광고 성과 측정을 위해 이메일과 전화번호를 해시(SHA-256) 처리한 값만 Meta에 전달합니다. 원문은 전달되지 않습니다.",
+    adsNote: "광고 성과 측정을 위해 제출 시 이메일 주소·이름·거주 국가를 해시(SHA-256) 처리한 값만 Meta에 전달합니다. 원문은 전달되지 않습니다.",
     submitting: "보내는 중...",
     submit: "문의 보내기",
     genericError: "문제가 발생했습니다.",
@@ -804,7 +804,7 @@ export const ko: Dictionary = {
     openingPayment: "결제 창 여는 중…",
     payAndSubmit: (charge: string) => `${charge} 결제 후 제출`,
     help: { a: "도움이 필요하신가요? ", b: ". 카드에 결제 내역은 있는데 제출이 확인되지 않는다면, 다시 결제하기 전에 먼저 문의해 주세요." },
-    adsNote: "광고 성과 측정을 위해 제출 시 연락처 이메일과 전화번호를 해시(SHA-256) 처리한 값만 Meta에 전달합니다. 원문은 전달되지 않습니다.",
+    adsNote: "광고 성과 측정을 위해 제출 시 연락처 이메일·전화번호·이름·거주 국가를 해시(SHA-256) 처리한 값만 Meta에 전달합니다. 원문은 전달되지 않습니다.",
     fields: {
       studentFirstName: "이름",
       studentLastName: "성",

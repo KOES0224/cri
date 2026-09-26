@@ -10,7 +10,7 @@ import { PASSWORD_MIN_LENGTH } from "@/lib/password-policy";
 import { signIn } from "next-auth/react";
 import { trackEvent } from "@/lib/analytics";
 import { useT } from "@/i18n/client";
-import { metaTrack, newEventId } from "@/lib/meta/pixel";
+import { metaTrack } from "@/lib/meta/pixel";
 import type { Dictionary } from "@/i18n/config";
 
 /** Maps the stable codes returned by /api/auth/register to the visitor's language; unknown codes fall back to the raw text. */
@@ -73,12 +73,11 @@ function RegisterForm() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const eventId = newEventId();
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role, eventId }),
+        body: JSON.stringify({ name, email, password, role }),
       });
 
       if (!res.ok) {
@@ -90,7 +89,7 @@ function RegisterForm() {
 
       trackEvent("sign_up", { role, method: "credentials" });
       const created = await res.json().catch(() => ({}));
-      metaTrack("CompleteRegistration", created.tracking || { content_name: role.toLowerCase() }, eventId);
+      if (created.eventId) metaTrack("CompleteRegistration", created.tracking || { content_name: role.toLowerCase() }, created.eventId);
       // Auto login after successful registration
       const loginRes = await signIn("credentials", {
         email,

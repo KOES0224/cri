@@ -1,4 +1,3 @@
-import "server-only";
 import { after } from "next/server";
 import { cookies, headers } from "next/headers";
 import { META_PIXEL_ID, cleanCustomData, type MetaCustomData } from "./config";
@@ -15,19 +14,25 @@ export type { MetaPerson, MetaRequestContext, MetaServerEvent } from "./payload"
  */
 const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN || "";
 
+/** Never throws: outside a request (tests, scripts) it returns a context that sends nothing. */
 export async function captureMetaContext(): Promise<MetaRequestContext> {
-  const [h, c] = await Promise.all([headers(), cookies()]);
-  const forwarded = h.get("x-forwarded-for");
-  return {
-    host: h.get("x-forwarded-host") || h.get("host"),
-    ip: (forwarded ? forwarded.split(",")[0] : h.get("x-real-ip"))?.trim() || null,
-    userAgent: h.get("user-agent"),
-    referer: h.get("referer"),
-    fbp: c.get("_fbp")?.value || null,
-    fbc: c.get("_fbc")?.value || null,
-    attribution: parseAttribution(c.get(ATTRIBUTION_COOKIE)?.value),
-    production: process.env.VERCEL_ENV === "production" || process.env.META_CAPI_ALLOW_NON_PRODUCTION === "true",
-  };
+  try {
+    const [h, c] = await Promise.all([headers(), cookies()]);
+    const forwarded = h.get("x-forwarded-for");
+    return {
+      host: h.get("x-forwarded-host") || h.get("host"),
+      ip: (forwarded ? forwarded.split(",")[0] : h.get("x-real-ip"))?.trim() || null,
+      userAgent: h.get("user-agent"),
+      referer: h.get("referer"),
+      fbp: c.get("_fbp")?.value || null,
+      fbc: c.get("_fbc")?.value || null,
+      attribution: parseAttribution(c.get(ATTRIBUTION_COOKIE)?.value),
+      // Previews and local runs may send server events only for Test Events (a test code is required), never to live data.
+      production: process.env.VERCEL_ENV === "production" || (process.env.META_CAPI_ALLOW_NON_PRODUCTION === "true" && Boolean(process.env.META_TEST_EVENT_CODE)),
+    };
+  } catch {
+    return { host: null, ip: null, userAgent: null, referer: null, fbp: null, fbc: null, attribution: {}, production: false };
+  }
 }
 
 async function post(body: Record<string, unknown>) {

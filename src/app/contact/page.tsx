@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useT } from "@/i18n/client";
 import { COUNTRY_CODES, countryName } from "@/lib/countries";
-import { metaTrack, newEventId } from "@/lib/meta/pixel";
+import { metaTrack } from "@/lib/meta/pixel";
 
 export default function ContactPage() {
   const { data: session, status: authStatus } = useSession();
@@ -45,13 +45,12 @@ export default function ContactPage() {
 
     try {
     const params = new URLSearchParams(window.location.search);
-    // One id for the browser and server copies of the Lead event, so Meta deduplicates them.
-    const eventId = newEventId();
-    const res = await submitContactForm({ ...formData, country: formData.country as (typeof COUNTRY_CODES)[number], applicantType: formData.applicantType as "parent" | "student" | "other", eventId, topic: params.get("topic") || "", programId: params.get("programId") || "" });
+    const res = await submitContactForm({ ...formData, country: formData.country as (typeof COUNTRY_CODES)[number], applicantType: formData.applicantType as "parent" | "student" | "other", topic: params.get("topic") || "", programId: params.get("programId") || "" });
     if (res.success) {
       setStatus("success");
       trackEvent("contact_submitted", { topic: params.get("topic") || undefined, program_id: params.get("programId") || undefined, applicant_type: formData.applicantType, country: formData.country });
-      metaTrack("Lead", res.tracking, eventId);
+      // Same event id and parameters as the server copy, so Meta counts the inquiry once.
+      metaTrack("Lead", res.tracking, res.eventId);
       setFormData(emptyForm);
     } else {
       setStatus("error");

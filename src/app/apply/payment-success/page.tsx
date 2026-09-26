@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { finalizePaidApplication } from "@/app/actions/payment";
 import { CheckCircle2, Loader2, AlertCircle, ExternalLink, ArrowRight } from "lucide-react";
@@ -22,8 +22,13 @@ function PaymentSuccessContent() {
     applicationId?: string;
     receiptUrl?: string;
   } | null>(null);
+  const started = useRef(false);
 
   useEffect(() => {
+    // Runs once: the payment reference is read from the URL, then removed from the address bar so analytics and
+    // the browser history never carry it. The router syncs searchParams after replaceState, which re-runs this effect.
+    if (started.current) return;
+    started.current = true;
     // The action names its reason in `code` (a t.apply.errors key); the English `error` text is the fallback.
     const actionText = (res: { error?: string; code?: string }) => {
       const localized = res.code ? (t.apply.errors as Record<string, unknown>)[res.code] : undefined;
@@ -40,14 +45,18 @@ function PaymentSuccessContent() {
         setLoading(false);
         return;
       }
+      try {
+        const clean = new URL(window.location.href);
+        for (const key of ["paymentKey", "amount", "paymentType"]) clean.searchParams.delete(key);
+        // A plain state object: Next treats its own history state as internal and would not sync useSearchParams.
+        window.history.replaceState(null, "", clean.toString());
+      } catch {}
 
       try {
-      // The order id doubles as the Meta event id: reloads of this page and the server copy all deduplicate to one Purchase.
       const res = await finalizePaidApplication({
         paymentKey,
         orderId,
         amount: Number(amountStr),
-        eventId: orderId,
       });
 
       if (res.error) {
@@ -59,7 +68,8 @@ function PaymentSuccessContent() {
           receiptUrl: res.receiptUrl,
         });
         trackEvent("application_submitted", { program_id: programId || undefined, order_id: orderId, value: Number(amountStr), currency: "KRW" });
-        if (res.tracking) metaTrack("Purchase", res.tracking, orderId);
+        // The order id is the event id on both sides: reloads of this page and the server copy deduplicate to one Purchase.
+        if (res.tracking && res.eventId) metaTrack("Purchase", res.tracking, res.eventId);
         setLoading(false);
         // Clean up draft storage
         try {

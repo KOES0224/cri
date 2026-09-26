@@ -78,7 +78,8 @@ type ProgramLike = { id: string; title: string; category?: string | null; subCat
 
 /** "Emory University - David McMillon - Behavioral Economics": what ads reports show per program. */
 export function programContent(program: ProgramLike): Pick<MetaCustomData, "content_name" | "content_category" | "content_ids" | "content_type"> {
-  const professor = program.professors?.[0];
+  // Deterministic across pages and server actions, whatever order the database returns the relation in.
+  const professor = [...(program.professors || [])].sort((a, b) => a.name.localeCompare(b.name))[0];
   const field = (professor?.relatedMajor || professor?.potentialTopics?.split(/[|,]/)[0] || program.subCategory || program.category || "").trim();
   const parts = professor ? [professor.university, professor.name, field].map((p) => (p || "").trim()).filter(Boolean) : [];
   return {

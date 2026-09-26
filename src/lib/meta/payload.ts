@@ -70,6 +70,22 @@ export function safeEventId(value: unknown): string | undefined {
   return typeof value === "string" && EVENT_ID.test(value) ? value : undefined;
 }
 
+const SOURCE_URL_PARAMS = new Set(["programId", "topic", "role", "step", "fbclid", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]);
+/**
+ * event_source_url with only the query parameters Meta needs for attribution. The payment provider's return URL
+ * carries its payment key and amount, and other pages may carry tokens; none of that belongs in an ad platform's log.
+ */
+export function sanitizeSourceUrl(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    if (!/^https?:$/.test(url.protocol)) return undefined;
+    for (const key of Array.from(url.searchParams.keys())) if (!SOURCE_URL_PARAMS.has(key)) url.searchParams.delete(key);
+    url.hash = "";
+    return url.toString();
+  } catch { return undefined; }
+}
+
 /** Builds the Conversions API request body. Pure, so tests can assert on it; hashes are computed here. */
 export function buildMetaPayload(ctx: MetaRequestContext, event: MetaServerEvent, now = Date.now()) {
   const p = event.person || {};
@@ -93,7 +109,7 @@ export function buildMetaPayload(ctx: MetaRequestContext, event: MetaServerEvent
       event_name: event.name,
       event_time: Math.floor(now / 1000),
       event_id: event.eventId || undefined,
-      event_source_url: event.sourceUrl || ctx.referer || undefined,
+      event_source_url: sanitizeSourceUrl(event.sourceUrl || ctx.referer),
       action_source: "website",
       user_data,
       ...(Object.keys(custom_data).length ? { custom_data } : {}),

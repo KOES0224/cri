@@ -506,7 +506,7 @@ export const en = {
     messagePlaceholder: "Type your detailed inquiry here...",
     requiredNote: "* Required. We use your contact details and message to respond to this inquiry. Do not include passwords, payment card details or identity documents. ",
     privacyLink: "Privacy information",
-    adsNote: "To measure our advertising, a hashed (SHA-256) version of your email address and phone number is shared with Meta. The plain values are never shared.",
+    adsNote: "To measure our advertising, a hashed (SHA-256) version of your email address, name and country is shared with Meta when you submit. The plain values are never shared.",
     submitting: "Submitting...",
     submit: "Submit Message",
     genericError: "Something went wrong.",
@@ -811,7 +811,7 @@ export const en = {
     openingPayment: "Opening payment…",
     payAndSubmit: (charge: string) => `Pay ${charge} and submit`,
     help: { a: "Need help? ", b: ". If a payment appears on your card but submission is unclear, contact us before paying again." },
-    adsNote: "To measure our advertising, a hashed (SHA-256) version of the contact email and phone number is shared with Meta when you submit. The plain values are never shared.",
+    adsNote: "To measure our advertising, a hashed (SHA-256) version of the contact email address, phone number, name and country of residence is shared with Meta when you submit. The plain values are never shared.",
     /** Korean field labels are keyed by application field; English falls back to applicationLabels. */
     fields: {} as Record<string, string>,
   },

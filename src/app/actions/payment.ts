@@ -12,12 +12,10 @@ import { confirmTossPayment, findConfirmedTossPayment } from '@/lib/toss';
 import { revalidatePath } from 'next/cache';
 import { notifyApplicationReceived, sendApplicationConfirmation } from '@/lib/notify';
 import { META_VALUES, applicantRegion, applicantTypeFromRole, programContent, type MetaCustomData } from '@/lib/meta/config';
-import { captureMetaContext, safeEventId, sendMetaEvent, type MetaPerson } from '@/lib/meta/capi';
+import { captureMetaContext, sendMetaEvent, type MetaPerson } from '@/lib/meta/capi';
 import type { ApplicationInput } from '@/lib/application-validation';
 
-/** Browser-generated Meta event id; the pixel fires the same event with it so Meta keeps one copy. */
-type TrackingInput = { eventId?: string } | undefined;
-const PROGRAM_CONTENT = { select: { id: true, title: true, category: true, subCategory: true, professors: { take: 1, select: { name: true, university: true, relatedMajor: true, potentialTopics: true } } } } as const;
+const PROGRAM_CONTENT = { select: { id: true, title: true, category: true, subCategory: true, professors: { select: { name: true, university: true, relatedMajor: true, potentialTopics: true } } } } as const;
 type ProgramForContent = { id: string; title: string; category: string; subCategory: string | null; professors: { name: string; university: string | null; relatedMajor: string | null; potentialTopics: string | null }[] };
 
 /** The person on the browser: the guardian when a parent account applies, otherwise the student. */
@@ -34,7 +32,7 @@ function applicationData(program: ProgramForContent, role: string | null | undef
 }
 
 // `error` stays English for existing callers; `code` names a key in t.apply.errors so the form can show the visitor's language.
-export async function beginApplicationCheckout(programId: string, input: unknown, tracking?: TrackingInput) {
+export async function beginApplicationCheckout(programId: string, input: unknown) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.', code: 'applySignIn' };
   if (!APPLICATION_FEE_ENABLED) return { error: 'No application fee is required. Submit the application without payment.', code: 'feeDisabled' };
@@ -58,7 +56,9 @@ export async function beginApplicationCheckout(programId: string, input: unknown
       if (pending?.status === 'COMPLETED') throw new Error('Already completed');
       if (pending) {
         if (pending.expiresAt <= new Date()) throw new Error('CHECKOUT_REVIEW');
-        if (JSON.stringify(applicationSchema.parse(pending.formData)) !== JSON.stringify(parsed.data)) throw new Error('CHECKOUT_CHANGED');
+        // A pending checkout saved under an older form shape (e.g. before residenceCountry existed) is treated as changed.
+        const previous = applicationSchema.safeParse(pending.formData);
+        if (!previous.success || JSON.stringify(previous.data) !== JSON.stringify(parsed.data)) throw new Error('CHECKOUT_CHANGED');
         return pending;
       }
 
@@ -68,8 +68,9 @@ export async function beginApplicationCheckout(programId: string, input: unknown
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
     } });
     });
-    const { data: meta } = await sendMetaEvent({ name: 'InitiateCheckout', eventId: safeEventId(tracking?.eventId), person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, { value: order.amount, currency: APPLICATION_CHARGE.currency }) });
-    return { orderId: order.id, amount: order.amount, currency: APPLICATION_CHARGE.currency, orderName: `${program.title.slice(0, 75)} — application fee`, tracking: meta };
+    // The order id is the event id: resuming the same pending order, and the browser's pixel call, deduplicate to one InitiateCheckout.
+    const { data: meta } = await sendMetaEvent({ name: 'InitiateCheckout', eventId: order.id, person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, { value: order.amount, currency: APPLICATION_CHARGE.currency }) });
+    return { orderId: order.id, amount: order.amount, currency: APPLICATION_CHARGE.currency, orderName: `${program.title.slice(0, 75)} — application fee`, tracking: meta, eventId: order.id };
   } catch (error) {
     if (error instanceof Error && error.message === 'CHECKOUT_CHANGED') return {error: 'An earlier checkout is pending. Reload to resume your saved application. Contact admissions to revise it before paying.', code: 'checkoutChanged'};
     if (error instanceof Error && error.message === 'CHECKOUT_REVIEW') return {error: 'Your earlier checkout needs review. Contact admissions before paying again so we can check its payment status.', code: 'checkoutReview'};
@@ -77,7 +78,7 @@ export async function beginApplicationCheckout(programId: string, input: unknown
   }
 }
 
-export async function finalizePaidApplication({ paymentKey, orderId, amount, eventId }: { paymentKey: string; orderId: string; amount: number; eventId?: string }) {
+export async function finalizePaidApplication({ paymentKey, orderId, amount }: { paymentKey: string; orderId: string; amount: number }) {
   const session = await getServerSession(authOptions);
   // Read while the request is alive; the Purchase event is sent after the charge is recorded.
   const metaContext = await captureMetaContext();
@@ -136,10 +137,10 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount, eve
     let tracking: MetaCustomData | undefined;
     if (created && program) {
       const form = applicationSchema.safeParse(order.formData);
-      const result = await sendMetaEvent({ name: 'Purchase', eventId: safeEventId(eventId) || orderId, person: form.success ? applicantPerson(session.user, form.data) : { email: session.user.email, externalId: session.user.id }, data: { ...applicationData(program, session.user.role, form.success ? form.data.residenceCountry : undefined), value: payment.totalAmount, currency: payment.currency, order_id: orderId } }, metaContext);
+      const result = await sendMetaEvent({ name: 'Purchase', eventId: orderId, person: form.success ? applicantPerson(session.user, form.data) : { email: session.user.email, externalId: session.user.id }, data: { ...applicationData(program, session.user.role, form.success ? form.data.residenceCountry : undefined), value: payment.totalAmount, currency: payment.currency, order_id: orderId } }, metaContext);
       tracking = result.data;
     }
-    return { success: true, applicationId, receiptUrl: payment.receiptUrl, tracking };
+    return { success: true, applicationId, receiptUrl: payment.receiptUrl, tracking, eventId: orderId };
   } catch {
     return { error: 'We could not finish recording your application. If a charge appears, do not pay again. Contact support@cri.kr with your order reference.', code: 'finalizeFailed' };
   }
@@ -149,7 +150,7 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount, eve
  * Free submission path, used while APPLICATION_FEE_ENABLED is off. Same validation and admission
  * checks as the paid checkout; the application is created directly with the fee marked as waived.
  */
-export async function submitApplicationWithoutFee(programId: string, input: unknown, tracking?: TrackingInput) {
+export async function submitApplicationWithoutFee(programId: string, input: unknown) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.', code: 'applySignIn' };
   if (APPLICATION_FEE_ENABLED) return { error: 'An application fee is required for this program. Please continue to payment.', code: 'feeRequired' };
@@ -194,8 +195,9 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
       await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);
     } catch { console.error('Application saved; notification emails failed.'); }
     revalidatePath('/dashboard', 'layout');
-    const { data: meta } = await sendMetaEvent({ name: 'SubmitApplication', eventId: safeEventId(tracking?.eventId), person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, META_VALUES.submitApplication ? { value: META_VALUES.submitApplication, currency: 'USD' } : undefined) });
-    return { success: true, applicationId, tracking: meta };
+    // The application id is the event id, shared with the browser's pixel call.
+    const { data: meta } = await sendMetaEvent({ name: 'SubmitApplication', eventId: applicationId, person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, META_VALUES.submitApplication ? { value: META_VALUES.submitApplication, currency: 'USD' } : undefined) });
+    return { success: true, applicationId, tracking: meta, eventId: applicationId };
   } catch {
     return { error: 'We could not submit your application. Your draft is saved; please try again or contact support@cri.kr.', code: 'submitFailed' };
   }

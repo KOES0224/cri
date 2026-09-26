@@ -16,28 +16,42 @@ export function newEventId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
-function fbq(): Fbq | undefined {
-  return typeof window === "undefined" ? undefined : window.fbq;
+/**
+ * Events fired before MetaPixel has initialised the pixel (page-level mount effects run before the layout's
+ * MetaPixel effect on a hard load) wait here and are flushed right after fbq('init'). Bounded so a page that never
+ * initialises the pixel cannot grow it.
+ */
+const pending: unknown[][] = [];
+let ready = false;
+const PENDING_LIMIT = 50;
+
+function call(...args: unknown[]) {
+  if (!ready || !window.fbq) { if (pending.length < PENDING_LIMIT) pending.push(args); return; }
+  try { window.fbq(...args); } catch {}
+}
+
+/** Called by MetaPixel once the pixel is initialised; replays anything fired earlier in this page load. */
+export function markMetaReady() {
+  ready = true;
+  const queued = pending.splice(0, pending.length);
+  for (const args of queued) call(...args);
 }
 
 /** Standard event with a dedup id. No-op when the pixel is not active. */
 export function metaTrack(event: MetaStandardEvent, data: MetaCustomData = {}, eventId?: string) {
   if (!metaBrowserEnabled()) return;
-  const f = fbq(); if (!f) return;
-  try { f("track", event, cleanCustomData(data), eventId ? { eventID: eventId } : undefined); } catch {}
+  call("track", event, cleanCustomData(data), eventId ? { eventID: eventId } : undefined);
 }
 
 /** Custom event (StartApplication) with a dedup id. */
 export function metaTrackCustom(event: MetaCustomEvent, data: MetaCustomData = {}, eventId?: string) {
   if (!metaBrowserEnabled()) return;
-  const f = fbq(); if (!f) return;
-  try { f("trackCustom", event, cleanCustomData(data), eventId ? { eventID: eventId } : undefined); } catch {}
+  call("trackCustom", event, cleanCustomData(data), eventId ? { eventID: eventId } : undefined);
 }
 
 export function metaPageView(eventId?: string) {
   if (!metaBrowserEnabled()) return;
-  const f = fbq(); if (!f) return;
-  try { f("track", "PageView", {}, eventId ? { eventID: eventId } : undefined); } catch {}
+  call("track", "PageView", {}, eventId ? { eventID: eventId } : undefined);
 }
 
 function readCookie(name: string): string | undefined {
@@ -61,7 +75,8 @@ export function captureAttribution() {
   if (typeof window === "undefined") return;
   const params = new URLSearchParams(window.location.search);
   const fbclid = params.get("fbclid");
-  if (fbclid && !readCookie("_fbc")) writeCookie("_fbc", `fb.1.${Date.now()}.${fbclid}`, ATTRIBUTION_MAX_AGE);
+  // A new click id replaces the stored one (Meta's pixel does the same once it has loaded).
+  if (fbclid && !(readCookie("_fbc") || "").endsWith(`.${fbclid}`)) writeCookie("_fbc", `fb.1.${Date.now()}.${fbclid}`, ATTRIBUTION_MAX_AGE);
 
   const utm: Attribution = {};
   for (const key of ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const) {
@@ -70,11 +85,15 @@ export function captureAttribution() {
   if (fbclid) utm.fbclid = fbclid.slice(0, 200);
   const hasNew = Object.keys(utm).length > 0;
   if (!hasNew) return;
-  // First touch wins: keep the original campaign unless nothing was stored yet.
-  if (readCookie(ATTRIBUTION_COOKIE)) return;
-  utm.landing = window.location.pathname;
-  utm.at = Date.now();
-  writeCookie(ATTRIBUTION_COOKIE, JSON.stringify(utm), ATTRIBUTION_MAX_AGE);
+  // First touch wins: stored fields are never overwritten, but fields the first visit lacked (e.g. a bare fbclid
+  // landing followed later by a tagged campaign link) are filled in.
+  let stored: Attribution = {};
+  try { stored = JSON.parse(readCookie(ATTRIBUTION_COOKIE) || "{}") as Attribution; } catch {}
+  const merged: Attribution = { ...utm, ...stored };
+  if (JSON.stringify(merged) === JSON.stringify(stored)) return;
+  if (!merged.landing) merged.landing = window.location.pathname;
+  if (!merged.at) merged.at = Date.now();
+  writeCookie(ATTRIBUTION_COOKIE, JSON.stringify(merged), ATTRIBUTION_MAX_AGE);
 }
 
 /** UTM fields to attach to a conversion's custom data. */

@@ -66,7 +66,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   // Meta custom event: the form was opened (step 1); later steps are reported from move().
   const started = useRef(false);
-  useEffect(() => { if (started.current || checkoutPending) return; started.current = true; metaTrackCustom('StartApplication', { ...content, step: 1 }); }, [checkoutPending, content]);
+  useEffect(() => { if (started.current || checkoutPending) return; started.current = true; metaTrackCustom('StartApplication', { ...content, step }, newEventId()); }, [checkoutPending, content, step]);
   useEffect(() => {
     const preventLoss = (event: BeforeUnloadEvent) => { if (revision.current !== savedRevision.current && !checkoutPending) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', preventLoss);
@@ -118,7 +118,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       if (Object.keys(issues).length) { setErrors(issues); setNotice(copy.notices.checkFields); requestAnimationFrame(() => document.getElementById(`apply-${Object.keys(issues)[0]}`)?.focus()); return; }
     }
     revision.current += 1;
-    if (next > step) { trackEvent('application_step', { program_id: program.id, step: next }); metaTrackCustom('StartApplication', { ...content, step: next }); }
+    if (next > step) { trackEvent('application_step', { program_id: program.id, step: next }); metaTrackCustom('StartApplication', { ...content, step: next }, newEventId()); }
     setSaveState('unsaved'); setStep(next); setNotice(''); setErrors({});
     requestAnimationFrame(() => titleRef.current?.focus());
   }
@@ -143,12 +143,11 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     setBusy(true); setNotice('');
     try {
       if (!await persist(form, step, revision.current)) throw new Error(copy.notices.saveBeforeSubmit);
-      const eventId = newEventId();
-      const result = await submitApplicationWithoutFee(program.id, form, { eventId });
+      const result = await submitApplicationWithoutFee(program.id, form);
       if (result.error || !result.applicationId) throw new Error(actionText(result, copy.notices.submitFailed));
       savedRevision.current = revision.current;
       trackEvent('application_submitted', { program_id: program.id, program_title: program.title, value: 0, currency: 'USD' });
-      if (!result.duplicate) metaTrack('SubmitApplication', result.tracking || content, eventId);
+      if (!result.duplicate && result.eventId) metaTrack('SubmitApplication', result.tracking || content, result.eventId);
       router.push(`/apply/submitted?programId=${encodeURIComponent(program.id)}`);
     } catch (error) { setNotice(error instanceof Error && error.message ? error.message : copy.notices.notSubmitted); paymentLock.current = false; setBusy(false); }
   }
@@ -162,12 +161,11 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       if (!checkoutRef.current && !await persist(form, step, revision.current)) throw new Error(copy.notices.saveBeforePay);
       const key = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
       if (!key || !paymentAvailable) throw new Error(copy.notices.paymentUnavailable);
-      const eventId = newEventId();
-      const order = await beginApplicationCheckout(program.id, form, { eventId });
+      const order = await beginApplicationCheckout(program.id, form);
       if (order.error || !order.orderId) throw new Error(actionText(order, copy.notices.preparePaymentFailed));
       checkoutRef.current = true; setCheckoutStarted(true);
       trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
-      metaTrack('InitiateCheckout', order.tracking, eventId);
+      metaTrack('InitiateCheckout', order.tracking, order.eventId);
       const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
       const sdk = await loadTossPayments(key);
       await sdk.payment({ customerKey: user.id }).requestPayment({ method: 'CARD', amount: { currency: order.currency!, value: order.amount! }, orderId: order.orderId, orderName: order.orderName!, successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`, failUrl: `${window.location.origin}/apply/payment-fail?programId=${encodeURIComponent(program.id)}`, customerEmail: user.email || form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim() });
