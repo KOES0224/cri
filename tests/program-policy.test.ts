@@ -40,7 +40,7 @@ test('password policy respects bcrypt byte limit, including non-ASCII input', ()
   assert.equal(validNewPassword('A-good-long-password'),true);
   assert.equal(validNewPassword('가'.repeat(25)),false);
 });
-const application={studentFirstName:'A',studentLastName:'B',studentEmail:'a@example.test',studentPhone:'123',parentFirstName:'C',parentLastName:'D',parentEmail:'d@example.test',parentPhone:'456',school:'School',gradYear:'2028',gender:'Prefer not to say',tShirtSize:'M',photoConsent:'No',resumeUrl:'/api/documents/abc123',initialTopicIdeas:'My topic',areaOfInterest:'Biology',essay:'My interests',shortAnswer:'My question',firstChoiceProfessor:'Professor',secondChoiceProfessor:'',thirdChoiceProfessor:'',previousResearch:'',howLearned:''};
+const application={studentFirstName:'A',studentLastName:'B',studentEmail:'a@example.test',studentPhone:'123',residenceCountry:'KR',parentFirstName:'C',parentLastName:'D',parentEmail:'d@example.test',parentPhone:'456',school:'School',gradYear:'2028',gender:'Prefer not to say',tShirtSize:'M',photoConsent:'No',resumeUrl:'/api/documents/abc123',initialTopicIdeas:'My topic',areaOfInterest:'Biology',essay:'My interests',shortAnswer:'My question',firstChoiceProfessor:'Professor',secondChoiceProfessor:'',thirdChoiceProfessor:'',previousResearch:'',howLearned:''};
 test('server validates required application fields, essay limits and private file references', () => {
  assert.equal(applicationSchema.safeParse(application).success,true);
  for(const patch of [{resumeUrl:'https://public.test/cv.pdf'},{essay:'word '.repeat(501)},{shortAnswer:'word '.repeat(151)},{studentFirstName:'  '}]) assert.equal(applicationSchema.safeParse({...application,...patch}).success,false);

@@ -10,6 +10,7 @@ export interface ApplicationSyncPayload {
   studentName: string;
   studentEmail: string;
   studentPhone: string;
+  residenceCountry: string;
   gender: string;
   school: string;
   gradYear: string;
@@ -70,6 +71,7 @@ export function formatApplicationForSheet(
     studentName,
     studentEmail: formData.studentEmail || user?.email || "",
     studentPhone: formData.studentPhone || "",
+    residenceCountry: formData.residenceCountry || "",
     gender: formData.gender || "",
     school: formData.school || "",
     gradYear: formData.gradYear || "",

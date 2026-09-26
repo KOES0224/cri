@@ -6,6 +6,8 @@ import { useSession } from "next-auth/react";
 import { safeCallbackUrl } from "@/lib/auth-input";
 import { applicantRoleFromParam } from "@/lib/applicant";
 import { useT } from "@/i18n/client";
+import { metaTrack } from "@/lib/meta/pixel";
+import { trackEvent } from "@/lib/analytics";
 import type { Dictionary } from "@/i18n/config";
 
 /** Maps the stable codes returned by /api/auth/onboard to the visitor's language; unknown codes fall back to the raw text. */
@@ -51,6 +53,8 @@ function OnboardingForm() {
       }
 
       const data = await res.json();
+      trackEvent("sign_up", { role, method: "google" });
+      if (data.eventId) metaTrack("CompleteRegistration", data.tracking || { content_name: role.toLowerCase() }, data.eventId);
 
       // Update NextAuth session state locally to avoid needing a hard refresh
       await update({
