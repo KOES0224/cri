@@ -10,6 +10,9 @@ import Analytics from "@/components/Analytics";
 import { SITE_URL } from "@/lib/seo";
 import { getDictionary, getLocale } from "@/i18n";
 import { LocaleProvider } from "@/i18n/client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { hashed, normalizeEmail } from "@/lib/meta/normalize";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,6 +54,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  // Signed-in visitors' email and user id go to the Meta pixel as advanced-matching keys, already SHA-256 hashed with
+  // the same normalisation the Conversions API uses, so both channels report identical keys and no plain value is
+  // rendered into the page. Read here so the pixel initialises immediately instead of waiting for a session fetch.
+  const session = process.env.NEXT_PUBLIC_META_PIXEL_ID ? await getServerSession(authOptions).catch(() => null) : null;
+  const matching = session?.user ? { em: hashed(normalizeEmail(session.user.email)), external_id: hashed(session.user.id?.trim() || undefined) } : undefined;
   return (
     <html lang={locale}>
       <body
@@ -65,7 +73,7 @@ export default async function RootLayout({
             <PublicOnly><Footer /></PublicOnly>
           </AppProvider>
         </LocaleProvider>
-        <Analytics />
+        <Analytics matching={matching} />
       </body>
     </html>
   );

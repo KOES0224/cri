@@ -11,6 +11,25 @@ import { allowRequest } from '@/lib/request-limit';
 import { confirmTossPayment, findConfirmedTossPayment } from '@/lib/toss';
 import { revalidatePath } from 'next/cache';
 import { notifyApplicationReceived, sendApplicationConfirmation } from '@/lib/notify';
+import { META_VALUES, applicantRegion, applicantTypeFromRole, programContent, type MetaCustomData } from '@/lib/meta/config';
+import { captureMetaContext, sendMetaEvent, type MetaPerson } from '@/lib/meta/capi';
+import type { ApplicationInput } from '@/lib/application-validation';
+
+const PROGRAM_CONTENT = { select: { id: true, title: true, category: true, subCategory: true, professors: { select: { name: true, university: true, relatedMajor: true, potentialTopics: true } } } } as const;
+type ProgramForContent = { id: string; title: string; category: string; subCategory: string | null; professors: { name: string; university: string | null; relatedMajor: string | null; potentialTopics: string | null }[] };
+
+/** The person on the browser: the guardian when a parent account applies, otherwise the student. */
+function applicantPerson(user: { id: string; email?: string | null; role?: string | null }, form: Pick<ApplicationInput, 'studentFirstName' | 'studentLastName' | 'studentPhone' | 'parentFirstName' | 'parentLastName' | 'parentPhone' | 'residenceCountry'>): MetaPerson {
+  const parent = user.role === 'PARENT' && form.parentPhone;
+  return {
+    email: user.email, externalId: user.id, country: form.residenceCountry,
+    phone: parent ? form.parentPhone : form.studentPhone,
+    firstName: parent ? form.parentFirstName : form.studentFirstName, lastName: parent ? form.parentLastName : form.studentLastName,
+  };
+}
+function applicationData(program: ProgramForContent, role: string | null | undefined, country: string | undefined, money?: { value: number; currency: string }): MetaCustomData {
+  return { ...programContent(program), applicant_type: applicantTypeFromRole(role), applicant_region: applicantRegion(country), ...(money || {}) };
+}
 
 // `error` stays English for existing callers; `code` names a key in t.apply.errors so the form can show the visitor's language.
 export async function beginApplicationCheckout(programId: string, input: unknown) {
@@ -23,7 +42,7 @@ export async function beginApplicationCheckout(programId: string, input: unknown
   try {
     if (!await allowRequest('checkout', session.user.id, 5, 600)) return { error: 'Please wait before starting another checkout.', code: 'checkoutRateLimit' };
     const [program, document, existing] = await Promise.all([
-      prisma.program.findUnique({ where: { id: programId } }),
+      prisma.program.findUnique({ where: { id: programId }, include: { professors: PROGRAM_CONTENT.select.professors } }),
       prisma.applicationDocument.findFirst({ where: { id: parsed.data.resumeUrl.split('/').pop(), userId: session.user.id }, select: { id: true } }),
       prisma.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId } } }),
     ]);
@@ -37,7 +56,9 @@ export async function beginApplicationCheckout(programId: string, input: unknown
       if (pending?.status === 'COMPLETED') throw new Error('Already completed');
       if (pending) {
         if (pending.expiresAt <= new Date()) throw new Error('CHECKOUT_REVIEW');
-        if (JSON.stringify(applicationSchema.parse(pending.formData)) !== JSON.stringify(parsed.data)) throw new Error('CHECKOUT_CHANGED');
+        // A pending checkout saved under an older form shape (e.g. before residenceCountry existed) is treated as changed.
+        const previous = applicationSchema.safeParse(pending.formData);
+        if (!previous.success || JSON.stringify(previous.data) !== JSON.stringify(parsed.data)) throw new Error('CHECKOUT_CHANGED');
         return pending;
       }
 
@@ -47,7 +68,9 @@ export async function beginApplicationCheckout(programId: string, input: unknown
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
     } });
     });
-    return { orderId: order.id, amount: order.amount, currency: APPLICATION_CHARGE.currency, orderName: `${program.title.slice(0, 75)} — application fee` };
+    // The order id is the event id: resuming the same pending order, and the browser's pixel call, deduplicate to one InitiateCheckout.
+    const { data: meta } = await sendMetaEvent({ name: 'InitiateCheckout', eventId: order.id, person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, { value: order.amount, currency: APPLICATION_CHARGE.currency }) });
+    return { orderId: order.id, amount: order.amount, currency: APPLICATION_CHARGE.currency, orderName: `${program.title.slice(0, 75)} — application fee`, tracking: meta, eventId: order.id };
   } catch (error) {
     if (error instanceof Error && error.message === 'CHECKOUT_CHANGED') return {error: 'An earlier checkout is pending. Reload to resume your saved application. Contact admissions to revise it before paying.', code: 'checkoutChanged'};
     if (error instanceof Error && error.message === 'CHECKOUT_REVIEW') return {error: 'Your earlier checkout needs review. Contact admissions before paying again so we can check its payment status.', code: 'checkoutReview'};
@@ -57,13 +80,15 @@ export async function beginApplicationCheckout(programId: string, input: unknown
 
 export async function finalizePaidApplication({ paymentKey, orderId, amount }: { paymentKey: string; orderId: string; amount: number }) {
   const session = await getServerSession(authOptions);
+  // Read while the request is alive; the Purchase event is sent after the charge is recorded.
+  const metaContext = await captureMetaContext();
   if (!session?.user?.id) return { error: 'Sign in with the account used for checkout.', code: 'checkoutSignIn' };
   if (typeof paymentKey !== 'string' || paymentKey.length > 500 || typeof orderId !== 'string' || orderId.length > 100) return { error: 'Invalid payment reference.', code: 'paymentReference' };
   try {
     const order = await prisma.applicationCheckout.findUnique({ where: { id: orderId } });
     if (!order || order.userId !== session.user.id || order.amount !== amount || amount !== APPLICATION_CHARGE.amount || order.currency !== APPLICATION_CHARGE.currency) return { error: 'Payment details could not be verified. Contact support if you have a receipt.', code: 'paymentMismatch' };
     if (order.status === 'COMPLETED' && order.applicationId) return { success: true, applicationId: order.applicationId, receiptUrl: undefined };
-    const program = await prisma.program.findUnique({ where: { id: order.programId } });
+    const program = await prisma.program.findUnique({ where: { id: order.programId }, include: { professors: PROGRAM_CONTENT.select.professors } });
     // Recheck immediately before asking the payment provider to confirm the charge.
     const canCharge = program && admissionState(program) === 'OPEN' && order.expiresAt > new Date();
     const existing = await prisma.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId: order.programId } } });
@@ -108,7 +133,14 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
       await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);
     } catch { console.error('Application saved; notification emails failed.'); }
     revalidatePath('/dashboard', 'layout');
-    return { success: true, applicationId, receiptUrl: payment.receiptUrl };
+    // Purchase is reported once per order: the event id is derived from the order, so retries and the browser copy deduplicate.
+    let tracking: MetaCustomData | undefined;
+    if (created && program) {
+      const form = applicationSchema.safeParse(order.formData);
+      const result = await sendMetaEvent({ name: 'Purchase', eventId: orderId, person: form.success ? applicantPerson(session.user, form.data) : { email: session.user.email, externalId: session.user.id }, data: { ...applicationData(program, session.user.role, form.success ? form.data.residenceCountry : undefined), value: payment.totalAmount, currency: payment.currency, order_id: orderId } }, metaContext);
+      tracking = result.data;
+    }
+    return { success: true, applicationId, receiptUrl: payment.receiptUrl, tracking, eventId: orderId };
   } catch {
     return { error: 'We could not finish recording your application. If a charge appears, do not pay again. Contact support@cri.kr with your order reference.', code: 'finalizeFailed' };
   }
@@ -127,7 +159,7 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
   try {
     if (!await allowRequest('submit', session.user.id, 5, 600)) return { error: 'Please wait a moment before submitting again.', code: 'submitRateLimit' };
     const [program, document, existing] = await Promise.all([
-      prisma.program.findUnique({ where: { id: programId } }),
+      prisma.program.findUnique({ where: { id: programId }, include: { professors: PROGRAM_CONTENT.select.professors } }),
       prisma.applicationDocument.findFirst({ where: { id: parsed.data.resumeUrl.split('/').pop(), userId: session.user.id }, select: { id: true } }),
       prisma.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId } } }),
     ]);
@@ -163,7 +195,9 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
       await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);
     } catch { console.error('Application saved; notification emails failed.'); }
     revalidatePath('/dashboard', 'layout');
-    return { success: true, applicationId };
+    // The application id is the event id, shared with the browser's pixel call.
+    const { data: meta } = await sendMetaEvent({ name: 'SubmitApplication', eventId: applicationId, person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, META_VALUES.submitApplication ? { value: META_VALUES.submitApplication, currency: 'USD' } : undefined) });
+    return { success: true, applicationId, tracking: meta, eventId: applicationId };
   } catch {
     return { error: 'We could not submit your application. Your draft is saved; please try again or contact support@cri.kr.', code: 'submitFailed' };
   }

@@ -243,6 +243,8 @@ model Lead {
   parentName  String?
   kakaoId     String?
   parentPhone String?
+  country       String?   // ISO-3166 alpha-2 residence country from the contact form
+  applicantType String?   // parent | student | other, as chosen on the contact form
 
   notes       String?   // Initial inquiry message
   deadline    DateTime?

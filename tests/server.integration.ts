@@ -38,7 +38,7 @@ test('real database: access control, private upload, checkout idempotency and pa
   const read=()=>readDocument(new Request('http://localhost'),{params:Promise.resolve({id:documentId})});
   assert.equal((await read()).status,200); assert.equal((await read()).headers.get('Cache-Control'),'private, no-store');
   session.user.id=otherId; assert.equal((await read()).status,404); session.user.id=userId;
-  const input={studentFirstName:'A',studentLastName:'B',studentEmail:'a@example.test',studentPhone:'123',parentFirstName:'C',parentLastName:'D',parentEmail:'d@example.test',parentPhone:'456',school:'School',gradYear:'2028',gender:'Prefer not to say',tShirtSize:'M',photoConsent:'No',resumeUrl:documentUrl,initialTopicIdeas:'My topic',areaOfInterest:'Biology',essay:'My interests',shortAnswer:'My question',firstChoiceProfessor:'Professor',secondChoiceProfessor:'',thirdChoiceProfessor:'',previousResearch:'',howLearned:''};
+  const input={studentFirstName:'A',studentLastName:'B',studentEmail:'a@example.test',studentPhone:'123',residenceCountry:'KR',parentFirstName:'C',parentLastName:'D',parentEmail:'d@example.test',parentPhone:'456',school:'School',gradYear:'2028',gender:'Prefer not to say',tShirtSize:'M',photoConsent:'No',resumeUrl:documentUrl,initialTopicIdeas:'My topic',areaOfInterest:'Biology',essay:'My interests',shortAnswer:'My question',firstChoiceProfessor:'Professor',secondChoiceProfessor:'',thirdChoiceProfessor:'',previousResearch:'',howLearned:''};
   const draft = await saveApplicationDraft(openId, {studentFirstName:'Draft only'}, 1, 0);
   assert.equal(draft.success,true); assert.equal(draft.version,1);
   assert.equal((await saveApplicationDraft(openId,{studentFirstName:'Stale'},1,0)).conflict,true);

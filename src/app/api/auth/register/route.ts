@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { allowRequest } from "@/lib/request-limit";
 import { validNewPassword } from "@/lib/password-policy";
 import * as z from "zod";
+import { sendMetaEvent } from "@/lib/meta/capi";
 
 /**
  * Error responses are plain-text stable codes (not sentences) so the client can show them in the visitor's language.
@@ -70,7 +71,10 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ id: user.id, email: user.email, role: user.role, studentCode: user.studentCode });
+    const [firstName, ...rest] = name.split(/\s+/);
+    const { data: tracking } = await sendMetaEvent({ name: "CompleteRegistration", eventId: user.id, person: { email, firstName, lastName: rest.join(" "), externalId: user.id }, data: { content_name: role.toLowerCase(), status: true } });
+    // The new user id is the Meta event id; the browser fires CompleteRegistration with it.
+    return NextResponse.json({ id: user.id, email: user.email, role: user.role, studentCode: user.studentCode, tracking, eventId: user.id });
   } catch (error: any) {
     console.error("REGISTRATION_ERROR", error);
     return new NextResponse("server", { status: 500 });
