@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { CRI_KR_HOSTS, CRI_KR_PAGES } from "./src/lib/cri-kr-redirects";
 
 // Slugs of the hardcoded articles that shipped before the blog moved to the CMS database (#15), mapped to
 // the article that now covers the same Naver post, so shared links and search results keep working.
@@ -24,10 +25,21 @@ const nextConfig: NextConfig = {
     // to the project) keep working only as permanent redirects, so sessions, OAuth callbacks and shared links
     // all live on one domain. src/proxy.ts then sends Korean visitors on to /ko.
     // Preview deployments (cri-portal-git-*, cri-portal-<hash>-*) are not matched.
+    const host = (value: string) => [{ type: "host" as const, value }];
     return [
-      ...["cri-portal-2024.vercel.app", "cri-portal.vercel.app", "cri.kr", "www.cri.kr"].map((host) => ({
+      // Old cri.kr pages go to their counterparts first; everything else on cri.kr keeps its path below.
+      ...CRI_KR_HOSTS.flatMap((value) => [
+        { source: "/", has: [...host(value), { type: "query" as const, key: "page_id", value: "16124" }], destination: "https://criglobal.org/blog", permanent: true },
+        ...CRI_KR_PAGES.map(([source, destination]) => ({
+          source: encodeURI(source),
+          has: host(value),
+          destination: `https://criglobal.org${destination}`,
+          permanent: true,
+        })),
+      ]),
+      ...["cri-portal-2024.vercel.app", "cri-portal.vercel.app", ...CRI_KR_HOSTS].map((value) => ({
         source: "/:path*",
-        has: [{ type: "host" as const, value: host }],
+        has: host(value),
         destination: "https://criglobal.org/:path*",
         permanent: true,
       })),
