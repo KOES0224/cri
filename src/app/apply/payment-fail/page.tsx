@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, RotateCcw, MessageSquare, Loader2 } from "lucide-react";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { useT } from "@/i18n/client";
 
 function PaymentFailContent() {

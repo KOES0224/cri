@@ -4,7 +4,7 @@ import { safeCallbackUrl } from "@/lib/auth-input";
 import { signIn } from "next-auth/react";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useT } from "@/i18n/client";
 

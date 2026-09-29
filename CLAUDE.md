@@ -23,5 +23,12 @@ Stack: Next.js 16 (App Router), React 19, Tailwind 4, Prisma 5 (PostgreSQL on Su
 - Data model: `prisma/schema.prisma`
 - Rollout notes from the last UX pass: `docs/program-ux-rollout.md`
 
+## Languages, URLs and SEO
+- Public pages have a Korean URL: `/research` is English, `/ko/research` is Korean. `src/proxy.ts` rewrites `/ko/*` onto the same routes; `src/i18n/routing.ts` lists the public sections and which pages have Korean content (hreflang). Portal pages (auth, apply, dashboard) stay unprefixed and follow the `lang` cookie.
+- Outside the dashboard, import `Link` from `@/i18n/link`, not `next/link`, so links stay on `/ko` URLs. A new public section needs `PUBLIC_SECTIONS` and the proxy matcher; add it to `KOREAN_CONTENT` once its body is translated.
+- Page metadata goes through `pageMetadata()` in `src/lib/seo.ts` (canonical + hreflang). JSON-LD lives in `src/lib/structured-data.tsx`; it carries no professor data by decision.
+- `/llms.txt` summarizes the site for AI assistants. Admin publish actions ping IndexNow (`src/lib/indexnow.ts`); `npx tsx scripts/indexnow-submit.ts --apply` resubmits the whole sitemap.
+- Search-console ownership tags come from Vercel env `GOOGLE_SITE_VERIFICATION`, `NAVER_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` (the content value only).
+
 ## Business priority
 Visitor → program page → application. Public funnel work comes before admin tooling.

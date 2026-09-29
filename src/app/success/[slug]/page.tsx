@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight, BookOpen, ExternalLink, GraduationCap, User } from "lucide-react";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { getSuccessStory, getSuccessStoryCards } from "@/lib/public-data";
 import { pageMetadata, summarize } from "@/lib/seo";
+import { JsonLd, articleJsonLd, breadcrumbJsonLd } from "@/lib/structured-data";
 import { getDictionary, getLocale } from "@/i18n";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -18,6 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: summarize(`${story.university}. ${story.description ?? ""}`),
     path: `/success/${story.slug || story.id}`,
     image: story.imageUrl,
+    type: "article",
   });
 }
 
@@ -31,8 +33,23 @@ export default async function SuccessStoryPage({ params }: Props) {
   const t = getDictionary(locale).success;
   const more = (await getSuccessStoryCards()).filter((s) => s.id !== story.id).slice(0, 3);
 
+  const path = `/success/${story.slug || story.id}`;
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-32">
+      <JsonLd
+        data={[
+          articleJsonLd({
+            path,
+            headline: story.projectTitle,
+            description: summarize(`${story.university}. ${story.description ?? ""}`),
+            image: story.imageUrl,
+            published: story.createdAt,
+            modified: story.updatedAt,
+            basedOn: naverSource ? story.externalLink : null,
+          }),
+          breadcrumbJsonLd(locale, [["CRI", "/"], [t.title, "/success"], [story.projectTitle, path]]),
+        ]}
+      />
       <div className="max-w-4xl mx-auto px-6">
         <Link href="/success" className="inline-flex items-center text-gray-500 hover:text-gray-900 transition-colors mb-8 font-medium">
           <ArrowLeft className="w-4 h-4 mr-2" /> {t.back}

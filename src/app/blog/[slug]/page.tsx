@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight, Clock, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
@@ -8,6 +8,7 @@ import MarkdownRenderer from "@/components/MarkdownRenderer";
 import EditorialCover from "@/components/EditorialCover";
 import { getPost, getPublishedPostCards } from "@/lib/public-data";
 import { pageMetadata, summarize } from "@/lib/seo";
+import { JsonLd, articleJsonLd, breadcrumbJsonLd } from "@/lib/structured-data";
 import { getDictionary, getLocale } from "@/i18n";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -20,6 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: summarize(post.excerpt || post.content),
     path: `/blog/${post.slug || post.id}`,
     image: post.imageUrl,
+    type: "article",
   });
 }
 
@@ -42,8 +44,23 @@ export default async function BlogPostPage({ params }: Props) {
     .filter((p) => p.id !== post.id && p.category === post.category)
     .slice(0, 3);
 
+  const path = `/blog/${post.slug || post.id}`;
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-32">
+      <JsonLd
+        data={[
+          articleJsonLd({
+            path,
+            headline: post.title,
+            description: summarize(post.excerpt || post.content),
+            image: post.imageUrl,
+            published: post.publishedAt ?? post.createdAt,
+            modified: post.updatedAt,
+            basedOn: naverSource ? post.externalLink : null,
+          }),
+          breadcrumbJsonLd(locale, [["CRI", "/"], [t.title, "/blog"], [post.title, path]]),
+        ]}
+      />
       <div className="max-w-4xl mx-auto px-6">
         <Link href="/blog" className="inline-flex items-center text-gray-500 hover:text-gray-900 transition-colors mb-8 font-medium">
           <ArrowLeft className="w-4 h-4 mr-2" /> {t.back}

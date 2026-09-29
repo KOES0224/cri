@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { motion } from "framer-motion";
 import { FolderGit2, Users, Trophy, ArrowRight, Star, ChevronRight, Activity, Award, Globe2 } from "lucide-react";
 

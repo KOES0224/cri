@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from "@/i18n/link";
 export const metadata = { title: 'Student Project Gallery | CRI' };
 export default function GalleryPage() {
   return <div className="min-h-[70vh] pt-36 pb-24 px-6"><div className="max-w-5xl mx-auto">

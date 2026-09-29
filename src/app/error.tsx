@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { AlertTriangle, Home } from "lucide-react";
-import Link from "next/link";
+import Link from "@/i18n/link";
 import { useT } from "@/i18n/client";
 
 export default function ErrorBoundary({ error, reset }: { error: Error & { digest?: string }, reset: () => void }) {
