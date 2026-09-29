@@ -1,4 +1,7 @@
-import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
+import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { applicationFeeFor } from '@/lib/payment-review';
 import { getProgramById } from "@/lib/public-data";
 import Link from "@/i18n/link";
 import { notFound } from "next/navigation";
@@ -38,6 +41,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function ProgramDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  // Fee copy follows the visitor's account: the payment-review account sees the fee it will be charged, everyone else the site setting.
+  const { feeEnabled: APPLICATION_FEE_ENABLED } = await applicationFeeFor((await getServerSession(authOptions))?.user?.id);
   const resolvedParams = await params;
   const program = await getProgram(resolvedParams.id);
 

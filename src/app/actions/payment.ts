@@ -5,7 +5,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { admissionState } from '@/lib/program-policy';
 import { canApply } from '@/lib/applicant';
-import { APPLICATION_CHARGE, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
+import { APPLICATION_CHARGE } from '@/lib/application-fee';
+import { applicationFeeFor, isPaymentReviewer } from '@/lib/payment-review';
 import { applicationSchema } from '@/lib/application-validation';
 import { allowRequest } from '@/lib/request-limit';
 import { confirmTossPayment, findConfirmedTossPayment } from '@/lib/toss';
@@ -35,7 +36,8 @@ function applicationData(program: ProgramForContent, role: string | null | undef
 export async function beginApplicationCheckout(programId: string, input: unknown) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.', code: 'applySignIn' };
-  if (!APPLICATION_FEE_ENABLED) return { error: 'No application fee is required. Submit the application without payment.', code: 'feeDisabled' };
+  const { feeEnabled, reviewer } = await applicationFeeFor(session.user.id);
+  if (!feeEnabled) return { error: 'No application fee is required. Submit the application without payment.', code: 'feeDisabled' };
   if (!process.env.TOSS_SECRET_KEY || !process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY) return { error: 'Online payment is unavailable. Contact admissions before paying.', code: 'paymentUnavailable' };
   const parsed = applicationSchema.safeParse(input);
   if (!parsed.success) { const field = parsed.error.issues[0]?.path.join('.') || 'application'; return { error: `Check the application fields and word limits: ${field}.`, code: `invalidFields:${field}` }; }
@@ -69,7 +71,8 @@ export async function beginApplicationCheckout(programId: string, input: unknown
     } });
     });
     // The order id is the event id: resuming the same pending order, and the browser's pixel call, deduplicate to one InitiateCheckout.
-    const { data: meta } = await sendMetaEvent({ name: 'InitiateCheckout', eventId: order.id, person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, { value: order.amount, currency: APPLICATION_CHARGE.currency }) });
+    // The payment-review account is not a prospect: no ad-measurement events.
+    const meta = reviewer ? undefined : (await sendMetaEvent({ name: 'InitiateCheckout', eventId: order.id, person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, { value: order.amount, currency: APPLICATION_CHARGE.currency }) })).data;
     return { orderId: order.id, amount: order.amount, currency: APPLICATION_CHARGE.currency, orderName: `${program.title.slice(0, 75)} — application fee`, tracking: meta, eventId: order.id };
   } catch (error) {
     if (error instanceof Error && error.message === 'CHECKOUT_CHANGED') return {error: 'An earlier checkout is pending. Reload to resume your saved application. Contact admissions to revise it before paying.', code: 'checkoutChanged'};
@@ -87,7 +90,8 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
   try {
     const order = await prisma.applicationCheckout.findUnique({ where: { id: orderId } });
     if (!order || order.userId !== session.user.id || order.amount !== amount || amount !== APPLICATION_CHARGE.amount || order.currency !== APPLICATION_CHARGE.currency) return { error: 'Payment details could not be verified. Contact support if you have a receipt.', code: 'paymentMismatch' };
-    if (order.status === 'COMPLETED' && order.applicationId) return { success: true, applicationId: order.applicationId, receiptUrl: undefined };
+    const reviewer = await isPaymentReviewer(session.user.id);
+    if (order.status === 'COMPLETED' && order.applicationId) return { success: true, applicationId: order.applicationId, receiptUrl: undefined, review: reviewer };
     const program = await prisma.program.findUnique({ where: { id: order.programId }, include: { professors: PROGRAM_CONTENT.select.professors } });
     // Recheck immediately before asking the payment provider to confirm the charge.
     const canCharge = program && admissionState(program) === 'OPEN' && order.expiresAt > new Date();
@@ -121,7 +125,8 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
       return app.id;
     });
     // Only the completed application is exported; payment keys and card details are never included.
-    try {
+    // The payment-review account's test submissions stay out of the admissions sheet.
+    if (!reviewer) try {
       const app = await prisma.application.findUniqueOrThrow({ where: { id: applicationId }, include: { program: true, user: true } });
       const { syncApplicationToGoogleSheet } = await import('@/lib/googleSheets');
       await syncApplicationToGoogleSheet({ application: app, user: session.user, program: app.program, formData: JSON.parse(app.content || '{}') });
@@ -129,31 +134,31 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
     // Notify admissions and confirm to the family once, on the callback that created the application.
     // Best effort: the application and charge are already committed.
     if (created) try {
-      const details = { applicationId, programTitle: program?.title || 'CRI program', accountEmail: session.user.email, form: order.formData as Record<string, unknown>, payment: { orderId, amount: payment.totalAmount, currency: payment.currency, receiptUrl: payment.receiptUrl } };
+      const details = { applicationId, programTitle: program?.title || 'CRI program', accountEmail: session.user.email, form: order.formData as Record<string, unknown>, payment: { orderId, amount: payment.totalAmount, currency: payment.currency, receiptUrl: payment.receiptUrl }, test: reviewer };
       await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);
     } catch { console.error('Application saved; notification emails failed.'); }
     revalidatePath('/dashboard', 'layout');
     // Purchase is reported once per order: the event id is derived from the order, so retries and the browser copy deduplicate.
     let tracking: MetaCustomData | undefined;
-    if (created && program) {
+    if (created && program && !reviewer) {
       const form = applicationSchema.safeParse(order.formData);
       const result = await sendMetaEvent({ name: 'Purchase', eventId: orderId, person: form.success ? applicantPerson(session.user, form.data) : { email: session.user.email, externalId: session.user.id }, data: { ...applicationData(program, session.user.role, form.success ? form.data.residenceCountry : undefined), value: payment.totalAmount, currency: payment.currency, order_id: orderId } }, metaContext);
       tracking = result.data;
     }
-    return { success: true, applicationId, receiptUrl: payment.receiptUrl, tracking, eventId: orderId };
+    return { success: true, applicationId, receiptUrl: payment.receiptUrl, tracking, eventId: orderId, review: reviewer };
   } catch {
     return { error: 'We could not finish recording your application. If a charge appears, do not pay again. Contact support@cri.kr with your order reference.', code: 'finalizeFailed' };
   }
 }
 
 /**
- * Free submission path, used while APPLICATION_FEE_ENABLED is off. Same validation and admission
+ * Free submission path, used while APPLICATION_FEE_ENABLED is off (except for the payment-review account). Same validation and admission
  * checks as the paid checkout; the application is created directly with the fee marked as waived.
  */
 export async function submitApplicationWithoutFee(programId: string, input: unknown) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.', code: 'applySignIn' };
-  if (APPLICATION_FEE_ENABLED) return { error: 'An application fee is required for this program. Please continue to payment.', code: 'feeRequired' };
+  if ((await applicationFeeFor(session.user.id)).feeEnabled) return { error: 'An application fee is required for this program. Please continue to payment.', code: 'feeRequired' };
   const parsed = applicationSchema.safeParse(input);
   if (!parsed.success) { const field = parsed.error.issues[0]?.path.join('.') || 'application'; return { error: `Check the application fields and word limits: ${field}.`, code: `invalidFields:${field}` }; }
   try {
