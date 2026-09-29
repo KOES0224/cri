@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { beginApplicationCheckout, submitApplicationWithoutFee } from '@/app/actions/payment';
 import { saveApplicationDraft } from '@/app/actions/applicationDrafts';
 import { applicationErrorMessage, applicationErrors, applicationLabels, personalFields } from '@/lib/application-validation';
-import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
+import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
 import { programKind } from '@/lib/program-policy';
 import { trackEvent } from '@/lib/analytics';
 import { useT } from '@/i18n/client';
@@ -15,14 +15,13 @@ import { metaTrack, metaTrackCustom, newEventId } from '@/lib/meta/pixel';
 import type { MetaCustomData } from '@/lib/meta/config';
 
 type Program = { id: string; title: string; category: string; tuition: number | null; professors: { id: string; name: string; university: string | null }[] };
-type Props = { program: Program; content: MetaCustomData; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean };
+type Props = { program: Program; content: MetaCustomData; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean; feeEnabled: boolean; reviewMode?: boolean };
 const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100';
 const actionClass = 'rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50';
 
-export default function ApplyClient({ program, content, user, applicantRole = 'STUDENT', savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable }: Props) {
+export default function ApplyClient({ program, content, user, applicantRole = 'STUDENT', savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable, feeEnabled, reviewMode = false }: Props) {
   const { t, locale } = useT();
   const router = useRouter();
-  const feeEnabled = APPLICATION_FEE_ENABLED;
   const copy = t.apply;
   const label = (key: string) => copy.fields[key] ?? applicationLabels[key];
   // Validation and action results carry stable codes ("required", "words:500", "invalidFields:essay"); unknown values are shown as-is.
@@ -66,7 +65,8 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   // Meta custom event: the form was opened (step 1); later steps are reported from move().
   const started = useRef(false);
-  useEffect(() => { if (started.current || checkoutPending) return; started.current = true; metaTrackCustom('StartApplication', { ...content, step }, newEventId()); }, [checkoutPending, content, step]);
+  // The payment-review account is not a prospect: none of its steps are reported to ad or analytics tools.
+  useEffect(() => { if (started.current || checkoutPending || reviewMode) return; started.current = true; metaTrackCustom('StartApplication', { ...content, step }, newEventId()); }, [checkoutPending, content, step, reviewMode]);
   useEffect(() => {
     const preventLoss = (event: BeforeUnloadEvent) => { if (revision.current !== savedRevision.current && !checkoutPending) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', preventLoss);
@@ -118,7 +118,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       if (Object.keys(issues).length) { setErrors(issues); setNotice(copy.notices.checkFields); requestAnimationFrame(() => document.getElementById(`apply-${Object.keys(issues)[0]}`)?.focus()); return; }
     }
     revision.current += 1;
-    if (next > step) { trackEvent('application_step', { program_id: program.id, step: next }); metaTrackCustom('StartApplication', { ...content, step: next }, newEventId()); }
+    if (next > step && !reviewMode) { trackEvent('application_step', { program_id: program.id, step: next }); metaTrackCustom('StartApplication', { ...content, step: next }, newEventId()); }
     setSaveState('unsaved'); setStep(next); setNotice(''); setErrors({});
     requestAnimationFrame(() => titleRef.current?.focus());
   }
@@ -146,8 +146,8 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       const result = await submitApplicationWithoutFee(program.id, form);
       if (result.error || !result.applicationId) throw new Error(actionText(result, copy.notices.submitFailed));
       savedRevision.current = revision.current;
-      trackEvent('application_submitted', { program_id: program.id, program_title: program.title, value: 0, currency: 'USD' });
-      if (!result.duplicate && result.eventId) metaTrack('SubmitApplication', result.tracking || content, result.eventId);
+      if (!reviewMode) trackEvent('application_submitted', { program_id: program.id, program_title: program.title, value: 0, currency: 'USD' });
+      if (!reviewMode && !result.duplicate && result.eventId) metaTrack('SubmitApplication', result.tracking || content, result.eventId);
       router.push(`/apply/submitted?programId=${encodeURIComponent(program.id)}`);
     } catch (error) { setNotice(error instanceof Error && error.message ? error.message : copy.notices.notSubmitted); paymentLock.current = false; setBusy(false); }
   }
@@ -164,8 +164,8 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       const order = await beginApplicationCheckout(program.id, form);
       if (order.error || !order.orderId) throw new Error(actionText(order, copy.notices.preparePaymentFailed));
       checkoutRef.current = true; setCheckoutStarted(true);
-      trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
-      metaTrack('InitiateCheckout', order.tracking, order.eventId);
+      if (!reviewMode) trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
+      if (!reviewMode && order.tracking) metaTrack('InitiateCheckout', order.tracking, order.eventId);
       const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
       const sdk = await loadTossPayments(key);
       await sdk.payment({ customerKey: user.id }).requestPayment({ method: 'CARD', amount: { currency: order.currency!, value: order.amount! }, orderId: order.orderId, orderName: order.orderName!, successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`, failUrl: `${window.location.origin}/apply/payment-fail?programId=${encodeURIComponent(program.id)}`, customerEmail: user.email || form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim() });
@@ -189,6 +189,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     <ol aria-label={copy.progress} className="mb-5 grid grid-cols-3 gap-2">{[copy.progressSteps[0], copy.progressSteps[1], feeEnabled ? copy.progressSteps[2] : copy.free.step3].map((label, index) => <li key={label} aria-current={step === index + 1 ? 'step' : undefined} className={`rounded-xl border px-3 py-3 text-xs font-semibold sm:text-sm ${step === index + 1 ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-500'}`}>{index + 1}. {label}</li>)}</ol>
     {!checkoutStarted && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs"><span role="status" className={saveState === 'error' ? 'text-red-700' : 'text-slate-600'}>{saveState === 'saving' ? copy.saving : saveState === 'unsaved' ? copy.unsaved : saveState === 'error' ? saveError : savedAt ? copy.savedAt(new Date(savedAt).toLocaleTimeString()) : copy.autosave}</span><button type="button" onClick={() => void persist(form, step, revision.current)} disabled={saveState === 'saving' || busy} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-semibold disabled:opacity-50">{copy.saveDraft}</button></div>}
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"><h2 ref={titleRef} tabIndex={-1} className="mb-6 text-xl font-bold text-slate-900 outline-none">{copy.headings[step - 1]}</h2>
+      {reviewMode && <div role="note" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">{copy.review.banner}</div>}
       {notice && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{notice}</div>}
       {step === 1 && <div className="grid gap-5 sm:grid-cols-2">
         {parentApplying && <p className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-950 sm:col-span-2">{copy.parentApplying.a}<strong>{copy.parentApplying.strong}</strong>{copy.parentApplying.b}</p>}

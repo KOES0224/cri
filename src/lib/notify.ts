@@ -65,7 +65,11 @@ type PaidApplication = {
   accountEmail?: string | null;
   form: Record<string, unknown>;
   payment: { orderId: string; amount: number; currency: string; receiptUrl?: string | null } | null;
+  /** Submitted by the payment-gateway review account: subjects are labelled so nobody processes it. */
+  test?: boolean;
 };
+
+const TEST_PREFIX = '[TEST · payment review] ';
 
 function str(value: unknown) { return typeof value === 'string' ? value.trim() : ''; }
 
@@ -90,7 +94,7 @@ export async function notifyApplicationReceived(app: PaidApplication) {
     ``,
     `Review: ${SITE_URL}/dashboard/applications-admin`,
   ].filter((line): line is string => line !== null);
-  return send({ to: ADMISSIONS_INBOX, subject: `[CRI application] ${student} · ${app.programTitle}`, text: lines.join('\n'), replyTo: str(f.studentEmail) || str(f.parentEmail) || undefined });
+  return send({ to: ADMISSIONS_INBOX, subject: `${app.test ? TEST_PREFIX : ''}[CRI application] ${student} · ${app.programTitle}`, text: lines.join('\n'), replyTo: str(f.studentEmail) || str(f.parentEmail) || undefined });
 }
 
 /** Confirmation to the family: account email plus the student / guardian addresses given in the form. */
@@ -116,7 +120,7 @@ export async function sendApplicationConfirmation(app: PaidApplication) {
     ``,
     `CRI Admissions`,
   ].join('\n');
-  return send({ to: recipients, subject: `We received your application · ${app.programTitle}`, text, replyTo: ADMISSIONS_INBOX });
+  return send({ to: recipients, subject: `${app.test ? TEST_PREFIX : ''}We received your application · ${app.programTitle}`, text, replyTo: ADMISSIONS_INBOX });
 }
 
 /** A student account was created (or linked) by admissions for an application submitted by a guardian. */
