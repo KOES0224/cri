@@ -41,6 +41,7 @@ Set these in `.env` locally and in Vercel. Values are never committed.
 | `ADMISSIONS_NOTIFY_EMAIL` | Inbox that receives new-application notifications. |
 | `GOOGLE_SHEET_WEBHOOK_URL` | Apps Script webhook that mirrors applications to a Google Sheet. |
 | `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_META_PIXEL_ID` | Optional analytics IDs; analytics are disabled when unset. |
+| `NEXT_PUBLIC_GTM_ID` | Optional Google Tag Manager container (`GTM-…`), loaded on criglobal.org only. Funnel events are pushed to its dataLayer. Don't add GA4 or the Meta Pixel as GTM tags; they're already installed in code. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional Google sign-in provider for next-auth. |
 
 ## Key paths
