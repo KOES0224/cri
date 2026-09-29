@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import Link from "@/i18n/link";
-import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/application-fee';
+import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { applicationFeeFor } from '@/lib/payment-review';
 import { getDictionary, getLocale } from '@/i18n';
 export async function generateMetadata(): Promise<Metadata> {
   const meta = getDictionary(await getLocale()).system.meta.admissions;
@@ -9,6 +12,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 export default async function AdmissionsPage() {
   const t = getDictionary(await getLocale()).admissions;
+  // The payment-review account sees the fee it will be charged; everyone else the site setting.
+  const { feeEnabled: APPLICATION_FEE_ENABLED } = await applicationFeeFor((await getServerSession(authOptions))?.user?.id);
   return <article className="max-w-4xl mx-auto pt-36 pb-24 px-6 text-gray-700">
     <h1 className="text-4xl sm:text-5xl font-black text-gray-900">{t.title}</h1>
     <p className="text-lg mt-5 leading-relaxed">{t.intro}</p>

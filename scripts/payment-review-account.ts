@@ -6,8 +6,8 @@
  *
  *   npx tsx scripts/payment-review-account.ts --out ~/cri-pg-review.txt              preview, no writes
  *   npx tsx scripts/payment-review-account.ts --out ~/cri-pg-review.txt --apply      create it (or reset its password)
- *   npx tsx scripts/payment-review-account.ts --disable --apply                      after the review: flag off, password scrambled, sessions ended
- *   npx tsx scripts/payment-review-account.ts --cleanup --apply                      delete the account's test applications, drafts and checkouts
+ *   npx tsx scripts/payment-review-account.ts --cleanup --apply                      after the review, first: delete the account's test applications, drafts and checkouts
+ *   npx tsx scripts/payment-review-account.ts --disable --apply                      then: flag off, password scrambled, sessions ended
  *
  * Options: --email <address> (default support+tosspg@cri.kr, delivered to the support inbox).
  * The password is written only to the --out file (mode 600) and is never printed.
@@ -15,6 +15,7 @@
  */
 import { randomBytes } from "node:crypto";
 import { chmodSync, writeFileSync } from "node:fs";
+import { relative, resolve } from "node:path";
 import { homedir } from "node:os";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
@@ -50,6 +51,7 @@ function samplePdf(): Buffer {
 async function main() {
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true, role: true, paymentReviewer: true, _count: { select: { applications: true } } } });
   // Never turn a real person's account into the review account.
+  // (After --disable the flag is off, so re-running setup on the same address is refused on purpose: pick a new --email.)
   if (existing && !existing.paymentReviewer && !flag("disable") && !flag("cleanup")) {
     throw new Error(`${email} already belongs to a ${existing.role} account that is not the review account. Choose another --email.`);
   }
@@ -81,6 +83,8 @@ async function main() {
   }
 
   if (!out) throw new Error("Pass --out <file> (outside the repository) to receive the login details.");
+  // The repository is public: the password file must never sit where `git add` could pick it up.
+  if (!relative(process.cwd(), resolve(out)).startsWith("..")) throw new Error("--out must point outside the repository (e.g. ~/cri-pg-review.txt).");
   console.log(`${apply ? "Setting up" : "Would set up"} ${email} as the payment review account (${existing ? "reset password" : "new PARENT account"}); login details → ${out}`);
   if (!apply) return;
 

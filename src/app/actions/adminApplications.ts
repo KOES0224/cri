@@ -301,6 +301,8 @@ export async function syncAllApplicationsToGoogleSheet() {
 
   try {
     const applications = await prisma.application.findMany({
+      // The payment-gateway review account's test applications never go to the admissions sheet.
+      where: { user: { paymentReviewer: false } },
       orderBy: { createdAt: "asc" },
       include: {
         user: true,
