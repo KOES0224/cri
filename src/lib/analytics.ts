@@ -2,9 +2,11 @@
 
 import { sendGAEvent } from '@next/third-parties/google';
 import { track } from '@vercel/analytics';
+import { pushGtmEvent } from './gtm';
 
 /**
- * Funnel events for Google Analytics 4 (NEXT_PUBLIC_GA_ID) and Vercel Web Analytics (enabled per project).
+ * Funnel events for Google Analytics 4 (NEXT_PUBLIC_GA_ID), Vercel Web Analytics (enabled per project) and the
+ * GTM dataLayer (NEXT_PUBLIC_GTM_ID), where they are available as Custom Event triggers with the same names.
  * Meta receives only standard events with its own parameter schema through src/lib/meta (pixel + Conversions API),
  * not these custom names. Calls are safe on the server and when nothing is configured.
  */
@@ -27,4 +29,5 @@ export function trackEvent(name: FunnelEvent, params: Params = {}) {
 
   try { track(name, clean); } catch {}
   if (GA_ID) { try { sendGAEvent('event', name, clean); } catch {} }
+  try { pushGtmEvent(name, clean); } catch {}
 }
