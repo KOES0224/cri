@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
@@ -9,6 +10,7 @@ import Footer from "@/components/layout/Footer";
 import Analytics from "@/components/Analytics";
 import { SITE_URL, localeMetadata } from "@/lib/seo";
 import { JsonLd, organizationJsonLd } from "@/lib/structured-data";
+import { MOVE_RESET_TOKEN } from "@/lib/reset-token";
 import { getDictionary, getLocale, getPublicPath } from "@/i18n";
 import { LocaleProvider } from "@/i18n/client";
 import { getServerSession } from "next-auth";
@@ -81,6 +83,8 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
+        {/* Before any other script: keeps the password-reset token out of analytics requests (src/lib/reset-token.ts). */}
+        <Script id="move-reset-token" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: MOVE_RESET_TOKEN }} />
         <LocaleProvider locale={locale}>
           <AppProvider>
             <PublicOnly><Navbar /></PublicOnly>
