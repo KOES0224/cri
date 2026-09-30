@@ -149,25 +149,26 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
       <UniversitiesStrip />
 
       {/* Open cohorts: the primary conversion path */}
-      <OpenProgramsSection programs={openPrograms} className="mt-16 md:mt-20 bg-[#F4F5F8] border-y border-gray-100" />
+      <OpenProgramsSection programs={openPrograms} className="mt-16 md:mt-20 bg-[#EAEEF4] border-y border-gray-200" />
 
       {/* Three steps to a decision */}
       <HowItWorks />
 
       {/* Philosophy */}
-      <section className="relative z-10 bg-[#F4F5F8] border-y border-gray-100 px-6 py-20 md:py-24">
-        <div className="mx-auto max-w-7xl">
+      <section className="relative z-10 overflow-hidden bg-gray-950 px-6 py-20 text-white md:py-24">
+        <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-indigo-600/20 blur-[140px]"></div>
+        <div className="relative mx-auto max-w-7xl">
           <div className="mb-10 max-w-3xl md:mb-12">
-            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-blue-700">{t.home.philosophyEyebrow}</p>
-            <h2 className="mb-4 text-3xl font-black tracking-tight text-gray-900 md:text-4xl">{t.home.philosophyTitle.before}<span className={locale === "ko" ? "text-blue-600" : "italic font-serif font-semibold text-blue-600 tracking-normal"}>{t.home.philosophyTitle.word}</span>{t.home.philosophyTitle.after}</h2>
-            <p className="text-lg leading-relaxed text-gray-600">{t.home.philosophyIntro}</p>
+            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-blue-300">{t.home.philosophyEyebrow}</p>
+            <h2 className="mb-4 text-3xl font-black tracking-tight text-white md:text-4xl">{t.home.philosophyTitle.before}<span className={locale === "ko" ? "text-blue-300" : "italic font-serif font-semibold text-blue-300 tracking-normal"}>{t.home.philosophyTitle.word}</span>{t.home.philosophyTitle.after}</h2>
+            <p className="text-lg leading-relaxed text-gray-300">{t.home.philosophyIntro}</p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
             {[
-              { ...t.home.philosophy[0], icon: <BookOpen className="h-6 w-6 text-indigo-600" />, tint: "bg-indigo-50" },
-              { ...t.home.philosophy[1], icon: <UserCheck className="h-6 w-6 text-purple-600" />, tint: "bg-purple-50" },
-              { ...t.home.philosophy[2], icon: <Award className="h-6 w-6 text-pink-600" />, tint: "bg-pink-50" },
+              { ...t.home.philosophy[0], icon: <BookOpen className="h-6 w-6 text-indigo-200" />, tint: "bg-indigo-500/20" },
+              { ...t.home.philosophy[1], icon: <UserCheck className="h-6 w-6 text-purple-200" />, tint: "bg-purple-500/20" },
+              { ...t.home.philosophy[2], icon: <Award className="h-6 w-6 text-pink-200" />, tint: "bg-pink-500/20" },
             ].map((feature, i) => (
               <motion.div
                 key={i}
@@ -175,14 +176,14 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="group relative rounded-3xl border border-gray-200/80 bg-white p-8 premium-card"
+                className="group relative rounded-3xl border border-white/10 bg-white/[0.06] p-8 backdrop-blur-sm transition-colors duration-300 hover:border-white/25 hover:bg-white/10"
               >
                 <div className={`mb-6 flex h-12 w-12 items-center justify-center rounded-2xl ${feature.tint} transition-transform duration-300 group-hover:scale-110`}>
                   {feature.icon}
                 </div>
-                <h3 className="mb-3 text-xl font-black tracking-tight text-gray-900">{feature.title}</h3>
-                <p className="leading-relaxed text-gray-600">{feature.description}</p>
-                <div className="absolute right-7 top-7 text-gray-300 opacity-0 transition-all duration-300 group-hover:-translate-y-1 group-hover:text-gray-900 group-hover:opacity-100">
+                <h3 className="mb-3 text-xl font-black tracking-tight text-white">{feature.title}</h3>
+                <p className="leading-relaxed text-gray-300">{feature.description}</p>
+                <div className="absolute right-7 top-7 text-white/30 opacity-0 transition-all duration-300 group-hover:-translate-y-1 group-hover:text-white group-hover:opacity-100">
                   <ArrowUpRight className="h-5 w-5" />
                 </div>
               </motion.div>
@@ -195,7 +196,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
       <FaqSection />
 
       {/* Closing CTA */}
-      <section className="relative z-10 bg-white px-6 pb-20 md:pb-24">
+      <section className="relative z-10 border-t border-gray-200 bg-[#EAEEF4] px-6 py-20 md:py-24">
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}
