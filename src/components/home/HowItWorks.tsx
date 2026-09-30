@@ -28,7 +28,7 @@ export default function HowItWorks() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="relative rounded-3xl border border-gray-200 bg-[#EAEEF4] p-8"
+                className="relative rounded-3xl border border-gray-200 bg-[#E3E8EF] p-8"
               >
                 <div className="flex items-center justify-between mb-6">
                   <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-gray-200 text-blue-700 shadow-sm"><Icon className="h-5 w-5" /></span>
