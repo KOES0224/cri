@@ -50,16 +50,16 @@ test('real database: access control, private upload, checkout idempotency and pa
   assert.equal((await saveApplicationDraft(closedId,{studentFirstName:'Closed'},1,0)).success,false);
   process.env.TOSS_SECRET_KEY='synthetic-test';process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY='synthetic-test';
   assert.match((await beginApplicationCheckout(closedId,input)).error,/no longer accepting/);
-  const order=await beginApplicationCheckout(openId,input); assert.ok(order.orderId); assert.equal(order.amount,68000);
+  const order=await beginApplicationCheckout(openId,input); assert.ok(order.orderId); assert.equal(order.amount,50);
   assert.equal((await beginApplicationCheckout(openId,input)).orderId,order.orderId);
   assert.match((await beginApplicationCheckout(openId,{...input,essay:'Changed'})).error,/earlier checkout/);
   let confirms=0, paid=false;
   globalThis.fetch=async(_url,init)=> {
     if(init?.method==='POST'){confirms++;paid=true;}
     if(!paid)return Response.json({code:'NOT_FOUND_PAYMENT'},{status:404});
-    return Response.json({status:'DONE',orderId:order.orderId,totalAmount:68000,currency:'KRW',paymentKey:'synthetic-key'});
+    return Response.json({status:'DONE',orderId:order.orderId,totalAmount:50,currency:'USD',paymentKey:'synthetic-key'});
   };
-  const callback={orderId:order.orderId,paymentKey:'synthetic-key',amount:68000};
+  const callback={orderId:order.orderId,paymentKey:'synthetic-key',amount:50};
   assert.ok((await finalizePaidApplication({...callback,amount:1})).error);assert.equal(confirms,0);
   session.user.id=otherId; assert.ok((await finalizePaidApplication(callback)).error); session.user.id=userId;
   const completed=await finalizePaidApplication(callback);assert.equal(completed.success,true);

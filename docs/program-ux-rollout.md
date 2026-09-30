@@ -10,7 +10,7 @@ This branch has NOT modified the production database. The existing build command
 
 Configure `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `DATABASE_URL`, `NEXT_PUBLIC_TOSS_CLIENT_KEY`, and `TOSS_SECRET_KEY` using the deployment provider's secret settings. Missing payment keys now fail closed instead of silently switching to test credentials. `RESEND_API_KEY` and verified `AUTH_EMAIL_FROM` enable password recovery; otherwise the recovery page gives an honest support route. Never commit secrets. Public administrator media still uses `BLOB_READ_WRITE_TOKEN` or `cri_READ_WRITE_TOKEN`.
 
-The existing charge remains KRW 68,000. The site distinguishes this checkout amount from the advertised USD 50 application fee and separate USD tuition. Confirm the desired merchant currency policy before changing the charge. No live charge, real email, or production export was performed during this work.
+The application fee is charged as USD 50 through Toss Payments' payment widget (USD merchant id); there is no won charge. Confirm the desired merchant currency policy before changing the charge. No live charge, real email, or production export was performed during this work.
 
 ## Inventory updates
 

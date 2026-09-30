@@ -6,21 +6,20 @@ import { useRouter } from 'next/navigation';
 import { beginApplicationCheckout, submitApplicationWithoutFee } from '@/app/actions/payment';
 import { saveApplicationDraft } from '@/app/actions/applicationDrafts';
 import { applicationErrorMessage, applicationErrors, applicationLabels, personalFields } from '@/lib/application-validation';
-import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
+import { APPLICATION_CHARGE, APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
 import { programKind } from '@/lib/program-policy';
 import { trackEvent } from '@/lib/analytics';
 import { useT } from '@/i18n/client';
 import { COUNTRY_CODES, countryName } from '@/lib/countries';
-import { defaultCardOrigin, tossCardOptions, type CardOrigin } from '@/lib/toss-card';
 import { metaTrack, metaTrackCustom, newEventId } from '@/lib/meta/pixel';
 import type { MetaCustomData } from '@/lib/meta/config';
 
 type Program = { id: string; title: string; category: string; tuition: number | null; professors: { id: string; name: string; university: string | null }[] };
-type Props = { program: Program; content: MetaCustomData; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean; feeEnabled: boolean; reviewMode?: boolean };
+type Props = { program: Program; content: MetaCustomData; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean; paymentVariantKey?: string; feeEnabled: boolean; reviewMode?: boolean };
 const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100';
 const actionClass = 'rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50';
 
-export default function ApplyClient({ program, content, user, applicantRole = 'STUDENT', savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable, feeEnabled, reviewMode = false }: Props) {
+export default function ApplyClient({ program, content, user, applicantRole = 'STUDENT', savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable, paymentVariantKey = 'DEFAULT', feeEnabled, reviewMode = false }: Props) {
   const { t, locale } = useT();
   const router = useRouter();
   const copy = t.apply;
@@ -46,11 +45,14 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [filename, setFilename] = useState(resumeFilename);
-  // Cards issued abroad open Toss's multilingual window (Visa, Mastercard, JCB, UnionPay); the default follows the residence country.
-  const [cardOriginChoice, setCardOriginChoice] = useState<CardOrigin | null>(null);
-  const cardOrigin = cardOriginChoice ?? defaultCardOrigin(form.residenceCountry);
-  // A per-instance group name: radios outside a <form> share one group per document, and Next can keep a hidden copy of the page.
-  const cardOriginName = useId();
+  // Toss payment widget (USD): rendered on the review step, then requestPayment opens the provider's window.
+  type TossWidgets = Awaited<ReturnType<Awaited<ReturnType<typeof import('@tosspayments/tosspayments-sdk')['loadTossPayments']>>['widgets']>>;
+  type PaymentMethodsUi = Awaited<ReturnType<TossWidgets['renderPaymentMethods']>>;
+  const widgetRef = useRef<{ widgets: TossWidgets; methods: PaymentMethodsUi } | null>(null);
+  const [widgetState, setWidgetState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  // Per-instance ids: Next can keep a hidden copy of the page, and the widget mounts by CSS selector.
+  const widgetId = useId();
+  const methodsSelector = `#${CSS.escape(`${widgetId}methods`)}`, agreementSelector = `#${CSS.escape(`${widgetId}agreement`)}`;
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
   const [savedAt, setSavedAt] = useState(draftSavedAt || '');
   const [saveError, setSaveError] = useState('');
@@ -78,6 +80,33 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     window.addEventListener('beforeunload', preventLoss);
     return () => window.removeEventListener('beforeunload', preventLoss);
   }, [checkoutPending]);
+
+  useEffect(() => {
+    const key = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+    if (step !== 3 || !feeEnabled || !paymentAvailable || !key) return;
+    let cancelled = false;
+    let methods: PaymentMethodsUi | undefined, agreement: Awaited<ReturnType<TossWidgets['renderAgreement']>> | undefined;
+    setWidgetState('loading');
+    (async () => {
+      try {
+        const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+        const widgets = (await loadTossPayments(key)).widgets({ customerKey: user.id });
+        await widgets.setAmount({ currency: APPLICATION_CHARGE.currency, value: APPLICATION_CHARGE.amount });
+        if (cancelled) return;
+        [methods, agreement] = await Promise.all([
+          widgets.renderPaymentMethods({ selector: methodsSelector, variantKey: paymentVariantKey }),
+          widgets.renderAgreement({ selector: agreementSelector, variantKey: 'AGREEMENT' }),
+        ]);
+        if (cancelled) { methods.destroy(); agreement.destroy(); return; }
+        widgetRef.current = { widgets, methods };
+        setWidgetState('ready');
+      } catch (error) {
+        console.error('Toss payment widget failed to load', error instanceof Error ? error.message : error);
+        if (!cancelled) setWidgetState('error');
+      }
+    })();
+    return () => { cancelled = true; widgetRef.current = null; try { methods?.destroy(); agreement?.destroy(); } catch {} };
+  }, [step, feeEnabled, paymentAvailable, user.id, methodsSelector, agreementSelector, paymentVariantKey]);
 
   const persist = useCallback((snapshot: Record<string, string>, currentStep: number, currentRevision: number) => {
     const task = queue.current.then(async () => {
@@ -165,16 +194,23 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     setBusy(true); setNotice('');
     try {
       if (!checkoutRef.current && !await persist(form, step, revision.current)) throw new Error(copy.notices.saveBeforePay);
-      const key = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
-      if (!key || !paymentAvailable) throw new Error(copy.notices.paymentUnavailable);
+      const widget = widgetRef.current;
+      if (!paymentAvailable || !widget) throw new Error(copy.notices.paymentUnavailable);
       const order = await beginApplicationCheckout(program.id, form);
       if (order.error || !order.orderId) throw new Error(actionText(order, copy.notices.preparePaymentFailed));
       checkoutRef.current = true; setCheckoutStarted(true);
       if (!reviewMode) trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
       if (!reviewMode && order.tracking) metaTrack('InitiateCheckout', order.tracking, order.eventId);
-      const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
-      const sdk = await loadTossPayments(key);
-      await sdk.payment({ customerKey: user.id }).requestPayment({ method: 'CARD', card: tossCardOptions(cardOrigin, locale, form.residenceCountry), amount: { currency: order.currency!, value: order.amount! }, orderId: order.orderId, orderName: order.orderName!, successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`, failUrl: `${window.location.origin}/apply/payment-fail?programId=${encodeURIComponent(program.id)}`, customerEmail: user.email || form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim() });
+      // PayPal (if offered) needs the order contents; cards do not.
+      const selected = widget.methods.getSelectedPaymentMethod() as { method?: string; easyPay?: { provider?: string } | null; paymentMethodKey?: string } | null;
+      const paypal = /PAYPAL/i.test(`${selected?.easyPay?.provider ?? ''} ${selected?.paymentMethodKey ?? ''}`) || selected?.method === 'FOREIGN_EASY_PAY';
+      await widget.widgets.requestPayment({
+        orderId: order.orderId, orderName: order.orderName!,
+        successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`,
+        failUrl: `${window.location.origin}/apply/payment-fail?programId=${encodeURIComponent(program.id)}`,
+        customerEmail: user.email || form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim(),
+        ...(paypal ? { foreignEasyPay: { country: form.residenceCountry || 'US', products: [{ name: order.orderName!.slice(0, 100), quantity: 1, unitAmount: order.amount!, currency: order.currency!, description: 'CRI application review fee' }] } } : {}),
+      });
     } catch (error) { setNotice(error instanceof Error && error.message ? error.message : copy.notices.paymentNotCompleted); }
     finally { paymentLock.current = false; setBusy(false); }
   }
@@ -216,9 +252,14 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       {step === 3 && <div className="space-y-6">{[1,2].map(section => <div key={section} className="rounded-xl border border-slate-200 p-4"><div className="mb-4 flex items-center justify-between gap-3"><h3 className="font-semibold">{section === 1 ? copy.headings[0] : copy.headings[1]}</h3>{!checkoutStarted && <button type="button" disabled={busy} onClick={() => move(section)} className="text-sm font-semibold text-blue-700 underline">{section === 1 ? copy.editPersonal : copy.editResearch}</button>}</div><dl className="space-y-4">{Object.keys(applicationLabels).filter(key => personalFields.includes(key) === (section === 1)).filter(key => !(form.studentLevel === 'UNIVERSITY' && key.startsWith('parent')) && !(key === 'tShirtSize' && !summer)).map(key => <div key={key}><dt className="text-xs font-semibold text-slate-500">{label(key)}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-900">{key === 'resumeUrl' ? <a href={form[key]} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">{filename || copy.viewPdf}</a> : key === 'studentLevel' ? form[key] === 'UNIVERSITY' ? copy.universityStudent : copy.schoolStudent : key === 'residenceCountry' && form[key] ? countryName(form[key] as (typeof COUNTRY_CODES)[number], locale) : form[key] || copy.notProvided}</dd></div>)}</dl></div>)}
         {!feeEnabled && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5"><p className="text-sm font-semibold text-emerald-900">{copy.free.box.title}</p><p className="mt-2 text-sm leading-relaxed text-emerald-900/80">{copy.free.box.body}</p></div>}
         {feeEnabled && <div className="rounded-xl border border-blue-200 bg-blue-50 p-5"><p className="text-sm font-semibold">{copy.feeBox.title}</p><p className="mt-2 text-2xl font-bold">{APPLICATION_CHARGE_LABEL}</p><p className="mt-3 text-sm leading-relaxed">{copy.feeBox.body1}</p><p className="mt-3 text-sm">{copy.feeBox.body2a}<Link href="/admissions" className="underline">{copy.feeBox.link1}</Link>{copy.feeBox.and}<Link href="/refunds" className="underline">{copy.feeBox.link2}</Link>{copy.feeBox.body2b}</p></div>}
-        {feeEnabled && <fieldset className="rounded-xl border border-slate-200 p-4"><legend className="px-1 text-sm font-semibold text-slate-800">{copy.cardOrigin.legend}</legend><div className="mt-2 grid gap-2">{(['international', 'domestic'] as const).map(origin => <label key={origin} className="flex items-start gap-3 rounded-lg px-2 py-2 text-sm text-slate-800 hover:bg-slate-50"><input type="radio" name={cardOriginName} value={origin} checked={cardOrigin === origin} disabled={busy} onChange={() => setCardOriginChoice(origin)} className="mt-0.5 h-4 w-4 accent-blue-700" /><span>{copy.cardOrigin[origin]}</span></label>)}</div></fieldset>}
+        {feeEnabled && <div className="rounded-xl border border-slate-200 bg-white p-2">
+          {widgetState === 'loading' && <p role="status" className="px-3 py-6 text-center text-sm text-slate-500">{copy.widget.loading}</p>}
+          {widgetState === 'error' && <p role="alert" className="px-3 py-6 text-center text-sm text-red-700">{copy.widget.failed}</p>}
+          <div id={`${widgetId}methods`} />
+          <div id={`${widgetId}agreement`} />
+        </div>}
       </div>}
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable} className={actionClass}>{busy ? copy.openingPayment : copy.payAndSubmit(APPLICATION_CHARGE_LABEL)}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable || widgetState !== 'ready'} className={actionClass}>{busy ? copy.openingPayment : copy.payAndSubmit(APPLICATION_CHARGE_LABEL)}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>
       <p className="mt-6 text-xs leading-relaxed text-slate-500">{copy.help.a}<a href="mailto:support@cri.kr" className="underline">support@cri.kr</a>{copy.help.b}</p>
       <p className="mt-2 text-xs leading-relaxed text-slate-500">{copy.adsNote}</p>
     </section>

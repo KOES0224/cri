@@ -9,7 +9,7 @@ delete process.env.AUTH_EMAIL_FROM;
 test('notification helpers are best effort when email is not configured', async () => {
   const inquiry = await notifyContactInquiry({ name: 'Test Parent', email: 'parent@example.test', message: 'Hello', leadId: 'lead1' });
   assert.equal(inquiry.sent, false);
-  const details = { applicationId: 'app1', programTitle: 'Program', accountEmail: 'parent@example.test', form: { studentFirstName: 'A', studentEmail: 'student@example.test', parentEmail: 'parent@example.test' }, payment: { orderId: 'CRI_1', amount: 68000, currency: 'KRW' } };
+  const details = { applicationId: 'app1', programTitle: 'Program', accountEmail: 'parent@example.test', form: { studentFirstName: 'A', studentEmail: 'student@example.test', parentEmail: 'parent@example.test' }, payment: { orderId: 'CRI_1', amount: 50, currency: 'USD' } };
   assert.equal((await notifyApplicationReceived(details)).sent, false);
   assert.equal((await sendApplicationConfirmation(details)).sent, false);
   // No valid recipient is reported, not thrown.
