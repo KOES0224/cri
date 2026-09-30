@@ -11,7 +11,6 @@ import { applicationSchema } from '@/lib/application-validation';
 import { allowRequest } from '@/lib/request-limit';
 import { confirmTossPayment, findConfirmedTossPayment } from '@/lib/toss';
 import { revalidatePath } from 'next/cache';
-import { after } from 'next/server';
 import { notifyApplicationReceived, sendApplicationConfirmation } from '@/lib/notify';
 import { META_VALUES, applicantRegion, applicantTypeFromRole, programContent, type MetaCustomData } from '@/lib/meta/config';
 import { captureMetaContext, sendMetaEvent, type MetaPerson } from '@/lib/meta/capi';
@@ -130,15 +129,6 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
       created = true;
       return app.id;
     });
-    // Only the completed application is exported; payment keys and card details are never included.
-    // The payment-review account's test submissions stay out of the admissions sheet.
-    // Runs after the response: filing the PDF in Drive takes a few seconds and must not delay the applicant.
-    const account = session.user;
-    if (!reviewer) after(async () => { try {
-      const app = await prisma.application.findUniqueOrThrow({ where: { id: applicationId }, include: { program: true, user: true } });
-      const { syncApplicationToGoogleSheet } = await import('@/lib/googleSheets');
-      await syncApplicationToGoogleSheet({ application: app, user: account, program: app.program, formData: JSON.parse(app.content || '{}') });
-    } catch { console.error('Application saved; spreadsheet sync requires retry.'); } });
     // Notify admissions and confirm to the family once, on the callback that created the application.
     // Best effort: the application and charge are already committed.
     if (created) try {
@@ -202,13 +192,6 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
     // second spreadsheet row, admissions email or Meta event.
     if (!saved.created) return { success: true, applicationId: saved.id, duplicate: true };
     const applicationId = saved.id;
-    // Sheet + Drive filing runs after the response so the submission stays fast. The review account is skipped.
-    const account = session.user;
-    if (!(await isPaymentReviewer(account.id))) after(async () => { try {
-      const app = await prisma.application.findUniqueOrThrow({ where: { id: applicationId }, include: { program: true, user: true } });
-      const { syncApplicationToGoogleSheet } = await import('@/lib/googleSheets');
-      await syncApplicationToGoogleSheet({ application: app, user: account, program: app.program, formData: JSON.parse(app.content || '{}') });
-    } catch { console.error('Application saved; spreadsheet sync requires retry.'); } });
     try {
       const details = { applicationId, programTitle: program.title, accountEmail: session.user.email, form: parsed.data as Record<string, unknown>, payment: null };
       await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);

@@ -1,4 +1,4 @@
-import { absoluteResumeUrl } from './googleSheets';
+import { absoluteResumeUrl } from './resume-links';
 import { Resend } from 'resend';
 
 /**

@@ -14,8 +14,6 @@ let session: any = null;
 const calls = {emails: 0, meta: [] as {name: string; eventId: string}[], inquiries: 0};
 require.cache[require.resolve('next-auth')] = {exports: {getServerSession: async () => session}} as any;
 require.cache[require.resolve('next/cache')] = {exports: {revalidatePath: () => {}, revalidateTag: () => {}}} as any;
-require.cache[require.resolve('../src/lib/googleSheets')] = {exports: {syncApplicationToGoogleSheet: async () => ({synced: false})}} as any;
-delete process.env.GOOGLE_SHEET_WEBHOOK_URL;
 require.cache[require.resolve('../src/lib/notify')] = {exports: {
   notifyApplicationReceived: async () => { calls.emails++; }, sendApplicationConfirmation: async () => { calls.emails++; },
   notifyContactInquiry: async () => { calls.inquiries++; }, sendStudentAccountWelcome: async () => {},

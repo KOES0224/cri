@@ -11,7 +11,6 @@ let session: any = null;
 // Replace only request context and external exports; exercise real database operations.
 require.cache[require.resolve('next-auth')] = {exports:{getServerSession:async()=>session}} as any;
 require.cache[require.resolve('next/cache')] = {exports:{revalidatePath:()=>{},revalidateTag:()=>{},unstable_cache:(fn:any)=>fn}} as any;
-require.cache[require.resolve('../src/lib/googleSheets')] = {exports:{syncApplicationToGoogleSheet:async()=>{}}} as any;
 const {prisma:db}=require('../src/lib/prisma') as {prisma:PrismaClient};
 const {allowRequest}=require('../src/lib/request-limit');
 const {POST:upload}=require('../src/app/api/upload/route');
