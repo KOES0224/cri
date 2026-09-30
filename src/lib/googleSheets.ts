@@ -1,4 +1,6 @@
 import { format } from "date-fns";
+import { prisma } from "@/lib/prisma";
+import { SITE_URL } from "@/lib/site";
 
 export interface ApplicationSyncPayload {
   applicationId: string;
@@ -26,12 +28,30 @@ export interface ApplicationSyncPayload {
   essay: string;
   shortAnswer: string;
   previousResearch: string;
+  /** Absolute link to the PDF on the site (admin login required). */
   resumeUrl: string;
+  /** Google Drive link written back by the Apps Script after it saved the PDF. */
+  resumeDriveUrl: string;
+  /** The PDF itself, so the Apps Script can file it in the Drive folder for the program. */
+  resumeFile?: { filename: string; contentBase64: string };
   parentName: string;
   parentEmail: string;
   parentPhone: string;
   photoConsent: string;
   howLearned: string;
+}
+
+/** The site stores the PDF path as /api/documents/<id>; the sheet and emails need a full address. */
+export function absoluteResumeUrl(resumeUrl: unknown): string {
+  const value = typeof resumeUrl === "string" ? resumeUrl.trim() : "";
+  if (!value) return "";
+  return value.startsWith("/") ? `${SITE_URL}${value}` : value;
+}
+
+/** Document id from the stored path, or null for anything else. */
+export function resumeDocumentId(resumeUrl: unknown): string | null {
+  const match = typeof resumeUrl === "string" ? /^\/api\/documents\/([a-z0-9]+)$/.exec(resumeUrl.trim()) : null;
+  return match ? match[1] : null;
 }
 
 /**
@@ -87,7 +107,8 @@ export function formatApplicationForSheet(
     essay: formData.essay || "",
     shortAnswer: formData.shortAnswer || "",
     previousResearch: formData.previousResearch || "",
-    resumeUrl: formData.resumeUrl || "",
+    resumeUrl: absoluteResumeUrl(formData.resumeUrl),
+    resumeDriveUrl: formData.resumeDriveUrl || "",
     parentName,
     parentEmail: formData.parentEmail || "",
     parentPhone: formData.parentPhone || "",
@@ -97,7 +118,9 @@ export function formatApplicationForSheet(
 }
 
 /**
- * Sends single application row to Google Spreadsheet via Apps Script Webhook
+ * Sends one application to the Google Sheet through the Apps Script webhook, with the resume PDF attached so the
+ * script can file it in the Drive folder for the program. The script answers with the Drive link, which is stored
+ * on the application as `resumeDriveUrl`. Re-sending the same application updates its row instead of adding one.
  */
 export async function syncApplicationToGoogleSheet({
   application,
@@ -109,7 +132,7 @@ export async function syncApplicationToGoogleSheet({
   user: any;
   program: any;
   formData: Record<string, any>;
-}): Promise<{ synced: boolean; error?: string }> {
+}): Promise<{ synced: boolean; error?: string; driveUrl?: string }> {
   const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
 
   if (!webhookUrl) {
@@ -119,6 +142,12 @@ export async function syncApplicationToGoogleSheet({
 
   try {
     const payload = formatApplicationForSheet(application, user, program, formData);
+    // Attach the PDF only when it belongs to the applicant's account (the same check the download route makes).
+    const documentId = resumeDocumentId(formData.resumeUrl);
+    if (documentId) {
+      const document = await prisma.applicationDocument.findFirst({ where: { id: documentId, userId: application.userId }, select: { filename: true, data: true } });
+      if (document) payload.resumeFile = { filename: document.filename, contentBase64: Buffer.from(document.data).toString("base64") };
+    }
 
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -126,7 +155,8 @@ export async function syncApplicationToGoogleSheet({
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(8000),
+      // Saving a PDF to Drive takes a few seconds on the Apps Script side.
+      signal: AbortSignal.timeout(25000),
     });
 
     if (!response.ok) {
@@ -134,78 +164,23 @@ export async function syncApplicationToGoogleSheet({
       console.error("Google Sheet webhook returned error status:", response.status, errText);
       return { synced: false, error: `HTTP ${response.status}` };
     }
+    const body = (await response.json().catch(() => null)) as { status?: string; message?: string; driveUrl?: string } | null;
+    if (body?.status === "error") {
+      console.error("Google Sheet script reported an error:", body.message);
+      return { synced: false, error: body.message || "script error" };
+    }
+
+    const driveUrl = typeof body?.driveUrl === "string" ? body.driveUrl : "";
+    if (driveUrl && driveUrl !== formData.resumeDriveUrl && application.id) {
+      try {
+        await prisma.application.update({ where: { id: application.id }, data: { content: JSON.stringify({ ...formData, resumeDriveUrl: driveUrl }) } });
+      } catch (error) { console.error("Drive link not stored on the application:", error instanceof Error ? error.message : error); }
+    }
 
     console.log(`✅ Successfully synced application ${application.id} to Google Sheet.`);
-    return { synced: true };
+    return { synced: true, driveUrl: driveUrl || undefined };
   } catch (error: any) {
     console.error("Error streaming application to Google Sheet webhook:", error?.message || error);
     return { synced: false, error: error?.message || "Failed to post to Google Sheets" };
   }
 }
-
-/**
- * The 5-line Google Apps Script template for admins to paste into their Google Sheet
- */
-export const GOOGLE_APPS_SCRIPT_TEMPLATE = `// 1. In your Google Sheet, click Extensions > Apps Script
-// 2. Paste this code and click Deploy > New deployment
-// 3. Select type "Web app", execute as "Me", who has access "Anyone"
-// 4. Copy the Web app URL and paste it into GOOGLE_SHEET_WEBHOOK_URL in .env
-
-function doPost(e) {
-  try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    var data = JSON.parse(e.postData.contents);
-    
-    // Auto-create bold headers on empty sheet
-    if (sheet.getLastRow() === 0) {
-      var headers = [
-        "Submitted At", "Application ID", "Status", "Fee Status", "Fee Amount", "Receipt URL", "Order ID",
-        "Student Name", "Email", "Phone", "Gender", "School", "Grad Year", "T-Shirt",
-        "Program", "Category", "1st Choice Professor", "2nd Choice Professor", "3rd Choice Professor",
-        "Area of Interest", "Topic Ideas", "Essay", "Short Answer", "Previous Research",
-        "Resume Link", "Parent Name", "Parent Email", "Parent Phone", "How Learned"
-      ];
-      sheet.appendRow(headers);
-      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#f3f4f6");
-      sheet.setFrozenRows(1);
-    }
-    
-    sheet.appendRow([
-      data.submittedAt,
-      data.applicationId,
-      data.status,
-      data.feeStatus,
-      data.feeAmount,
-      data.receiptUrl,
-      data.orderId,
-      data.studentName,
-      data.studentEmail,
-      data.studentPhone,
-      data.gender,
-      data.school,
-      data.gradYear,
-      data.tShirtSize,
-      data.programTitle,
-      data.programCategory,
-      data.firstChoiceProfessor,
-      data.secondChoiceProfessor,
-      data.thirdChoiceProfessor,
-      data.areaOfInterest,
-      data.initialTopicIdeas,
-      data.essay,
-      data.shortAnswer,
-      data.previousResearch,
-      data.resumeUrl,
-      data.parentName,
-      data.parentEmail,
-      data.parentPhone,
-      data.howLearned
-    ]);
-    
-    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}`;

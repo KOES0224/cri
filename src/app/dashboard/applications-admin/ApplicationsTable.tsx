@@ -188,6 +188,12 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
                       <div className="max-w-[200px] truncate" title={app.program.title}>
                         {app.program.title}
                       </div>
+                      {(app.resumeUrl || app.resumeDriveUrl) && (
+                        <div className="mt-1 flex gap-3 text-xs font-semibold">
+                          {app.resumeUrl && <a href={app.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Resume PDF</a>}
+                          {app.resumeDriveUrl && <a href={app.resumeDriveUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:underline">Drive</a>}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-gray-500">
                       {format(new Date(app.createdAt), 'MMM d, yyyy')}
