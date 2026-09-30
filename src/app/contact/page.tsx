@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { submitContactForm } from "@/app/actions/contact";
 import { trackEvent } from "@/lib/analytics";
 import { useSession } from "next-auth/react";
@@ -38,8 +38,12 @@ export default function ContactPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Blocks a second submit (double click, Enter pressed twice) before the disabled button re-renders.
+  const sending = useRef(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (sending.current) return;
+    sending.current = true;
     setStatus("loading");
     setErrorMessage("");
 
@@ -48,7 +52,8 @@ export default function ContactPage() {
     const res = await submitContactForm({ ...formData, country: formData.country as (typeof COUNTRY_CODES)[number], applicantType: formData.applicantType as "parent" | "student" | "other", topic: params.get("topic") || "", programId: params.get("programId") || "" });
     if (res.success) {
       setStatus("success");
-      trackEvent("contact_submitted", { topic: params.get("topic") || undefined, program_id: params.get("programId") || undefined, applicant_type: formData.applicantType, country: formData.country });
+      // The lead id is the transaction id for GTM and the event id for Meta: one inquiry, one conversion.
+      trackEvent("contact_submitted", { topic: params.get("topic") || undefined, program_id: params.get("programId") || undefined, applicant_type: formData.applicantType, country: formData.country, transaction_id: res.eventId });
       // Same event id and parameters as the server copy, so Meta counts the inquiry once.
       metaTrack("Lead", res.tracking, res.eventId);
       setFormData(emptyForm);
@@ -57,6 +62,7 @@ export default function ContactPage() {
       setErrorMessage(res.error || copy.genericError);
     }
     } catch { setStatus("error"); setErrorMessage(copy.sendError); }
+    finally { sending.current = false; }
   };
 
   return (

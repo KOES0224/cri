@@ -5,10 +5,12 @@ import {createHash, randomUUID} from 'node:crypto';
 import {PrismaClient} from '@prisma/client';
 const url = new URL(process.env.DATABASE_URL || 'http://missing');
 if (!['127.0.0.1','localhost'].includes(url.hostname)) throw new Error('Integration tests require a disposable LOCAL database.');
+// These cases exercise the paid checkout; the site default is free applications (NEXT_PUBLIC_APPLICATION_FEE_ENABLED unset).
+process.env.NEXT_PUBLIC_APPLICATION_FEE_ENABLED = 'true';
 let session: any = null;
 // Replace only request context and external exports; exercise real database operations.
 require.cache[require.resolve('next-auth')] = {exports:{getServerSession:async()=>session}} as any;
-require.cache[require.resolve('next/cache')] = {exports:{revalidatePath:()=>{}}} as any;
+require.cache[require.resolve('next/cache')] = {exports:{revalidatePath:()=>{},revalidateTag:()=>{},unstable_cache:(fn:any)=>fn}} as any;
 require.cache[require.resolve('../src/lib/googleSheets')] = {exports:{syncApplicationToGoogleSheet:async()=>{}}} as any;
 const {prisma:db}=require('../src/lib/prisma') as {prisma:PrismaClient};
 const {allowRequest}=require('../src/lib/request-limit');

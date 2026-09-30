@@ -2,11 +2,15 @@
 
 import { sendGAEvent } from '@next/third-parties/google';
 import { track } from '@vercel/analytics';
-import { pushGtmEvent } from './gtm';
+import { pushGtmEvent, type FunnelParam } from './gtm';
 
 /**
- * Funnel events for Google Analytics 4 (NEXT_PUBLIC_GA_ID), Vercel Web Analytics (enabled per project) and the
- * GTM dataLayer (NEXT_PUBLIC_GTM_ID), where they are available as Custom Event triggers with the same names.
+ * Funnel events for Vercel Web Analytics (enabled per project) and the GTM dataLayer (NEXT_PUBLIC_GTM_ID), where they
+ * are Custom Event triggers with the same names; GA4, Google Ads, Kakao and Naver are configured inside GTM.
+ * NEXT_PUBLIC_GA_ID (GA4 installed in code) must stay unset while the GTM container carries GA4, or GA4 counts twice.
+ * One-time conversions carry transaction_id (application, order or inquiry id, the same value Meta gets as event_id).
+ * Google Ads (Transaction ID) and Meta deduplicate on it; GA4, Kakao and Naver count every push, so a repeat
+ * submission must not call trackEvent at all.
  * Meta receives only standard events with its own parameter schema through src/lib/meta (pixel + Conversions API),
  * not these custom names. Calls are safe on the server and when nothing is configured.
  */
@@ -19,7 +23,8 @@ export type FunnelEvent =
   | 'contact_submitted'     // contact form sent
   | 'sign_up';              // account created
 
-type Params = Record<string, string | number | boolean | undefined>;
+// Only keys listed in FUNNEL_PARAMS (src/lib/gtm.ts), so the dataLayer reset always covers every parameter.
+type Params = Partial<Record<FunnelParam, string | number | boolean | undefined>>;
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 export function trackEvent(name: FunnelEvent, params: Params = {}) {
