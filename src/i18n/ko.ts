@@ -805,6 +805,7 @@ export const ko: Dictionary = {
     payAndSubmit: (charge: string) => `${charge} 결제 후 제출`,
     help: { a: "도움이 필요하신가요? ", b: ". 카드에 결제 내역은 있는데 제출이 확인되지 않는다면, 다시 결제하기 전에 먼저 문의해 주세요." },
     adsNote: "광고 성과 측정을 위해 제출 시 연락처 이메일·전화번호·이름·거주 국가를 해시(SHA-256) 처리한 값만 Meta에 전달합니다. 원문은 전달되지 않습니다.",
+    cardOrigin: { legend: "결제 카드", international: "해외 발급 카드 (Visa, Mastercard, JCB, UnionPay 등)", domestic: "국내 발급 카드" },
     review: { banner: "결제 심사용 계정입니다. 지원서가 예시 데이터로 미리 채워져 있어 따로 입력하실 필요가 없습니다. 아래의 결제 버튼을 누르면 결제창이 열립니다. 이 계정의 제출은 테스트로 표시됩니다." },
     fields: {
       studentFirstName: "이름",
