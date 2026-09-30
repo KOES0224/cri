@@ -1,6 +1,7 @@
 /**
- * Toss Payments Server-Side Verification Utility
+ * Toss Payments Server-Side Verification Utility. Charges are in the application-fee currency (USD); anything else is rejected.
  */
+import { APPLICATION_CHARGE } from "./application-fee";
 
 export interface TossPaymentConfirmResult {
   success: boolean;
@@ -78,7 +79,7 @@ export async function confirmTossPayment(
     }
 
     // Verify amount to prevent frontend tampering
-    if (Number(data.totalAmount) !== Number(amount) || data.currency !== "KRW" || data.orderId !== orderId) {
+    if (Number(data.totalAmount) !== Number(amount) || data.currency !== APPLICATION_CHARGE.currency || data.orderId !== orderId) {
       return {
         success: false,
         error: "Payment details could not be verified. Contact support with your order reference.",
@@ -120,7 +121,7 @@ export async function findConfirmedTossPayment(orderId: string, amount: number):
     });
     if (!response.ok) return { success: false };
     const data = await response.json();
-    if (data.status !== 'DONE' || data.orderId !== orderId || data.totalAmount !== amount || data.currency !== 'KRW') return { success: false };
+    if (data.status !== 'DONE' || data.orderId !== orderId || Number(data.totalAmount) !== Number(amount) || data.currency !== APPLICATION_CHARGE.currency) return { success: false };
     return {success: true, paymentData: {...data, receiptUrl: data.receipt?.url}};
   } catch { return {success: false}; }
 }

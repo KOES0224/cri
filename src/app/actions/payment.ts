@@ -54,8 +54,13 @@ export async function beginApplicationCheckout(programId: string, input: unknown
     const order = await prisma.$transaction(async tx => {
       // Only one active checkout per student/program can reach the provider.
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${session.user.id + ':' + programId}))`;
-      const pending = await tx.applicationCheckout.findUnique({ where: { userId_programId: { userId: session.user.id, programId } } });
+      let pending = await tx.applicationCheckout.findUnique({ where: { userId_programId: { userId: session.user.id, programId } } });
       if (pending?.status === 'COMPLETED') throw new Error('Already completed');
+      // A pending order from before a fee/currency change can no longer be paid as stored; start over.
+      if (pending && (pending.amount !== APPLICATION_CHARGE.amount || pending.currency !== APPLICATION_CHARGE.currency)) {
+        await tx.applicationCheckout.delete({ where: { id: pending.id } });
+        pending = null;
+      }
       if (pending) {
         if (pending.expiresAt <= new Date()) throw new Error('CHECKOUT_REVIEW');
         // A pending checkout saved under an older form shape (e.g. before residenceCountry existed) is treated as changed.
@@ -73,7 +78,7 @@ export async function beginApplicationCheckout(programId: string, input: unknown
     // The order id is the event id: resuming the same pending order, and the browser's pixel call, deduplicate to one InitiateCheckout.
     // The payment-review account is not a prospect: no ad-measurement events.
     const meta = reviewer ? undefined : (await sendMetaEvent({ name: 'InitiateCheckout', eventId: order.id, person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, { value: order.amount, currency: APPLICATION_CHARGE.currency }) })).data;
-    return { orderId: order.id, amount: order.amount, currency: APPLICATION_CHARGE.currency, orderName: `${program.title.slice(0, 75)} — application fee`, tracking: meta, eventId: order.id };
+    return { orderId: order.id, amount: order.amount, currency: order.currency, orderName: `${program.title.slice(0, 75)} — application fee`, tracking: meta, eventId: order.id };
   } catch (error) {
     if (error instanceof Error && error.message === 'CHECKOUT_CHANGED') return {error: 'An earlier checkout is pending. Reload to resume your saved application. Contact admissions to revise it before paying.', code: 'checkoutChanged'};
     if (error instanceof Error && error.message === 'CHECKOUT_REVIEW') return {error: 'Your earlier checkout needs review. Contact admissions before paying again so we can check its payment status.', code: 'checkoutReview'};

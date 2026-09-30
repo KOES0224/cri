@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { applicationSchema, applicationDraftSchema } from '@/lib/application-validation';
 import { canApply } from "@/lib/applicant";
 import { applicationFeeFor } from "@/lib/payment-review";
+import { TOSS_WIDGET_VARIANT_KEY, tossWidgetClientKeyValid } from "@/lib/application-fee";
 import { REVIEW_DOCUMENT_FILENAME, paymentReviewDraft } from "@/lib/payment-review-draft";
 import ApplyClient from "./ApplyClient";
 import { programContent } from "@/lib/meta/config";
@@ -100,5 +101,5 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
     draftStep = sample ? 3 : 2;
   }
   const document = savedDraft?.resumeUrl ? await prisma.applicationDocument.findFirst({where: {id: savedDraft.resumeUrl.split('/').pop(), userId: session.user.id}}) : null;
-  return <ApplyClient program={programWithProfessors} content={programContent(program)} user={session.user} applicantRole={session.user.role} savedDraft={savedDraft} draftVersion={saved?.version} draftStep={draftStep} draftSavedAt={saved?.updatedAt.toISOString()} checkoutPending={checkoutPending} resumeFilename={document?.filename} paymentAvailable={Boolean(process.env.TOSS_SECRET_KEY && process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY)} feeEnabled={feeEnabled} reviewMode={reviewer} />;
+  return <ApplyClient program={programWithProfessors} content={programContent(program)} user={session.user} applicantRole={session.user.role} savedDraft={savedDraft} draftVersion={saved?.version} draftStep={draftStep} draftSavedAt={saved?.updatedAt.toISOString()} checkoutPending={checkoutPending} resumeFilename={document?.filename} paymentAvailable={Boolean(process.env.TOSS_SECRET_KEY && tossWidgetClientKeyValid(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY))} paymentVariantKey={TOSS_WIDGET_VARIANT_KEY} feeEnabled={feeEnabled} reviewMode={reviewer} />;
 }
