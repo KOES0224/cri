@@ -7,6 +7,7 @@ export const GOOGLE_APPS_SCRIPT_TEMPLATE = String.raw`// CRI application sync. I
 // then Deploy > Manage deployments > pencil icon > Version: "New version" > Deploy (the web app URL stays the same).
 // The first run asks for permission to edit the sheet and Google Drive.
 var ROOT_FOLDER_ID = "1WT8LCPjQvY2q-OX38qGFYBf3gzHyO8z6"; // Drive folder for resumes; one subfolder per program is created automatically.
+var SHEET_NAME = "Applications"; // Rows go to this tab (created if missing), so a form-responses tab in the same file is left alone.
 
 var HEADERS = ["Submitted At", "Application ID", "Status", "Fee Status", "Fee Amount", "Receipt URL", "Order ID",
   "Student Name", "Email", "Phone", "Country", "Gender", "School", "Grad Year", "T-Shirt",
@@ -20,7 +21,8 @@ function doPost(e) {
     var driveUrl = data.resumeDriveUrl || "";
     if (data.resumeFile && data.resumeFile.contentBase64) driveUrl = saveResume(data) || driveUrl;
 
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
     var headers = ensureHeaders(sheet);
     var values = {
       "Submitted At": data.submittedAt, "Application ID": data.applicationId, "Status": data.status,
