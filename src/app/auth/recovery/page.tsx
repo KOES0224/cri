@@ -1,5 +1,5 @@
 "use client";
-import { useState, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from "@/i18n/link";
 import { useT } from '@/i18n/client';
@@ -16,7 +16,18 @@ function recoveryText(result: RecoveryResponse, t: Dictionary): string {
 function RecoveryForm() {
   const params = useSearchParams();
   const { t } = useT();
-  const token = params.get('token');
+  // The reset link's token is a one-time credential. Keep it in state and take it out of the address bar before the
+  // analytics and ad scripts (GTM, Meta Pixel) read the page URL; they load after this page's first effects run.
+  const [token] = useState(() => params.get('token'));
+  useEffect(() => {
+    if (!params.has('token')) return;
+    try {
+      const clean = new URL(window.location.href);
+      clean.searchParams.delete('token');
+      // A plain state object, as on the payment result page, so Next syncs useSearchParams to the clean address.
+      window.history.replaceState(null, '', clean.toString());
+    } catch {}
+  }, [params]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');

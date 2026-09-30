@@ -34,9 +34,10 @@ export default function MetaPixel({ matching }: { matching?: MetaMatching }) {
       window.fbq?.("init", META_PIXEL_ID, keys);
       markMetaReady();
     }
-    // The payment provider returns with its payment reference in the query string; the page removes it first
-    // (see apply/payment-success), and the PageView fires once the address is clean.
-    if (searchParams.has("paymentKey")) return;
+    // The payment provider returns with its payment reference in the query string, and password-reset links carry a
+    // one-time token; those pages remove them first (apply/payment-success, auth/recovery), and the PageView fires once
+    // the address is clean.
+    if (searchParams.has("paymentKey") || searchParams.has("token")) return;
     const page = `${pathname}?${searchParams.toString()}`;
     if (page === lastPage.current) return;
     lastPage.current = page;
