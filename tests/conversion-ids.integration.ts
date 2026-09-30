@@ -14,8 +14,6 @@ let session: any = null;
 const calls = {emails: 0, meta: [] as {name: string; eventId: string}[], inquiries: 0};
 require.cache[require.resolve('next-auth')] = {exports: {getServerSession: async () => session}} as any;
 require.cache[require.resolve('next/cache')] = {exports: {revalidatePath: () => {}, revalidateTag: () => {}}} as any;
-require.cache[require.resolve('../src/lib/googleSheets')] = {exports: {syncApplicationToGoogleSheet: async () => ({synced: false})}} as any;
-delete process.env.GOOGLE_SHEET_WEBHOOK_URL;
 require.cache[require.resolve('../src/lib/notify')] = {exports: {
   notifyApplicationReceived: async () => { calls.emails++; }, sendApplicationConfirmation: async () => { calls.emails++; },
   notifyContactInquiry: async () => { calls.inquiries++; }, sendStudentAccountWelcome: async () => {},
@@ -63,8 +61,7 @@ test('free applications: one conversion id per application, repeats and races re
     assert.equal(race[0].applicationId, race[1].applicationId);
     assert.equal(await db.application.count({where: {userId, programId: programB}}), 1);
 
-    // Side effects ran once per real application (2 programs): 2 emails and 1 Meta event each. (The spreadsheet sync is
-    // loaded with a dynamic import that the require.cache stub cannot replace; without GOOGLE_SHEET_WEBHOOK_URL it sends nothing.)
+    // Side effects ran once per real application (2 programs): 2 emails and 1 Meta event each.
     assert.equal(calls.emails, 4);
     assert.deepEqual(calls.meta.map(m => m.name), ['SubmitApplication', 'SubmitApplication']);
     assert.deepEqual(new Set(calls.meta.map(m => m.eventId)), new Set([first.applicationId, race.find((r: any) => !r.duplicate).applicationId]));

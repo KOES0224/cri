@@ -1,7 +1,7 @@
 # CRI (criglobal.org)
 
 Public site + student/admin portal for CRI student research programs.
-Stack: Next.js 16 (App Router), React 19, Tailwind 4, Prisma 5 (PostgreSQL on Supabase), next-auth 4, Toss Payments, Vercel Blob, Resend, Google Sheets mirror.
+Stack: Next.js 16 (App Router), React 19, Tailwind 4, Prisma 5 (PostgreSQL on Supabase), next-auth 4, Toss Payments, Vercel Blob, Resend.
 
 ## Deploy
 - GitHub `KOES0224/cri`, branch `main` auto-deploys to Vercel project `cri-portal` (criglobal.org).
@@ -19,7 +19,7 @@ Stack: Next.js 16 (App Router), React 19, Tailwind 4, Prisma 5 (PostgreSQL on Su
 - Public pages: `src/app/page.tsx` (home), `src/app/research/*` (programs), `src/app/research/program/[id]` (detail + Apply), `src/app/apply/*` (application + Toss checkout), `src/app/admissions`, `src/app/contact`
 - Shared program facts: `src/lib/program-policy.ts`; application rules: `src/lib/application-*.ts`
 - Auth: `src/lib/auth.ts`, `src/app/auth/*`
-- Admin dashboard: `src/app/dashboard/*`
+- Admin dashboard: `src/app/dashboard/*`; full-screen applications sheet (outside the admin shell): `src/app/admin/applications-sheet/*`
 - Data model: `prisma/schema.prisma`
 - Rollout notes from the last UX pass: `docs/program-ux-rollout.md`
 

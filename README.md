@@ -39,7 +39,6 @@ Set these in `.env` locally and in Vercel. Values are never committed.
 | `NEXT_PUBLIC_TOSS_CLIENT_KEY`, `TOSS_SECRET_KEY` | Toss Payments keys for the application fee checkout. Missing keys fail closed. |
 | `RESEND_API_KEY`, `AUTH_EMAIL_FROM` | Transactional email (password recovery, notifications). `AUTH_EMAIL_FROM` must be a verified sender. |
 | `ADMISSIONS_NOTIFY_EMAIL` | Inbox that receives new-application notifications. |
-| `GOOGLE_SHEET_WEBHOOK_URL` | Apps Script webhook that mirrors applications to a Google Sheet. |
 | `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_META_PIXEL_ID` | Optional analytics IDs; analytics are disabled when unset. |
 | `NEXT_PUBLIC_GTM_ID` | Google Tag Manager container (`GTM-…`), loaded on criglobal.org only. GA4, Google Ads, Kakao and Naver are configured inside it; funnel events are pushed to its dataLayer with a `transaction_id` on one-time conversions. Keep `NEXT_PUBLIC_GA_ID` unset while GA4 lives in GTM, and never add the Meta Pixel as a GTM tag (it is installed in code with the Conversions API). |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional Google sign-in provider for next-auth. |

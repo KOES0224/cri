@@ -195,38 +195,6 @@ export async function scheduleUserGoogleMeeting(userId: string, title: string, s
   }
 }
 
-export async function getAdminApplicationsExportData() {
-  const session = await getServerSession(authOptions);
-  
-  if (!session || session.user.role !== "ADMIN") {
-    return { success: false, error: "Unauthorized" };
-  }
-
-  try {
-    const applications = await prisma.application.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: {
-          select: { 
-            id: true, 
-            name: true, 
-            email: true, 
-            studentCode: true, 
-            activities: { orderBy: { createdAt: 'asc' } } 
-          }
-        },
-        program: {
-          select: { title: true, category: true }
-        }
-      }
-    });
-
-    return { success: true, data: applications };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
 /**
  * Updates application tracking metadata from the spreadsheet view
  */
@@ -265,73 +233,10 @@ export async function deleteApplication(applicationId: string) {
     });
     
     revalidatePath("/dashboard/applications-admin");
-    revalidatePath("/dashboard/applications-admin/sheet");
+    revalidatePath("/admin/applications-sheet");
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to delete application" };
-  }
-}
-
-/**
- * Checks whether Google Sheet Webhook is currently configured in .env
- */
-export async function checkGoogleSheetWebhookStatus() {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") return { hasWebhook: false };
-
-  const url = process.env.GOOGLE_SHEET_WEBHOOK_URL;
-  if (!url) return { hasWebhook: false };
-
-  // Mask url for security: https://script.google.com/macros/s/...abc/exec
-  const masked = url.length > 25 ? `${url.substring(0, 32)}...${url.substring(url.length - 8)}` : "Configured";
-  return { hasWebhook: true, maskedUrl: masked };
-}
-
-/**
- * Batch sync all applications from database into Google Sheet
- */
-export async function syncAllApplicationsToGoogleSheet() {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") return { success: false, error: "Unauthorized" };
-
-  const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
-  if (!webhookUrl) {
-    return { success: false, error: "GOOGLE_SHEET_WEBHOOK_URL is not set in environment variables." };
-  }
-
-  try {
-    const applications = await prisma.application.findMany({
-      // The payment-gateway review account's test applications never go to the admissions sheet.
-      where: { user: { paymentReviewer: false } },
-      orderBy: { createdAt: "asc" },
-      include: {
-        user: true,
-        program: true,
-      }
-    });
-
-    const { syncApplicationToGoogleSheet } = await import("@/lib/googleSheets");
-    let syncedCount = 0;
-
-    for (const app of applications) {
-      let formData = {};
-      try {
-        formData = JSON.parse(app.content || "{}");
-      } catch (e) {}
-
-      const res = await syncApplicationToGoogleSheet({
-        application: app,
-        user: app.user,
-        program: app.program,
-        formData,
-      });
-
-      if (res.synced) syncedCount++;
-    }
-
-    return { success: true, count: syncedCount, total: applications.length };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Failed to sync to Google Sheet" };
   }
 }
 
