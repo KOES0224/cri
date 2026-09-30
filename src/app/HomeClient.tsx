@@ -149,7 +149,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
       <UniversitiesStrip />
 
       {/* Open cohorts: the primary conversion path */}
-      <OpenProgramsSection programs={openPrograms} className="mt-16 md:mt-20 bg-[#EAEEF4] border-y border-gray-200" />
+      <OpenProgramsSection programs={openPrograms} className="mt-16 md:mt-20 bg-[#E3E8EF] border-y border-gray-200" />
 
       {/* Three steps to a decision */}
       <HowItWorks />
@@ -196,7 +196,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
       <FaqSection />
 
       {/* Closing CTA */}
-      <section className="relative z-10 border-t border-gray-200 bg-[#EAEEF4] px-6 py-20 md:py-24">
+      <section className="relative z-10 border-t border-gray-200 bg-[#E3E8EF] px-6 py-20 md:py-24">
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}
