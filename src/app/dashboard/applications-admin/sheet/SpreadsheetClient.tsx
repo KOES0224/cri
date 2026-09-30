@@ -23,7 +23,7 @@ import {
   checkGoogleSheetWebhookStatus,
   syncAllApplicationsToGoogleSheet
 } from "@/app/actions/adminApplications";
-import { GOOGLE_APPS_SCRIPT_TEMPLATE } from "@/lib/googleSheets";
+import { GOOGLE_APPS_SCRIPT_TEMPLATE } from "@/lib/google-apps-script";
 
 // Safe date parsing helper to prevent RangeError crashes
 function safeIsoDate(dateVal: any): string {
@@ -456,6 +456,15 @@ export default function SpreadsheetClient({ initialData }: { initialData: any[] 
                         );
                       }
 
+                      if ((col === "resumeUrl" || col === "resumeDriveUrl") && typeof val === "string" && val) {
+                        return (
+                          <td key={col} className="px-4 py-2 border-r border-gray-200 max-w-[250px]">
+                            <a href={val} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold text-xs">
+                              {col === "resumeUrl" ? "Resume PDF" : "Drive"} <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </td>
+                        );
+                      }
                       const displayVal = typeof val === 'object' ? JSON.stringify(val) : String(val || "");
                       const isLongText = displayVal.length > 50;
 

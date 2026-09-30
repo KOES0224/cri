@@ -1,3 +1,4 @@
+import { absoluteResumeUrl } from './googleSheets';
 import { Resend } from 'resend';
 
 /**
@@ -87,6 +88,8 @@ export async function notifyApplicationReceived(app: PaidApplication) {
     parent ? `Parent / guardian: ${parent} · ${str(f.parentEmail) || '-'} · ${str(f.parentPhone) || '-'}` : null,
     app.accountEmail ? `Account email: ${app.accountEmail}` : null,
     str(f.residenceCountry) ? `Country of residence: ${str(f.residenceCountry)}` : null,
+    str(f.resumeDriveUrl) ? `Resume (Drive): ${str(f.resumeDriveUrl)}` : null,
+    str(f.resumeUrl) ? `Resume (site, admin login): ${absoluteResumeUrl(f.resumeUrl)}` : null,
     `Area of interest: ${str(f.areaOfInterest) || '-'}`,
     `First-choice professor: ${str(f.firstChoiceProfessor) || '-'}`,
     ``,

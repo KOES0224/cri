@@ -3,7 +3,7 @@ import { getLocale, type Locale } from "@/i18n";
 import { localeAlternates } from "@/i18n/routing";
 
 /** Canonical public origin. Used for metadataBase, robots and the sitemap. */
-export const SITE_URL = "https://criglobal.org";
+export { SITE_URL } from "./site";
 
 /** Fallback social image: app/opengraph-image.png is served at this path. */
 export const DEFAULT_OG_IMAGE = "/opengraph-image.png";
