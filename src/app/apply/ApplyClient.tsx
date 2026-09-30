@@ -52,7 +52,9 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   const [widgetState, setWidgetState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   // Per-instance ids: Next can keep a hidden copy of the page, and the widget mounts by CSS selector.
   const widgetId = useId();
-  const methodsSelector = `#${CSS.escape(`${widgetId}methods`)}`, agreementSelector = `#${CSS.escape(`${widgetId}agreement`)}`;
+  // Attribute selectors need no escaping, so nothing browser-only runs during server rendering.
+  const methodsId = `${widgetId}methods`, agreementId = `${widgetId}agreement`;
+  const methodsSelector = `[id="${methodsId}"]`, agreementSelector = `[id="${agreementId}"]`;
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
   const [savedAt, setSavedAt] = useState(draftSavedAt || '');
   const [saveError, setSaveError] = useState('');
@@ -202,8 +204,8 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       if (!reviewMode) trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
       if (!reviewMode && order.tracking) metaTrack('InitiateCheckout', order.tracking, order.eventId);
       // PayPal (if offered) needs the order contents; cards do not.
-      const selected = widget.methods.getSelectedPaymentMethod() as { method?: string; easyPay?: { provider?: string } | null; paymentMethodKey?: string } | null;
-      const paypal = /PAYPAL/i.test(`${selected?.easyPay?.provider ?? ''} ${selected?.paymentMethodKey ?? ''}`) || selected?.method === 'FOREIGN_EASY_PAY';
+      const selected = await widget.methods.getSelectedPaymentMethod().catch(() => null);
+      const paypal = selected?.code === 'PAYPAL';
       await widget.widgets.requestPayment({
         orderId: order.orderId, orderName: order.orderName!,
         successUrl: `${window.location.origin}/apply/payment-success?programId=${encodeURIComponent(program.id)}`,
@@ -255,8 +257,8 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
         {feeEnabled && <div className="rounded-xl border border-slate-200 bg-white p-2">
           {widgetState === 'loading' && <p role="status" className="px-3 py-6 text-center text-sm text-slate-500">{copy.widget.loading}</p>}
           {widgetState === 'error' && <p role="alert" className="px-3 py-6 text-center text-sm text-red-700">{copy.widget.failed}</p>}
-          <div id={`${widgetId}methods`} />
-          <div id={`${widgetId}agreement`} />
+          <div id={methodsId} />
+          <div id={agreementId} />
         </div>}
       </div>}
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable || widgetState !== 'ready'} className={actionClass}>{busy ? copy.openingPayment : copy.payAndSubmit(APPLICATION_CHARGE_LABEL)}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>

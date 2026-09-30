@@ -636,7 +636,7 @@ export const en = {
       paidBody: (charge: string) => `Your application fee payment of ${charge} was verified. Program tuition is separate. Your dossier has been submitted to the admissions committee.`,
       orderId: "Order ID:",
       method: "Payment Method:",
-      methodValue: "Toss Payments (card)",
+      methodValue: "Toss Payments",
       status: "Status:",
       statusValue: (charge: string) => `PAID (${charge})`,
       receipt: "View Official Payment Receipt",

@@ -19,7 +19,7 @@ Changing `NEXT_PUBLIC_*` values needs a redeploy (they are baked in at build tim
 - In the Toss admin, a payment-widget UI for that MID; its `variantKey` goes into `NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY`.
 - Test mode: Toss's sandbox test cards (Visa 4242 4242 4242 4242, Mastercard 5555 5555 5555 4444, JCB 3530 1113 3330 0000); UnionPay is not available in the sandbox.
 
-Until the USD MID and UI exist, `widgets.setAmount({ currency: 'USD' })` / `requestPayment` fail with Toss's "잘못된 통화 값입니다" (invalid currency), which the checkout shows as a notice.
+Until the USD MID and UI exist, Toss rejects the USD request with "잘못된 통화 값입니다" (invalid currency). If that happens while the widget renders, the checkout shows the generic "payment options could not be loaded" text (details in the browser console); if it happens on "Pay and submit", Toss's message is shown as the notice.
 
 ## Flow
 

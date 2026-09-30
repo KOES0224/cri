@@ -633,7 +633,7 @@ export const ko: Dictionary = {
       paidBody: (charge: string) => `지원비 ${charge} 결제가 확인되었습니다. 수업료는 별도입니다. 지원서가 입학팀에 전달되었습니다.`,
       orderId: "주문 번호:",
       method: "결제 수단:",
-      methodValue: "토스페이먼츠 (카드)",
+      methodValue: "토스페이먼츠",
       status: "상태:",
       statusValue: (charge: string) => `결제 완료 (${charge})`,
       receipt: "결제 영수증 보기",
