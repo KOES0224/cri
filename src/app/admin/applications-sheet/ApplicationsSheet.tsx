@@ -5,6 +5,7 @@ import { ArrowUpDown, Check, ChevronDown, ChevronUp, Columns3, Download, Externa
 import { deleteApplication, updateApplicationProcessingFields } from "@/app/actions/adminApplications";
 import { applicationLabels } from "@/lib/application-validation";
 import type { SheetRow } from "@/lib/admin-sheet";
+import { formatKST } from "@/lib/formatKST";
 
 /*
  * Full-screen applications sheet.
@@ -47,7 +48,7 @@ function buildColumns(rows: SheetRow[]): Column[] {
   return [
     { key: "actions", label: "", width: 44, kind: "actions", sticky: true, get: () => "" },
     { key: "applicant", label: "Applicant", width: 220, kind: "applicant", sticky: true, get: (r) => `${r.user.name || ""} <${r.user.email}>` },
-    { key: "submittedAt", label: "Submitted", width: 110, kind: "text", get: (r) => day(r.createdAt) },
+    { key: "submittedAt", label: "Submitted", width: 110, kind: "text", get: (r) => formatKST(r.createdAt, "yyyy-MM-dd") },
     { key: "program", label: "Program", width: 240, kind: "text", get: (r) => r.program.title },
     { key: "finalRegisteredCourse", label: "Final course", width: 220, kind: "course", get: (r) => r.finalRegisteredCourse || "" },
     { key: "stage", label: "Stage", width: 130, kind: "stage", get: (r) => r.stage || "REVIEW" },
@@ -66,8 +67,9 @@ function buildColumns(rows: SheetRow[]): Column[] {
 
 function csvFor(rows: SheetRow[], columns: Column[]) {
   const cols = columns.filter((c) => c.kind !== "actions");
-  // Values that spreadsheets would treat as formulas (=, +, -, @, tab, CR) are neutralised with a leading apostrophe.
-  const cell = (v: string) => `"${(/^[=+\-@\t\r]/.test(v) ? `'${v}` : v).replace(/"/g, '""')}"`;
+  // Values a spreadsheet would run as a formula get a leading apostrophe; "+82 10…" phone numbers and negative numbers are left alone.
+  const formulaLike = (v: string) => /^[=@\t\r]/.test(v) || /^[+-](?![\d\s(])/.test(v);
+  const cell = (v: string) => `"${(formulaLike(v) ? `'${v}` : v).replace(/"/g, '""')}"`;
   const lines = [cols.map((c) => cell(c.label)).join(",")];
   for (const r of rows) lines.push(cols.map((c) => cell(c.get(r))).join(","));
   return "﻿" + lines.join("\r\n");
@@ -82,7 +84,7 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
   const [widths, setWidths] = useState<Record<string, number>>({});
   const [hidden, setHidden] = useState<string[]>([]);
   const [rowMode, setRowMode] = useState<RowMode>("cozy");
-  const loaded = useRef(false);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(PREFS_KEY) || "{}");
@@ -90,12 +92,12 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
       if (Array.isArray(saved.hidden)) setHidden(saved.hidden);
       if (saved.rowMode) setRowMode(saved.rowMode);
     } catch {}
-    loaded.current = true;
+    setLoaded(true);
   }, []);
   useEffect(() => {
-    if (!loaded.current) return;
+    if (!loaded) return;
     try { localStorage.setItem(PREFS_KEY, JSON.stringify({ widths, hidden, rowMode })); } catch {}
-  }, [widths, hidden, rowMode]);
+  }, [loaded, widths, hidden, rowMode]);
 
   const columns = useMemo(() => base.map((c) => ({ ...c, width: widths[c.key] || c.width })).filter((c) => !hidden.includes(c.key)), [base, widths, hidden]);
   const stickyLeft = useMemo(() => { let left = 0; const map: Record<string, number> = {}; for (const c of columns) { if (!c.sticky) break; map[c.key] = left; left += c.width; } return map; }, [columns]);
@@ -130,9 +132,10 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
     drag.current = { key, startX: event.clientX, startWidth: width };
     // The state updater runs later, possibly after pointerup cleared the drag, so the key is captured here.
     const move = (e: PointerEvent) => { if (!drag.current) return; const { key: k, startWidth, startX } = drag.current; const next = Math.max(MIN_WIDTH, startWidth + e.clientX - startX); setWidths((w) => ({ ...w, [k]: next })); };
-    const up = () => { drag.current = null; window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    const up = () => { drag.current = null; window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
   };
 
   // Inline edits of the pipeline fields
@@ -266,7 +269,7 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
                         </button>
                       )}
                     </div>
-                    {c.kind !== "actions" && <span role="separator" aria-orientation="vertical" onPointerDown={onResizeStart(c.key, c.width)} onDoubleClick={() => setWidths((w) => { const n = { ...w }; delete n[c.key]; return n; })} className="absolute right-0 top-0 h-full w-2 cursor-col-resize select-none hover:bg-blue-400/40" title="Drag to resize · double-click to reset" />}
+                    {c.kind !== "actions" && <span role="separator" aria-orientation="vertical" onPointerDown={onResizeStart(c.key, c.width)} onDoubleClick={() => setWidths((w) => { const n = { ...w }; delete n[c.key]; return n; })} className="absolute right-0 top-0 h-full w-2 cursor-col-resize touch-none select-none hover:bg-blue-400/40" title="Drag to resize · double-click to reset" />}
                   </th>
                 ))}
               </tr>
@@ -276,7 +279,7 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
                 <tr key={r.id} className={`group ${saving[r.id] ? "opacity-60" : ""}`}>
                   {columns.map((c) => {
                     const stickyStyle = c.sticky ? { left: stickyLeft[c.key] } : undefined;
-                    const cellClass = `border-b border-r border-slate-200 p-0 align-top ${c.sticky ? "sticky z-10 bg-white group-hover:bg-blue-50/40" : "group-hover:bg-blue-50/20"}`;
+                    const cellClass = `border-b border-r border-slate-200 p-0 align-top ${c.sticky ? "sticky z-10 bg-white group-hover:bg-blue-50" : "group-hover:bg-blue-50/20"}`;
                     if (c.kind === "actions") return <td key={c.key} style={stickyStyle} className={cellClass}><button type="button" onClick={() => void remove(r)} title="Delete application" className="flex h-full w-full items-start justify-center px-2 py-2 text-slate-300 hover:text-red-600"><Trash2 className="h-4 w-4" /></button></td>;
                     if (c.kind === "applicant") return <td key={c.key} style={stickyStyle} className={cellClass}><button type="button" onClick={() => setDetail({ id: r.id, key: "applicant" })} className="block w-full overflow-hidden px-2 py-1.5 text-left hover:bg-blue-50"><div className="truncate font-semibold text-slate-900">{r.user.name || "—"}</div><div className="truncate text-[11px] text-slate-500">{r.user.email}</div></button></td>;
                     if (c.kind === "stage") return <td key={c.key} className={cellClass}><select disabled={!!saving[r.id]} value={r.stage || "REVIEW"} onChange={(e) => void save(r, "stage", e.target.value)} className={`${inputClass} font-bold ${r.stage === "ENROLLED" ? "text-emerald-700" : r.stage === "REJECTED" ? "text-red-600" : r.stage === "PAYMENT" ? "text-amber-700" : "text-blue-700"}`}>{STAGES.map((s) => <option key={s} value={s}>{s}</option>)}</select></td>;
@@ -285,7 +288,7 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
                     if (c.kind === "textarea") { const field = c.key as "interviewComments" | "generalComments"; return <td key={c.key} className={cellClass}><textarea key={`${r.id}-${field}-${rowMode}`} disabled={!!saving[r.id]} rows={textareaRows} defaultValue={r[field] || ""} onBlur={(e) => { if (e.target.value !== (r[field] || "")) void save(r, field, e.target.value); }} placeholder="…" className={`${inputClass} resize-none leading-snug`} /></td>; }
                     if (c.kind === "resume") { const site = typeof r.form.resumeUrl === "string" ? r.form.resumeUrl : ""; const drive = typeof r.form.resumeDriveUrl === "string" ? r.form.resumeDriveUrl : ""; return <td key={c.key} className={cellClass}><div className="flex flex-wrap gap-2 px-2 py-1.5 text-xs font-semibold">{site && <a href={site} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-700 hover:underline">PDF <ExternalLink className="h-3 w-3" /></a>}{drive && <a href={drive} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-emerald-700 hover:underline">Drive <ExternalLink className="h-3 w-3" /></a>}{!site && !drive && <span className="text-slate-300">—</span>}</div></td>; }
                     const value = c.get(r);
-                    return <td key={c.key} className={cellClass}><button type="button" onClick={() => setDetail({ id: r.id, key: c.key })} title={rowMode === "full" ? undefined : "Click to read in full"} className={`w-full overflow-hidden px-2 py-1.5 text-left text-slate-700 hover:bg-blue-50 ${textClass}`}>{value || <span className="text-slate-300">—</span>}</button></td>;
+                    return <td key={c.key} className={cellClass}><button type="button" onClick={() => setDetail({ id: r.id, key: c.key })} title={rowMode === "full" ? undefined : "Click to read in full"} className="block w-full overflow-hidden px-2 py-1.5 text-left text-slate-700 hover:bg-blue-50"><span className={textClass}>{value || <span className="text-slate-300">—</span>}</span></button></td>;
                   })}
                 </tr>
               ))}
@@ -299,7 +302,7 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
             <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
               <div className="min-w-0">
                 <div className="truncate text-base font-black text-slate-900">{detailRow.user.name || detailRow.user.email}</div>
-                <div className="truncate text-xs text-slate-500">{detailRow.program.title} · {day(detailRow.createdAt)}</div>
+                <div className="truncate text-xs text-slate-500">{detailRow.program.title} · {formatKST(detailRow.createdAt, "yyyy-MM-dd")}</div>
               </div>
               <button type="button" onClick={() => setDetail(null)} aria-label="Close" className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
             </div>
