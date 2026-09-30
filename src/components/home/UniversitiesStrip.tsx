@@ -28,15 +28,17 @@ export default function UniversitiesStrip({ universities = FEATURED_UNIVERSITIES
   const { t } = useT();
   if (universities.length === 0) return null;
   return (
-    <section aria-label={t.home.universities.eyebrow} className="relative z-10 px-6 pt-16 pb-4 max-w-6xl mx-auto">
-      <p className="text-center text-xs font-black uppercase tracking-widest text-gray-400 mb-7">{t.home.universities.eyebrow}</p>
-      <ul className="flex flex-wrap items-center justify-center gap-x-10 md:gap-x-14 gap-y-6">
+    <section aria-label={t.home.universities.eyebrow} className="relative z-10 px-6 pt-12 md:pt-14">
+      <div className="mx-auto max-w-7xl">
+      <p className="mb-6 text-center text-xs font-bold uppercase tracking-widest text-gray-400">{t.home.universities.eyebrow}</p>
+      <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6 md:gap-x-14">
         {universities.map((u) => (
           <li key={u.name} className="flex items-center" title={u.name}>
             <Logo university={u} />
           </li>
         ))}
       </ul>
+      </div>
     </section>
   );
 }

@@ -27,15 +27,15 @@ export default function OpenProgramsSection({
   heading ??= copy.heading;
   intro ??= copy.intro;
   return (
-    <section id="open-programs" className={`relative z-10 scroll-mt-28 py-24 md:py-32 px-6 ${className}`}>
-      <div className="max-w-7xl mx-auto">
-        <div className="max-w-3xl mb-12 md:mb-16">
+    <section id="open-programs" className={`relative z-10 scroll-mt-28 px-6 py-20 md:py-24 ${className}`}>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-10 max-w-3xl md:mb-12">
           <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black uppercase tracking-wider mb-6">
             <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
             {eyebrow}
           </div>
-          <h2 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900 mb-5">{heading}</h2>
-          <p className="text-lg md:text-xl text-gray-500 leading-relaxed font-medium">{intro}</p>
+          <h2 className="mb-4 text-3xl font-black tracking-tight text-gray-900 md:text-4xl">{heading}</h2>
+          <p className="text-lg leading-relaxed text-gray-600">{intro}</p>
         </div>
 
         {programs.length === 0 ? (
@@ -56,7 +56,8 @@ export default function OpenProgramsSection({
             </div>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+          /* Two or four cohorts fill a 2×2 grid instead of leaving an orphan card on a three-column row. */
+          <div className={`grid gap-6 md:grid-cols-2 ${programs.length === 2 || programs.length === 4 ? "" : "xl:grid-cols-3"}`}>
             {programs.map((program, i) => {
               const prof = program.professor;
               const initials = prof?.name ? prof.name.split(" ").map((n) => n[0]).slice(0, 2).join("") : "CRI";
@@ -147,7 +148,7 @@ export default function OpenProgramsSection({
           </div>
         )}
 
-        <div className="mt-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 text-sm text-gray-500 font-medium">
+        <div className="mt-8 flex flex-col gap-4 text-sm font-medium text-gray-500 sm:flex-row sm:items-center sm:gap-8">
           <span>{APPLICATION_FEE_ENABLED ? copy.reviewNote : copy.reviewNoteFree}</span>
           <div className="flex items-center gap-5 shrink-0">
             <Link href="/admissions" className="font-bold text-gray-900 hover:text-blue-600 transition-colors">{copy.howApplying}</Link>
