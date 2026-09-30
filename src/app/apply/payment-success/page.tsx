@@ -68,7 +68,7 @@ function PaymentSuccessContent() {
           receiptUrl: res.receiptUrl,
         });
         // The payment-review account is not a prospect: its test payment is not reported as a conversion.
-        if (!res.review) trackEvent("application_submitted", { program_id: programId || undefined, order_id: orderId, value: Number(amountStr), currency: APPLICATION_CHARGE.currency });
+        if (!res.review) trackEvent("application_submitted", { program_id: programId || undefined, order_id: orderId, transaction_id: orderId, value: Number(amountStr), currency: APPLICATION_CHARGE.currency });
         // The order id is the event id on both sides: reloads of this page and the server copy deduplicate to one Purchase.
         if (res.tracking && res.eventId) metaTrack("Purchase", res.tracking, res.eventId);
         setLoading(false);

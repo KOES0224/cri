@@ -177,10 +177,10 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
     if (!document) return { error: 'Please upload your CV again using this account.', code: 'resumeMissing' };
     if (existing) return { success: true, applicationId: existing.id, duplicate: true };
     const submittedAt = new Date();
-    const applicationId = await prisma.$transaction(async tx => {
+    const saved = await prisma.$transaction(async tx => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${session.user.id + ':' + programId}))`;
       const again = await tx.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { id: true } });
-      if (again) return again.id;
+      if (again) return { id: again.id, created: false };
       const app = await tx.application.create({ data: {
         userId: session.user.id, programId, status: 'PENDING', stage: 'REVIEW', expectedWaitDays: 7,
         content: JSON.stringify({ ...parsed.data, payment: { feeStatus: 'WAIVED', amount: 0, currency: 'USD', submittedAt: submittedAt.toISOString() } }),
@@ -193,8 +193,12 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
       } });
       await tx.applicationDraft.deleteMany({ where: { userId: session.user.id, programId } });
       await tx.applicationCheckout.deleteMany({ where: { userId: session.user.id, programId, status: 'PENDING' } });
-      return app.id;
+      return { id: app.id, created: true };
     });
+    // A second tab or a double submit lost the race to the first one: answer like an existing application, without a
+    // second spreadsheet row, admissions email or Meta event.
+    if (!saved.created) return { success: true, applicationId: saved.id, duplicate: true };
+    const applicationId = saved.id;
     try {
       const app = await prisma.application.findUniqueOrThrow({ where: { id: applicationId }, include: { program: true, user: true } });
       const { syncApplicationToGoogleSheet } = await import('@/lib/googleSheets');

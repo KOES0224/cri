@@ -11,7 +11,7 @@
     "test": "tsx --test tests/*.test.ts",
     "inventory:review": "tsx scripts/update-professor-marketing-bios.ts",
     "inventory:programs": "tsx scripts/update-program-inventory.ts",
-    "test:integration": "tsx --test tests/server.integration.ts"
+    "test:integration": "tsx --test tests/server.integration.ts tests/conversion-ids.integration.ts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",

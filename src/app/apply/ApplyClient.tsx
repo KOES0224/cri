@@ -183,7 +183,9 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       const result = await submitApplicationWithoutFee(program.id, form);
       if (result.error || !result.applicationId) throw new Error(actionText(result, copy.notices.submitFailed));
       savedRevision.current = revision.current;
-      if (!reviewMode) trackEvent('application_submitted', { program_id: program.id, program_title: program.title, value: 0, currency: 'USD' });
+      // One conversion per application: a repeat submission (already applied, or a second tab) reports nothing. The
+      // application id is the transaction id for GTM and the event id for Meta, so every platform can deduplicate.
+      if (!reviewMode && !result.duplicate) trackEvent('application_submitted', { program_id: program.id, program_title: program.title, value: 0, currency: 'USD', transaction_id: result.applicationId });
       if (!reviewMode && !result.duplicate && result.eventId) metaTrack('SubmitApplication', result.tracking || content, result.eventId);
       router.push(`/apply/submitted?programId=${encodeURIComponent(program.id)}`);
     } catch (error) { setNotice(error instanceof Error && error.message ? error.message : copy.notices.notSubmitted); paymentLock.current = false; setBusy(false); }
