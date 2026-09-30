@@ -77,6 +77,7 @@ export const en = {
       "Ivy Mentors": "Ivy Mentors",
     } as Record<string, string>,
     philosophyTitle: { before: "The Standard for ", word: "Research", after: "" },
+    philosophyEyebrow: "What counts as research",
     philosophyIntro: "Not every idea becomes research. At CRI, work is recognized as research only when it meets strict conditions.",
     philosophy: [
       {
@@ -112,6 +113,7 @@ export const en = {
     },
     universities: { eyebrow: "Mentors teach at" },
     faq: {
+      eyebrow: "Before you apply",
       title: "Questions families ask first",
       intro: "The short answers. The admissions and refund pages have the full terms.",
       items: [

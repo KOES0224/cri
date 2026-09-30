@@ -11,12 +11,12 @@ export default function HowItWorks() {
   const { t } = useT();
   const icons = [Search, FileText, CheckCircle2];
   return (
-    <section className="relative z-10 bg-white py-24 md:py-28 px-6 border-t border-gray-100">
-      <div className="max-w-7xl mx-auto">
-        <div className="max-w-3xl mb-14">
-          <p className="text-xs font-black uppercase tracking-widest text-blue-700 mb-4">{t.home.howItWorks.eyebrow}</p>
-          <h2 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900 mb-4">{t.home.howItWorks.title}</h2>
-          <p className="text-lg md:text-xl text-gray-500 font-medium leading-relaxed">{t.home.howItWorks.intro}</p>
+    <section className="relative z-10 bg-white px-6 py-20 md:py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-10 max-w-3xl md:mb-12">
+          <p className="mb-4 text-xs font-bold uppercase tracking-widest text-blue-700">{t.home.howItWorks.eyebrow}</p>
+          <h2 className="mb-4 text-3xl font-black tracking-tight text-gray-900 md:text-4xl">{t.home.howItWorks.title}</h2>
+          <p className="text-lg leading-relaxed text-gray-600">{t.home.howItWorks.intro}</p>
         </div>
         <ol className="grid md:grid-cols-3 gap-6">
           {t.home.howItWorks.steps.map((step, i) => {
@@ -28,7 +28,7 @@ export default function HowItWorks() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="relative rounded-3xl border border-gray-200/90 bg-[#FAFAFA] p-8"
+                className="relative rounded-3xl border border-gray-200/80 bg-[#F4F5F8] p-8"
               >
                 <div className="flex items-center justify-between mb-6">
                   <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-gray-200 text-blue-700 shadow-sm"><Icon className="h-5 w-5" /></span>
@@ -41,7 +41,7 @@ export default function HowItWorks() {
             );
           })}
         </ol>
-        <div className="mt-10 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
           <Link href="#open-programs" className="inline-flex items-center justify-center px-7 py-3.5 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-colors">
             {t.home.howItWorks.cta} <ArrowRight className="ml-2 h-4 w-4" />
           </Link>

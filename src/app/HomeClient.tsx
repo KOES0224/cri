@@ -20,15 +20,7 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
   // Stat labels: a translated CMS value if the admin added one, else a dictionary translation of the English CMS label, else the fallback.
   const statLabel = (key: string, fallback: string) => cms(key) || (locale !== "en" && content[key] ? t.home.cmsLabels[content[key]] : "") || content[key] || fallback;
   return (
-    <div className="flex flex-col min-h-screen bg-[#FAFAFA] font-sans overflow-hidden">
-      
-      {/* Dynamic Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex justify-center">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-400/20 blur-[120px] rounded-full mix-blend-multiply opacity-70 animate-pulse"></div>
-        <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] bg-purple-400/20 blur-[120px] rounded-full mix-blend-multiply opacity-70 animate-pulse delay-1000"></div>
-        <div className="absolute -bottom-32 left-1/4 w-[60%] h-[60%] bg-indigo-300/20 blur-[120px] rounded-full mix-blend-multiply opacity-50"></div>
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_0%,#000_70%,transparent_100%)] mix-blend-overlay"></div>
-      </div>
+    <div className="flex flex-col min-h-screen bg-white font-sans overflow-hidden">
 
       {/* Hero Section with Animated Abstract Background */}
       <section className="group relative pt-40 pb-32 md:pt-56 md:pb-48 px-6 flex items-center justify-center z-10 min-h-screen overflow-hidden bg-gray-950">
@@ -132,21 +124,24 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
         </div>
       </section>
 
-      {/* Statistics Section (Managed by CMS) */}
-      <section className="relative z-20 -mt-16 md:-mt-24 px-6 max-w-6xl mx-auto">
-        <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col md:flex-row justify-center items-stretch divide-y md:divide-y-0 md:divide-x divide-gray-100">
-          <div className="flex-1 text-center w-full py-10 md:py-12 lg:py-14 px-6 md:px-8 lg:px-12 flex flex-col items-center justify-start">
-            <p className="text-5xl lg:text-6xl font-black text-gray-900 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat1_number || "100%"}</p>
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{statLabel("landing_stat1_label", t.home.stat1Label)}</p>
-          </div>
-          <div className="flex-1 text-center w-full py-10 md:py-12 lg:py-14 px-6 md:px-8 lg:px-12 flex flex-col items-center justify-start">
-            <p className="text-5xl lg:text-6xl font-black text-blue-600 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat2_number || "#1"}</p>
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{statLabel("landing_stat2_label", t.home.stat2Label)}</p>
-          </div>
-          <div className="flex-1 text-center w-full py-10 md:py-12 lg:py-14 px-6 md:px-8 lg:px-12 flex flex-col items-center justify-start">
-            <p className="text-5xl lg:text-6xl font-black text-purple-600 mb-3 tracking-tight whitespace-nowrap">{content.landing_stat3_number || "50+"}</p>
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs lg:text-sm leading-snug max-w-[180px] min-h-[40px] flex items-start justify-center">{statLabel("landing_stat3_label", t.home.stat3Label)}</p>
-          </div>
+      {/* Every band below the hero shares one container (max-w-7xl), one heading pattern and one vertical rhythm;
+          bands alternate white and a soft grey so each section reads as its own block. */}
+
+      {/* Statistics (Managed by CMS) */}
+      <section className="relative z-20 -mt-14 md:-mt-20 px-6">
+        <div className="mx-auto max-w-7xl">
+          <dl className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 rounded-3xl border border-gray-100 bg-white shadow-xl shadow-gray-900/5">
+            {[
+              { number: content.landing_stat1_number || "100%", label: statLabel("landing_stat1_label", t.home.stat1Label), color: "text-gray-900" },
+              { number: content.landing_stat2_number || "#1", label: statLabel("landing_stat2_label", t.home.stat2Label), color: "text-blue-600" },
+              { number: content.landing_stat3_number || "50+", label: statLabel("landing_stat3_label", t.home.stat3Label), color: "text-purple-600" },
+            ].map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center px-6 py-8 md:py-10 text-center">
+                <dd className={`order-first text-4xl lg:text-5xl font-black tracking-tight whitespace-nowrap ${stat.color}`}>{stat.number}</dd>
+                <dt className="mt-2 max-w-[220px] text-sm font-semibold leading-snug text-gray-500">{stat.label}</dt>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 
@@ -154,53 +149,41 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
       <UniversitiesStrip />
 
       {/* Open cohorts: the primary conversion path */}
-      <OpenProgramsSection programs={openPrograms} className="bg-[#FAFAFA]" />
+      <OpenProgramsSection programs={openPrograms} className="mt-16 md:mt-20 bg-[#F4F5F8] border-y border-gray-100" />
 
       {/* Three steps to a decision */}
       <HowItWorks />
 
-      {/* Philosophy Section */}
-      <section className="pt-24 pb-32 relative z-10 bg-white">
-        <div className="absolute top-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-24 max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-6">{t.home.philosophyTitle.before}<span className={locale === "ko" ? "text-blue-600" : "italic font-serif text-blue-600 tracking-normal"}>{t.home.philosophyTitle.word}</span>{t.home.philosophyTitle.after}</h2>
-            <p className="text-xl text-gray-500 leading-relaxed font-medium">{t.home.philosophyIntro}</p>
+      {/* Philosophy */}
+      <section className="relative z-10 bg-[#F4F5F8] border-y border-gray-100 px-6 py-20 md:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-10 max-w-3xl md:mb-12">
+            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-blue-700">{t.home.philosophyEyebrow}</p>
+            <h2 className="mb-4 text-3xl font-black tracking-tight text-gray-900 md:text-4xl">{t.home.philosophyTitle.before}<span className={locale === "ko" ? "text-blue-600" : "italic font-serif font-semibold text-blue-600 tracking-normal"}>{t.home.philosophyTitle.word}</span>{t.home.philosophyTitle.after}</h2>
+            <p className="text-lg leading-relaxed text-gray-600">{t.home.philosophyIntro}</p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+
+          <div className="grid gap-6 md:grid-cols-3">
             {[
-              {
-                ...t.home.philosophy[0],
-                icon: <BookOpen className="h-7 w-7 text-indigo-600" />,
-                gradient: "from-blue-50 to-indigo-50"
-              },
-              {
-                ...t.home.philosophy[1],
-                icon: <UserCheck className="h-7 w-7 text-purple-600" />,
-                gradient: "from-indigo-50 to-purple-50"
-              },
-              {
-                ...t.home.philosophy[2],
-                icon: <Award className="h-7 w-7 text-pink-600" />,
-                gradient: "from-purple-50 to-pink-50"
-              }
+              { ...t.home.philosophy[0], icon: <BookOpen className="h-6 w-6 text-indigo-600" />, tint: "bg-indigo-50" },
+              { ...t.home.philosophy[1], icon: <UserCheck className="h-6 w-6 text-purple-600" />, tint: "bg-purple-50" },
+              { ...t.home.philosophy[2], icon: <Award className="h-6 w-6 text-pink-600" />, tint: "bg-pink-50" },
             ].map((feature, i) => (
-              <motion.div 
-                key={i} 
-                initial={{ opacity: 0, y: 50 }}
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6, delay: i * 0.15 }}
-                className="group relative bg-white p-10 rounded-3xl border border-gray-100/50 premium-card"
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="group relative rounded-3xl border border-gray-200/80 bg-white p-8 premium-card"
               >
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-300 shadow-inner`}>
+                <div className={`mb-6 flex h-12 w-12 items-center justify-center rounded-2xl ${feature.tint} transition-transform duration-300 group-hover:scale-110`}>
                   {feature.icon}
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4 tracking-tight">{feature.title}</h3>
-                <p className="text-gray-500 text-lg leading-relaxed">{feature.description}</p>
-                <div className="absolute top-8 right-8 text-gray-200 group-hover:text-gray-900 transition-colors opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 group-hover:-translate-y-2 duration-300">
-                  <ArrowUpRight className="w-6 h-6" />
+                <h3 className="mb-3 text-xl font-black tracking-tight text-gray-900">{feature.title}</h3>
+                <p className="leading-relaxed text-gray-600">{feature.description}</p>
+                <div className="absolute right-7 top-7 text-gray-300 opacity-0 transition-all duration-300 group-hover:-translate-y-1 group-hover:text-gray-900 group-hover:opacity-100">
+                  <ArrowUpRight className="h-5 w-5" />
                 </div>
               </motion.div>
             ))}
@@ -212,24 +195,24 @@ export default function HomeClient({ content, openPrograms = [] }: { content: Re
       <FaqSection />
 
       {/* Closing CTA */}
-      <section className="relative z-10 bg-white px-6 pb-32">
+      <section className="relative z-10 bg-white px-6 pb-20 md:pb-24">
         <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="max-w-5xl mx-auto relative rounded-[3rem] overflow-hidden bg-gray-950 text-center py-20 md:py-24 px-8 border border-gray-800"
+          className="relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] border border-gray-800 bg-gray-950 px-8 py-16 text-center md:py-20"
         >
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-2xl bg-gradient-to-b from-blue-500/20 to-transparent blur-[100px] pointer-events-none"></div>
-          <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">{t.home.ctaTitle}</h2>
-            <p className="text-xl text-gray-400">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-full w-full max-w-2xl -translate-x-1/2 bg-gradient-to-b from-blue-500/20 to-transparent blur-[100px]"></div>
+          <div className="relative z-10 mx-auto max-w-2xl space-y-6">
+            <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">{t.home.ctaTitle}</h2>
+            <p className="text-lg leading-relaxed text-gray-400">
               {t.home.ctaBody}
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
-              <Link href="#open-programs" className="px-8 py-4 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-all shadow-xl shadow-white/10 inline-flex items-center justify-center">
-                {openCount > 0 ? t.home.ctaApply : t.home.ctaSee} <ArrowRight className="ml-2 w-4 h-4" />
+            <div className="flex flex-col justify-center gap-4 pt-2 sm:flex-row">
+              <Link href="#open-programs" className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-4 font-bold text-gray-900 shadow-xl shadow-white/10 transition-all hover:bg-gray-100">
+                {openCount > 0 ? t.home.ctaApply : t.home.ctaSee} <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
-              <Link href="/contact" className="px-8 py-4 bg-white/10 text-white border border-white/20 font-bold rounded-xl hover:bg-white/20 transition-all inline-flex items-center justify-center">
+              <Link href="/contact" className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-8 py-4 font-bold text-white transition-all hover:bg-white/20">
                 {t.home.ctaAsk}
               </Link>
             </div>

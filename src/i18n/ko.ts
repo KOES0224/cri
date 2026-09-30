@@ -78,6 +78,7 @@ export const ko: Dictionary = {
       "Ivy Mentors": "아이비리그 멘토",
     } as Record<string, string>,
     philosophyTitle: { before: "CRI가 생각하는 ", word: "연구", after: "의 기준" },
+    philosophyEyebrow: "CRI의 연구 기준",
     philosophyIntro: "모든 아이디어가 연구가 되지는 않습니다. CRI는 아래 세 가지 조건을 갖춘 결과물만 연구로 인정합니다.",
     philosophy: [
       {
@@ -113,6 +114,7 @@ export const ko: Dictionary = {
     },
     universities: { eyebrow: "멘토 소속 대학" },
     faq: {
+      eyebrow: "지원 전에 확인하세요",
       title: "학부모님이 자주 묻는 질문",
       intro: "핵심만 짧게 정리했습니다. 자세한 조건은 지원 안내와 환불 규정 페이지에서 확인하실 수 있습니다.",
       items: [
