@@ -812,6 +812,7 @@ export const en = {
     payAndSubmit: (charge: string) => `Pay ${charge} and submit`,
     help: { a: "Need help? ", b: ". If a payment appears on your card but submission is unclear, contact us before paying again." },
     adsNote: "To measure our advertising, a hashed (SHA-256) version of the contact email address, phone number, name and country of residence is shared with Meta when you submit. The plain values are never shared.",
+    cardOrigin: { legend: "Card used for payment", international: "Card issued outside Korea (Visa, Mastercard, JCB, UnionPay)", domestic: "Card issued in Korea" },
     /** Shown only to the payment-gateway review account. */
     review: { banner: "Payment review account. This application is pre-filled with sample data, so no entries are needed. Press \"Pay and submit\" at the bottom to open the payment window. Submissions from this account are marked as tests." },
     /** Korean field labels are keyed by application field; English falls back to applicationLabels. */
