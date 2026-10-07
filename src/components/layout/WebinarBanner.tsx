@@ -27,11 +27,17 @@ export default function WebinarBanner() {
     const id = window.setTimeout(() => setVisible(show), 0);
     return () => window.clearTimeout(id);
   }, []);
-  if (!visible || stripLocalePrefix(pathname).path === "/webinar") return null;
+  const shown = visible && stripLocalePrefix(pathname).path !== "/webinar";
+  // The strip makes the fixed navigation taller; globals.css pads <main> by the same height while it is shown.
+  useEffect(() => {
+    document.documentElement.classList.toggle("cri-banner", shown);
+    return () => document.documentElement.classList.remove("cri-banner");
+  }, [shown]);
+  if (!shown) return null;
   const dismiss = () => { setVisible(false); try { sessionStorage.setItem(DISMISS_KEY, "1"); } catch {} };
   return (
-    <div className="bg-blue-700 text-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 py-2 text-sm sm:px-6">
+    <div className="h-10 bg-blue-700 text-white">
+      <div className="mx-auto flex h-10 max-w-7xl items-center justify-center gap-3 px-4 text-sm sm:px-6">
         <Link href="/webinar" className="flex min-w-0 items-center gap-2 font-semibold hover:underline">
           <span className="truncate">{t.webinar.banner.text}</span>
           <span className="inline-flex shrink-0 items-center rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-bold">{t.webinar.banner.cta} <ArrowRight className="ml-1 h-3 w-3" /></span>

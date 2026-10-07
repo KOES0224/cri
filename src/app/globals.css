@@ -119,3 +119,8 @@ html[lang="ko"] .font-black { font-weight: 800; }
 @keyframes hero-fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 .hero-fade-up { animation: hero-fade-up 0.7s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .hero-fade-up { animation: none; } }
+
+/* Announcement strip (src/components/layout/WebinarBanner.tsx) sits above the fixed navigation; pages keep their
+   own top padding, so the document is pushed down by the strip's height while it is shown. */
+html.cri-banner main { padding-top: 2.5rem; }
+html.cri-banner { scroll-padding-top: 2.5rem; }
