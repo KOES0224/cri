@@ -20,6 +20,7 @@ Stack: Next.js 16 (App Router), React 19, Tailwind 4, Prisma 5 (PostgreSQL on Su
 - Shared program facts: `src/lib/program-policy.ts`; application rules: `src/lib/application-*.ts`
 - Auth: `src/lib/auth.ts`, `src/app/auth/*`
 - Admin dashboard: `src/app/dashboard/*`; full-screen applications sheet (outside the admin shell): `src/app/admin/applications-sheet/*`
+- Customer directory (enrolled students across cohorts, segments, Resend audiences): `src/app/dashboard/contacts/*`, rules in `src/lib/contacts.ts`, import `scripts/import-contacts.ts`; see `docs/customers.md`
 - Data model: `prisma/schema.prisma`
 - Rollout notes from the last UX pass: `docs/program-ux-rollout.md`
 

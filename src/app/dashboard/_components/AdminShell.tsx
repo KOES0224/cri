@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
-import { LayoutDashboard, ClipboardCheck, Inbox, MessageSquare, BookOpen, Users, PanelsTopLeft, Settings, ArrowUpRight, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, ClipboardCheck, Inbox, MessageSquare, BookOpen, BookUser, Users, PanelsTopLeft, Settings, ArrowUpRight, Menu, X, LogOut } from "lucide-react";
 import { adminNavigation } from "@/lib/admin-navigation";
 
-const icons = { overview: LayoutDashboard, applications: ClipboardCheck, inquiries: Inbox, messages: MessageSquare, programs: BookOpen, people: Users, content: PanelsTopLeft, settings: Settings };
+const icons = { overview: LayoutDashboard, applications: ClipboardCheck, inquiries: Inbox, customers: BookUser, messages: MessageSquare, programs: BookOpen, people: Users, content: PanelsTopLeft, settings: Settings };
 
 export default function AdminShell({ children, name }: { children: React.ReactNode; name: string }) {
   const pathname = usePathname();

@@ -1,6 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { linkContactToUserBestEffort } from "@/lib/contact-sync";
 import { randomBytes } from "node:crypto";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -209,6 +210,7 @@ export async function adminCreateStudentFromApplication(applicationId: string) {
       await tx.userActivity.create({ data: { userId: created.id, adminName: "Administrator", action: "ACCOUNT_CREATED", content: `Student account created from application ${applicationId} by administrator ${admin.id}.` } });
       return created;
     });
+    await linkContactToUserBestEffort(email, student.id, "STUDENT");
     const welcome = await sendStudentAccountWelcome({ to: email, studentName: name || "", programTitle: application.program.title, guardianName: application.user.role === "PARENT" ? application.user.name : null, created: true });
     revalidateLinking(student.id, application.user.id);
     return ok({ created: true, studentId: student.id, studentName: student.name || email, studentCode: student.studentCode, tempPassword, emailed: welcome.sent });

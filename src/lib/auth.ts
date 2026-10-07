@@ -1,4 +1,5 @@
 import { NextAuthOptions } from "next-auth";
+import { linkContactToUserBestEffort } from "@/lib/contact-sync";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 
@@ -63,6 +64,8 @@ export const authOptions: NextAuthOptions = {
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.studentCode = dbUser.studentCode;
+          // Attach the account to its customer-directory record (same student or parent email), if any.
+          await linkContactToUserBestEffort(user.email, dbUser.id, dbUser.role);
         } else {
           token.id = user.id;
           token.role = "STUDENT"; // Safe default

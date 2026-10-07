@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { syncContactFromApplicationBestEffort } from "@/lib/contact-sync";
 
 const patchSchema = z.object({
   status: z.enum(["PENDING", "ACCEPTED", "REJECTED"]).optional(),
@@ -17,7 +18,9 @@ export async function changeApplication(id: string, input: unknown, actor: { id:
   if (!parsed.success) throw new Error("Invalid application update. Check the entered values.");
   if (!expectedUpdatedAt || !Number.isFinite(new Date(expectedUpdatedAt).getTime())) throw new Error("Refresh this record before saving changes.");
   const patch = parsed.data;
-  return prisma.$transaction(async tx => {
+  let becameEnrolled = false;
+  let becameRejected = false;
+  const result = await prisma.$transaction(async tx => {
     const current = await tx.application.findUnique({ where: { id } });
     if (!current) throw new Error("Application not found.");
     if (current.updatedAt.getTime() !== new Date(expectedUpdatedAt).getTime()) throw new Error("This record changed since you opened it. Refresh before saving again.");
@@ -34,6 +37,8 @@ export async function changeApplication(id: string, input: unknown, actor: { id:
     if ((stage === "PAYMENT" || stage === "ENROLLED") && status !== "ACCEPTED") throw new Error("Accept the application before moving it to payment or enrollment.");
     if (patch.stage && ["REVIEW", "INTERVIEW"].includes(stage) && status !== "PENDING") throw new Error("Return the decision to pending review before reopening review or interview.");
     if (stage === "ENROLLED" && current.stage !== "ENROLLED" && !enrollmentConfirmed) throw new Error("Confirm tuition arrangements and registration before enrolling this student. The application fee is separate.");
+    becameEnrolled = stage === "ENROLLED" && current.stage !== "ENROLLED";
+    becameRejected = stage === "REJECTED" && current.stage !== "REJECTED";
     const next = { ...patch, status, stage, updatedAt: new Date(Math.max(Date.now(), current.updatedAt.getTime() + 1)) };
     const changed = await tx.application.updateMany({ where: { id, updatedAt: current.updatedAt }, data: next });
     if (changed.count !== 1) throw new Error("Another administrator updated this record. Refresh before saving again.");
@@ -47,4 +52,8 @@ export async function changeApplication(id: string, input: unknown, actor: { id:
     await tx.userActivity.create({ data: { userId: current.userId, adminName: actor.name, action: "STATUS_CHANGE", content: `Application ${id} updated by ${actor.name} (${actor.id}).\nBefore: ${JSON.stringify(before)}\nAfter: ${JSON.stringify(after)}` } });
     return { updatedAt, status, stage };
   });
+  // The customer directory mirrors enrollments; never fail the enrollment over it.
+  if (becameEnrolled) await syncContactFromApplicationBestEffort(id, "ENROLLED");
+  else if (becameRejected) await syncContactFromApplicationBestEffort(id, "CANCELLED");
+  return result;
 }
