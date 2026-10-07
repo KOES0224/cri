@@ -416,3 +416,84 @@ model ApplicationDraft {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([userId, programId])
 }
+
+// Customer directory (docs/customers.md): everyone who enrolled in a program, with or without a portal account.
+// Segments such as "high school, graduating this year" are computed from studentLevel + gradYear and never stored.
+model Contact {
+  id             String    @id @default(cuid())
+  firstName      String
+  lastName       String
+  gender         String?
+  email          String    @unique
+  phone          String?
+  parentName     String?
+  parentEmail    String?
+  parentPhone    String?
+  parentPhoneKey String?   // digits only, for sibling matching
+  school         String?
+  studentLevel   String?   // SCHOOL | UNIVERSITY; null until known
+  gradYear       Int?
+  levelSource    String    @default("IMPORT") // IMPORT | INFERRED (from the school name) | MANUAL | APPLICATION
+  reviewNeeded   Boolean   @default(false)
+  reviewReason   String?
+  reviewedAt     DateTime?
+  reviewedBy     String?
+  channel        String?   // normalised acquisition channel (Lourus, AM, Supia, Direct ...)
+  agencyRaw      String?
+  howLearned     String?
+  householdId    String?   // shared by confirmed siblings
+  pinnedNote     String?   @db.Text
+  emailOptOutAt  DateTime?
+  emailBouncedAt DateTime?
+  userId         String?   // student's portal account, when one exists
+  parentUserId   String?   // guardian's portal account, when one exists
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  programs       ContactProgram[]
+
+  @@index([parentEmail])
+  @@index([parentPhoneKey])
+  @@index([householdId])
+  @@index([studentLevel, gradYear])
+  @@index([userId])
+  @@index([parentUserId])
+}
+
+model ContactProgram {
+  id             String    @id @default(cuid())
+  contactId      String
+  cohortKey      String    // 2026S, 2025W, 2025S, or program:<programId> for portal applications
+  cohortLabel    String
+  professor      String?
+  status         String    @default("ENROLLED") // APPLIED | ENROLLED | UNPAID | CANCELLED
+  agencyRaw      String?
+  appliedAt      DateTime?
+  paymentNote    String?   @db.Text
+  adminNote      String?   @db.Text
+  areaOfInterest String?   @db.Text
+  topic          String?   @db.Text
+  resumeUrl      String?
+  applicationId  String?   @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  contact        Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, cohortKey])
+  @@index([cohortKey])
+}
+
+// One row per audience pushed to Resend, so it stays clear who was mailed and when.
+model ContactAudienceSync {
+  id         String   @id @default(cuid())
+  name       String
+  recipient  String   // STUDENT | PARENT | BOTH
+  filters    Json
+  audienceId String?
+  total      Int      @default(0)
+  added      Int      @default(0)
+  failed     Int      @default(0)
+  status     String   @default("RUNNING") // RUNNING | DONE | FAILED
+  createdBy  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
