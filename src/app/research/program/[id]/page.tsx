@@ -217,7 +217,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
            </div>
            
            {/* Sidebar */}
-           <div className="lg:col-span-1 lg:sticky lg:top-28 self-start">
+           <div className="lg:col-span-1 lg:sticky lg:top-[calc(7rem+var(--banner-h,0px))] self-start">
               <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl">
                  <h3 className="text-xl font-bold text-gray-900 mb-6">{t.details}</h3>
 

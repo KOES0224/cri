@@ -47,7 +47,7 @@ export default function Week1() {
 
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="sticky top-28 bg-[#14141c]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-xl">
+          <div className="sticky top-[calc(7rem+var(--banner-h,0px))] bg-[#14141c]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-xl">
             <h4 className="font-bold text-lg mb-6 border-b border-white/10 pb-4">Week 1 Checklist</h4>
             <ul className="space-y-6">
               <li className="flex gap-4">

@@ -19,6 +19,7 @@ export default function WebinarClient({ open, user }: { open: boolean; user: { n
   const [form, setForm] = useState<Form>({ name: user?.name || "", role: (user?.role as Form["role"]) || "", phone: "", email: user?.email || "", kakaoId: "", question: "", consent: false });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
+  const [closed, setClosed] = useState(!open);
   const [result, setResult] = useState<WebinarResult | null>(null);
   const [notice, setNotice] = useState("");
   const errorText = (code: string | undefined) => (code ? (copy.errors as Record<string, string>)[code] || code : "");
@@ -36,8 +37,9 @@ export default function WebinarClient({ open, user }: { open: boolean; user: { n
     try {
       const res = await registerForWebinar({ ...form, role: form.role as "PARENT" | "STUDENT" | "OTHER", consent: true });
       if (!res.success) {
-        if (res.code === "invalid" && res.field) setErrors({ [res.field]: res.field });
-        setNotice(errorText(res.code === "invalid" ? res.field : res.code));
+        if (res.code === "closed") { setClosed(true); setStatus("idle"); return; }
+        if (res.field) setErrors({ [res.field]: res.code });
+        setNotice(errorText(res.code));
         setStatus("idle");
         return;
       }
@@ -71,7 +73,7 @@ export default function WebinarClient({ open, user }: { open: boolean; user: { n
         </div>
 
         <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-[0_20px_40px_rgb(0,0,0,0.04)] sm:p-10">
-          {!open ? (
+          {closed ? (
             <div className="py-10 text-center">
               <Clock className="mx-auto h-10 w-10 text-gray-300" />
               <h2 className="mt-4 text-2xl font-bold text-gray-900">{copy.closedTitle}</h2>
@@ -145,6 +147,7 @@ export default function WebinarClient({ open, user }: { open: boolean; user: { n
                 <span>{copy.consent}<Link href="/privacy" className="text-blue-700 underline">{copy.consentLink}</Link></span>
               </label>
               {errors.consent && <p className="-mt-3 text-sm text-red-700">{errorText(errors.consent)}</p>}
+              <p className="text-xs text-gray-500">{copy.adsNote}</p>
               <button type="submit" disabled={status === "sending"} className="w-full rounded-xl bg-black py-4 font-bold text-white shadow-md transition-all hover:bg-gray-900 disabled:opacity-70">
                 {status === "sending" ? copy.submitting : copy.submit}
               </button>

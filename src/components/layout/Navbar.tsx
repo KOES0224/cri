@@ -10,7 +10,7 @@ import { useT } from "@/i18n/client";
 import LanguageToggle from "./LanguageToggle";
 import WebinarBanner from "./WebinarBanner";
 
-export default function Navbar() {
+export default function Navbar({ bannerVisible = false }: { bannerVisible?: boolean }) {
   const { data: session } = useSession();
   const { t } = useT();
   const [isOpen, setIsOpen] = useState(false);
@@ -55,7 +55,7 @@ export default function Navbar() {
 
   return (
     <nav aria-label="Main navigation" className="fixed top-0 w-full z-50">
-      <WebinarBanner />
+      <WebinarBanner initialVisible={bannerVisible} />
       <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ${scrolled ? "py-4" : "py-6"}`}>
         <div className={`flex items-center justify-between rounded-2xl px-6 py-3 transition-colors duration-300 bg-white/95 shadow-lg shadow-black/5 ring-1 ring-black/5 backdrop-blur-xl`}>
           

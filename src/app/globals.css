@@ -122,5 +122,6 @@ html[lang="ko"] .font-black { font-weight: 800; }
 
 /* Announcement strip (src/components/layout/WebinarBanner.tsx) sits above the fixed navigation; pages keep their
    own top padding, so the document is pushed down by the strip's height while it is shown. */
-html.cri-banner main { padding-top: 2.5rem; }
-html.cri-banner { scroll-padding-top: 2.5rem; }
+html.cri-banner { --banner-h: 2.5rem; scroll-padding-top: 2.5rem; }
+html.cri-banner .cri-page { padding-top: 2.5rem; }
+html.cri-banner #mobile-navigation { max-height: calc(100dvh - 150px); }

@@ -1,40 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { ArrowRight, X } from "lucide-react";
 import Link from "@/i18n/link";
 import { useT } from "@/i18n/client";
 import { WEBINAR, webinarBannerVisible } from "@/lib/webinar";
-import { stripLocalePrefix } from "@/i18n/routing";
 
-const DISMISS_KEY = `cri.webinar.dismissed.${WEBINAR.key}`;
+const DISMISS_COOKIE = `cri_webinar_dismissed_${WEBINAR.key}`;
 
 /**
- * Site-wide strip above the navigation until the webinar day is over (src/lib/webinar.ts). Hidden on the sign-up
- * page itself and after the visitor closes it (for the session). Checks the clock in the browser too, so a cached
- * page cannot keep showing it after the deadline.
+ * Announcement strip above the navigation until the webinar day is over (src/lib/webinar.ts). The root layout decides
+ * the first paint (active, not on /webinar, not dismissed) and pads the page by the strip's height through the
+ * `cri-banner` class on <html>; here the visitor's clock can still switch it off, and the close button dismisses it
+ * for the session with a cookie so the server agrees on the next page.
  */
-export default function WebinarBanner() {
+export default function WebinarBanner({ initialVisible }: { initialVisible: boolean }) {
   const { t } = useT();
-  const pathname = usePathname();
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(initialVisible);
   useEffect(() => {
-    // Decided after mount (session storage and the visitor's clock are browser-only); deferred to keep the effect pure.
-    let dismissed = false;
-    try { dismissed = sessionStorage.getItem(DISMISS_KEY) === "1"; } catch {}
-    const show = webinarBannerVisible() && !dismissed;
-    const id = window.setTimeout(() => setVisible(show), 0);
+    // A cached page may still carry the strip after the deadline; the browser clock has the last word (deferred to
+    // keep the effect free of synchronous state updates).
+    if (!visible || webinarBannerVisible()) return;
+    const id = window.setTimeout(() => setVisible(false), 0);
     return () => window.clearTimeout(id);
-  }, []);
-  const shown = visible && stripLocalePrefix(pathname).path !== "/webinar";
-  // The strip makes the fixed navigation taller; globals.css pads <main> by the same height while it is shown.
+  }, [visible]);
   useEffect(() => {
-    document.documentElement.classList.toggle("cri-banner", shown);
-    return () => document.documentElement.classList.remove("cri-banner");
-  }, [shown]);
-  if (!shown) return null;
-  const dismiss = () => { setVisible(false); try { sessionStorage.setItem(DISMISS_KEY, "1"); } catch {} };
+    document.documentElement.classList.toggle("cri-banner", visible);
+  }, [visible]);
+  if (!visible) return null;
+  const dismiss = () => {
+    setVisible(false);
+    document.cookie = `${DISMISS_COOKIE}=1; Path=/; SameSite=Lax`;
+  };
   return (
     <div className="h-10 bg-blue-700 text-white">
       <div className="mx-auto flex h-10 max-w-7xl items-center justify-center gap-3 px-4 text-sm sm:px-6">

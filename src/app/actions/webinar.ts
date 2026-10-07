@@ -12,18 +12,21 @@ import { getLocale } from "@/i18n";
 
 export type WebinarResult =
   | { success: true; alreadyRegistered: boolean; eventId: string; tracking: MetaCustomData }
-  | { success: false; code: "closed" | "invalid" | "rate" | "failed"; field?: string };
+  | { success: false; code: string; field?: string };
 
 /** Saves a sign-up (one per person per webinar), tells admissions, confirms by email when one was given. */
 export async function registerForWebinar(input: WebinarRegistrationInput): Promise<WebinarResult> {
   if (!webinarRegistrationOpen()) return { success: false, code: "closed" };
   const parsed = webinarRegistrationSchema.safeParse(input);
-  if (!parsed.success) return { success: false, code: "invalid", field: String(parsed.error.issues[0]?.path[0] ?? "form") };
+  if (!parsed.success) { const issue = parsed.error.issues[0]; return { success: false, code: issue?.message || "failed", field: String(issue?.path[0] ?? "form") }; }
   const data = parsed.data;
   const dedupeKey = webinarDedupeKey(data);
-  if (!dedupeKey) return { success: false, code: "invalid", field: "contact" };
+  if (!dedupeKey) return { success: false, code: "contact", field: "contact" };
   try {
-    if (!(await allowRequest("webinar", dedupeKey, 5, 600))) return { success: false, code: "rate" };
+    // Per person (plus-tags collapsed so one mailbox cannot mint fresh buckets) and per webinar overall, which also
+    // bounds the outbound confirmation emails.
+    const limiterKey = dedupeKey.replace(/^email:([^+@]+)\+[^@]*@/, "email:$1@");
+    if (!(await allowRequest("webinar", limiterKey, 5, 600)) || !(await allowRequest("webinar-all", WEBINAR.key, 300, 3600))) return { success: false, code: "rate" };
     const [session, locale] = await Promise.all([getServerSession(authOptions), getLocale()]);
     const existing = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { id: true } });
     if (existing) return { success: true, alreadyRegistered: true, eventId: existing.id, tracking: {} };
@@ -34,7 +37,7 @@ export async function registerForWebinar(input: WebinarRegistrationInput): Promi
     // Best effort: the registration is saved whatever happens to the emails or the ad event.
     await Promise.all([
       notifyWebinarRegistration({ ...data, id: registration.id, locale }),
-      data.email ? sendWebinarConfirmation({ to: data.email, name: data.name, locale }) : Promise.resolve(),
+      data.email ? sendWebinarConfirmation({ to: data.email, locale }) : Promise.resolve(),
     ]).catch((error) => console.error("webinar notifications failed", error instanceof Error ? error.message : error));
     const [firstName, ...rest] = data.name.split(/\s+/);
     const { data: tracking } = await sendMetaEvent({

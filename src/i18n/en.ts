@@ -421,7 +421,7 @@ export const en = {
       },
       ads: {
         heading: "Advertising measurement",
-        body: "CRI uses the Meta Pixel and Conversions API to measure whether its advertising leads to inquiries and applications. When you send an inquiry, create an account or submit an application, a hashed (SHA-256) version of your email address, phone number, name and country is shared with Meta together with the page visited; the plain values are never shared. Meta uses this to match the event to an ad and to report results. You can limit this in your browser (ad-blocking or tracking protection) or in your Meta ad settings.",
+        body: "CRI uses the Meta Pixel and Conversions API to measure whether its advertising leads to inquiries and applications. When you send an inquiry, sign up for an event, create an account or submit an application, a hashed (SHA-256) version of your email address, phone number, name and country is shared with Meta together with the page visited; the plain values are never shared. Meta uses this to match the event to an ad and to report results. You can limit this in your browser (ad-blocking or tracking protection) or in your Meta ad settings.",
       },
       requests: {
         heading: "Your questions and requests",
@@ -502,6 +502,7 @@ export const en = {
     question: "Anything you want us to cover? (optional)",
     consent: "I agree that CRI uses these details to send the session link and follow-up information. ",
     consentLink: "Privacy information",
+    adsNote: "To measure our advertising, a hashed (SHA-256) version of your email address, phone number and name is shared with Meta when you sign up. The plain values are never shared.",
     submit: "Save my seat",
     submitting: "Sending…",
     errors: {

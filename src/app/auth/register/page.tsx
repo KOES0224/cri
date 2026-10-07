@@ -116,7 +116,7 @@ function RegisterForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center pt-44 pb-12 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen bg-gray-50 flex flex-col justify-center pt-44 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="absolute top-28 left-6">
         <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
           <ArrowLeft className="mr-2 h-4 w-4" />
