@@ -116,7 +116,7 @@ function RegisterForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center pt-44 pb-12 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen bg-gray-50 flex flex-col justify-center pt-44 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="absolute top-28 left-6">
         <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -185,6 +185,7 @@ function RegisterForm() {
                   type="email"
                   autoComplete="email"
                   required
+                  defaultValue={/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(searchParams.get("email") || "") ? searchParams.get("email")! : undefined}
                   placeholder={t.auth.emailPlaceholder}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />

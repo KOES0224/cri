@@ -16,14 +16,14 @@ export const LOCALE_HEADER = "x-cri-locale";
 export const PATH_HEADER = "x-cri-path";
 
 /** Top-level sections of the public site. Everything else (auth, apply, dashboard, api) is portal. */
-const PUBLIC_SECTIONS = ["/research", "/projects", "/intern", "/success", "/blog", "/contact", "/admissions", "/privacy", "/refunds", "/partners"];
+const PUBLIC_SECTIONS = ["/research", "/projects", "/intern", "/success", "/blog", "/contact", "/admissions", "/privacy", "/refunds", "/partners", "/webinar"];
 
 /** Pages whose main content exists in Korean; the rest render Korean chrome around English content. */
 const KOREAN_CONTENT = [
   /^\/$/,
   /^\/research(\/(summer-camp|winter|1-on-1))?$/,
   /^\/research\/program\/[^/]+$/,
-  /^\/(blog|success|contact|admissions|privacy|refunds)$/,
+  /^\/(blog|success|contact|admissions|privacy|refunds|webinar)$/,
 ];
 
 function splitPath(href: string): [path: string, rest: string] {

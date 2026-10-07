@@ -30,7 +30,7 @@ export default function StartOptions({ applyUrl }: { applyUrl: string }) {
   const googleCallback = `/onboarding?role=${role}&callbackUrl=${encodeURIComponent(applyUrl)}`;
 
   return (
-    <aside className="lg:sticky lg:top-28 self-start rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+    <aside className="lg:sticky lg:top-[calc(7rem+var(--banner-h,0px))] self-start rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <h2 className="text-lg font-bold text-slate-900">{copy.who}</h2>
       <p className="mt-1 text-sm text-slate-500">{copy.whyAccount}</p>
 

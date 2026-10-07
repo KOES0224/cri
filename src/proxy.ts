@@ -58,6 +58,7 @@ export const config = {
     "/success/:path*",
     "/blog/:path*",
     "/contact",
+    "/webinar",
     "/admissions",
     "/privacy",
     "/refunds",

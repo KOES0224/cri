@@ -21,7 +21,8 @@ export type FunnelEvent =
   | 'checkout_begin'        // Toss payment window requested
   | 'application_submitted' // fee confirmed, application created
   | 'contact_submitted'     // contact form sent
-  | 'sign_up';              // account created
+  | 'sign_up'               // account created
+  | 'webinar_registered';   // webinar sign-up sent
 
 // Only keys listed in FUNNEL_PARAMS (src/lib/gtm.ts), so the dataLayer reset always covers every parameter.
 type Params = Partial<Record<FunnelParam, string | number | boolean | undefined>>;

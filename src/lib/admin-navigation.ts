@@ -3,6 +3,7 @@ export const adminNavigation = [
     { href: "/dashboard", label: "Overview", icon: "overview" },
     { href: "/dashboard/applications-admin", label: "Applications", icon: "applications" },
     { href: "/dashboard/leads", label: "Inquiries", icon: "inquiries" },
+    { href: "/dashboard/webinar", label: "Webinar", icon: "inquiries" },
     { href: "/dashboard/contacts", label: "Customers", icon: "customers" },
     { href: "/dashboard/messages", label: "Messages", icon: "messages" },
   ] },

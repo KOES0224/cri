@@ -497,3 +497,22 @@ model ContactAudienceSync {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+// Webinar sign-ups (src/lib/webinar.ts names the current webinar). One row per contact per webinar.
+model WebinarRegistration {
+  id         String   @id @default(cuid())
+  webinarKey String
+  name       String
+  role       String?  // PARENT | STUDENT | OTHER
+  phone      String?
+  email      String?
+  kakaoId    String?
+  question   String?  @db.Text
+  locale     String?
+  userId     String?  // portal account, when the visitor was signed in
+  dedupeKey  String   // normalised email, phone digits or kakao id: the same person registers once
+  createdAt  DateTime @default(now())
+
+  @@unique([webinarKey, dedupeKey])
+  @@index([webinarKey, createdAt])
+}

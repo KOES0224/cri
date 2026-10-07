@@ -170,3 +170,23 @@ export function articleJsonLd({ path, headline, description, image, published, m
     ...(basedOn ? { isBasedOn: basedOn } : {}),
   };
 }
+
+/** Event markup for the webinar page (online, free). */
+export function eventJsonLd(locale: Locale, input: { name: string; description: string; startDate: Date; durationMinutes: number; path: string }): Json {
+  const end = new Date(input.startDate.getTime() + input.durationMinutes * 60_000);
+  return {
+    "@context": "https://schema.org",
+    "@type": "EducationEvent",
+    name: input.name,
+    description: input.description,
+    startDate: input.startDate.toISOString(),
+    endDate: end.toISOString(),
+    eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
+    eventStatus: "https://schema.org/EventScheduled",
+    isAccessibleForFree: true,
+    inLanguage: locale,
+    location: { "@type": "VirtualLocation", url: `${SITE_URL}${localizedPath(input.path, locale)}` },
+    organizer: { "@type": "Organization", name: "CRI", url: SITE_URL },
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD", availability: "https://schema.org/InStock", url: `${SITE_URL}${localizedPath(input.path, locale)}` },
+  };
+}

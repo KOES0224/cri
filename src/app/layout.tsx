@@ -11,6 +11,8 @@ import { SITE_URL, localeMetadata } from "@/lib/seo";
 import { JsonLd, organizationJsonLd } from "@/lib/structured-data";
 import { getDictionary, getLocale, getPublicPath } from "@/i18n";
 import { LocaleProvider } from "@/i18n/client";
+import { WEBINAR, webinarBannerVisible } from "@/lib/webinar";
+import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hashed, normalizeEmail } from "@/lib/meta/normalize";
@@ -71,20 +73,24 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  // The announcement strip is decided here so the first paint already has it (no layout shift): active webinar,
+  // not on its own page, not dismissed in this session.
+  const [publicPath, cookieStore] = await Promise.all([getPublicPath(), cookies()]);
+  const bannerVisible = webinarBannerVisible() && publicPath !== "/webinar" && cookieStore.get(`cri_webinar_dismissed_${WEBINAR.key}`)?.value !== "1";
   // Signed-in visitors' email and user id go to the Meta pixel as advanced-matching keys, already SHA-256 hashed with
   // the same normalisation the Conversions API uses, so both channels report identical keys and no plain value is
   // rendered into the page. Read here so the pixel initialises immediately instead of waiting for a session fetch.
   const session = process.env.NEXT_PUBLIC_META_PIXEL_ID ? await getServerSession(authOptions).catch(() => null) : null;
   const matching = session?.user ? { em: hashed(normalizeEmail(session.user.email)), external_id: hashed(session.user.id?.trim() || undefined) } : undefined;
   return (
-    <html lang={locale}>
+    <html lang={locale} className={bannerVisible ? "cri-banner" : undefined}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <LocaleProvider locale={locale}>
           <AppProvider>
-            <PublicOnly><Navbar /></PublicOnly>
-            <main className="flex-1">
+            <PublicOnly><Navbar bannerVisible={bannerVisible} /></PublicOnly>
+            <main className="flex-1 cri-page">
               {children}
             </main>
             <PublicOnly><Footer /></PublicOnly>

@@ -6,6 +6,7 @@ import { deleteApplication, updateApplicationProcessingFields } from "@/app/acti
 import { applicationLabels } from "@/lib/application-validation";
 import type { SheetRow } from "@/lib/admin-sheet";
 import { formatKST } from "@/lib/formatKST";
+import { csvDocument } from "@/lib/csv";
 
 /*
  * Full-screen applications sheet.
@@ -67,12 +68,7 @@ function buildColumns(rows: SheetRow[]): Column[] {
 
 function csvFor(rows: SheetRow[], columns: Column[]) {
   const cols = columns.filter((c) => c.kind !== "actions");
-  // Values a spreadsheet would run as a formula get a leading apostrophe; "+82 10…" phone numbers and negative numbers are left alone.
-  const formulaLike = (v: string) => /^[=@\t\r]/.test(v) || /^[+-](?![\d\s(])/.test(v);
-  const cell = (v: string) => `"${(formulaLike(v) ? `'${v}` : v).replace(/"/g, '""')}"`;
-  const lines = [cols.map((c) => cell(c.label)).join(",")];
-  for (const r of rows) lines.push(cols.map((c) => cell(c.get(r))).join(","));
-  return "﻿" + lines.join("\r\n");
+  return csvDocument([cols.map((c) => c.label), ...rows.map((r) => cols.map((c) => c.get(r)))]);
 }
 
 export default function ApplicationsSheet({ rows: initialRows, programs }: { rows: SheetRow[]; programs: string[] }) {
