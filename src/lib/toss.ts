@@ -32,7 +32,8 @@ export interface TossPaymentConfirmResult {
 export async function confirmTossPayment(
   paymentKey: string,
   orderId: string,
-  amount: number
+  amount: number,
+  currency: string = APPLICATION_CHARGE.currency
 ): Promise<TossPaymentConfirmResult> {
   const secretKey = process.env.TOSS_SECRET_KEY;
 
@@ -79,7 +80,7 @@ export async function confirmTossPayment(
     }
 
     // Verify amount to prevent frontend tampering
-    if (Number(data.totalAmount) !== Number(amount) || data.currency !== APPLICATION_CHARGE.currency || data.orderId !== orderId) {
+    if (Number(data.totalAmount) !== Number(amount) || data.currency !== currency || data.orderId !== orderId) {
       return {
         success: false,
         error: "Payment details could not be verified. Contact support with your order reference.",
@@ -112,7 +113,7 @@ export async function confirmTossPayment(
 }
 
 /** Read-only reconciliation: recovers a confirmed charge after a database/network failure. */
-export async function findConfirmedTossPayment(orderId: string, amount: number): Promise<TossPaymentConfirmResult> {
+export async function findConfirmedTossPayment(orderId: string, amount: number, currency: string = APPLICATION_CHARGE.currency): Promise<TossPaymentConfirmResult> {
   if (!process.env.TOSS_SECRET_KEY) return { success: false };
   try {
     const response = await fetch(`https://api.tosspayments.com/v1/payments/orders/${encodeURIComponent(orderId)}`, {
@@ -121,7 +122,7 @@ export async function findConfirmedTossPayment(orderId: string, amount: number):
     });
     if (!response.ok) return { success: false };
     const data = await response.json();
-    if (data.status !== 'DONE' || data.orderId !== orderId || Number(data.totalAmount) !== Number(amount) || data.currency !== APPLICATION_CHARGE.currency) return { success: false };
+    if (data.status !== 'DONE' || data.orderId !== orderId || Number(data.totalAmount) !== Number(amount) || data.currency !== currency) return { success: false };
     return {success: true, paymentData: {...data, receiptUrl: data.receipt?.url}};
   } catch { return {success: false}; }
 }
