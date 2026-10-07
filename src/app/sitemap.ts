@@ -23,6 +23,7 @@ const STATIC_ROUTES: Array<[path: string, priority: number, changeFrequency: Ent
   ["/success", 0.7, "weekly"],
   ["/blog", 0.7, "weekly"],
   ["/contact", 0.6, "yearly"],
+  ["/webinar", 0.7, "weekly"],
   ["/admissions", 0.8, "monthly"],
   ["/privacy", 0.3, "yearly"],
   ["/refunds", 0.3, "yearly"],
