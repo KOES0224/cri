@@ -8,6 +8,7 @@ import ContactsTable, { type ContactRow } from "./ContactsTable";
 import AudienceSync from "./AudienceSync";
 
 const PAGE_SIZE = 50;
+const CUSTOMER_SCOPE = { programs: { some: { status: { in: ["ENROLLED", "UNPAID"] } } } };
 const FLAG_LABELS: Record<(typeof CONTACT_FLAGS)[number], string> = { review: "Needs review", repeat: "Repeat customers", family: "Siblings / same family", optout: "Opted out of email", bounced: "Email bounced", unpaid: "Unpaid", account: "Has portal account", noaccount: "No portal account" };
 const STATUS_LABELS: Record<(typeof CONTACT_STATUSES)[number], string> = { customers: "Customers (enrolled)", applicants: "Applicants (not yet enrolled)", all: "Everyone" };
 
@@ -20,7 +21,14 @@ export default async function ContactsPage({ searchParams }: { searchParams: Pro
   const [contacts, total, counts, professors, channels, cohortRows, recentSyncs] = await Promise.all([
     prisma.contact.findMany({ where, include: contactInclude, orderBy: [{ lastName: "asc" }, { firstName: "asc" }], take: PAGE_SIZE, skip: (page - 1) * PAGE_SIZE }),
     prisma.contact.count({ where }),
-    Promise.all([prisma.contact.count({ where: { programs: { some: { status: { in: ["ENROLLED", "UNPAID"] } } } } }), prisma.contact.count({ where: { reviewNeeded: true } }), prisma.contact.count({ where: { emailOptOutAt: { not: null } } }), prisma.contact.count({ where: { OR: [{ userId: { not: null } }, { parentUserId: { not: null } }] } })]),
+    // Header counts use the same "customers" scope as the default list, so each chip opens exactly the rows it counts.
+    Promise.all([
+      prisma.contact.count({ where: CUSTOMER_SCOPE }),
+      prisma.contact.count({ where: { AND: [CUSTOMER_SCOPE, { reviewNeeded: true }] } }),
+      prisma.contact.count({ where: { AND: [CUSTOMER_SCOPE, { emailOptOutAt: { not: null } }] } }),
+      prisma.contact.count({ where: { AND: [CUSTOMER_SCOPE, { OR: [{ userId: { not: null } }, { parentUserId: { not: null } }] }] } }),
+      prisma.contact.count({ where: { programs: { some: { status: "APPLIED" } }, NOT: CUSTOMER_SCOPE } }),
+    ]),
     prisma.contactProgram.findMany({ where: { professor: { not: null } }, distinct: ["professor"], select: { professor: true }, orderBy: { professor: "asc" } }),
     prisma.contact.findMany({ where: { channel: { not: null } }, distinct: ["channel"], select: { channel: true }, orderBy: { channel: "asc" } }),
     prisma.contactProgram.findMany({ distinct: ["cohortKey"], select: { cohortKey: true, cohortLabel: true }, orderBy: { cohortKey: "desc" } }),
@@ -40,16 +48,18 @@ export default async function ContactsPage({ searchParams }: { searchParams: Pro
   }));
   const cohorts = [...new Map([...Object.entries(COHORTS), ...cohortRows.map(r => [r.cohortKey, r.cohortLabel] as [string, string])]).entries()].sort((a, b) => b[0].localeCompare(a[0]));
   const query = filtersToQuery(filters);
-  const [all, review, optedOut, withAccount] = counts;
+  const [all, review, optedOut, withAccount, applicants] = counts;
+  const chip = "rounded-full px-3 py-1.5 font-semibold transition-colors";
   const select = "rounded-lg border border-slate-200 px-3 py-2 text-sm";
   return <AdminLayout>
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div><h1 className="text-3xl font-bold tracking-tight">Customers</h1><p className="mt-2 text-sm text-slate-500">Everyone who enrolled in a program, across cohorts. Segments are computed from academic level and graduation year, so filter here and send to a Resend audience to email them individually.</p></div>
       <div className="flex flex-wrap gap-2 text-xs">
-        <span className="rounded-full bg-slate-100 px-3 py-1.5 font-semibold text-slate-700">{all} customers</span>
-        <a href="/dashboard/contacts?flag=account" className="rounded-full bg-blue-50 px-3 py-1.5 font-semibold text-blue-700 hover:bg-blue-100">{withAccount} with portal account</a>
-        <a href="/dashboard/contacts?flag=review" className="rounded-full bg-amber-50 px-3 py-1.5 font-semibold text-amber-800 hover:bg-amber-100">{review} need review</a>
-        <a href="/dashboard/contacts?flag=optout" className="rounded-full bg-rose-50 px-3 py-1.5 font-semibold text-rose-700 hover:bg-rose-100">{optedOut} opted out</a>
+        <a href="/dashboard/contacts" className={`${chip} bg-slate-900 text-white hover:bg-slate-700`}>{all} customers</a>
+        <a href="/dashboard/contacts?status=applicants" className={`${chip} bg-slate-100 text-slate-700 hover:bg-slate-200`}>{applicants} applicants</a>
+        <a href="/dashboard/contacts?flag=account" className={`${chip} bg-sky-50 text-sky-700 hover:bg-sky-100`}>{withAccount} with portal account</a>
+        <a href="/dashboard/contacts?flag=review" className={`${chip} bg-amber-50 text-amber-800 hover:bg-amber-100`}>{review} need review</a>
+        <a href="/dashboard/contacts?flag=optout" className={`${chip} bg-rose-50 text-rose-700 hover:bg-rose-100`}>{optedOut} opted out</a>
       </div>
     </header>
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
