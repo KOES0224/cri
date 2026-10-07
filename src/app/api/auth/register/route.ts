@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { linkContactToUserBestEffort } from "@/lib/contact-sync";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { allowRequest } from "@/lib/request-limit";
@@ -70,6 +71,7 @@ export async function POST(request: Request) {
         studentCode,
       },
     });
+    await linkContactToUserBestEffort(user.email, user.id, user.role);
 
     const [firstName, ...rest] = name.split(/\s+/);
     const { data: tracking } = await sendMetaEvent({ name: "CompleteRegistration", eventId: user.id, person: { email, firstName, lastName: rest.join(" "), externalId: user.id }, data: { content_name: role.toLowerCase(), status: true } });

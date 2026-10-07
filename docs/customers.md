@@ -14,8 +14,13 @@ flag clears (`levelSource` becomes MANUAL and later imports never overwrite it).
 ## Data sources
 - `scripts/import-contacts.ts <workbook.xlsx> [--apply]` imports the consolidated enrolment workbook
   (sheet `전체 고객 리스트`). The workbook holds personal data and stays outside the repository.
-- Portal applications: when an application moves to stage ENROLLED, `syncContactFromApplication`
-  mirrors it into the directory (`cohortKey = program:<programId>`).
+- Portal applications: a submitted application is mirrored as an APPLIED program row
+  (`cohortKey = program:<programId>`), ENROLLED when admissions enrol it, CANCELLED when it is rejected
+  first. The page shows customers (enrolled) by default; switch "Show" to applicants or everyone.
+- Accounts: on sign-up and sign-in (`linkContactToUser`) the account is attached to the record with the
+  same student email (`userId`) or parent email (`parentUserId`). The People page shows the customer
+  record and the Customers page links back to the account. `scripts/link-contacts-to-accounts.ts`
+  backfills both for accounts and applications that already existed.
 
 ## Email
 The directory does not send email. "Send to Resend audience" creates a Resend Audience from the

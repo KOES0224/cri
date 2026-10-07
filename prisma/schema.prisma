@@ -445,7 +445,8 @@ model Contact {
   pinnedNote     String?   @db.Text
   emailOptOutAt  DateTime?
   emailBouncedAt DateTime?
-  userId         String?   // portal account, when one exists
+  userId         String?   // student's portal account, when one exists
+  parentUserId   String?   // guardian's portal account, when one exists
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   programs       ContactProgram[]
@@ -454,6 +455,8 @@ model Contact {
   @@index([parentPhoneKey])
   @@index([householdId])
   @@index([studentLevel, gradYear])
+  @@index([userId])
+  @@index([parentUserId])
 }
 
 model ContactProgram {
@@ -462,7 +465,7 @@ model ContactProgram {
   cohortKey      String    // 2026S, 2025W, 2025S, or program:<programId> for portal applications
   cohortLabel    String
   professor      String?
-  status         String    @default("ENROLLED") // ENROLLED | UNPAID | CANCELLED
+  status         String    @default("ENROLLED") // APPLIED | ENROLLED | UNPAID | CANCELLED
   agencyRaw      String?
   appliedAt      DateTime?
   paymentNote    String?   @db.Text

@@ -1,5 +1,6 @@
 "use server";
 import { randomUUID } from 'node:crypto';
+import { syncContactFromApplicationBestEffort } from '@/lib/contact-sync';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -135,6 +136,7 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
       const details = { applicationId, programTitle: program?.title || 'CRI program', accountEmail: session.user.email, form: order.formData as Record<string, unknown>, payment: { orderId, amount: payment.totalAmount, currency: payment.currency, receiptUrl: payment.receiptUrl }, test: reviewer };
       await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);
     } catch { console.error('Application saved; notification emails failed.'); }
+    if (created) await syncContactFromApplicationBestEffort(applicationId, 'APPLIED');
     revalidatePath('/dashboard', 'layout');
     // Purchase is reported once per order: the event id is derived from the order, so retries and the browser copy deduplicate.
     let tracking: MetaCustomData | undefined;
@@ -196,6 +198,7 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
       const details = { applicationId, programTitle: program.title, accountEmail: session.user.email, form: parsed.data as Record<string, unknown>, payment: null };
       await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);
     } catch { console.error('Application saved; notification emails failed.'); }
+    await syncContactFromApplicationBestEffort(applicationId, 'APPLIED');
     revalidatePath('/dashboard', 'layout');
     // The application id is the event id, shared with the browser's pixel call.
     const { data: meta } = await sendMetaEvent({ name: 'SubmitApplication', eventId: applicationId, person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, META_VALUES.submitApplication ? { value: META_VALUES.submitApplication, currency: 'USD' } : undefined) });

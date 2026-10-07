@@ -2,15 +2,19 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { SEGMENT_KEYS, type SegmentKey } from "@/lib/contacts";
 
-export const CONTACT_FLAGS = ["review", "repeat", "family", "optout", "bounced", "unpaid"] as const;
+export const CONTACT_FLAGS = ["review", "repeat", "family", "optout", "bounced", "unpaid", "account", "noaccount"] as const;
 export type ContactFlag = (typeof CONTACT_FLAGS)[number];
-export type ContactFilters = { q: string; segment: SegmentKey | ""; cohort: string; professor: string; channel: string; flag: ContactFlag | "" };
+export const CONTACT_STATUSES = ["customers", "applicants", "all"] as const;
+export type ContactStatus = (typeof CONTACT_STATUSES)[number];
+export type ContactFilters = { q: string; segment: SegmentKey | ""; cohort: string; professor: string; channel: string; flag: ContactFlag | ""; status: ContactStatus };
 
 export function parseContactFilters(params: Record<string, string | string[] | undefined>): ContactFilters {
   const s = (k: string, max = 100) => { const v = params[k]; return (typeof v === "string" ? v : "").trim().slice(0, max); };
   const segment = s("segment");
   const flag = s("flag");
+  const status = s("status");
   return {
+    status: (CONTACT_STATUSES as readonly string[]).includes(status) ? (status as ContactStatus) : "customers",
     q: s("q"),
     segment: (SEGMENT_KEYS as string[]).includes(segment) ? (segment as SegmentKey) : "",
     cohort: s("cohort"), professor: s("professor"), channel: s("channel"),
@@ -19,7 +23,7 @@ export function parseContactFilters(params: Record<string, string | string[] | u
 }
 
 export function filtersToQuery(f: ContactFilters): Record<string, string> {
-  return Object.fromEntries(Object.entries(f).filter(([, v]) => v)) as Record<string, string>;
+  return Object.fromEntries(Object.entries(f).filter(([k, v]) => v && !(k === "status" && v === "customers"))) as Record<string, string>;
 }
 
 function segmentWhere(segment: SegmentKey | "", year: number): Prisma.ContactWhereInput {
@@ -38,6 +42,9 @@ function segmentWhere(segment: SegmentKey | "", year: number): Prisma.ContactWhe
 /** Builds the Prisma filter; "repeat" and "family" need a grouping pass first, hence async. */
 export async function contactWhere(f: ContactFilters, now: Date = new Date()): Promise<Prisma.ContactWhereInput> {
   const and: Prisma.ContactWhereInput[] = [segmentWhere(f.segment, now.getFullYear())];
+  // Customers have at least one enrolled (or registered-but-unpaid) program; applicants only applied so far.
+  if (f.status === "customers") and.push({ programs: { some: { status: { in: ["ENROLLED", "UNPAID"] } } } });
+  if (f.status === "applicants") and.push({ programs: { some: { status: "APPLIED" } }, NOT: { programs: { some: { status: { in: ["ENROLLED", "UNPAID"] } } } } });
   if (f.q) and.push({ OR: ["firstName", "lastName", "email", "phone", "school", "parentName", "parentEmail", "parentPhone", "pinnedNote"].map(field => ({ [field]: { contains: f.q, mode: "insensitive" } })) });
   if (f.cohort) and.push({ programs: { some: { cohortKey: f.cohort } } });
   if (f.professor) and.push({ programs: { some: { professor: { contains: f.professor, mode: "insensitive" } } } });
@@ -46,6 +53,8 @@ export async function contactWhere(f: ContactFilters, now: Date = new Date()): P
   if (f.flag === "optout") and.push({ emailOptOutAt: { not: null } });
   if (f.flag === "bounced") and.push({ emailBouncedAt: { not: null } });
   if (f.flag === "unpaid") and.push({ programs: { some: { status: "UNPAID" } } });
+  if (f.flag === "account") and.push({ OR: [{ userId: { not: null } }, { parentUserId: { not: null } }] });
+  if (f.flag === "noaccount") and.push({ userId: null, parentUserId: null });
   if (f.flag === "repeat") {
     const groups = await prisma.contactProgram.groupBy({ by: ["contactId"], _count: { _all: true }, having: { contactId: { _count: { gt: 1 } } } });
     and.push({ id: { in: groups.map(g => g.contactId) } });

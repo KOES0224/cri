@@ -10,7 +10,7 @@ export type ContactRow = {
   school: string | null; studentLevel: string | null; gradYear: number | null; levelSource: string; segment: string;
   reviewNeeded: boolean; reviewReason: string | null; reviewedBy: string | null; reviewedAt: string | null;
   channel: string | null; agencyRaw: string | null; howLearned: string | null; householdId: string | null; pinnedNote: string | null;
-  emailOptOutAt: string | null; emailBouncedAt: string | null; userId: string | null;
+  emailOptOutAt: string | null; emailBouncedAt: string | null; userId: string | null; parentUserId: string | null;
   programs: { id: string; cohortKey: string; cohortLabel: string; professor: string | null; status: string; agencyRaw: string | null; appliedAt: string | null; paymentNote: string | null; adminNote: string | null; areaOfInterest: string | null; topic: string | null; resumeUrl: string | null }[];
   siblings: { id: string; name: string; confirmed: boolean }[];
 };
@@ -47,7 +47,9 @@ function RowGroup({ row: r, open, onToggle, confirmedSiblings, suggested }: { ro
         <p className="mt-0.5 text-xs text-slate-500">{[r.school, r.studentLevel === "SCHOOL" ? "High school" : r.studentLevel === "UNIVERSITY" ? "University" : null, r.gradYear ? `class of ${r.gradYear}` : null].filter(Boolean).join(" · ") || "No school details"}</p>
         <div className="mt-1.5 flex flex-wrap gap-1">
           {badge(r.segment === "UNKNOWN" ? "slate" : "blue", segmentLabel(r.segment))}
-          {r.programs.length > 1 && badge("violet", `Repeat · ${r.programs.length} programs`)}
+          {r.programs.filter(p => p.status !== "CANCELLED").length > 1 && badge("violet", `Repeat · ${r.programs.filter(p => p.status !== "CANCELLED").length} programs`)}
+          {r.programs.some(p => p.status === "APPLIED") && !r.programs.some(p => p.status === "ENROLLED" || p.status === "UNPAID") && badge("slate", "Applicant")}
+          {(r.userId || r.parentUserId) && <a href={`/dashboard/users/${r.userId ?? r.parentUserId}`} className="inline-flex items-center whitespace-nowrap rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 hover:bg-sky-100">{r.userId ? "Portal account" : "Parent account"} ↗</a>}
           {confirmedSiblings.length > 0 && badge("emerald", `Family: ${confirmedSiblings.map(s => s.name).join(", ")}`)}
           {suggested.length > 0 && badge("amber", `Family? ${suggested.map(s => s.name).join(", ")}`, "Same parent email or phone. Open the row to confirm.")}
           {r.reviewNeeded && badge("amber", "Needs review", r.reviewReason ?? undefined)}

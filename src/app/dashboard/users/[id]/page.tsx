@@ -9,6 +9,8 @@ import { format } from "date-fns";
 import UserActivityTimeline from "./UserActivityTimeline";
 import UserApplicationsList from "./UserApplicationsList";
 import GuardianLinkPanel from "./GuardianLinkPanel";
+import { prisma } from "@/lib/prisma";
+import { segmentLabel, segmentOf } from "@/lib/contacts";
 
 export default async function AdminUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -23,6 +25,8 @@ export default async function AdminUserProfilePage({ params }: { params: Promise
   if (!user) {
     notFound();
   }
+
+  const customer = await prisma.contact.findFirst({ where: { OR: [{ userId: user.id }, { parentUserId: user.id }, { email: user.email.toLowerCase() }] }, include: { programs: { orderBy: { cohortKey: "desc" } } } });
 
   // Combine UserActivity and LeadActivity for a unified timeline
   const combinedActivities = [
@@ -53,6 +57,15 @@ export default async function AdminUserProfilePage({ params }: { params: Promise
         {/* Left Column: Details */}
         <div className="lg:col-span-1 space-y-6">
           <GuardianLinkPanel user={{ id: user.id, role: user.role }} guardian={user.parent} children={user.children} />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-lg font-bold text-gray-900">Customer record</h3>
+            {customer ? <div className="mt-3 text-sm text-gray-700">
+              <p className="font-semibold">{customer.firstName} {customer.lastName} <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{segmentLabel(segmentOf(customer.studentLevel, customer.gradYear))}</span></p>
+              <ul className="mt-2 space-y-1 text-xs text-gray-600">{customer.programs.map(p => <li key={p.id}>{p.cohortLabel}{p.professor ? ` · ${p.professor.replace(/\s*\(.*$/, "")}` : ""} <span className="text-gray-400">({p.status.toLowerCase()})</span></li>)}</ul>
+              {customer.pinnedNote && <p className="mt-2 whitespace-pre-line rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">{customer.pinnedNote}</p>}
+              <Link href={`/dashboard/contacts?q=${encodeURIComponent(customer.email)}&status=all`} className="mt-3 inline-block text-sm font-semibold text-blue-700 hover:underline">Open in Customers →</Link>
+            </div> : <p className="mt-2 text-sm text-gray-500">Not in the customer directory yet. A record appears when this person applies or is enrolled.</p>}
+          </div>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
               <h3 className="text-lg font-bold text-gray-900 flex items-center">
