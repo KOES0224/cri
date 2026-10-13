@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { SEGMENT_KEYS, type SegmentKey } from "@/lib/contacts";
+import { SEGMENT_KEYS, seniorYear, type SegmentKey } from "@/lib/contacts";
 
 export const CONTACT_FLAGS = ["review", "repeat", "family", "optout", "bounced", "unpaid", "account", "noaccount"] as const;
 export type ContactFlag = (typeof CONTACT_FLAGS)[number];
@@ -41,7 +41,7 @@ function segmentWhere(segment: SegmentKey | "", year: number): Prisma.ContactWhe
 
 /** Builds the Prisma filter; "repeat" and "family" need a grouping pass first, hence async. */
 export async function contactWhere(f: ContactFilters, now: Date = new Date()): Promise<Prisma.ContactWhereInput> {
-  const and: Prisma.ContactWhereInput[] = [segmentWhere(f.segment, now.getFullYear())];
+  const and: Prisma.ContactWhereInput[] = [segmentWhere(f.segment, seniorYear(now))];
   // Customers have at least one enrolled (or registered-but-unpaid) program; applicants only applied so far.
   if (f.status === "customers") and.push({ programs: { some: { status: { in: ["ENROLLED", "UNPAID"] } } } });
   if (f.status === "applicants") and.push({ programs: { some: { status: "APPLIED" } }, NOT: { programs: { some: { status: { in: ["ENROLLED", "UNPAID"] } } } } });

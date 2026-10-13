@@ -6,8 +6,10 @@ are not stored as labels: "Repeat" is simply more than one program row, "Family"
 `householdId` (the page suggests matches on parent email or parent phone and an admin confirms them).
 
 ## Segments
-Computed from `studentLevel` (SCHOOL / UNIVERSITY) and `gradYear` against the current calendar year
-(`src/lib/contacts.ts`, `segmentOf`). Nothing to update when the year changes. Records whose level or
+Computed from `studentLevel` (SCHOOL / UNIVERSITY) and `gradYear` against the admissions year
+(`src/lib/contacts.ts`, `segmentOf` / `seniorYear`): from 1 July the "final year" is next calendar year's
+graduates (the students applying early that autumn), until June it is this year's. Nothing to update
+when the year changes. Records whose level or
 year could not be determined are flagged `reviewNeeded`; open the row, set the values once, and the
 flag clears (`levelSource` becomes MANUAL and later imports never overwrite it).
 

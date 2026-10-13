@@ -2,17 +2,24 @@
  * Customer directory rules shared by the admin page, the import script, the CSV export and the
  * Resend audience sync. Pure functions only; Prisma lives in contact-query.ts.
  *
- * A segment is derived from studentLevel + gradYear against the current calendar year, so it stays
- * correct as years pass. "Graduating this year" means gradYear === current year.
+ * A segment is derived from studentLevel + gradYear against the current admissions year, so it stays
+ * correct as years pass. The admissions year turns over on 1 July: from July, students who graduate next
+ * calendar year are in their final year (the ones applying early this autumn); until June, it is the
+ * students graduating this calendar year.
  */
+export function seniorYear(now: Date = new Date()): number {
+  // UTC so the result is the same on Vercel (UTC) and on a laptop in Korea.
+  return now.getUTCMonth() >= 6 ? now.getUTCFullYear() + 1 : now.getUTCFullYear();
+}
+
 export type StudentLevel = "SCHOOL" | "UNIVERSITY";
 
 export const SEGMENTS = [
   { key: "HS_CURRENT", label: "High school · enrolled", ko: "고등 재학" },
-  { key: "HS_GRADUATING", label: "High school · graduating this year", ko: "고3 · 올해 졸업" },
+  { key: "HS_GRADUATING", label: "High school · final year (applying now)", ko: "고3 · 지원 시즌" },
   { key: "HS_ALUMNI", label: "Finished high school · likely in university", ko: "고교 졸업 · 대학 재학 추정" },
   { key: "UNI_CURRENT", label: "University · enrolled", ko: "대학 재학" },
-  { key: "UNI_GRADUATING", label: "University · graduating this year", ko: "대학 · 올해 졸업" },
+  { key: "UNI_GRADUATING", label: "University · final year", ko: "대학 · 졸업 학년" },
   { key: "UNI_ALUMNI", label: "University graduate", ko: "대학 졸업" },
   { key: "UNKNOWN", label: "Level or year unknown", ko: "미확인" },
 ] as const;
@@ -22,7 +29,7 @@ export function segmentLabel(key: string) { return SEGMENTS.find(s => s.key === 
 
 export function segmentOf(level: string | null | undefined, gradYear: number | null | undefined, now: Date = new Date()): SegmentKey {
   if ((level !== "SCHOOL" && level !== "UNIVERSITY") || !gradYear) return "UNKNOWN";
-  const year = now.getFullYear();
+  const year = seniorYear(now);
   if (level === "SCHOOL") return gradYear > year ? "HS_CURRENT" : gradYear === year ? "HS_GRADUATING" : "HS_ALUMNI";
   return gradYear > year ? "UNI_CURRENT" : gradYear === year ? "UNI_GRADUATING" : "UNI_ALUMNI";
 }
@@ -103,7 +110,7 @@ export function reviewReasons(input: { school?: string | null; studentLevel?: st
   if (!input.studentLevel) reasons.push(input.levelConfident === false ? inferLevel(input.school).reason : "Academic level missing");
   if (!input.gradYear) reasons.push("Graduation year missing or not a year");
   else {
-    const gap = input.gradYear - now.getFullYear();
+    const gap = input.gradYear - seniorYear(now);
     if (input.studentLevel === "SCHOOL" && gap > 6) reasons.push(`Graduation year ${input.gradYear} is far away for a school student`);
     if (gap < -8) reasons.push(`Graduation year ${input.gradYear} is long past`);
   }
