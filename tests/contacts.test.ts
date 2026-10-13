@@ -1,17 +1,27 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { channelOf, inferLevel, parseGradYear, phoneKey, reviewReasons, segmentOf, toCsv } from "../src/lib/contacts";
+import { channelOf, inferLevel, parseGradYear, phoneKey, reviewReasons, segmentOf, seniorYear, toCsv } from "../src/lib/contacts";
 import { verifySvixSignature } from "../src/lib/svix";
 
-const in2026 = new Date("2026-10-07T00:00:00Z");
+const in2026 = new Date("2026-10-07T00:00:00Z"); // October: admissions year 2027
+const spring2026 = new Date("2026-03-15T00:00:00Z"); // March: admissions year 2026
 
-test("segments follow level and graduation year against the current year", () => {
+test("the admissions year turns over on 1 July", () => {
+  assert.equal(seniorYear(spring2026), 2026);
+  assert.equal(seniorYear(new Date("2026-06-30T23:00:00Z")), 2026);
+  assert.equal(seniorYear(new Date("2026-07-01T12:00:00Z")), 2027);
+  assert.equal(seniorYear(in2026), 2027);
+});
+
+test("segments follow level and graduation year against the admissions year", () => {
   assert.equal(segmentOf("SCHOOL", 2028, in2026), "HS_CURRENT");
-  assert.equal(segmentOf("SCHOOL", 2026, in2026), "HS_GRADUATING");
-  assert.equal(segmentOf("SCHOOL", 2025, in2026), "HS_ALUMNI");
+  assert.equal(segmentOf("SCHOOL", 2027, in2026), "HS_GRADUATING");
+  assert.equal(segmentOf("SCHOOL", 2026, in2026), "HS_ALUMNI");
+  assert.equal(segmentOf("SCHOOL", 2026, spring2026), "HS_GRADUATING");
+  assert.equal(segmentOf("SCHOOL", 2027, spring2026), "HS_CURRENT");
   assert.equal(segmentOf("UNIVERSITY", 2029, in2026), "UNI_CURRENT");
-  assert.equal(segmentOf("UNIVERSITY", 2026, in2026), "UNI_GRADUATING");
+  assert.equal(segmentOf("UNIVERSITY", 2027, in2026), "UNI_GRADUATING");
   assert.equal(segmentOf("UNIVERSITY", 2024, in2026), "UNI_ALUMNI");
   assert.equal(segmentOf(null, 2027, in2026), "UNKNOWN");
   assert.equal(segmentOf("SCHOOL", null, in2026), "UNKNOWN");

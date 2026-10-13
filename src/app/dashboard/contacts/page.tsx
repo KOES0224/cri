@@ -84,6 +84,6 @@ export default async function ContactsPage({ searchParams }: { searchParams: Pro
       <ContactsTable rows={rows} />
       <ListPagination page={page} pageSize={PAGE_SIZE} total={total} pathname="/dashboard/contacts" query={query} />
     </div>
-    <p className="mt-4 text-xs text-slate-500">Accounts: when someone signs up or applies on the website with the same email, their record here is linked automatically, and new applications appear under “Applicants” until admissions enrol them. Segments: high school or university comes from the academic level, and “graduating this year” means the graduation year equals the current calendar year. Records marked “needs review” were imported with an unclear school name or without a year; open the row to set them once.</p>
+    <p className="mt-4 text-xs text-slate-500">Accounts: when someone signs up or applies on the website with the same email, their record here is linked automatically, and new applications appear under “Applicants” until admissions enrol them. Segments: high school or university comes from the academic level. “Final year” follows the admissions calendar: from July it means graduating next year (the students applying early this autumn), until June it means graduating this year. Records marked “needs review” were imported with an unclear school name or without a year; open the row to set them once.</p>
   </AdminLayout>;
 }
