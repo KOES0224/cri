@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useSyncExternalStore, Suspense } from 'react';
+import { forgetResetToken, readResetToken } from '@/lib/reset-token';
 import Link from "@/i18n/link";
 import { useT } from '@/i18n/client';
 import type { Dictionary } from '@/i18n/config';
@@ -14,20 +14,10 @@ function recoveryText(result: RecoveryResponse, t: Dictionary): string {
 }
 
 function RecoveryForm() {
-  const params = useSearchParams();
   const { t } = useT();
-  // The reset link's token is a one-time credential. Keep it in state and take it out of the address bar before the
-  // analytics and ad scripts (GTM, Meta Pixel) read the page URL; they load after this page's first effects run.
-  const [token] = useState(() => params.get('token'));
-  useEffect(() => {
-    if (!params.has('token')) return;
-    try {
-      const clean = new URL(window.location.href);
-      clean.searchParams.delete('token');
-      // A plain state object, as on the payment result page, so Next syncs useSearchParams to the clean address.
-      window.history.replaceState(null, '', clean.toString());
-    } catch {}
-  }, [params]);
+  // The reset token was moved from the address into sessionStorage by the layout's early script (src/lib/reset-token.ts).
+  // It is read only in the browser: undefined while the server renders and during hydration, then the token or null.
+  const token = useSyncExternalStore(noSubscription, readResetToken, () => undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -39,9 +29,10 @@ function RecoveryForm() {
     try {
       const response = await fetch('/api/auth/recovery', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(token ? { token, password: data.get('password') } : { email: data.get('email') }) });
       const result: RecoveryResponse = await response.json();
-      if (!response.ok) setError(recoveryText(result, t)); else setMessage(recoveryText(result, t));
+      if (!response.ok) setError(recoveryText(result, t)); else { if (token) forgetResetToken(); setMessage(recoveryText(result, t)); }
     } catch { setError(t.auth.recovery.network); } finally { setBusy(false); }
   }
+  if (token === undefined) return <RecoveryFallback />;
   return <div className="max-w-lg mx-auto px-6 pt-40 pb-24"><h1 className="text-3xl font-bold text-gray-900">{token ? t.auth.recovery.titleReset : t.auth.recovery.title}</h1>
     <p className="text-gray-600 mt-4 mb-6">{token ? t.auth.recovery.introReset : t.auth.recovery.intro}</p>
     {message ? <p role="status" className="rounded-2xl bg-blue-50 p-5 text-blue-900">{message}</p> : <form onSubmit={submit} aria-busy={busy} className="space-y-5">
@@ -52,5 +43,6 @@ function RecoveryForm() {
     <Link href="/auth/login" className="block mt-6 text-blue-700 underline">{t.auth.recovery.backToSignIn}</Link><p className="text-sm text-gray-600 mt-6">{t.auth.recovery.help.a}<a href="mailto:support@cri.kr" className="underline">support@cri.kr</a>{t.auth.recovery.help.b}</p>
   </div>;
 }
+const noSubscription = () => () => {};
 function RecoveryFallback() { const { t } = useT(); return <p className="pt-40 text-center">{t.auth.recovery.loading}</p>; }
 export default function RecoveryPage() { return <Suspense fallback={<RecoveryFallback />}><RecoveryForm /></Suspense>; }
