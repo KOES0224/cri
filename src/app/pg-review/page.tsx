@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { COMPANY } from "@/lib/company";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PG_REVIEW_PRODUCT, pgReviewViewer } from "@/lib/pg-review";
@@ -27,7 +28,7 @@ export default async function PgReviewPage() {
             <div><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">상품명</dt><dd className="mt-1 font-semibold text-slate-900">{PG_REVIEW_PRODUCT.name}</dd></div>
             <div><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">결제 금액</dt><dd className="mt-1 text-2xl font-black text-slate-900">{PG_REVIEW_PRODUCT.label}</dd></div>
             <div><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">제공 방식</dt><dd className="mt-1 text-slate-800">온라인 심사 · 결제 후 영업일 기준 7일 이내 결과 안내</dd></div>
-            <div><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">판매자</dt><dd className="mt-1 text-slate-800">Elite Research Co., Ltd. · 사업자등록번호 863-87-02851</dd></div>
+            <div><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">판매자</dt><dd className="mt-1 text-slate-800">{COMPANY.legalName} · 대표 {COMPANY.representative.ko} · 사업자등록번호 {COMPANY.businessRegistrationNumber}</dd></div>
           </dl>
           <p className="mt-5 text-sm text-slate-600">
             결제 전에 <Link href="/refunds" className="text-blue-700 underline">취소 및 환불 규정</Link>과 <Link href="/privacy" className="text-blue-700 underline">개인정보 안내</Link>를 확인해 주세요. 결제는 토스페이먼츠를 통해 처리됩니다.

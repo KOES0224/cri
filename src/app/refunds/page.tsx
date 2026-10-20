@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from "@/i18n/link";
 import { getDictionary, getLocale } from '@/i18n';
+import { COMPANY, companyLegalName } from '@/lib/company';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = getDictionary(await getLocale());
@@ -23,13 +24,15 @@ const policies = { en: english, ko: korean } as const;
 
 export default async function RefundsPage() {
 const locale = await getLocale();
-const t = getDictionary(locale).legal.refunds;
+const dict = getDictionary(locale);
+const t = dict.legal.refunds;
+const seller = `${companyLegalName(locale)} · ${dict.footer.business.representative} ${COMPANY.representative[locale]} · ${dict.footer.business.registration} ${COMPANY.businessRegistrationNumber}`;
 // The visitor's language comes first; the other language follows under its own heading.
 const secondary = locale === 'ko' ? 'en' : 'ko';
 return <article className="mx-auto max-w-4xl px-6 pb-24 pt-36 text-gray-700">
   <p className="text-xs font-semibold uppercase tracking-widest text-blue-700">{t.eyebrow}</p>
   <h1 className="mt-3 text-4xl font-black tracking-tight text-gray-900 sm:text-5xl">{t.title}</h1>
-  <p className="mt-5 text-sm text-gray-500">{t.company}</p>
+  <p className="mt-5 text-sm text-gray-500">{seller}</p>
   <section className="mt-8 space-y-5 rounded-3xl border border-gray-200 bg-white p-6 leading-relaxed sm:p-8" lang={locale} aria-label={t.primaryLabel}>{policies[locale].map(text=><p key={text}>{text}</p>)}</section>
   <section className="mt-8 space-y-5 rounded-3xl border border-blue-100 bg-blue-50 p-6 leading-relaxed sm:p-8" lang={secondary}><h2 className="text-2xl font-bold text-gray-900">{t.secondaryHeading}</h2>{policies[secondary].map(text=><p key={text}>{text}</p>)}</section>
   <section className="mt-10"><h2 className="text-xl font-bold text-gray-900">{t.requestHeading}</h2><p className="mt-3 leading-relaxed">{t.requestA}<a href="mailto:support@cri.kr" className="text-blue-700 underline">support@cri.kr</a>{t.requestB}<a href="tel:+82262038999" className="text-blue-700 underline">{t.phone}</a>{t.requestC}</p></section>

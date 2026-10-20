@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from "@/i18n/link";
 import { getDictionary, getLocale } from '@/i18n';
+import { COMPANY } from '@/lib/company';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = getDictionary(await getLocale());
@@ -8,7 +9,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PrivacyPage() {
-  const t = getDictionary(await getLocale()).legal.privacy;
+  const locale = await getLocale();
+  const t = getDictionary(locale).legal.privacy;
   return <article className="max-w-3xl mx-auto px-6 pt-36 pb-24 text-gray-700 space-y-6 leading-relaxed">
     <h1 className="text-4xl font-bold text-gray-900">{t.title}</h1>
     <p>{t.intro}</p>
@@ -19,6 +21,7 @@ export default async function PrivacyPage() {
     <h2 className="text-2xl font-bold text-gray-900">{t.ads.heading}</h2>
     <p>{t.ads.body}</p>
     <h2 className="text-2xl font-bold text-gray-900">{t.requests.heading}</h2>
+    <p>{t.requests.officer}: <strong className="font-semibold text-gray-900">{COMPANY.representative[locale]}</strong> · <a className="text-blue-700 underline" href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a> · <a className="text-blue-700 underline" href={COMPANY.phoneHref}>{COMPANY.phone}</a></p>
     <p>{t.requests.bodyA}<a className="text-blue-700 underline" href="mailto:support@cri.kr">support@cri.kr</a>{t.requests.bodyB}</p>
     <p>{t.requests.note}</p>
     <Link href="/contact" className="text-blue-700 underline">{t.contact}</Link>

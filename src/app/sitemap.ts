@@ -27,6 +27,7 @@ const STATIC_ROUTES: Array<[path: string, priority: number, changeFrequency: Ent
   ["/admissions", 0.8, "monthly"],
   ["/privacy", 0.3, "yearly"],
   ["/refunds", 0.3, "yearly"],
+  ["/terms", 0.3, "yearly"],
 ];
 
 const abs = (path: string) => `${SITE_URL}${path}`;
