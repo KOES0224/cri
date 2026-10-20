@@ -1,9 +1,27 @@
 import Link from "@/i18n/link";
 import { Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
 import { getDictionary, getLocale } from "@/i18n";
+import { COMPANY, FTC_LOOKUP_URL, companyLegalName } from "@/lib/company";
 
 export default async function Footer() {
-  const t = getDictionary(await getLocale()).footer;
+  const locale = await getLocale();
+  const t = getDictionary(locale).footer;
+  const representative = COMPANY.representative[locale];
+  const legalName = companyLegalName(locale);
+  const otherName = legalName === COMPANY.legalName ? COMPANY.legalNameKo : COMPANY.legalName;
+  // Operator identity required of an online seller (전자상거래법 제10조); the labels are translated, the facts are shared.
+  const facts: Array<[string, React.ReactNode]> = [
+    [t.business.representative, representative],
+    [t.business.registration, COMPANY.businessRegistrationNumber],
+    ...(COMPANY.mailOrderRegistrationNumber
+      ? [[t.business.mailOrder, <span key="mail-order">{COMPANY.mailOrderRegistrationNumber} <a href={FTC_LOOKUP_URL} target="_blank" rel="noopener noreferrer" className="underline decoration-gray-600 underline-offset-2 hover:text-white transition-colors">{t.business.lookup}</a></span>] as [string, React.ReactNode]]
+      : []),
+    [t.business.address, `${COMPANY.postalCode} ${COMPANY.address[locale]}`],
+    [t.business.phone, <a key="phone" href={COMPANY.phoneHref} className="hover:text-white transition-colors">{COMPANY.phone}</a>],
+    [t.business.email, <a key="email" href={`mailto:${COMPANY.email}`} className="hover:text-white transition-colors">{COMPANY.email}</a>],
+    [t.business.privacyOfficer, representative],
+    [t.business.hosting, COMPANY.hostingProvider],
+  ];
   return (
     <footer className="bg-gray-950 text-white pt-20 pb-16 px-6 relative z-10 overflow-hidden border-t border-gray-900">
       {/* Background Ambience */}
@@ -151,14 +169,23 @@ export default async function Footer() {
           </div>
         </div>
 
-        <div className="mb-6 border-t border-gray-800 pt-6 text-sm leading-relaxed text-gray-400">
-          <p className="font-semibold text-gray-200">{t.company}</p>
-          <p>{t.businessNumber}</p>
+        <div className="mb-6 border-t border-gray-800 pt-6 text-xs leading-relaxed text-gray-400">
+          <p className="text-sm font-semibold text-gray-200">
+            {legalName} <span className="font-normal text-gray-400">({COMPANY.brand}){otherName ? ` · ${otherName}` : ""}</span>
+          </p>
+          <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
+            {facts.map(([label, value]) => (
+              <div key={label} className="flex gap-1.5">
+                <dt className="shrink-0 whitespace-nowrap text-gray-400">{label}</dt>
+                <dd className="text-gray-300">{value}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
 
         {/* Bottom Bar: Copyright & Accreditations */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <div className="flex flex-wrap gap-4"><Link href="/admissions" className="underline">{t.applicationGuide}</Link><Link href="/privacy" className="underline">{t.privacy}</Link><Link href="/refunds" className="underline">{t.refunds}</Link></div>
+          <div className="flex flex-wrap gap-4"><Link href="/admissions" className="underline">{t.applicationGuide}</Link><Link href="/terms" className="underline">{t.terms}</Link><Link href="/privacy" className="underline">{t.privacy}</Link><Link href="/refunds" className="underline">{t.refunds}</Link></div>
           <p>{t.copyright}</p>
           <div className="flex items-center gap-6">
             <span>{t.standard}</span>

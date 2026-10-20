@@ -62,6 +62,7 @@ export const config = {
     "/admissions",
     "/privacy",
     "/refunds",
+    "/terms",
     "/partners",
   ],
 };
