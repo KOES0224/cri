@@ -37,7 +37,8 @@ export async function POST(request: Request) {
       const raw = randomBytes(32).toString('hex');
       await prisma.verificationToken.create({ data: { identifier: user.id, token: `reset:${digest(raw)}`, expires: new Date(Date.now() + 30 * 60 * 1000) } });
       const url = new URL('/auth/recovery', process.env.NEXTAUTH_URL);
-      url.searchParams.set('token', raw);
+      // In the fragment, the token never reaches a server log, a Referer header or the recovery page's analytics.
+      url.hash = new URLSearchParams({ token: raw }).toString();
       const response = await new Resend(process.env.RESEND_API_KEY).emails.send({ from: process.env.AUTH_EMAIL_FROM, to: parsed.data, subject: 'Reset your CRI password', text: `A password reset was requested for your CRI account. This link expires in 30 minutes and can be used once:\n\n${url}\n\nIf you did not request this, you can ignore this email. Never share this link or your password.` });
       if (response.error) console.error('Password recovery email could not be delivered');
     }
