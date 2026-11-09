@@ -134,6 +134,29 @@ export async function confirmTossPayment(
 }
 
 /**
+ * Where a payment stands at the provider, by its key: `paid` (approved for exactly this order, amount and currency),
+ * `dead` (ended without a standing charge: refused, expired or fully cancelled), `open` (authenticated or in progress,
+ * not settled yet), `unknown` (partially cancelled, mismatched, or the provider could not be asked). A failed lookup is
+ * never `dead`. Read-only; allowed for payment-widget secret keys.
+ */
+export async function tossPaymentState(paymentKey: string, orderId: string, amount: number, currency: string = APPLICATION_CHARGE.currency): Promise<"paid" | "dead" | "open" | "unknown"> {
+  if (!process.env.TOSS_SECRET_KEY) return "unknown";
+  try {
+    const response = await fetch(`https://api.tosspayments.com/v1/payments/${encodeURIComponent(paymentKey)}`, {
+      headers: { Authorization: `Basic ${Buffer.from(`${process.env.TOSS_SECRET_KEY}:`).toString("base64")}` },
+      cache: "no-store", signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) return "unknown";
+    const data = await response.json();
+    if (data?.orderId !== orderId) return "unknown";
+    if (data.status === "DONE") return Number(data.totalAmount) === Number(amount) && data.currency === currency ? "paid" : "unknown";
+    if (["ABORTED", "EXPIRED", "CANCELED"].includes(data.status)) return "dead";
+    if (["READY", "IN_PROGRESS", "WAITING_FOR_DEPOSIT"].includes(data.status)) return "open";
+    return "unknown";
+  } catch { return "unknown"; }
+}
+
+/**
  * Read-only reconciliation: finds an already-approved charge for this payment key (after a timeout, a database failure
  * or a repeated request). Looks the payment up by its key, which the payment-widget secret key is allowed to do; the
  * order-id lookup is reserved for the per-merchant-id keys and does not work here.

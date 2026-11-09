@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import Link from "@/i18n/link";
+import { Lock, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { beginApplicationCheckout, submitApplicationWithoutFee } from '@/app/actions/payment';
+import { beginApplicationCheckout, reportPaymentProblem, resolvePendingCheckout, submitApplicationWithoutFee } from '@/app/actions/payment';
 import { saveApplicationDraft } from '@/app/actions/applicationDrafts';
 import { applicationErrorMessage, applicationErrors, applicationLabels, personalFields } from '@/lib/application-validation';
-import { APPLICATION_CHARGE, APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
+import { APPLICATION_CHARGE, APPLICATION_CHARGE_LABEL, APPLICATION_CHARGE_PRICE, TOSS_AGREEMENT_VARIANT_KEY } from '@/lib/application-fee';
+import { COMPANY } from '@/lib/company';
 import { programKind } from '@/lib/program-policy';
 import { trackEvent } from '@/lib/analytics';
 import { useT } from '@/i18n/client';
@@ -15,11 +17,11 @@ import { metaTrack, metaTrackCustom, newEventId } from '@/lib/meta/pixel';
 import type { MetaCustomData } from '@/lib/meta/config';
 
 type Program = { id: string; title: string; category: string; tuition: number | null; professors: { id: string; name: string; university: string | null }[] };
-type Props = { program: Program; content: MetaCustomData; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean; paymentVariantKey?: string; feeEnabled: boolean; reviewMode?: boolean };
+type Props = { program: Program; content: MetaCustomData; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean; paymentVariantKey?: string; feeEnabled: boolean; reviewMode?: boolean; feeIntroducedSinceDraft?: boolean };
 const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100';
 const actionClass = 'rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50';
 
-export default function ApplyClient({ program, content, user, applicantRole = 'STUDENT', savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, resumeFilename = '', paymentAvailable, paymentVariantKey = 'DEFAULT', feeEnabled, reviewMode = false }: Props) {
+export default function ApplyClient({ program, content, user, applicantRole = 'STUDENT', savedDraft, draftVersion = 0, draftStep = 1, draftSavedAt, checkoutPending = false, feeIntroducedSinceDraft = false, resumeFilename = '', paymentAvailable, paymentVariantKey = 'DEFAULT', feeEnabled, reviewMode = false }: Props) {
   const { t, locale } = useT();
   const router = useRouter();
   const copy = t.apply;
@@ -50,6 +52,8 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   type PaymentMethodsUi = Awaited<ReturnType<TossWidgets['renderPaymentMethods']>>;
   const widgetRef = useRef<{ widgets: TossWidgets; methods: PaymentMethodsUi } | null>(null);
   const [widgetState, setWidgetState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  // The button says what the click does: pay by card here, or continue to PayPal's own page.
+  const [payMethod, setPayMethod] = useState<'card' | 'paypal'>('card');
   // Per-instance ids: Next can keep a hidden copy of the page, and the widget mounts by CSS selector.
   const widgetId = useId();
   // Attribute selectors need no escaping, so nothing browser-only runs during server rendering.
@@ -67,6 +71,27 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [checkoutStarted, setCheckoutStarted] = useState(checkoutPending);
+  // `checkoutPending` means an earlier payment reached the provider and was never settled here. The server settles it
+  // when the form opens: a payment that went through becomes the application, one that ended without a charge frees
+  // the form again, and only an unclear one keeps the form locked for admissions.
+  const [earlierPayment, setEarlierPayment] = useState<'none' | 'checking' | 'wait' | 'review'>(checkoutPending ? 'checking' : 'none');
+  const [recheck, setRecheck] = useState(0);
+  useEffect(() => {
+    if (!checkoutPending) return;
+    let active = true, timer: number | undefined;
+    // A payment still in progress at the provider settles within seconds or expires by itself: look a few more times
+    // before leaving it to the "Check again" button.
+    const delays = [3000, 6000, 12000, 24000];
+    const run = (attempt: number) => resolvePendingCheckout(program.id).then(result => {
+      if (!active) return;
+      if (result.state === 'paid') router.replace('/dashboard/applications');
+      else if (result.state === 'review') setEarlierPayment('review');
+      else if (result.state === 'wait') { setEarlierPayment('wait'); if (attempt < delays.length) timer = window.setTimeout(() => run(attempt + 1), delays[attempt]); }
+      else window.location.reload();
+    }).catch(() => { if (active) setEarlierPayment('wait'); });
+    void run(0);
+    return () => { active = false; if (timer) window.clearTimeout(timer); };
+  }, [checkoutPending, program.id, router, recheck]);
   const paymentLock = useRef(false);
   const checkoutRef = useRef(checkoutPending);
   const locked = checkoutStarted || busy;
@@ -97,14 +122,18 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
         if (cancelled) return;
         [methods, agreement] = await Promise.all([
           widgets.renderPaymentMethods({ selector: methodsSelector, variantKey: paymentVariantKey }),
-          widgets.renderAgreement({ selector: agreementSelector, variantKey: 'AGREEMENT' }),
+          widgets.renderAgreement({ selector: agreementSelector, variantKey: TOSS_AGREEMENT_VARIANT_KEY }),
         ]);
         if (cancelled) { methods.destroy(); agreement.destroy(); return; }
         widgetRef.current = { widgets, methods };
+        methods.on('paymentMethodSelect', selected => setPayMethod(selected?.code === 'PAYPAL' ? 'paypal' : 'card'));
+        void methods.getSelectedPaymentMethod().then(selected => { if (!cancelled) setPayMethod(selected?.code === 'PAYPAL' ? 'paypal' : 'card'); }).catch(() => {});
         setWidgetState('ready');
       } catch (error) {
         console.error('Toss payment widget failed to load', error instanceof Error ? error.message : error);
         if (!cancelled) setWidgetState('error');
+        // An applicant who cannot see the payment form cannot apply: tell admissions straight away (never the review account's tests).
+        if (!cancelled && !reviewMode) void reportPaymentProblem(program.id, 'form', (error as { code?: string } | null)?.code, error instanceof Error ? error.message : undefined).catch(() => {});
       }
     })();
     return () => { cancelled = true; widgetRef.current = null; try { methods?.destroy(); agreement?.destroy(); } catch {} };
@@ -201,6 +230,8 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       const widget = widgetRef.current;
       if (!paymentAvailable || !widget) throw new Error(copy.notices.paymentUnavailable);
       const order = await beginApplicationCheckout(program.id, form);
+      // An earlier payment for this application had gone through unrecorded; it is recorded now, with no second charge.
+      if ('alreadyPaid' in order && order.alreadyPaid) { savedRevision.current = revision.current; router.replace('/dashboard/applications'); return; }
       if (order.error || !order.orderId) throw new Error(actionText(order, copy.notices.preparePaymentFailed));
       checkoutRef.current = true; setCheckoutStarted(true);
       if (!reviewMode) trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
@@ -215,7 +246,18 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
         customerEmail: user.email || form.studentEmail, customerName: `${form.studentFirstName} ${form.studentLastName}`.trim(),
         ...(paypal ? { foreignEasyPay: { country: form.residenceCountry || 'US', products: [{ name: order.orderName!.slice(0, 100), quantity: 1, unitAmount: order.amount!, currency: order.currency!, description: 'CRI application review fee' }] } } : {}),
       });
-    } catch (error) { setNotice(error instanceof Error && error.message ? error.message : copy.notices.paymentNotCompleted); }
+    } catch (error) {
+      // Nothing has been charged at this point (the charge happens only after the provider returns to our site), so the
+      // form is unlocked again and the applicant can edit or retry.
+      checkoutRef.current = false; setCheckoutStarted(false);
+      const code = (error as { code?: string } | null)?.code;
+      const known = code === 'USER_CANCEL' || code === 'PAY_PROCESS_CANCELED' ? copy.notices.paymentWindowClosed
+        : code === 'NEED_AGREEMENT_WITH_REQUIRED_TERMS' ? copy.notices.acceptPaymentTerms
+        : code === 'NOT_SELECTED_PAYMENT_METHOD' ? copy.notices.choosePaymentMethod : '';
+      setNotice(known || (error instanceof Error && error.message ? error.message : copy.notices.paymentNotCompleted));
+      // Anything other than the payer's own choice means the payment window itself did not work for this applicant.
+      if (!known && code && !reviewMode) void reportPaymentProblem(program.id, 'window', code, error instanceof Error ? error.message : undefined).catch(() => {});
+    }
     finally { paymentLock.current = false; setBusy(false); }
   }
   function field(key: string, options: { type?: string; optional?: boolean; multiline?: boolean; words?: number; choices?: [string, string][]; hint?: string } = {}) {
@@ -231,12 +273,16 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     <Link href={`/research/program/${program.id}`} onClick={event => { if (revision.current !== savedRevision.current && !confirm(copy.leaveConfirm)) event.preventDefault(); }} className="text-sm text-slate-600 underline">{copy.back}</Link>
     <header className="my-6"><p className="text-xs font-semibold uppercase tracking-widest text-blue-700">{copy.eyebrow}</p><h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{program.title}</h1><p className="mt-3 text-sm text-slate-600">{feeEnabled ? <>{copy.feeLine.a}<strong>{APPLICATION_CHARGE_LABEL}</strong>{copy.feeLine.b}</> : copy.free.feeLine.a}<strong>{program.tuition == null ? copy.contactAdmissions : `$${program.tuition.toLocaleString()} USD`}</strong>{feeEnabled ? copy.feeLine.c : copy.free.feeLine.c}</p><p className="mt-2 text-sm text-slate-600">{feeEnabled ? copy.submittedNote : copy.free.submittedNote}<Link href="/admissions" className="text-blue-700 underline">{copy.stepsAndFees}</Link> · <Link href="/terms" className="text-blue-700 underline">{t.footer.terms}</Link> · <Link href="/privacy" className="text-blue-700 underline">{copy.privacy}</Link> · <Link href="/refunds" className="text-blue-700 underline">{copy.refunds}</Link></p></header>
     {feeEnabled && !paymentAvailable && <div role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">{copy.paymentUnavailable.a}<Link href="/contact" className="underline">{copy.paymentUnavailable.link}</Link>{copy.paymentUnavailable.b}</div>}
-    {checkoutStarted && <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm">{copy.checkoutRestored.a}<Link href="/contact" className="underline">{copy.checkoutRestored.link}</Link>{copy.checkoutRestored.b}</div>}
+    {feeIntroducedSinceDraft && feeEnabled && <div role="note" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">{copy.feeIntroduced(APPLICATION_CHARGE_LABEL)}</div>}
+    {earlierPayment === 'checking' && <div role="status" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm">{copy.checkoutVerifying}</div>}
+    {earlierPayment === 'wait' && <div role="status" className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm"><span>{copy.checkoutWaiting}</span><button type="button" onClick={() => { setEarlierPayment('checking'); setRecheck(value => value + 1); }} className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-semibold text-blue-800">{copy.checkAgain}</button></div>}
+    {earlierPayment === 'review' && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">{copy.checkoutRestored.a}<Link href="/contact" className="underline">{copy.checkoutRestored.link}</Link>{copy.checkoutRestored.b}</div>}
     <ol aria-label={copy.progress} className="mb-5 grid grid-cols-3 gap-2">{[copy.progressSteps[0], copy.progressSteps[1], feeEnabled ? copy.progressSteps[2] : copy.free.step3].map((label, index) => <li key={label} aria-current={step === index + 1 ? 'step' : undefined} className={`rounded-xl border px-3 py-3 text-xs font-semibold sm:text-sm ${step === index + 1 ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-500'}`}>{index + 1}. {label}</li>)}</ol>
     {!checkoutStarted && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs"><span role="status" className={saveState === 'error' ? 'text-red-700' : 'text-slate-600'}>{saveState === 'saving' ? copy.saving : saveState === 'unsaved' ? copy.unsaved : saveState === 'error' ? saveError : savedAt ? copy.savedAt(new Date(savedAt).toLocaleTimeString()) : copy.autosave}</span><button type="button" onClick={() => void persist(form, step, revision.current)} disabled={saveState === 'saving' || busy} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-semibold disabled:opacity-50">{copy.saveDraft}</button></div>}
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"><h2 ref={titleRef} tabIndex={-1} className="mb-6 text-xl font-bold text-slate-900 outline-none">{copy.headings[step - 1]}</h2>
       {reviewMode && <div role="note" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">{copy.review.banner}</div>}
-      {notice && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{notice}</div>}
+      {step === 3 && feeEnabled && <p className="-mt-3 mb-5 text-sm text-slate-600">{copy.pay.lead}</p>}
+      {notice && !(step === 3 && feeEnabled) && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{notice}</div>}
       {step === 1 && <div className="grid gap-5 sm:grid-cols-2">
         {parentApplying && <p className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-950 sm:col-span-2">{copy.parentApplying.a}<strong>{copy.parentApplying.strong}</strong>{copy.parentApplying.b}</p>}
         {field('studentLevel', { choices: [['SCHOOL',copy.schoolStudent],['UNIVERSITY',copy.universityStudent]] })}{field('school')}
@@ -255,15 +301,40 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       </div>}
       {step === 3 && <div className="space-y-6">{[1,2].map(section => <div key={section} className="rounded-xl border border-slate-200 p-4"><div className="mb-4 flex items-center justify-between gap-3"><h3 className="font-semibold">{section === 1 ? copy.headings[0] : copy.headings[1]}</h3>{!checkoutStarted && <button type="button" disabled={busy} onClick={() => move(section)} className="text-sm font-semibold text-blue-700 underline">{section === 1 ? copy.editPersonal : copy.editResearch}</button>}</div><dl className="space-y-4">{Object.keys(applicationLabels).filter(key => personalFields.includes(key) === (section === 1)).filter(key => !(form.studentLevel === 'UNIVERSITY' && key.startsWith('parent')) && !(key === 'tShirtSize' && !summer)).map(key => <div key={key}><dt className="text-xs font-semibold text-slate-500">{label(key)}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-900">{key === 'resumeUrl' ? <a href={form[key]} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">{filename || copy.viewPdf}</a> : key === 'studentLevel' ? form[key] === 'UNIVERSITY' ? copy.universityStudent : copy.schoolStudent : key === 'residenceCountry' && form[key] ? countryName(form[key] as (typeof COUNTRY_CODES)[number], locale) : form[key] || copy.notProvided}</dd></div>)}</dl></div>)}
         {!feeEnabled && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5"><p className="text-sm font-semibold text-emerald-900">{copy.free.box.title}</p><p className="mt-2 text-sm leading-relaxed text-emerald-900/80">{copy.free.box.body}</p></div>}
-        {feeEnabled && <div className="rounded-xl border border-blue-200 bg-blue-50 p-5"><p className="text-sm font-semibold">{copy.feeBox.title}</p><p className="mt-2 text-2xl font-bold">{APPLICATION_CHARGE_LABEL}</p><p className="mt-3 text-sm leading-relaxed">{copy.feeBox.body1}</p><p className="mt-3 text-sm">{copy.feeBox.body2a}<Link href="/admissions" className="underline">{copy.feeBox.link1}</Link>{copy.feeBox.and}<Link href="/refunds" className="underline">{copy.feeBox.link2}</Link>{copy.feeBox.body2b}</p></div>}
-        {feeEnabled && <div className="rounded-xl border border-slate-200 bg-white p-2">
-          {widgetState === 'loading' && <p role="status" className="px-3 py-6 text-center text-sm text-slate-500">{copy.widget.loading}</p>}
-          {widgetState === 'error' && <p role="alert" className="px-3 py-6 text-center text-sm text-red-700">{copy.widget.failed}</p>}
-          <div id={methodsId} />
-          <div id={agreementId} />
-        </div>}
+        {feeEnabled && <section aria-labelledby={`${widgetId}summary`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          {/* Order summary first, then how to pay: the order a US checkout uses, with the total and currency unambiguous. */}
+          <div className="border-b border-slate-200 bg-slate-50 p-5 sm:p-6">
+            <h3 id={`${widgetId}summary`} className="text-sm font-semibold uppercase tracking-wide text-slate-500">{copy.pay.summaryTitle}</h3>
+            <div className="mt-4 flex items-start justify-between gap-4">
+              <div className="min-w-0"><p className="font-semibold text-slate-900">{copy.pay.item}</p><p className="mt-0.5 break-words text-sm text-slate-600">{program.title}</p><p className="mt-1 text-xs text-slate-500">{copy.pay.itemNote}</p></div>
+              <p className="shrink-0 font-semibold tabular-nums text-slate-900">{APPLICATION_CHARGE_PRICE}</p>
+            </div>
+            <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-slate-200 pt-4">
+              <p className="font-semibold text-slate-900">{copy.pay.total}</p>
+              <p className="text-2xl font-bold tabular-nums text-slate-900">{APPLICATION_CHARGE_PRICE} <span className="text-sm font-semibold text-slate-500">{APPLICATION_CHARGE.currency}</span></p>
+            </div>
+            {user.email && <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500"><Mail aria-hidden className="h-3.5 w-3.5 shrink-0 text-slate-400" />{copy.pay.receipt(user.email)}</p>}
+          </div>
+          <div className="p-5 sm:p-6">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{copy.pay.methodTitle}</h3>
+            <div className="mt-3 rounded-xl border border-slate-200 p-1">
+              {widgetState === 'loading' && <p role="status" className="px-3 py-6 text-center text-sm text-slate-500">{copy.widget.loading}</p>}
+              {widgetState === 'error' && <p role="alert" className="px-3 py-6 text-center text-sm text-red-700">{copy.widget.failed}</p>}
+              <div id={methodsId} />
+              <div id={agreementId} />
+            </div>
+            {(locale === 'ko' || form.residenceCountry === 'KR') && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-950">{copy.pay.koreanCard}</p>}
+            <p className="mt-3 flex gap-2 text-xs leading-relaxed text-slate-600"><Lock aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" /><span>{copy.pay.secure}</span></p>
+          </div>
+        </section>}
       </div>}
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable || widgetState !== 'ready'} className={actionClass}>{busy ? copy.openingPayment : copy.payAndSubmit(APPLICATION_CHARGE_LABEL)}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>
+      {step === 3 && feeEnabled && notice && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{notice}</div>}
+      {step === 3 && feeEnabled && <p className="mt-6 text-xs leading-relaxed text-slate-600">{copy.pay.billed(`${APPLICATION_CHARGE_PRICE}`, COMPANY.legalName)}</p>}
+      <div className={`${step === 3 && feeEnabled ? 'mt-4' : 'mt-8'} flex flex-wrap items-center justify-between gap-3`}>{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable || widgetState !== 'ready' || earlierPayment !== 'none'} className={`${actionClass} inline-flex items-center justify-center gap-2`}><Lock aria-hidden className="h-4 w-4" />{busy ? copy.pay.processing : payMethod === 'paypal' ? copy.pay.continuePaypal : copy.pay.button(APPLICATION_CHARGE_PRICE)}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>
+      {step === 3 && feeEnabled && <div className="mt-3 space-y-1 text-right text-xs leading-relaxed text-slate-500">
+        <p>{payMethod === 'paypal' ? copy.pay.paypalHelper(APPLICATION_CHARGE_PRICE) : copy.pay.cardHelper}</p>
+        <p>{copy.pay.legalA}<Link href="/terms" className="underline">{copy.pay.terms}</Link>{copy.pay.legalAnd}<Link href="/refunds" className="underline">{copy.pay.refunds}</Link>{copy.pay.legalB}<Link href="/privacy" className="underline">{copy.pay.privacy}</Link>{copy.pay.legalC}</p>
+      </div>}
       <p className="mt-6 text-xs leading-relaxed text-slate-500">{copy.help.a}<a href="mailto:support@cri.kr" className="underline">support@cri.kr</a>{copy.help.b}</p>
       <p className="mt-2 text-xs leading-relaxed text-slate-500">{copy.adsNote}</p>
     </section>

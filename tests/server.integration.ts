@@ -21,11 +21,11 @@ const {beginApplicationCheckout,finalizePaidApplication}=require('../src/app/act
 const {createProgram}=require('../src/app/actions/programs');
 const {authOptions}=require('../src/lib/auth');
 const key=randomUUID().replaceAll('-','');
-const userId=`test-${key}`, otherId=`other-${key}`, openId=`open-${key}`, closedId=`closed-${key}`;
+const userId=`test-${key}`, otherId=`other-${key}`, openId=`open-${key}`, open2Id=`open2-${key}`, closedId=`closed-${key}`;
 const realFetch=globalThis.fetch;
 test('real database: access control, private upload, checkout idempotency and password recovery', async()=>{
  await db.user.createMany({data:[{id:userId,email:`${key}@example.test`,role:'STUDENT'},{id:otherId,email:`other-${key}@example.test`,role:'STUDENT'}]});
- await db.program.createMany({data:[{id:openId,title:'QA Winter',description:'Local only',category:'Winter',status:'OPEN',endDate:new Date(Date.now()+86400000)},{id:closedId,title:'QA Summer',description:'Local only',category:'Summer Camp',status:'OPEN',endDate:new Date('2020-07-31')} ]});
+ await db.program.createMany({data:[{id:openId,title:'QA Winter',description:'Local only',category:'Winter',status:'OPEN',endDate:new Date(Date.now()+86400000)},{id:open2Id,title:'QA Winter 2',description:'Local only',category:'Winter',status:'OPEN',endDate:new Date(Date.now()+86400000)},{id:closedId,title:'QA Summer',description:'Local only',category:'Summer Camp',status:'OPEN',endDate:new Date('2020-07-31')} ]});
  try {
   assert.equal(await allowRequest('integration',key,2,60),true);
   assert.equal(await allowRequest('integration',key,2,60),true);
@@ -52,21 +52,52 @@ test('real database: access control, private upload, checkout idempotency and pa
   process.env.TOSS_SECRET_KEY='synthetic-test';process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY='synthetic-test';
   assert.match((await beginApplicationCheckout(closedId,input)).error,/no longer accepting/);
   const order=await beginApplicationCheckout(openId,input); assert.ok(order.orderId); assert.equal(order.amount,50);
-  assert.equal((await beginApplicationCheckout(openId,input)).orderId,order.orderId);
-  assert.match((await beginApplicationCheckout(openId,{...input,essay:'Changed'})).error,/earlier checkout/);
+  // No payment has reached the provider for these orders, so pressing Pay again, an edited form or an expired checkout
+  // each get a fresh order id; only one row ever exists.
+  const again=await beginApplicationCheckout(openId,input); assert.ok(again.orderId); assert.notEqual(again.orderId,order.orderId);
+  const edited=await beginApplicationCheckout(openId,{...input,essay:'Changed'}); assert.ok(edited.orderId); assert.notEqual(edited.orderId,order.orderId);
+  await db.applicationCheckout.update({where:{id:edited.orderId},data:{expiresAt:new Date(Date.now()-1000)}});
+  const fresh=await beginApplicationCheckout(openId,input); assert.ok(fresh.orderId); assert.notEqual(fresh.orderId,edited.orderId);
+  assert.equal(await db.applicationCheckout.count({where:{userId,programId:openId}}),1);
+  // A refusal that the provider's record confirms (no charge stands) releases the order; the form survives as a draft.
+  globalThis.fetch=async(_url,init)=> init?.method==='POST' ? Response.json({code:'REJECT_CARD_COMPANY',message:'declined'},{status:403}) : Response.json({status:'ABORTED',orderId:fresh.orderId,totalAmount:50,currency:'USD'});
+  const declined=await finalizePaidApplication({orderId:fresh.orderId,paymentKey:'declined-key',amount:50});
+  assert.equal(declined.code,'paymentDeclined');
+  assert.equal(await db.applicationCheckout.count({where:{userId,programId:openId}}),0);
+  assert.equal(await db.applicationDraft.count({where:{userId,programId:openId}}),1);
+  const retry=await beginApplicationCheckout(openId,input); assert.ok(retry.orderId); assert.notEqual(retry.orderId,fresh.orderId);
   let confirms=0, paid=false;
   globalThis.fetch=async(_url,init)=> {
     if(init?.method==='POST'){confirms++;paid=true;}
     if(!paid)return Response.json({code:'NOT_FOUND_PAYMENT'},{status:404});
-    return Response.json({status:'DONE',orderId:order.orderId,totalAmount:50,currency:'USD',paymentKey:'synthetic-key'});
+    return Response.json({status:'DONE',orderId:retry.orderId,totalAmount:50,currency:'USD',paymentKey:'synthetic-key'});
   };
-  const callback={orderId:order.orderId,paymentKey:'synthetic-key',amount:50};
+  const callback={orderId:retry.orderId,paymentKey:'synthetic-key',amount:50};
   assert.ok((await finalizePaidApplication({...callback,amount:1})).error);assert.equal(confirms,0);
   session.user.id=otherId; assert.ok((await finalizePaidApplication(callback)).error); session.user.id=userId;
   const completed=await finalizePaidApplication(callback);assert.equal(completed.success,true);
   assert.equal(await db.applicationDraft.count({where:{userId,programId:openId}}),0);
   const repeated=await finalizePaidApplication(callback);assert.equal(repeated.applicationId,completed.applicationId);assert.equal(confirms,1);
   assert.equal(await db.application.count({where:{userId,programId:openId}}),1);
+  // Second program: a confirm whose outcome is unclear keeps the order locked; once the provider reports the payment
+  // as approved, the next Pay records it instead of charging again.
+  const second=await beginApplicationCheckout(open2Id,input); assert.ok(second.orderId);
+  let state='IN_PROGRESS', posts=0;
+  globalThis.fetch=async(_url,init)=> {
+    if(init?.method==='POST'){posts++;return Response.json({code:'PROVIDER_ERROR'},{status:500});}
+    return Response.json({status:state,orderId:second.orderId,totalAmount:50,currency:'USD',paymentKey:'unclear-key'});
+  };
+  const unclear=await finalizePaidApplication({orderId:second.orderId,paymentKey:'unclear-key',amount:50});
+  assert.equal(unclear.code,'paymentUnconfirmed'); assert.equal(posts,1);
+  assert.equal((await db.applicationCheckout.findUnique({where:{id:second.orderId}}))?.paymentKey,'unclear-key');
+  assert.match((await beginApplicationCheckout(open2Id,input)).error,/earlier checkout/);
+  assert.equal((await saveApplicationDraft(open2Id,{studentFirstName:'Locked'},1,0)).success,false);
+  // A second return with another payment key cannot claim the order while the first is unsettled.
+  assert.equal((await finalizePaidApplication({orderId:second.orderId,paymentKey:'other-key',amount:50})).code,'checkoutReview'); assert.equal(posts,1);
+  state='DONE';
+  const recovered=await beginApplicationCheckout(open2Id,input);
+  assert.equal(recovered.alreadyPaid,true); assert.ok(recovered.applicationId); assert.equal(posts,1);
+  assert.equal(await db.application.count({where:{userId,programId:open2Id}}),1);
   const elevated=await authOptions.callbacks.jwt({token:{id:userId,role:'STUDENT',sessionVersion:0},trigger:'update',session:{role:'ADMIN'}});assert.equal(elevated.role,'STUDENT');
   const raw='a'.repeat(64), token='reset:'+createHash('sha256').update(raw).digest('hex');
   await db.verificationToken.create({data:{identifier:userId,token,expires:new Date(Date.now()+60000)}});
@@ -78,7 +109,7 @@ test('real database: access control, private upload, checkout idempotency and pa
   await db.application.deleteMany({where:{userId}});
   await db.verificationToken.deleteMany({where:{identifier:userId}});
   await db.user.deleteMany({where:{id:{in:[userId,otherId]}}});
-  await db.program.deleteMany({where:{id:{in:[openId,closedId]}}});
+  await db.program.deleteMany({where:{id:{in:[openId,open2Id,closedId]}}});
   await db.$disconnect();
  }
 });

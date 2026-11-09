@@ -18,7 +18,7 @@ export default async function AdmissionsPage() {
     <h1 className="text-4xl sm:text-5xl font-black text-gray-900">{t.title}</h1>
     <p className="text-lg mt-5 leading-relaxed">{t.intro}</p>
     <ol className="grid sm:grid-cols-2 gap-5 my-10 list-decimal list-inside">
-      {t.steps.map(([title,body])=><li key={title} className="bg-white border border-gray-200 rounded-2xl p-6"><strong className="text-gray-900">{title}</strong><p className="mt-3 leading-relaxed">{body}</p></li>)}
+      {t.steps.map(([title, body], index) => (APPLICATION_FEE_ENABLED && index === 2 ? [t.feeStepTitle, `${body} ${t.feeStepNote}`] : [title, body])).map(([title,body])=><li key={title} className="bg-white border border-gray-200 rounded-2xl p-6"><strong className="text-gray-900">{title}</strong><p className="mt-3 leading-relaxed">{body}</p></li>)}
     </ol>
     <section className="rounded-3xl bg-blue-50 border border-blue-100 p-6 sm:p-8">
       {APPLICATION_FEE_ENABLED ? (<>

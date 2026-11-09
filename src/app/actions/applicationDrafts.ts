@@ -6,6 +6,7 @@ import { applicationDraftSchema } from '@/lib/application-validation';
 import { admissionState } from '@/lib/program-policy';
 import { canApply } from '@/lib/applicant';
 import { applicationFeeFor } from '@/lib/payment-review';
+import { checkoutLocksForm } from '@/lib/checkout-policy';
 // `error` stays English for existing callers; `code` names a key in t.apply.errors so the form can show the visitor's language.
 export async function saveApplicationDraft(programId: string, input: unknown, step: number, expectedVersion: number) {
   const session = await getServerSession(authOptions);
@@ -17,11 +18,12 @@ export async function saveApplicationDraft(programId: string, input: unknown, st
     const [program, submitted, checkout] = await Promise.all([
       prisma.program.findUnique({ where: { id: programId } }),
       prisma.application.findUnique({ where: { userId_programId: { userId, programId } }, select: { id: true } }),
-      prisma.applicationCheckout.findUnique({ where: { userId_programId: { userId, programId } }, select: { status: true } }),
+      prisma.applicationCheckout.findUnique({ where: { userId_programId: { userId, programId } }, select: { status: true, paymentKey: true, keyTracked: true } }),
     ]);
-    // An unfinished checkout locks the form only while this account pays a fee. With the fee off it is left over from
-    // an earlier fee period, and the free submission clears it; blocking the save here would block that submission too.
-    const inCheckout = Boolean(checkout) && (checkout!.status !== 'PENDING' || (await applicationFeeFor(userId)).feeEnabled);
+    // A checkout locks the form once its payment has reached the provider and is not settled yet, or when it is
+    // completed (rules: src/lib/checkout-policy.ts). Before that the applicant may still edit and pay again. With the
+    // fee off, a leftover pending checkout never locks: the free submission goes ahead.
+    const inCheckout = Boolean(checkout) && (checkout!.status !== 'PENDING' || (checkoutLocksForm(checkout) && (await applicationFeeFor(userId)).feeEnabled));
     if (!program || admissionState(program) !== 'OPEN' || submitted || inCheckout) return { success: false as const, error: 'This application is closed, submitted or already in checkout. Reload to see its current state.', code: 'draftClosed' };
     if (parsed.data.resumeUrl) {
       if (!/^\/api\/documents\/[a-z0-9]+$/.test(parsed.data.resumeUrl)) return { success: false as const, error: 'Upload a PDF using this application form.', code: 'draftResumeForm' };
