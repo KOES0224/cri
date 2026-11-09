@@ -39,7 +39,7 @@ export default async function ParentLayout({
 
           <Link href="/dashboard/billing" className="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-700 transition-colors group mb-4">
             <CreditCard className="h-5 w-5" />
-            <span className="font-medium text-sm">Billing Integrations</span>
+            <span className="font-medium text-sm">Payments & receipts</span>
           </Link>
 
           <div className="h-px bg-gray-100 w-full mb-4"></div>

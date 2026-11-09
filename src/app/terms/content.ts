@@ -45,12 +45,12 @@ const ko: TermsDocument = {
     ] },
     { heading: "제6조 (지원, 심사 및 계약의 성립)", body: [
       "1. 이용자는 사이트의 지원서 양식을 작성하여 프로그램에 지원할 수 있습니다.",
-      "2. 지원비가 적용되는 경우 지원비는 지원서 검토·면접 등 심사 서비스의 대가이며, 결제와 동시에 심사가 시작됩니다. 지원비 납부는 합격을 보장하지 않습니다.",
+      "2. 지원비가 적용되는 경우 지원비는 지원서 검토·면접 등 심사 서비스의 대가이며, 심사는 입학팀이 접수된 지원서의 검토를 시작한 때 개시됩니다. 지원비 납부는 합격을 보장하지 않습니다.",
       "3. 회사는 심사 결과를 이메일과 지원자 포털로 안내하며, 프로그램 참가 계약은 합격 통지 후 회사와 보호자(또는 성인 지원자)가 개별 프로그램 계약을 체결하고 수업료를 납부한 때 성립합니다.",
       "4. 회사는 지원 내용이 허위이거나 다른 사람의 정보를 도용한 경우, 프로그램 운영에 지장을 줄 우려가 있는 경우 지원을 승낙하지 않거나 계약을 해지할 수 있습니다.",
     ] },
     { heading: "제7조 (결제)", body: [
-      "1. 지원비와 수업료는 사이트에 표시된 통화로 청구되며, 결제는 회사가 지정한 결제대행사를 통해 신용·체크카드 등으로 처리됩니다.",
+      "1. 지원비는 미국 달러(USD)로, 수업료는 사이트 또는 개별 프로그램 계약에 표시된 통화로 청구되며, 결제는 회사가 지정한 결제대행사(토스페이먼츠)를 통해 신용·체크카드 등으로 처리됩니다.",
       "2. 결제 금액, 통화, 서비스 내용은 결제 전 결제 화면에 표시되며, 이용자는 이를 확인한 후 결제해야 합니다.",
       "3. 환율 차이나 해외 결제 수수료 등 카드사가 부과하는 비용은 이용자와 카드사 간의 계약에 따릅니다.",
     ] },
@@ -122,12 +122,12 @@ const en: TermsDocument = {
     ] },
     { heading: "Article 6 (Applications, review and formation of the contract)", body: [
       "1. Users may apply to a programme by completing the application form on the Site.",
-      "2. Where an application fee applies, it is consideration for the review service (application review, interview and related work) and the review begins when payment is made. Payment of the application fee does not guarantee admission.",
+      "2. Where an application fee applies, it is consideration for the review service (application review, interview and related work). Review begins when admissions starts examining the submitted application. Payment of the application fee does not guarantee admission.",
       "3. The Company communicates review results by email and through the applicant portal. A programme participation contract is formed when, after an offer of admission, the Company and the parent or guardian (or an adult applicant) conclude the individual programme contract and tuition is paid.",
       "4. The Company may decline an application or terminate a contract where the application contains false information, uses another person's information, or is likely to disrupt the operation of a programme.",
     ] },
     { heading: "Article 7 (Payment)", body: [
-      "1. Application fees and tuition are charged in the currency shown on the Site and processed by the payment service provider designated by the Company, by credit or debit card or other listed methods.",
+      "1. Application fees are charged in US dollars (USD), and tuition in the currency shown on the Site or in the individual programme contract. Payments are processed by the payment service provider designated by the Company (Toss Payments), by credit or debit card or other listed methods.",
       "2. The amount, currency and service are shown on the payment screen before payment. Users should check them before paying.",
       "3. Exchange-rate differences, foreign transaction fees and other charges levied by a card issuer are governed by the agreement between the user and the issuer.",
     ] },

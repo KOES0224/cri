@@ -6,12 +6,16 @@ import { prisma } from "@/lib/prisma";
 import { applicationSchema, applicationDraftSchema } from '@/lib/application-validation';
 import { canApply } from "@/lib/applicant";
 import { applicationFeeFor } from "@/lib/payment-review";
-import { TOSS_WIDGET_VARIANT_KEY, tossWidgetClientKeyValid } from "@/lib/application-fee";
+import { TOSS_WIDGET_VARIANT_KEY, tossWidgetClientKeyValid, APPLICATION_FEE_INTRODUCED } from "@/lib/application-fee";
+import { checkoutLocksForm } from "@/lib/checkout-policy";
 import { REVIEW_DOCUMENT_FILENAME, paymentReviewDraft } from "@/lib/payment-review-draft";
 import ApplyClient from "./ApplyClient";
 import { programContent } from "@/lib/meta/config";
 
 export const dynamic = "force-dynamic";
+
+/** Pressing Pay can settle an earlier payment with the provider before a new order is made. */
+export const maxDuration = 60;
 
 export default async function ApplyPage({ searchParams }: { searchParams: Promise<{ programId?: string }> }) {
   const resolvedParams = await searchParams;
@@ -54,6 +58,10 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
   if (existing) redirect("/dashboard/applications");
 
   if (!program || admissionState(program) !== "OPEN") {
+    // A payment that reached the provider before the program closed is still settled: the success page records it or
+    // tells the payer where it stands.
+    const unsettled = await prisma.applicationCheckout.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { id: true, status: true, paymentKey: true } });
+    if (unsettled?.status === "PENDING" && unsettled.paymentKey) redirect(`/apply/payment-success?orderId=${encodeURIComponent(unsettled.id)}&programId=${encodeURIComponent(programId)}`);
     redirect("/research");
   }
 
@@ -90,8 +98,10 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
   // While the fee is switched off, an old unfinished checkout must not lock the form; the free path clears it on submit.
   // The payment-gateway review account sees the paid checkout even while the fee is off for everyone else.
   const { feeEnabled, reviewer } = await applicationFeeFor(session.user.id);
-  const checkoutPending = feeEnabled && pending?.status === 'PENDING';
-  const parsed = checkoutPending ? applicationSchema.safeParse(pending.formData) : applicationDraftSchema.safeParse(saved?.formData);
+  // The form is locked only while a payment that reached the provider is still unsettled; the client then asks the
+  // server to settle it (resolvePendingCheckout). A checkout that never got that far leaves the form editable.
+  const checkoutPending = feeEnabled && checkoutLocksForm(pending);
+  const parsed = checkoutPending ? applicationSchema.safeParse(pending!.formData) : applicationDraftSchema.safeParse(saved?.formData ?? (feeEnabled && pending?.status === 'PENDING' ? pending.formData : undefined));
   let savedDraft = parsed.success ? Object.fromEntries(Object.entries(parsed.data).filter((entry): entry is [string, string] => typeof entry[1] === 'string')) : undefined;
   let draftStep = saved?.step;
   if (reviewer && !savedDraft) {
@@ -101,5 +111,5 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
     draftStep = sample ? 3 : 2;
   }
   const document = savedDraft?.resumeUrl ? await prisma.applicationDocument.findFirst({where: {id: savedDraft.resumeUrl.split('/').pop(), userId: session.user.id}}) : null;
-  return <ApplyClient program={programWithProfessors} content={programContent(program)} user={session.user} applicantRole={session.user.role} savedDraft={savedDraft} draftVersion={saved?.version} draftStep={draftStep} draftSavedAt={saved?.updatedAt.toISOString()} checkoutPending={checkoutPending} resumeFilename={document?.filename} paymentAvailable={Boolean(process.env.TOSS_SECRET_KEY && tossWidgetClientKeyValid(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY))} paymentVariantKey={TOSS_WIDGET_VARIANT_KEY} feeEnabled={feeEnabled} reviewMode={reviewer} />;
+  return <ApplyClient program={programWithProfessors} content={programContent(program)} user={session.user} applicantRole={session.user.role} savedDraft={savedDraft} draftVersion={saved?.version} draftStep={draftStep} draftSavedAt={saved?.updatedAt.toISOString()} checkoutPending={checkoutPending} feeIntroducedSinceDraft={Boolean(feeEnabled && !reviewer && saved && saved.updatedAt < APPLICATION_FEE_INTRODUCED)} resumeFilename={document?.filename} paymentAvailable={Boolean(process.env.TOSS_SECRET_KEY && tossWidgetClientKeyValid(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY))} paymentVariantKey={TOSS_WIDGET_VARIANT_KEY} feeEnabled={feeEnabled} reviewMode={reviewer} />;
 }

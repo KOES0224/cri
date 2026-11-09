@@ -398,6 +398,12 @@ model ApplicationCheckout {
   currency      String
   status        String   @default("PENDING")
   applicationId String?
+  // Set just before the provider is asked to confirm a charge. On a row created by code that stores it (keyTracked),
+  // empty means no confirm was ever sent for this order, so no charge can exist for it; set means the provider's
+  // record of that payment decides what may happen next. Rows from before this was stored are keyTracked = false.
+  paymentKey    String?
+  paymentKeyAt  DateTime?
+  keyTracked    Boolean  @default(false)
   expiresAt     DateTime
   createdAt     DateTime @default(now())
   user          User @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1,5 +1,6 @@
 import { getDictionary } from "@/i18n/config";
 import { SITE_URL, summarize } from "@/lib/seo";
+import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from "@/lib/application-fee";
 import { getPublishedPostCards, getPublishedPrograms, getSuccessStoryCards } from "@/lib/public-data";
 import { admissionLabel, admissionState, programDate, programFacts } from "@/lib/program-policy";
 
@@ -55,6 +56,7 @@ export async function GET() {
     "",
     `- [Application guide and fees](${url("/admissions")}): ${meta.admissions.description}`,
     `- [Refund policy](${url("/refunds")})`,
+    ...(APPLICATION_FEE_ENABLED ? [`- Application fee: ${APPLICATION_CHARGE_LABEL} per application, paid online by card in US dollars at submission. It covers admissions review and is separate from tuition, which is due only after admission.`] : []),
     `- [Contact admissions](${url("/contact")}): ${meta.contact.description}`,
     "",
     "## Student outcomes",

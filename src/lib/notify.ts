@@ -1,4 +1,5 @@
 import { absoluteResumeUrl } from './resume-links';
+import { COMPANY } from '@/lib/company';
 import { Resend } from 'resend';
 
 /**
@@ -65,7 +66,7 @@ type PaidApplication = {
   programTitle: string;
   accountEmail?: string | null;
   form: Record<string, unknown>;
-  payment: { orderId: string; amount: number; currency: string; receiptUrl?: string | null } | null;
+  payment: { orderId: string; amount: number; currency: string; receiptUrl?: string | null; method?: string | null; approvedAt?: string | null } | null;
   /** Submitted by the payment-gateway review account: subjects are labelled so nobody processes it. */
   test?: boolean;
 };
@@ -100,30 +101,93 @@ export async function notifyApplicationReceived(app: PaidApplication) {
   return send({ to: ADMISSIONS_INBOX, subject: `${app.test ? TEST_PREFIX : ''}[CRI application] ${student} · ${app.programTitle}`, text: lines.join('\n'), replyTo: str(f.studentEmail) || str(f.parentEmail) || undefined });
 }
 
+/** A checkout that could not be settled automatically: admissions gets the order number to look up in the Toss admin. */
+export async function notifyPaymentNeedsReview(input: { orderId: string; accountEmail?: string | null; programTitle?: string | null; situation: string }) {
+  const text = [
+    `An application-fee payment could not be settled automatically and may need a manual check.`,
+    ``,
+    `Order number: ${input.orderId}`,
+    input.accountEmail ? `Account email: ${input.accountEmail}` : null,
+    input.programTitle ? `Program: ${input.programTitle}` : null,
+    `What happened: ${input.situation}`,
+    ``,
+    `What to do: look the order number up in the Toss Payments admin (결제조회).`,
+    `- Approved there: ask the applicant to open the application form again. The site records the payment and submits the application by itself, without a second charge.`,
+    `- Failed or expired there: nothing to do. The form unlocks by itself the next time the applicant opens it.`,
+    `- Still unclear: reply to the applicant and contact Toss Payments with the order number.`,
+  ].filter((line): line is string => line !== null).join('\n');
+  return send({ to: ADMISSIONS_INBOX, subject: `[CRI payment check] ${input.orderId}`, text, replyTo: validEmail(input.accountEmail) ? input.accountEmail! : undefined });
+}
+
+/** The payment form or window did not work for an applicant: nobody can apply while this lasts, so admissions hears at once. */
+export async function notifyPaymentFormProblem(input: { accountEmail?: string | null; programTitle?: string | null; where: string; code?: string | null; message?: string | null }) {
+  const text = [
+    `An applicant could not use the application-fee payment ${input.where === 'window' ? 'window' : 'form'}. While this lasts, applicants cannot pay and therefore cannot submit.`,
+    ``,
+    input.accountEmail ? `Account email: ${input.accountEmail}` : null,
+    input.programTitle ? `Program: ${input.programTitle}` : null,
+    `Reported by the payment SDK: ${input.code || 'no code'}${input.message ? ` · ${input.message}` : ''}`,
+    ``,
+    `What to check:`,
+    `- Toss Payments admin: the payment UI named in NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY exists and is connected to the US-dollar merchant id, and that merchant id's contract is complete.`,
+    `- If it cannot be fixed quickly, remove NEXT_PUBLIC_APPLICATION_FEE_ENABLED in Vercel and redeploy: applications are then free again.`,
+    `This alert is sent at most a few times an hour.`,
+  ].filter((line): line is string => line !== null).join('\n');
+  return send({ to: ADMISSIONS_INBOX, subject: `[CRI payment problem] applicants cannot reach payment`, text, replyTo: validEmail(input.accountEmail) ? input.accountEmail! : undefined });
+}
+
+/** "$50.00 USD": cents and an explicit currency code, as a US receipt prints an amount. */
+function receiptMoney(amount: number, currency: string) {
+  try { return `${new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)} ${currency}`; } catch { return `${amount} ${currency}`; }
+}
+
+function paymentReceiptLines(payment: NonNullable<PaidApplication['payment']>, programTitle: string, applicant: string): string[] {
+  const paidAt = payment.approvedAt ? new Date(payment.approvedAt) : new Date();
+  const date = Number.isNaN(paidAt.getTime()) ? null : `${paidAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })} (UTC)`;
+  // Toss names the method in Korean ("카드", "해외간편결제").
+  const method = !payment.method ? null : /카드|card/i.test(payment.method) ? 'Card' : /간편|paypal/i.test(payment.method) ? 'PayPal' : 'Online payment';
+  return [
+    `RECEIPT`,
+    `Amount paid: ${receiptMoney(payment.amount, payment.currency)}`,
+    date ? `Date paid: ${date}` : null,
+    method ? `Paid with: ${method}` : null,
+    `Order number: ${payment.orderId}`,
+    `For: Application fee, ${programTitle}${applicant ? ` (applicant: ${applicant})` : ''}`,
+    `Billed by: ${COMPANY.legalName} (${COMPANY.brand}), Seoul, Republic of Korea`,
+    payment.receiptUrl ? `Card receipt from our payment processor, Toss Payments: ${payment.receiptUrl}` : null,
+  ].filter((line): line is string => line !== null);
+}
+
 /** Confirmation to the family: account email plus the student / guardian addresses given in the form. */
 export async function sendApplicationConfirmation(app: PaidApplication) {
   const f = app.form;
   const recipients = Array.from(new Set([app.accountEmail, str(f.studentEmail), str(f.parentEmail)].filter(validEmail)));
   const student = str(f.studentFirstName) || 'there';
+  const applicant = `${str(f.studentFirstName)} ${str(f.studentLastName)}`.trim();
+  // The paid version doubles as the receipt a US payer keeps: amount with currency, date, order number, what was
+  // bought, who billed it and where the policies are. Plain text, no marketing.
+  const paid = app.payment ? paymentReceiptLines(app.payment, app.programTitle, applicant) : null;
   const text = [
     `Hi ${student},`,
     ``,
-    app.payment ? `Thank you. Your application to "${app.programTitle}" has been received and the application fee has been confirmed.` : `Thank you. Your application to "${app.programTitle}" has been received.`,
+    paid ? `Your payment was received and your application to "${app.programTitle}" has been submitted to CRI admissions.` : `Thank you. Your application to "${app.programTitle}" has been received.`,
+    ...(paid ? [``, ...paid] : []),
     ``,
     `What happens next:`,
     `1. Admissions reviews the application for research readiness and fit (usually within about a week).`,
     `2. We may invite you to a short admissions interview.`,
     `3. You receive a decision by email and in your CRI portal.`,
     ``,
-    app.payment ? `Payment: ${app.payment.amount.toLocaleString()} ${app.payment.currency} · order ${app.payment.orderId}${app.payment.receiptUrl ? `\nReceipt: ${app.payment.receiptUrl}` : ''}` : `There was no application fee.`,
-    `Program tuition is only due after admission.`,
+    paid ? `Tuition is separate and is not included in this payment. It is due only after admission.` : `There was no application fee. Program tuition is only due after admission.`,
     ``,
     `Track your application: ${SITE_URL}/dashboard/applications`,
-    `Questions: reply to this email or write to support@cri.kr.`,
+    ...(paid ? [`Refunds follow our Refund Policy: ${SITE_URL}/refunds`, `Terms of Service: ${SITE_URL}/terms`, ``, `Don't recognize this charge, or have a question? Reply to this email and we'll help. Keep this email as your receipt.`] : [`Questions: reply to this email or write to support@cri.kr.`]),
     ``,
     `CRI Admissions`,
+    ...(paid ? [`${COMPANY.legalName} · ${COMPANY.address.en} ${COMPANY.postalCode} · ${COMPANY.email} · ${COMPANY.phone}`] : []),
   ].join('\n');
-  return send({ to: recipients, subject: `${app.test ? TEST_PREFIX : ''}We received your application · ${app.programTitle}`, text, replyTo: ADMISSIONS_INBOX });
+  const subject = paid ? `Your CRI application and receipt: ${receiptMoney(app.payment!.amount, app.payment!.currency)} · ${app.programTitle}` : `We received your application · ${app.programTitle}`;
+  return send({ to: recipients, subject: `${app.test ? TEST_PREFIX : ''}${subject}`, text, replyTo: ADMISSIONS_INBOX });
 }
 
 /** A student account was created (or linked) by admissions for an application submitted by a guardian. */

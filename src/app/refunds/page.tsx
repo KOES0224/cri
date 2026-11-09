@@ -12,13 +12,15 @@ const english = [
 'CRI programs have limited enrollment. Upon registration, faculty and TA schedules and student-specific research preparation are arranged.',
 'The application fee is consideration for admissions review services, including review of the application, and is separate from program tuition. Before payment, the company explains the service, when it begins, and any statutory limits on withdrawal. After the admissions review service has actually begun, the right of withdrawal may be limited to the extent permitted by applicable law.',
 'If a participant cancels a program, the refund is calculated by distinguishing services already provided from services not yet provided. The full price of services that have not been provided is not excluded from a refund solely because materials were sent or a place was reserved.',
-'The consumer\'s rights under applicable law, including rights relating to services not provided, performance that differs from the contract, withdrawal, termination, and refunds, remain protected.'
+'The consumer\'s rights under applicable law, including rights relating to services not provided, performance that differs from the contract, withdrawal, termination, and refunds, remain protected.',
+'Card and PayPal payments are charged and refunded in US dollars through the original payment method. If your card is billed in another currency, the amount returned to you can differ from the amount first charged because of exchange-rate movement and your bank\'s fees, and a refund can take several business days to appear on your statement.'
 ];
 const korean = [
 'CRI 프로그램은 정원제로 운영되며, 등록에 따라 교수·TA 일정과 학생별 연구 준비가 진행됩니다.',
 '지원비는 지원서 검토 등 입학 심사 서비스의 대가이며, 프로그램 수업료와 별개입니다. 회사는 결제 전에 서비스 내용과 개시 시점, 청약철회 제한 조건을 안내합니다. 실제 심사 서비스가 개시된 이후에는 관계 법령이 허용하는 범위에서 해당 서비스의 청약철회가 제한될 수 있습니다.',
 '프로그램 취소 시에는 실제 제공된 서비스와 아직 제공되지 않은 서비스를 구분하여 환불 금액을 산정합니다. 자료 발송이나 정원 확보만을 이유로 미제공 서비스 대금 전액을 환불 대상에서 제외하지 않습니다.',
-'회사의 서비스 미제공 또는 계약과 다른 이행에 대한 권리와 관계 법령에 따른 소비자의 청약철회·계약해지·환불 권리는 보장됩니다.'
+'회사의 서비스 미제공 또는 계약과 다른 이행에 대한 권리와 관계 법령에 따른 소비자의 청약철회·계약해지·환불 권리는 보장됩니다.',
+'카드와 PayPal 결제는 미국 달러로 청구되며, 환불도 결제하신 수단으로 미국 달러 기준으로 처리됩니다. 원화 등 다른 통화로 청구되는 카드는 환율 변동과 카드사 수수료 때문에 환불 금액이 처음 결제된 금액과 다를 수 있고, 카드 내역에 반영되기까지 영업일 기준 며칠이 걸릴 수 있습니다.'
 ];
 const policies = { en: english, ko: korean } as const;
 
