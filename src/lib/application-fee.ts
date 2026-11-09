@@ -17,6 +17,8 @@ export const APPLICATION_FEE_ENABLED = process.env.NEXT_PUBLIC_APPLICATION_FEE_E
  * DEFAULT renders the merchant's default UI.
  */
 export const TOSS_WIDGET_VARIANT_KEY = process.env.NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY || 'DEFAULT';
+/** Payment UI of the won merchant id, used only by the review sample product. One widget key serves both merchant ids; the UI picks which one is charged. */
+export const TOSS_WIDGET_VARIANT_KEY_KRW = process.env.NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY_KRW || 'DEFAULT';
 
 /** The widget only initialises with a 결제위젯 연동 키 (…_gck_…); API 개별 연동 키 (…_ck_…) belong to the legacy won-only window. */
 export function tossWidgetClientKeyValid(key: string | undefined): boolean {

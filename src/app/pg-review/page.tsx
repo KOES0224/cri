@@ -3,7 +3,7 @@ import { COMPANY } from "@/lib/company";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PG_REVIEW_PRODUCT, pgReviewViewer } from "@/lib/pg-review";
-import { TOSS_WIDGET_VARIANT_KEY, tossWidgetClientKeyValid } from "@/lib/application-fee";
+import { TOSS_WIDGET_VARIANT_KEY_KRW, tossWidgetClientKeyValid } from "@/lib/application-fee";
 import ReviewProduct from "./ReviewProduct";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +33,7 @@ export default async function PgReviewPage() {
           <p className="mt-5 text-sm text-slate-600">
             결제 전에 <Link href="/refunds" className="text-blue-700 underline">취소 및 환불 규정</Link>과 <Link href="/privacy" className="text-blue-700 underline">개인정보 안내</Link>를 확인해 주세요. 결제는 토스페이먼츠를 통해 처리됩니다.
           </p>
-          <ReviewProduct viewer={viewer} paymentAvailable={paymentAvailable} variantKey={TOSS_WIDGET_VARIANT_KEY} />
+          <ReviewProduct viewer={viewer} paymentAvailable={paymentAvailable} variantKey={TOSS_WIDGET_VARIANT_KEY_KRW} />
         </section>
 
         <p className="mt-6 text-xs text-slate-500">이 페이지는 결제 심사용 샘플 상품 페이지이며 심사 계정에만 표시됩니다. 문의: support@cri.kr</p>
