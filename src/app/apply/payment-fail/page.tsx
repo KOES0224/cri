@@ -15,7 +15,10 @@ function PaymentFailContent() {
   const programId = searchParams.get("programId");
   // The provider's codes, grouped into what a payer can act on. Its own text is never shown: it may be in Korean, and a
   // lost, stolen or flagged card is reported as a plain decline.
-  const reason = !code || /CANCEL|ABORTED/i.test(code) ? copy.reasons.canceled
+  // Only the payer's own cancel reads as "you canceled". PAY_PROCESS_ABORTED is the provider's general "this payment
+  // failed in the window" (a failed bank verification, a refusal), so it gets the try-another-card wording.
+  const reason = !code || /^(PAY_PROCESS_CANCELED|USER_CANCEL|PAYMENT_CANCELLED)$/i.test(code) ? copy.reasons.canceled
+    : /ABORTED/i.test(code) ? copy.reasons.notApproved
     : /NOT_SUPPORTED/i.test(code) ? copy.reasons.currency
     : /REJECT_CARD_PAYMENT|EXCEED/i.test(code) ? copy.reasons.limit
     : /INVALID_CARD_NUMBER|INVALID_CARD_EXPIRATION|INVALID_CARD_IDENTITY|INVALID_PASSWORD/i.test(code) ? copy.reasons.details

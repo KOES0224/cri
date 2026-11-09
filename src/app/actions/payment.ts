@@ -171,7 +171,9 @@ export async function finalizePaidApplication({ paymentKey: receivedKey, orderId
         content: JSON.stringify({ ...(order.formData as Record<string, unknown>), payment: { feeStatus: 'PAID', amount: payment.totalAmount, currency: payment.currency, orderId, receiptUrl: payment.receiptUrl, approvedAt: payment.approvedAt, method: payment.method } }),
         steps: { create: [
           { title: 'Application & Fee Submitted', status: 'COMPLETED', order: 1, date: new Date() },
-          { title: 'Admissions Review', status: 'IN_PROGRESS', order: 2 },
+          // Not "in progress" yet: the terms and the refund policy turn on when admissions actually starts examining
+          // the application, so staff move this step when they open the file.
+          { title: 'Admissions Review', status: 'UPCOMING', order: 2 },
           { title: 'Admissions Interview', status: 'UPCOMING', order: 3 },
           { title: 'Final Decision', status: 'UPCOMING', order: 4 },
         ] },
@@ -246,7 +248,9 @@ export async function settleReturnedOrder(orderId: string): Promise<PaymentResul
   if (typeof orderId !== 'string' || !orderId || orderId.length > 100) return { error: 'Invalid payment reference.', code: 'paymentReference' };
   try {
     const row = await prisma.applicationCheckout.findUnique({ where: { id: orderId } });
-    if (!row || row.userId !== session.user.id) return { error: 'Payment details could not be verified. Contact support if you have a receipt.', code: 'paymentMismatch' };
+    // No such order any more: it was released after a refusal or replaced by a newer attempt. Nothing was charged for it.
+    if (!row) return { error: 'This payment session is no longer active and you have not been charged. Go back to your application and pay again.', code: 'paymentSuperseded' };
+    if (row.userId !== session.user.id) return { error: 'Payment details could not be verified. Contact support if you have a receipt.', code: 'paymentMismatch' };
     if (row.status === 'COMPLETED' && row.applicationId) return completedOrder(row.id, row.applicationId, await isPaymentReviewer(session.user.id));
     const settled = await resolvePendingCheckout(row.programId);
     if (settled.state === 'paid') {

@@ -334,6 +334,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       {step === 3 && feeEnabled && <div className="mt-3 space-y-1 text-right text-xs leading-relaxed text-slate-500">
         <p>{payMethod === 'paypal' ? copy.pay.paypalHelper(APPLICATION_CHARGE_PRICE) : copy.pay.cardHelper}</p>
         <p>{copy.pay.legalA}<Link href="/terms" className="underline">{copy.pay.terms}</Link>{copy.pay.legalAnd}<Link href="/refunds" className="underline">{copy.pay.refunds}</Link>{copy.pay.legalB}<Link href="/privacy" className="underline">{copy.pay.privacy}</Link>{copy.pay.legalC}</p>
+        <p>{copy.pay.refundNote}</p>
       </div>}
       <p className="mt-6 text-xs leading-relaxed text-slate-500">{copy.help.a}<a href="mailto:support@cri.kr" className="underline">support@cri.kr</a>{copy.help.b}</p>
       <p className="mt-2 text-xs leading-relaxed text-slate-500">{copy.adsNote}</p>

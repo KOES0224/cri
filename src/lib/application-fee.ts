@@ -4,8 +4,13 @@
  */
 export const APPLICATION_CHARGE = { currency: 'USD', amount: 50 } as const;
 export const APPLICATION_CHARGE_LABEL = '$50 USD';
-/** When the fee was switched on for every applicant. Drafts last saved before this were started while applying was free and get a one-line notice. */
-export const APPLICATION_FEE_INTRODUCED = new Date('2026-11-09T06:00:00Z');
+/**
+ * When the fee was switched on for every applicant. Drafts last saved before this were started while applying was free
+ * and get a one-line notice. Set NEXT_PUBLIC_APPLICATION_FEE_SINCE (an ISO time) together with the fee switch so the two
+ * cannot drift; the fallback is the day the switch was first made.
+ */
+const feeSince = new Date(process.env.NEXT_PUBLIC_APPLICATION_FEE_SINCE || '');
+export const APPLICATION_FEE_INTRODUCED = Number.isNaN(feeSince.getTime()) ? new Date('2026-11-09T09:00:00Z') : feeSince;
 /** The same amount the way a US checkout prints it, with cents. The currency code is shown next to it where space allows. */
 export const APPLICATION_CHARGE_PRICE = '$50.00';
 

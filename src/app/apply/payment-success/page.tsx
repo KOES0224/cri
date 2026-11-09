@@ -76,6 +76,8 @@ function PaymentSuccessContent() {
           if (res.code === "paymentPending" || res.code === "paymentUnconfirmed") return false;
           // Keep the reference only while the outcome is still open; a settled refusal or mismatch ends this attempt.
           if (res.code !== "finalizeFailed") remember(null);
+          // The charge may exist although recording failed: offer "Check again" rather than a dead end.
+          if (res.code === "finalizeFailed") setPending(true);
           const reason = res.providerReason ? ` (Toss: ${res.providerReason})` : "";
           setDeclined(["paymentDeclined", "paymentNotStarted", "paymentSuperseded"].includes(res.code));
           setError((res.code === "paymentNotStarted" ? copy.missingDetails : actionText(res)) + reason);
@@ -115,7 +117,7 @@ function PaymentSuccessContent() {
         if (show(res)) return;
         setError(copy.stillPending);
         setLoading(false);
-      } catch { setError(copy.verifyFailed); setLoading(false); }
+      } catch { setPending(true); setError(copy.verifyFailed); setLoading(false); }
     }
 
     processPayment();
@@ -163,6 +165,8 @@ function PaymentSuccessContent() {
             </div>
             <h1 className="text-2xl font-black text-gray-900 mb-2">{declined ? copy.declinedTitle : copy.noticeTitle}</h1>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">{error}</p>
+            {/* The messages for an unsettled payment ask for the order number, so it is shown here to copy. */}
+            {!declined && orderId && <p className="mb-6 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600">{copy.orderId}: <span className="select-all break-all font-mono font-semibold text-gray-900">{orderId}</span></p>}
             <div className="flex flex-col gap-3 w-full">
               {declined && programId ? (
                 <Link href={`/apply?programId=${encodeURIComponent(programId)}`} className="w-full h-12 bg-gray-900 text-white rounded-xl font-bold text-sm flex items-center justify-center hover:bg-black transition-colors">
