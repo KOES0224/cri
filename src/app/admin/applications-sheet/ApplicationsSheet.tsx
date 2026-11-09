@@ -40,7 +40,7 @@ const fee = (r: SheetRow) => {
   const p = (r.form.payment && typeof r.form.payment === "object" ? r.form.payment : {}) as Record<string, unknown>;
   if (!p.feeStatus && !p.amount) return "";
   // Amount, then what staff need to find the payment in the Toss admin: the order number and the day it was approved.
-  return `${str(p.feeStatus) || "PAID"}${p.amount ? ` · $${str(p.amount)} ${str(p.currency) || "USD"}` : ""}${p.orderId ? ` · ${str(p.orderId)}` : ""}${p.approvedAt ? ` · ${day(str(p.approvedAt))}` : ""}`;
+  return `${str(p.feeStatus) || "PAID"}${p.amount ? ` · $${str(p.amount)} ${str(p.currency) || "USD"}` : ""}${p.code ? ` · code ${str(p.code)}` : ""}${p.orderId ? ` · ${str(p.orderId)}` : ""}${p.approvedAt ? ` · ${day(str(p.approvedAt))}` : ""}`;
 };
 
 function buildColumns(rows: SheetRow[]): Column[] {

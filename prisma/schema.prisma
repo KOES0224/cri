@@ -404,10 +404,32 @@ model ApplicationCheckout {
   paymentKey    String?
   paymentKeyAt  DateTime?
   keyTracked    Boolean  @default(false)
+  // Referral code the order was priced with, if any; `amount` above is already the reduced fee.
+  feeCode       String?
   expiresAt     DateTime
   createdAt     DateTime @default(now())
   user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([userId, programId])
+}
+
+// Referral codes: CRI gives one to an agency or school, and an applicant who enters it pays a reduced application fee or
+// none at all. Rules in src/lib/fee-code.ts; managed at /dashboard/fee-codes.
+model FeeCode {
+  id        String    @id @default(cuid())
+  // Stored upper-case; what the applicant types.
+  code      String    @unique
+  // Who it was given to. Shown to admins only.
+  partner   String
+  // What the applicant pays, in whole US dollars. 0 waives the fee.
+  feeAmount Int       @default(0)
+  // Empty = no limit. Counted when an application is recorded.
+  maxUses   Int?
+  usedCount Int       @default(0)
+  expiresAt DateTime?
+  active    Boolean   @default(true)
+  note      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 // Private, resumable application drafts; versions prevent lost updates across tabs.

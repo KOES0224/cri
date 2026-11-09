@@ -9,6 +9,7 @@ export const adminNavigation = [
   ] },
   { group: "Management", items: [
     { href: "/dashboard/programs", label: "Programs", icon: "programs" },
+    { href: "/dashboard/fee-codes", label: "Referral codes", icon: "codes" },
     { href: "/dashboard/users", label: "People", icon: "people" },
     { href: "/dashboard/cms", label: "Website content", icon: "content" },
     { href: "/dashboard/settings", label: "Settings", icon: "settings" },
