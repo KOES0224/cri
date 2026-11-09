@@ -122,8 +122,27 @@ export async function notifyPaymentNeedsReview(input: { orderId: string; account
   return send({ to: ADMISSIONS_INBOX, subject: `[CRI payment check] ${input.orderId}`, text, replyTo: validEmail(input.accountEmail) ? input.accountEmail! : undefined });
 }
 
-/** The payment form or window did not work for an applicant: nobody can apply while this lasts, so admissions hears at once. */
+/**
+ * The payment form or window did not work for an applicant: nobody can apply while this lasts, so admissions hears at
+ * once. `where: 'return'` is one payer sent back from the provider's window with an unusual code: worth a look, and an
+ * outage only if it repeats.
+ */
 export async function notifyPaymentFormProblem(input: { accountEmail?: string | null; programTitle?: string | null; where: string; code?: string | null; message?: string | null }) {
+  if (input.where === 'return') {
+    const text = [
+      `An applicant's application-fee payment ended inside the payment provider's window with a code that is neither the payer's own cancel nor a card problem.`,
+      ``,
+      input.accountEmail ? `Account email: ${input.accountEmail}` : null,
+      input.programTitle ? `Program: ${input.programTitle}` : null,
+      `Code from the payment provider: ${input.code || 'no code'}`,
+      ``,
+      `One such mail can be a one-off. Several in a row mean payments are not going through for anyone (for example Toss's code 2003: payments stopped for the merchant). Then:`,
+      `- Ask Toss Payments about the code, with the US-dollar merchant id.`,
+      `- If it cannot be fixed quickly, set NEXT_PUBLIC_APPLICATION_FEE_ENABLED to false in Vercel and redeploy: applications are then free again.`,
+      `This alert is sent at most a few times an hour.`,
+    ].filter((line): line is string => line !== null).join('\n');
+    return send({ to: ADMISSIONS_INBOX, subject: `[CRI payment problem] a payment ended with code ${input.code || 'unknown'}`, text, replyTo: validEmail(input.accountEmail) ? input.accountEmail! : undefined });
+  }
   const text = [
     `An applicant could not use the application-fee payment ${input.where === 'window' ? 'window' : 'form'}. While this lasts, applicants cannot pay and therefore cannot submit.`,
     ``,

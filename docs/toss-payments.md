@@ -30,12 +30,12 @@ Update the "Current state" section above when this is done.
 
 1. Toss confirms the foreign-currency merchant id is open and the `criUSD` payment UI is connected to it.
 2. One dollar payment succeeds on `/pg-review/usd` (USD 1.00, review account or an admin). Cancel it in the Toss admin.
-3. Rehearse the real path with the review account (`~/cri-pg-review.txt`): open a program, Apply, and on the last step
-   - pay the full fee: the receipt page and the `[TEST]` mails arrive; cancel the payment in the Toss admin;
-   - with a throwaway reduced-fee code from `/dashboard/fee-codes`: the total, the Pay button and the Toss window show the reduced amount;
-   - with a throwaway waiving code: the payment form disappears and "Submit application" submits; the code's Used count goes up.
-   Then run `npx tsx scripts/payment-review-account.ts --cleanup --apply` (it removes the account's test applications and checkouts) and switch the throwaway codes off.
-4. The referral codes for partners exist and are Active (`/dashboard/fee-codes`, or `npx tsx scripts/referral-codes.ts`).
+3. Rehearse the real path with the review account (`~/cri-pg-review.txt`) and two throwaway codes from `/dashboard/fee-codes` (one reduced, one waiving). An application can only be submitted once per program, so in this order:
+   - Program A, last step: apply the reduced code. The total and the Pay button show the reduced amount; press Pay, check that the Toss window shows the same amount, and close the window without paying.
+   - Same form: remove the code, apply the waiving code. The payment form disappears; "Submit application" submits, and the code's Used count goes up by one.
+   - Program B (or program A again after the cleanup below): pay the full fee. The receipt page appears and two mails marked `[TEST · payment review]` arrive; cancel the payment in the Toss admin.
+   Then run `npx tsx scripts/payment-review-account.ts --cleanup --apply` (it deletes the account's test applications, drafts and checkouts) and switch the throwaway codes off. The throwaway codes keep their Used count, and their Used link shows no rows, because the review account is left out of the applications lists.
+4. The referral codes for partners exist and are Active (`/dashboard/fee-codes`, or `npx tsx scripts/referral-codes.ts` to list them).
 
 **Switch** (Vercel → cri-portal-2024 → Environment Variables, Production):
 
@@ -47,11 +47,13 @@ Update the "Current state" section above when this is done.
 7. With a student test account (not an admin: admins cannot open the form), the last step shows the order summary, "Have a referral code?" and the payment form.
 8. Watch the admissions inbox for `[CRI payment problem]` and `[CRI payment check]` on the first day.
 
-A browser tab that was opened before a deploy keeps talking to the old build for up to 12 hours (Vercel skew protection): someone already on the free form when the fee goes on can still submit for free from that tab, and the reverse when it goes off. A tab that outlives that is reloaded by the form itself.
+Tabs that were open during the switch: Vercel skew protection is on for this project (maximum age 12 hours, read from the project settings on 2026-11-09; Vercel → Settings → Advanced shows the current value). While it applies, a tab opened before the deploy keeps talking to the old build: someone already on the free form when the fee goes on can still submit for free from that tab, and the reverse when it goes off. When such a tab does reach the new build and Submit or Pay is pressed, the server answers that the fee has changed and the form reloads itself onto the current form (after a switch-on, with a one-line note that a fee has been introduced). If the tab cannot even save (the new build does not recognise the old page), the applicant sees "Draft not saved" and has to reload by hand; nothing typed before the last successful save is lost.
 
 ### Switching the fee off
 
 Set `NEXT_PUBLIC_APPLICATION_FEE_ENABLED` to `false` and redeploy. A payment that already reached Toss keeps its applicant's form locked until it is settled (recorded as the application, or released when Toss reports no charge), so nobody ends up charged and also submitted for free; everyone else applies for free at once. If `[CRI payment check]` mails are open, go through them first.
+
+Keep `TOSS_SECRET_KEY` set, and from the same key set, while the fee is off: settling such a payment means asking Toss about it. If Toss cannot answer (key removed or changed, or a payment it reports in a state the site does not recognise), that applicant's form stays locked. To release it by hand: look the order number from the `[CRI payment check]` mail up in the Toss admin; if nothing was charged, delete that one `ApplicationCheckout` row (Supabase → Table editor, `id` = the order number) and the form is free again; if it was charged, refund it there first or ask the applicant to open the form so the site records it.
 
 Toss issued two live merchant ids (won and foreign currency). The widget key pair is shared by the whole store; which merchant id a payment goes to is decided by the payment UI (variantKey) chosen in the Toss admin, not by the key. The per-merchant-id keys under "API 개별 연동 키" (`live_ck_…`, secret and security keys) are not used by this site. A confirm error `NOT_AVAILABLE_PAYMENT_BY_MERCHANT` means the UI in use points at a merchant id without a completed contract.
 
@@ -76,16 +78,16 @@ Rules live in `src/lib/checkout-policy.ts`; the reasoning is in its header.
 - A charge only happens at confirm, and the payment key is written to the order just before it (first key wins). An order without a key has no charge behind it, so every press of Pay replaces it with a fresh order: closing the window, a declined card or coming back hours later never blocks the applicant.
 - An order with a key follows Toss's record of that payment (`GET /v1/payments/{paymentKey}`): approved is recorded as the application without a second charge, refused or expired is released, in progress waits (the form and the success page re-check by themselves), and anything still unsettled after 40 minutes is mailed to admissions with the order number.
 - The order-id lookup (`/v1/payments/orders/{orderId}`) cannot be called with payment-widget secret keys. Never base a decision on it.
-- Admissions also gets a mail (`[CRI payment problem]`, a few an hour at most) when the payment form cannot load, when the payment window fails in the form, and when an applicant lands on `/apply/payment-fail` with a code that is neither their own cancel nor a card problem (Toss's merchant-side codes such as `2003`, an unsupported currency, unknown codes): nobody can apply while that lasts.
+- Admissions also gets a mail (`[CRI payment problem]`, a few an hour at most) when the payment form cannot load or the payment window fails in the form: nobody can apply while that lasts. A separate mail with its own hourly budget (`[CRI payment problem] a payment ended with code …`) is sent when an applicant lands on `/apply/payment-fail` with a code the page cannot explain (Toss's merchant-side codes such as `2003`, or one the site does not know): one can be a one-off, several in a row mean payments are not going through. The payer's own cancel, a declined card and a card that cannot pay in dollars are not reported.
 - `[CRI payment check]` mails state the order's amount and its referral code, so a USD 20 payment in the Toss admin is not mistaken for a wrong charge.
-- Deleting a paid application in the admin also removes its finished checkout, so the same account can apply to that program again. The payment stays on record at Toss; refund it there.
+- Deleting a paid application in the admin refunds nothing: refund the order in the Toss admin if needed (the delete dialog in the spreadsheet view shows the order number). The order stays in `ApplicationCheckout` as the site's record of the payment, marked `REMOVED` and set aside, so the same account can apply to that program again (and would pay again). The old receipt page of a removed order says the application was removed by admissions.
 - Do not roll back to a build from before 2026-11-09 while the fee is on: older code confirms without storing the key.
 
 ## Testing locally
 
 - `npm test`: unit tests, no database.
 - `npm run test:integration` needs a disposable PostgreSQL on `127.0.0.1` (the tests refuse any other host). Without Docker or a system PostgreSQL, the npm package `embedded-postgres` (installed in a scratch folder outside the repo) runs one: start it on a free port, then `DATABASE_URL=postgresql://…@127.0.0.1:<port>/<db> npx prisma db push --skip-generate` and run the tests with the same `DATABASE_URL`. Never run `prisma db push` without that override: `.env` points at production.
-- The same database plus `NEXT_PUBLIC_APPLICATION_FEE_ENABLED=true` on `next dev` gives a local site with the fee on for clicking through codes and the admin pages. Toss's published documentation sample keys (`test_gck_docs_…` / `test_gsk_docs_…`) make the widget render in test mode, but that sample merchant has no dollar contract: Pay ends with `INVALID_AMOUNT_CURRENCY`. A dollar payment can only be exercised on production with the review account.
+- A local site with the fee on, for clicking through codes and the admin pages: `DATABASE_URL=postgresql://…@127.0.0.1:<port>/<db> NEXT_PUBLIC_APPLICATION_FEE_ENABLED=true NEXTAUTH_URL=http://localhost:<port> npx next dev -p <port>`. As with `db push`, never without the `DATABASE_URL` override: `next dev` reads every variable that is not given on the command line from `.env`, and `.env` points at production. To see the payment widget, add Toss's published documentation sample keys as `NEXT_PUBLIC_TOSS_CLIENT_KEY=test_gck_docs_…` and `TOSS_SECRET_KEY=test_gsk_docs_…`: it renders in test mode, but that sample merchant has no dollar contract, so Pay ends with `INVALID_AMOUNT_CURRENCY`. A dollar payment can only be exercised on production with the review account.
 
 ## Review account
 

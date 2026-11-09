@@ -71,6 +71,14 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   const rememberCode = (value: { code: string; feeAmount: number } | null) => {
     try { if (value) sessionStorage.setItem(codeStoreKey, JSON.stringify(value)); else sessionStorage.removeItem(codeStoreKey); } catch {}
   };
+  // A code the applicant removed, or that stopped working, is set aside for this tab: the copy on their unpaid order
+  // must not bring it back on the next load. Applying a code again clears it.
+  const setAsideKey = `${codeStoreKey}_off`;
+  const setAside = (code: string | null) => {
+    try { if (code) sessionStorage.setItem(setAsideKey, code); else sessionStorage.removeItem(setAsideKey); } catch {}
+  };
+  // The text the server last refused in the field: the applicant has had their answer about it.
+  const refusedCode = useRef('');
   // True while a remembered code is being re-checked: Pay waits, so the order is never priced without it.
   const [codeRestoring, setCodeRestoring] = useState(false);
   const dueRef = useRef(due);
@@ -82,8 +90,11 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       const parsed = JSON.parse(sessionStorage.getItem(codeStoreKey) || 'null');
       if (parsed && typeof parsed.code === 'string' && Number.isInteger(parsed.feeAmount) && parsed.feeAmount >= 0 && parsed.feeAmount < APPLICATION_CHARGE.amount) stored = { code: parsed.code, feeAmount: parsed.feeAmount };
     } catch {}
-    // Not remembered in this tab (another device, a new session): the code of the applicant's own unpaid order, if any.
-    const remembered = stored ?? (orderFeeCode ? { code: orderFeeCode, feeAmount: APPLICATION_CHARGE.amount } : null);
+    // Not remembered in this tab (another device, a new session): the code of the applicant's own unpaid order, if any,
+    // unless they removed it or were already told it no longer works.
+    let aside = '';
+    try { aside = sessionStorage.getItem(setAsideKey) || ''; } catch {}
+    const remembered = stored ?? (orderFeeCode && orderFeeCode !== aside ? { code: orderFeeCode, feeAmount: APPLICATION_CHARGE.amount } : null);
     if (!remembered) return;
     const applied = stored;
     let active = true;
@@ -96,7 +107,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       // failed check keeps what this tab had applied: the server prices the order again at Pay, and the payment form
       // charges exactly that.
       if (['feeCodeInvalid', 'feeCodeExpired', 'feeCodeUsedUp'].includes(result.code)) {
-        try { sessionStorage.removeItem(codeStoreKey); } catch {}
+        try { sessionStorage.removeItem(codeStoreKey); sessionStorage.setItem(setAsideKey, remembered.code); } catch {}
         finish(null);
         setCodeOpen(true); setCodeError(copy.pay.codeNoLonger(remembered.code, dollars(APPLICATION_CHARGE.amount)));
       }
@@ -104,7 +115,14 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     }).catch(() => finish(applied));
     return () => { active = false; window.clearTimeout(timer); };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- copy follows the locale, which is fixed for the page's lifetime.
-  }, [feeEnabled, codeStoreKey, orderFeeCode]);
+  }, [feeEnabled, codeStoreKey, setAsideKey, orderFeeCode]);
+  // A page from before the fee was switched on reloaded itself onto this form (see submitFree): say why there is a
+  // payment step now, since the save made just before the reload hides the usual "fee introduced" note.
+  const switchKey = `cri_fee_switch_${program.id}`;
+  const [feeJustIntroduced, setFeeJustIntroduced] = useState(false);
+  useEffect(() => {
+    try { if (sessionStorage.getItem(switchKey)) { sessionStorage.removeItem(switchKey); if (feeEnabled) setFeeJustIntroduced(true); } } catch {}
+  }, [switchKey, feeEnabled]);
   // Per-instance ids: Next can keep a hidden copy of the page, and the widget mounts by CSS selector.
   const widgetId = useId();
   // Attribute selectors need no escaping, so nothing browser-only runs during server rendering.
@@ -202,18 +220,25 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     if (codeBusy || busy || !codeInput.trim()) return;
     setCodeBusy(true); setCodeError('');
     try {
+      const typed = codeInput.trim().toUpperCase();
       const result = await checkFeeCode(codeInput);
-      if (!result.ok) { setCodeError(result.code === 'feeCodeRetry' ? copy.pay.codeFailed : errorText(result.code)); return; }
+      if (!result.ok) {
+        // A definite refusal is the applicant's answer about this text: Pay may go ahead at the full fee with it still in the field.
+        if (codeRefused(result.code)) refusedCode.current = typed;
+        setCodeError(result.code === 'feeCodeRetry' ? copy.pay.codeFailed : errorText(result.code));
+        return;
+      }
       const applied = { code: result.code, feeAmount: result.feeAmount };
       setFeeCode(applied); setCodeInput(''); setCodeOpen(false); setNotice('');
-      rememberCode(applied);
+      rememberCode(applied); setAside(null);
       // The field just left the page: keep keyboard and screen-reader users at the applied code.
       requestAnimationFrame(() => document.getElementById(`${widgetId}coderemove`)?.focus());
     } catch { setCodeError(copy.pay.codeFailed); }
     finally { setCodeBusy(false); }
   }
   function removeCode() {
-    setFeeCode(null); setCodeError('');
+    if (feeCode) setAside(feeCode.code);
+    setFeeCode(null); setCodeError(''); setNotice('');
     rememberCode(null);
     requestAnimationFrame(() => document.getElementById(`${widgetId}codelink`)?.focus());
   }
@@ -222,7 +247,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   function dropCode(code: string) {
     const message = copy.pay.codeNoLonger(code, dollars(APPLICATION_CHARGE.amount));
     // The field reopens empty: the next Pay goes ahead at the full fee the message names, unless a code is typed again.
-    setFeeCode(null); rememberCode(null); setCodeOpen(true); setCodeInput(''); setCodeError(message);
+    setFeeCode(null); rememberCode(null); setAside(code); setCodeOpen(true); setCodeInput(''); setCodeError(message);
     return message;
   }
   const codeRefused = (code?: string) => code === 'feeCodeInvalid' || code === 'feeCodeExpired' || code === 'feeCodeUsedUp';
@@ -300,7 +325,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       if (!await persist(form, step, revision.current)) throw new Error(copy.notices.saveBeforeSubmit);
       const result = await submitApplicationWithoutFee(program.id, form, code);
       // Only a page from before the fee was switched on can be told this: the draft is saved, so load the current form.
-      if ('code' in result && result.code === 'feeRequired' && !feeEnabled) { window.location.reload(); return; }
+      if ('code' in result && result.code === 'feeRequired' && !feeEnabled) { try { sessionStorage.setItem(switchKey, '1'); } catch {} window.location.reload(); return; }
       if (code && 'code' in result && codeRefused(result.code)) throw new Error(dropCode(code));
       if (result.error || !result.applicationId) throw new Error(actionText(result, copy.notices.submitFailed));
       savedRevision.current = revision.current;
@@ -316,8 +341,10 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     if (paymentLock.current) return;
     const issues = applicationErrors(form);
     if (Object.keys(issues).length) { setErrors(issues); setStep(personalFields.includes(Object.keys(issues)[0]) ? 1 : 2); setNotice(copy.notices.completeBeforePay); return; }
-    // A code that was typed but never applied would be ignored and the full fee charged: stop and ask.
-    if (!feeCode && codeOpen && codeInput.trim()) { setCodeError(copy.pay.codeNotApplied); setNotice(copy.pay.codeNotApplied); document.getElementById(`${widgetId}code`)?.focus(); return; }
+    // A code that was typed but never applied would be ignored and the full fee charged: stop and ask. Text the server
+    // has already refused is different: the applicant was told to continue without it.
+    const typedCode = codeInput.trim().toUpperCase();
+    if (!feeCode && codeOpen && typedCode && typedCode !== refusedCode.current) { setCodeError(copy.pay.codeNotApplied); setNotice(copy.pay.codeNotApplied); document.getElementById(`${widgetId}code`)?.focus(); return; }
     paymentLock.current = true;
     setBusy(true); setNotice('');
     try {
@@ -378,7 +405,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     <Link href={`/research/program/${program.id}`} onClick={event => { if (revision.current !== savedRevision.current && !confirm(copy.leaveConfirm)) event.preventDefault(); }} className="text-sm text-slate-600 underline">{copy.back}</Link>
     <header className="my-6"><p className="text-xs font-semibold uppercase tracking-widest text-blue-700">{copy.eyebrow}</p><h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{program.title}</h1><p className="mt-3 text-sm text-slate-600">{feeEnabled ? <>{copy.feeLine.a}<strong>{APPLICATION_CHARGE_LABEL}</strong>{copy.feeLine.b}</> : copy.free.feeLine.a}<strong>{program.tuition == null ? copy.contactAdmissions : `$${program.tuition.toLocaleString()} USD`}</strong>{feeEnabled ? copy.feeLine.c : copy.free.feeLine.c}</p><p className="mt-2 text-sm text-slate-600">{feeEnabled && !waived ? copy.submittedNote : copy.free.submittedNote}<Link href="/admissions" className="text-blue-700 underline">{copy.stepsAndFees}</Link> · <Link href="/terms" className="text-blue-700 underline">{t.footer.terms}</Link> · <Link href="/privacy" className="text-blue-700 underline">{copy.privacy}</Link> · <Link href="/refunds" className="text-blue-700 underline">{copy.refunds}</Link></p></header>
     {feeEnabled && !paymentAvailable && !waived && <div role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">{copy.paymentUnavailable.a}<Link href="/contact" className="underline">{copy.paymentUnavailable.link}</Link>{copy.paymentUnavailable.b}</div>}
-    {feeIntroducedSinceDraft && feeEnabled && <div role="note" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">{copy.feeIntroduced(APPLICATION_CHARGE_LABEL)}</div>}
+    {(feeIntroducedSinceDraft || feeJustIntroduced) && feeEnabled && <div role="note" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">{copy.feeIntroduced(APPLICATION_CHARGE_LABEL)}</div>}
     {earlierPayment === 'checking' && <div role="status" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm">{copy.checkoutVerifying}</div>}
     {earlierPayment === 'wait' && <div role="status" className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm"><span>{copy.checkoutWaiting}</span><button type="button" onClick={() => { setEarlierPayment('checking'); setRecheck(value => value + 1); }} className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-semibold text-blue-800">{copy.checkAgain}</button></div>}
     {earlierPayment === 'review' && <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">{copy.checkoutRestored.a}<Link href="/contact" className="underline">{copy.checkoutRestored.link}</Link>{copy.checkoutRestored.b}</div>}
@@ -429,7 +456,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
               <div className="mt-4">
                 <label htmlFor={`${widgetId}code`} className="mb-1 block text-xs font-semibold text-slate-700">{copy.pay.codeLabel}</label>
                 <div className="flex gap-2">
-                  <input id={`${widgetId}code`} value={codeInput} onChange={event => { setCodeInput(event.target.value); setCodeError(''); }} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void applyCode(); } }} maxLength={32} autoCapitalize="characters" autoComplete="off" spellCheck={false} aria-invalid={Boolean(codeError)} aria-describedby={`${widgetId}codehelp`} className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base uppercase text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:text-sm" />
+                  <input id={`${widgetId}code`} value={codeInput} onChange={event => { setCodeInput(event.target.value); setCodeError(''); setNotice(current => (current === copy.pay.codeNotApplied ? '' : current)); }} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void applyCode(); } }} maxLength={32} autoCapitalize="characters" autoComplete="off" spellCheck={false} aria-invalid={Boolean(codeError)} aria-describedby={`${widgetId}codehelp`} className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base uppercase text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:text-sm" />
                   <button type="button" onClick={() => void applyCode()} disabled={codeBusy || busy || !codeInput.trim()} className="shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 disabled:opacity-50">{codeBusy ? copy.pay.codeChecking : copy.pay.codeApply}</button>
                 </div>
                 <p id={`${widgetId}codehelp`} className={`mt-1 text-xs ${codeError ? 'text-red-700' : 'text-slate-500'}`} role={codeError ? 'alert' : undefined}>{codeError || copy.pay.codeHelp}</p>

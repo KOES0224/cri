@@ -43,8 +43,8 @@ export default function FeeCodeRow({ row }: { row: FeeCodeRowData }) {
         <td className="px-4 py-3 text-slate-800">{row.partner}{row.note && <span className="mt-0.5 block text-xs text-slate-500">{row.note}</span>}</td>
         <td className="whitespace-nowrap px-4 py-3 text-slate-800">{row.effect}</td>
         <td className="whitespace-nowrap px-4 py-3 tabular-nums text-slate-800">
-          {/* The spreadsheet view searches the fee column, so the code finds the applications that used it. */}
-          {row.usedCount > 0 ? <a href={`/admin/applications-sheet?q=${encodeURIComponent(row.code)}`} className="font-semibold text-blue-700 underline" title="Show the applications that used this code">{row.usedCount}</a> : row.usedCount}
+          {/* The spreadsheet view filtered to exactly the applications recorded with this code. */}
+          {row.usedCount > 0 ? <a href={`/admin/applications-sheet?code=${encodeURIComponent(row.code)}`} className="font-semibold text-blue-700 underline" title="Show the applications that used this code">{row.usedCount}</a> : row.usedCount}
           {row.maxUses !== null ? ` / ${row.maxUses}` : ""}
         </td>
         <td className="whitespace-nowrap px-4 py-3 text-slate-600">{row.lastValidDay || "No end date"}</td>

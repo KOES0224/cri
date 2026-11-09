@@ -5,20 +5,21 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { canApply } from "@/lib/applicant";
-import { allowRequest } from "@/lib/request-limit";
+import { allowRequest, limitReached } from "@/lib/request-limit";
 import { APPLICATION_CHARGE } from "@/lib/application-fee";
 import { applicationFeeFor } from "@/lib/payment-review";
-import { feeCodeLimits, feeCodeProblem, feeWithCode, newFeeCode, normalizeFeeCode } from "@/lib/fee-code";
+import { feeCodeLimits, feeCodeProblem, feeWithCode, koreanDay, newFeeCode, normalizeFeeCode } from "@/lib/fee-code";
 
 /**
  * What a referral code would do for the signed-in applicant: the fee they would pay with it. Nothing is reserved here;
  * the code is checked again, and counted, when the application is recorded. `code` names a key in t.apply.errors,
  * except `feeCodeRetry`: the check itself failed and says nothing about the code.
  *
- * `restore` is the form re-checking a code it already applied in this tab (on every page load): a code that still
- * works is answered from a roomier budget, so reloads and returns from a declined payment never use up the tries for
- * typing a code. A lookup that fails always counts as a typed try, whoever sent it, so the roomier budget cannot be
- * used to guess codes.
+ * `restore` is the form re-checking a code it already applied (on every page load): a code that still works is
+ * answered from a roomier budget, so reloads and returns from a declined payment never use up the tries for typing a
+ * code. The roomier budget cannot be used to guess codes: a restore lookup that misses counts as a typed try, and no
+ * restore lookup is made once the typed tries are used up. The one miss that is not counted is the code on the
+ * applicant's own unpaid order, which was valid when the order was priced and is re-checked on every load.
  */
 export async function checkFeeCode(input: string, restore = false): Promise<{ ok: true; code: string; feeAmount: number } | { ok: false; code: string }> {
   const session = await getServerSession(authOptions);
@@ -27,13 +28,18 @@ export async function checkFeeCode(input: string, restore = false): Promise<{ ok
     // Codes are only asked for while this account goes through the paid checkout; otherwise nothing is looked up.
     if (!(await applicationFeeFor(session.user.id)).feeEnabled) return { ok: false, code: "feeCodeInvalid" };
     // A handful of tries is plenty for someone who was given a code; it is not enough to guess one.
-    const allowed = restore === true ? await allowRequest("fee-code-restore", session.user.id, 40, 600) : await allowRequest("fee-code", session.user.id, 10, 600);
+    const allowed = restore === true
+      ? await allowRequest("fee-code-restore", session.user.id, 40, 600) && !await limitReached("fee-code", session.user.id, 10)
+      : await allowRequest("fee-code", session.user.id, 10, 600);
     if (!allowed) return { ok: false, code: "feeCodeRate" };
     const code = normalizeFeeCode(input);
     const row = code ? await prisma.feeCode.findUnique({ where: { code } }) : null;
     const problem = feeCodeProblem(row);
     if (problem || !row) {
-      if (restore === true && !await allowRequest("fee-code", session.user.id, 10, 600)) return { ok: false, code: "feeCodeRate" };
+      if (restore === true) {
+        const own = code ? await prisma.applicationCheckout.findFirst({ where: { userId: session.user.id, feeCode: code, status: "PENDING" }, select: { id: true } }) : null;
+        if (!own) await allowRequest("fee-code", session.user.id, 10, 600);
+      }
       // "Switched off" reads the same as "no such code": an applicant has no use for the difference.
       return { ok: false, code: problem === "expired" ? "feeCodeExpired" : problem === "usedUp" ? "feeCodeUsedUp" : "feeCodeInvalid" };
     }
@@ -76,11 +82,16 @@ export async function updateFeeCode(form: FormData): Promise<FeeCodeFormState> {
   const partner = field(form, "partner").slice(0, 120);
   if (!id) return { error: "The code could not be found. Reload the page." };
   if (!partner) return { error: "Say who the code is for." };
-  const limits = feeCodeLimits({ maxUses: field(form, "maxUses"), lastValidDay: field(form, "expiresAt") });
-  if ("error" in limits) return { error: limits.error };
   try {
-    const changed = await prisma.feeCode.updateMany({ where: { id }, data: { partner, note: field(form, "note").slice(0, 500) || null, ...limits } });
-    if (changed.count !== 1) return { error: "The code could not be found. Reload the page." };
+    const current = await prisma.feeCode.findUnique({ where: { id }, select: { expiresAt: true } });
+    if (!current) return { error: "The code could not be found. Reload the page." };
+    // A last valid day that was not changed is kept as it is, even when it has passed: the note or the partner of an
+    // expired code can be corrected without bringing the code back to life. Only a new day has to be today or later.
+    const day = field(form, "expiresAt");
+    const sameDay = Boolean(current.expiresAt) && day === koreanDay(current.expiresAt!);
+    const limits = feeCodeLimits({ maxUses: field(form, "maxUses"), lastValidDay: sameDay ? "" : day });
+    if ("error" in limits) return { error: limits.error };
+    await prisma.feeCode.update({ where: { id }, data: { partner, note: field(form, "note").slice(0, 500) || null, maxUses: limits.maxUses, ...(sameDay ? {} : { expiresAt: limits.expiresAt }) } });
   } catch { return { error: "The change could not be saved. Please try again." }; }
   revalidatePath("/dashboard/fee-codes");
   return { saved: true };

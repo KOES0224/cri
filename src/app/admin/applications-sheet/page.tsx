@@ -3,18 +3,19 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { getApplicationsSheetData } from "@/lib/admin-sheet";
+import { normalizeFeeCode } from "@/lib/fee-code";
 import ApplicationsSheet from "./ApplicationsSheet";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Applications sheet | CRI Admin", robots: { index: false, follow: false } };
 
 /** Full-screen spreadsheet of every application, outside the admin shell so the data gets the whole window. */
-export default async function ApplicationsSheetPage({ searchParams }: { searchParams: Promise<{ q?: string | string[] }> }) {
+export default async function ApplicationsSheetPage({ searchParams }: { searchParams: Promise<{ code?: string | string[] }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/auth/login?callbackUrl=%2Fadmin%2Fapplications-sheet");
   if (session.user.role !== "ADMIN") redirect("/dashboard");
   const { rows, programs } = await getApplicationsSheetData();
-  // ?q= pre-fills the search box, e.g. the link from a referral code to the applications that used it.
-  const { q } = await searchParams;
-  return <ApplicationsSheet rows={rows} programs={programs} initialSearch={typeof q === "string" ? q.slice(0, 100) : ""} />;
+  // ?code= shows exactly the applications recorded with that referral code (the link from /dashboard/fee-codes).
+  const { code } = await searchParams;
+  return <ApplicationsSheet rows={rows} programs={programs} initialCode={normalizeFeeCode(code) ?? ""} />;
 }

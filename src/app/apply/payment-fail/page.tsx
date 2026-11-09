@@ -15,17 +15,16 @@ function PaymentFailContent() {
   const searchParams = useSearchParams();
   const code = sanitizeFailCode(searchParams.get("code"));
   const programId = searchParams.get("programId");
-  const message = searchParams.get("message");
   // The provider's codes are grouped into what a payer can act on (src/lib/payment-fail-reason.ts).
   const reason = copy.reasons[paymentFailReason(code)];
-  // A failure that is not the payer's choice or card means the payment window is not working: admissions is told once
-  // per visit (the server limits how often a mail goes out and skips the payment-review account).
+  // A code the page cannot explain (the provider stopped payments for the merchant, or one we do not know) is passed to
+  // admissions once per visit; the server limits how often a mail goes out and skips the payment-review account.
   const reported = useRef(false);
   useEffect(() => {
     if (reported.current || !programId || !failureNeedsReport(code)) return;
     reported.current = true;
-    void reportPaymentProblem(programId, "window", code, message ?? undefined).catch(() => {});
-  }, [code, programId, message]);
+    void reportPaymentProblem(programId, "return", code).catch(() => {});
+  }, [code, programId]);
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-6 flex items-center justify-center">

@@ -36,6 +36,13 @@ function applicationData(program: ProgramForContent, role: string | null | undef
   return { ...programContent(program), applicant_type: applicantTypeFromRole(role), applicant_region: applicantRegion(country), ...(money || {}) };
 }
 
+/**
+ * The order of a paid application that admissions deleted (src/app/actions/adminApplications.ts keeps the row as the
+ * site's record of that payment). It is never confirmed, recovered or settled again.
+ */
+const REMOVED_ORDER = 'REMOVED';
+const REMOVED_ORDER_TEXT = 'This application was removed by admissions. If you were charged for it and have not heard from us, contact support@cri.kr with your order reference.';
+
 // `error` stays English for existing callers; `code` names a key in t.apply.errors so the form can show the visitor's language.
 export async function beginApplicationCheckout(programId: string, input: unknown, partnerCode?: string) {
   const session = await getServerSession(authOptions);
@@ -125,6 +132,7 @@ export async function finalizePaidApplication({ paymentKey: receivedKey, orderId
     if (!order) return { error: 'This payment session is no longer active and you have not been charged. Go back to your application and pay again.', code: 'paymentSuperseded' };
     // The order row is the price: the normal fee, or less when it was made with a referral code. Never more, never zero.
     if (order.userId !== session.user.id || order.amount !== amount || order.amount <= 0 || order.amount > APPLICATION_CHARGE.amount || order.currency !== APPLICATION_CHARGE.currency) return { error: 'Payment details could not be verified. Contact support if you have a receipt.', code: 'paymentMismatch' };
+    if (order.status === REMOVED_ORDER) return { error: REMOVED_ORDER_TEXT, code: 'applicationRemoved' };
     const reviewer = await isPaymentReviewer(session.user.id);
     if (order.status === 'COMPLETED' && order.applicationId) return completedOrder(order.id, order.applicationId, reviewer);
     const program = await prisma.program.findUnique({ where: { id: order.programId }, include: { professors: PROGRAM_CONTENT.select.professors } });
@@ -155,8 +163,9 @@ export async function finalizePaidApplication({ paymentKey: receivedKey, orderId
       // still be usable: if it was switched off, expired or used up meanwhile, nothing is charged and the applicant
       // prices a new order from the form.
       if (order.feeCode && !order.paymentKey && order.expiresAt <= new Date() && feeCodeProblem(await prisma.feeCode.findUnique({ where: { code: order.feeCode } }))) {
-        await releaseCheckout(order, null);
-        return { error: 'The referral code on this order can no longer be used, and you have not been charged. Go back to your application to continue.', code: 'feeCodeLapsed' };
+        if (await releaseCheckout(order, null)) return { error: 'The referral code on this order can no longer be used, and you have not been charged. Go back to your application to continue.', code: 'feeCodeLapsed' };
+        // Not released: another return for this order stored its payment key a moment ago and is being confirmed.
+        return { error: 'Another payment for this application is being confirmed. Please do not pay again; reopen your application in a moment to see its status.', code: 'paymentPending' };
       }
       // The key is stored before the provider is asked to charge, so a row without one provably has no charge. The
       // update is conditional: if the order was replaced in another tab meanwhile, nothing is confirmed.
@@ -280,6 +289,7 @@ export async function settleReturnedOrder(orderId: string): Promise<PaymentResul
     // No such order any more: it was released after a refusal or replaced by a newer attempt. Nothing was charged for it.
     if (!row) return { error: 'This payment session is no longer active and you have not been charged. Go back to your application and pay again.', code: 'paymentSuperseded' };
     if (row.userId !== session.user.id) return { error: 'Payment details could not be verified. Contact support if you have a receipt.', code: 'paymentMismatch' };
+    if (row.status === REMOVED_ORDER) return { error: REMOVED_ORDER_TEXT, code: 'applicationRemoved' };
     if (row.status === 'COMPLETED' && row.applicationId) return completedOrder(row.id, row.applicationId, await isPaymentReviewer(session.user.id));
     const settled = await resolvePendingCheckout(row.programId);
     if (settled.state === 'paid') {
@@ -311,20 +321,26 @@ async function releaseCheckout(order: { id: string; userId: string; programId: s
 }
 
 /**
- * The browser could not load the payment form, or the payment window failed before any payment was made. Logged and
- * mailed to admissions (a few times an hour at most) so a broken paid path is noticed the moment an applicant hits it.
+ * The browser could not load the payment form (`form`), the payment window failed in the form before any payment was
+ * made (`window`), or the provider sent the payer back to the failure page with a code that is neither their own cancel
+ * nor a card problem (`return`). Logged and mailed to admissions, a few times an hour at most, so a broken paid path is
+ * noticed the moment an applicant hits it. Reports from the failure page have their own budget and wording: one of
+ * them can be a one-off, and they must not use up the alarms for a form that does not load.
  */
-export async function reportPaymentProblem(programId: string, where: 'form' | 'window', code?: string, message?: string) {
+export async function reportPaymentProblem(programId: string, where: 'form' | 'window' | 'return', code?: string, message?: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return;
+  const place = where === 'window' || where === 'return' ? where : 'form';
   const safeCode = typeof code === 'string' ? code.replace(/[^A-Za-z0-9_]/g, '').slice(0, 60) : '';
-  const safeMessage = typeof message === 'string' ? message.replace(/\s+/g, ' ').slice(0, 200) : '';
-  console.error('Payment form problem', where === 'window' ? 'window' : 'form', safeCode || 'no-code', safeMessage);
+  // The failure page takes its details from the address bar, which anyone can write: only the code is kept from it.
+  const safeMessage = place !== 'return' && typeof message === 'string' ? message.replace(/\s+/g, ' ').slice(0, 200) : '';
+  console.error('Payment form problem', place, safeCode || 'no-code', safeMessage);
   try {
     if (await isPaymentReviewer(session.user.id)) return;
-    if (!await allowRequest('payment-problem-report', session.user.id, 3, 600) || !await allowRequest('payment-problem-mail', 'all', 3, 3600)) return;
+    const [mine, all] = place === 'return' ? ['payment-return-report', 'payment-return-mail'] : ['payment-problem-report', 'payment-problem-mail'];
+    if (!await allowRequest(mine, session.user.id, 3, 600) || !await allowRequest(all, 'all', 3, 3600)) return;
     const program = typeof programId === 'string' ? await prisma.program.findUnique({ where: { id: programId }, select: { title: true } }) : null;
-    await notifyPaymentFormProblem({ accountEmail: session.user.email, programTitle: program?.title, where, code: safeCode, message: safeMessage });
+    await notifyPaymentFormProblem({ accountEmail: session.user.email, programTitle: program?.title, where: place, code: safeCode, message: safeMessage });
   } catch { console.error('Payment problem alert failed.'); }
 }
 
@@ -414,6 +430,11 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
       await tx.applicationDraft.deleteMany({ where: { userId: session.user.id, programId } });
       // A leftover checkout is cleared only if its payment never reached the provider; a keyed one may be an unrecorded charge.
       await tx.applicationCheckout.deleteMany({ where: { userId: session.user.id, programId, status: 'PENDING', paymentKey: null } });
+      // A return from the payment window in another tab may have stored its payment key since the check above: then
+      // that payment is being confirmed, and this submission is undone rather than left next to a charge. (If the
+      // delete above won instead, the other tab finds no order and nothing is charged.)
+      const claimed = await tx.applicationCheckout.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { status: true, paymentKey: true } });
+      if (claimed?.status === 'PENDING' && claimed.paymentKey) throw new Error('CHECKOUT_REVIEW');
       return { id: app.id, created: true };
     });
     // A second tab or a double submit lost the race to the first one: answer like an existing application, without a

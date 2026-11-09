@@ -25,11 +25,10 @@ export function paymentFailReason(code: string): PaymentFailReason {
 }
 
 /**
- * Failures that are neither the payer's choice nor their card: the payment window itself did not work (the provider
- * stopped payments for the merchant, as with its numeric code 2003, the currency is not supported, or the code is one
- * we do not know). Retrying will not help the payer, so admissions is told.
+ * Failures the page cannot explain to the payer: the provider stopped payments for the merchant (its numeric code 2003)
+ * or sent a code we do not know. Retrying may not help, so admissions is told. A card that cannot pay in US dollars is
+ * the payer's card, like a decline, and is not reported.
  */
 export function failureNeedsReport(code: string): boolean {
-  const reason = paymentFailReason(code);
-  return Boolean(code) && (reason === "generic" || reason === "currency");
+  return Boolean(code) && paymentFailReason(code) === "generic";
 }

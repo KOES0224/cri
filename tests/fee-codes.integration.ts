@@ -11,20 +11,24 @@ import {randomUUID} from 'node:crypto';
 import {PrismaClient} from '@prisma/client';
 const url = new URL(process.env.DATABASE_URL || 'http://missing');
 if (!['127.0.0.1','localhost'].includes(url.hostname)) throw new Error('Integration tests require a disposable LOCAL database.');
+// The session runs in Korea's zone on purpose (production runs in UTC): a time comparison that depends on the session
+// zone fails here, whatever zone the local server itself was started in.
+url.searchParams.set('options', '-c TimeZone=Asia/Seoul');
+process.env.DATABASE_URL = url.toString();
 // Codes are only asked for while the fee is on.
 process.env.NEXT_PUBLIC_APPLICATION_FEE_ENABLED = 'true';
 process.env.TOSS_SECRET_KEY = 'synthetic-test';
 process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY = 'synthetic-test';
 
 let session: any = null;
-const sent = {received: [] as any[], confirmations: [] as any[], reviews: [] as any[], meta: [] as {name: string; value?: number}[]};
+const sent = {received: [] as any[], confirmations: [] as any[], reviews: [] as any[], problems: [] as any[], meta: [] as {name: string; value?: number}[]};
 require.cache[require.resolve('next-auth')] = {exports: {getServerSession: async () => session}} as any;
 require.cache[require.resolve('next/cache')] = {exports: {revalidatePath: () => {}, revalidateTag: () => {}, unstable_cache: (fn: any) => fn}} as any;
 require.cache[require.resolve('../src/lib/notify')] = {exports: {
   notifyApplicationReceived: async (details: any) => { sent.received.push(details); },
   sendApplicationConfirmation: async (details: any) => { sent.confirmations.push(details); return {sent: true}; },
   notifyPaymentNeedsReview: async (details: any) => { sent.reviews.push(details); },
-  notifyPaymentFormProblem: async () => {},
+  notifyPaymentFormProblem: async (details: any) => { sent.problems.push(details); },
 }} as any;
 require.cache[require.resolve('../src/lib/meta/capi')] = {exports: {
   captureMetaContext: async () => ({}),
@@ -32,7 +36,7 @@ require.cache[require.resolve('../src/lib/meta/capi')] = {exports: {
 }} as any;
 const {prisma: db} = require('../src/lib/prisma') as {prisma: PrismaClient};
 const {checkFeeCode, createFeeCode, setFeeCodeActive, updateFeeCode} = require('../src/app/actions/feeCodes');
-const {beginApplicationCheckout, finalizePaidApplication, resolvePendingCheckout, settleReturnedOrder, submitApplicationWithoutFee} = require('../src/app/actions/payment');
+const {beginApplicationCheckout, finalizePaidApplication, reportPaymentProblem, resolvePendingCheckout, settleReturnedOrder, submitApplicationWithoutFee} = require('../src/app/actions/payment');
 const {deleteApplication} = require('../src/app/actions/adminApplications');
 
 const key = randomUUID().replaceAll('-', '');
@@ -73,6 +77,8 @@ function approvingProvider(orderId: string, amount: number) {
 }
 
 before(async () => {
+  // Budgets shared by every account (mails per hour) would otherwise carry over from an earlier run on this database.
+  await db.requestLimit.deleteMany({});
   await db.user.create({data: {id: adminId, email: `admin-${key}@example.test`, role: 'ADMIN'}});
   const future = new Date(Date.now() + 30 * 86400000);
   await db.program.createMany({data: programs.map((id, i) => ({id, title: `QA Codes ${i + 1}`, description: 'Local only', category: 'Winter', status: 'OPEN', endDate: future}))});
@@ -155,6 +161,16 @@ test('admin: only administrators create and switch codes, and the input is valid
   assert.equal((await db.feeCode.findUniqueOrThrow({where: {code: LIMITED}})).maxUses, 1);
   asAdmin();
 
+  // An expired code: its note and partner can be corrected with the day left as it is, and it stays expired. Only a
+  // day that is changed has to be today or later.
+  const past = await db.feeCode.create({data: {code: `P${K}`, partner: 'Past partner', feeAmount: 0, expiresAt: new Date('2025-03-31T14:59:59Z')}});
+  assert.deepEqual(await updateFeeCode(formData({id: past.id, partner: 'Past partner (invoiced)', maxUses: '', expiresAt: '2025-03-31', note: '12 used'})), {saved: true});
+  const corrected = await db.feeCode.findUniqueOrThrow({where: {code: `P${K}`}});
+  assert.deepEqual({partner: corrected.partner, note: corrected.note, expires: corrected.expiresAt?.toISOString()}, {partner: 'Past partner (invoiced)', note: '12 used', expires: '2025-03-31T14:59:59.000Z'});
+  assert.match((await updateFeeCode(formData({id: past.id, partner: 'Past partner', expiresAt: '2025-04-30'}))).error, /already passed/);
+  assert.deepEqual(await updateFeeCode(formData({id: past.id, partner: 'Past partner', expiresAt: '2031-04-30'})), {saved: true});
+  assert.equal((await db.feeCode.findUniqueOrThrow({where: {code: `P${K}`}})).expiresAt?.toISOString(), '2031-04-30T14:59:59.000Z');
+
   // Switching off and on again.
   await setFeeCodeActive(formData({id: waive.id, active: 'false'}));
   assert.equal((await db.feeCode.findUniqueOrThrow({where: {code: WAIVE}})).active, false);
@@ -180,12 +196,16 @@ test('the form check says what a code would do, and why a code cannot be used', 
   await db.feeCode.update({where: {code: REDUCE}, data: {active: true, maxUses: 3, usedCount: 3}});
   assert.deepEqual(await checkFeeCode(REDUCE), {ok: false, code: 'feeCodeUsedUp'});
   await db.feeCode.update({where: {code: REDUCE}, data: {maxUses: null, usedCount: 0}});
-  // Ten typed tries per ten minutes (seven used above); a page reload re-checking an applied code has its own budget.
+  // Ten typed tries per ten minutes (seven used above). A page reload re-checking a code that works is answered from
+  // its own budget and spends none of them.
+  for (let i = 0; i < 12; i++) assert.deepEqual(await checkFeeCode(WAIVE, true), {ok: true, code: WAIVE, feeAmount: 0});
   for (let i = 0; i < 3; i++) assert.equal((await checkFeeCode(WAIVE)).ok, true);
   assert.deepEqual(await checkFeeCode(WAIVE), {ok: false, code: 'feeCodeRate'});
-  assert.deepEqual(await checkFeeCode(WAIVE, true), {ok: true, code: WAIVE, feeAmount: 0});
-  // A lookup that fails always counts as a typed try, so the reload budget cannot be used to guess codes.
+  // Once the typed tries are used up the reload budget answers nothing either, hit or miss: it cannot be used to keep
+  // guessing. (The form keeps a code it had already applied; the server prices the order again at Pay.)
+  assert.deepEqual(await checkFeeCode(WAIVE, true), {ok: false, code: 'feeCodeRate'});
   assert.deepEqual(await checkFeeCode(`NOPE${K}`, true), {ok: false, code: 'feeCodeRate'});
+  // Every miss through the reload path counts as a typed try.
   const guesser = await student('guesser');
   guesser.signIn();
   for (let i = 0; i < 10; i++) assert.deepEqual(await checkFeeCode(`GUESS${i}${K}`, true), {ok: false, code: 'feeCodeInvalid'});
@@ -365,6 +385,8 @@ test('recovery: a reduced payment that went through without being recorded is re
 });
 
 test('a waiving code works until its last moment whatever the database session time zone, and says why it stops', async () => {
+  // This file runs its database session in Korea's zone (see the top): make sure that really took effect.
+  assert.deepEqual(await db.$queryRaw`SHOW TimeZone`, [{TimeZone: 'Asia/Seoul'}]);
   // Expires in three hours: a comparison done in a non-UTC session would already call it expired (Korea is UTC+9).
   const SOON = `S${K}`, ONCE = `O${K}`;
   await db.feeCode.createMany({data: [{code: SOON, partner: 'Ends today', feeAmount: 0, expiresAt: new Date(Date.now() + 3 * 3600_000)}, {code: ONCE, partner: 'One use', feeAmount: 0, maxUses: 1}]});
@@ -408,6 +430,10 @@ test('reduced fee: a declined attempt keeps the price and counts nothing; a stal
   // the draft stays, and the applicant prices a new order from the form.
   await db.applicationCheckout.update({where: {id: retry.orderId}, data: {expiresAt: new Date(Date.now() - 1000)}});
   await db.feeCode.update({where: {code: REDUCE}, data: {active: false}});
+  // The form re-checks the dead code of the applicant's own unpaid order on every load: that never uses up their
+  // tries for typing another code.
+  for (let i = 0; i < 12; i++) assert.deepEqual(await checkFeeCode(REDUCE, true), {ok: false, code: 'feeCodeInvalid'});
+  assert.deepEqual(await checkFeeCode(WAIVE), {ok: true, code: WAIVE, feeAmount: 0});
   const provider = approvingProvider(retry.orderId, 20);
   const lapsed = await finalizePaidApplication({orderId: retry.orderId, paymentKey: `key-${retry.orderId}`, amount: 20});
   assert.equal(lapsed.code, 'feeCodeLapsed', JSON.stringify(lapsed));
@@ -449,6 +475,38 @@ test('an unsettled payment is escalated to admissions after 40 minutes, with the
   assert.deepEqual(await resolvePendingCheckout(p6), {state: 'released'});
   assert.equal(await db.applicationCheckout.count({where: {userId: s.id}}), 0);
   assert.equal(await db.applicationDraft.count({where: {userId: s.id, programId: p6}}), 1);
+
+  // The 40-minute mail on its own: the server stored the key and never heard back (no alert was sent at confirm).
+  const t = await student('silent');
+  t.signIn();
+  const silent = `CRI_silent_${key}`;
+  await db.applicationCheckout.create({data: {id: silent, userId: t.id, programId: p6, status: 'PENDING', amount: 20, currency: 'USD', feeCode: REDUCE, formData: t.form, keyTracked: true, paymentKey: 'silent-key', paymentKeyAt: new Date(Date.now() - 41 * 60_000), expiresAt: new Date(Date.now() - 11 * 60_000)}});
+  globalThis.fetch = (async () => Response.json({status: 'IN_PROGRESS', orderId: silent, totalAmount: 20, currency: 'USD', paymentKey: 'silent-key'})) as any;
+  sent.reviews.length = 0;
+  assert.deepEqual(await resolvePendingCheckout(p6), {state: 'review'});
+  assert.equal(sent.reviews.length, 1);
+  assert.deepEqual({order: sent.reviews[0].orderId, expected: sent.reviews[0].expected, program: sent.reviews[0].programTitle}, {order: silent, expected: `20.00 USD (referral code ${REDUCE}; the normal fee is 50.00 USD)`, program: 'QA Codes 6'});
+});
+
+test('a failure in the payment window is reported to admissions with its code only, within its own budget', async () => {
+  const s = await student('failed');
+  s.signIn();
+  sent.problems.length = 0;
+  // From the failure page: the code is cleaned, and free text from the address bar is never passed on.
+  await reportPaymentProblem(p1, 'return', '20 03<script>', 'text anyone could put in the address bar');
+  assert.deepEqual(sent.problems, [{accountEmail: `failed-${key}@example.test`, programTitle: 'QA Codes 1', where: 'return', code: '2003script', message: ''}]);
+  // Three reports per account in ten minutes, then silence.
+  await reportPaymentProblem(p1, 'return', '2003');
+  await reportPaymentProblem(p1, 'return', '2003');
+  await reportPaymentProblem(p1, 'return', '2003');
+  assert.equal(sent.problems.length, 3);
+  // A payment form that does not load is a different alarm with its own budget, and keeps the SDK's message.
+  await reportPaymentProblem(p1, 'form', 'INVALID_CLIENT_KEY', 'The   key is\nwrong');
+  assert.deepEqual(sent.problems[3], {accountEmail: `failed-${key}@example.test`, programTitle: 'QA Codes 1', where: 'form', code: 'INVALID_CLIENT_KEY', message: 'The key is wrong'});
+  // Signed out: nothing.
+  session = null;
+  await reportPaymentProblem(p1, 'return', '2003');
+  assert.equal(sent.problems.length, 4);
 });
 
 test('deleting an application frees the account to apply again and gives the code use back', async () => {
@@ -466,12 +524,21 @@ test('deleting an application frees the account to apply again and gives the cod
   asAdmin();
   assert.equal((await deleteApplication(paid.applicationId)).success, true);
   assert.equal(await db.application.count({where: {userId: s.id}}), 0);
-  assert.equal(await db.applicationCheckout.count({where: {userId: s.id}}), 0);
   assert.equal(await uses(REDUCE), before);
-  // The same account can pay for the same program again.
+  // The order stays as the site's record of the payment, set aside so it no longer stands for the program.
+  const kept = await db.applicationCheckout.findUniqueOrThrow({where: {id: order.orderId}});
+  assert.deepEqual({status: kept.status, key: kept.paymentKey, amount: kept.amount, code: kept.feeCode, moved: kept.programId !== p7 && kept.programId.startsWith(p7)}, {status: 'REMOVED', key: `key-${order.orderId}`, amount: 20, code: REDUCE, moved: true});
+  // Its old receipt page says what happened, and nothing is confirmed for it again.
   s.signIn();
+  const provider = approvingProvider(order.orderId, 20);
+  assert.equal((await settleReturnedOrder(order.orderId)).code, 'applicationRemoved');
+  assert.equal((await finalizePaidApplication({orderId: order.orderId, paymentKey: `key-${order.orderId}`, amount: 20})).code, 'applicationRemoved');
+  assert.equal(provider.posts.length, 0);
+  assert.equal(await db.application.count({where: {userId: s.id}}), 0);
+  // The same account can save a draft and pay for the same program again, under a new order.
   const again = await beginApplicationCheckout(p7, s.form, REDUCE);
-  assert.ok(again.orderId && again.amount === 20, JSON.stringify(again));
+  assert.ok(again.orderId && again.orderId !== order.orderId && again.amount === 20, JSON.stringify(again));
+  assert.equal(await db.applicationCheckout.count({where: {userId: s.id}}), 2);
 
   // A waived application: the use comes back too, and an unsettled payment row of that account is never touched.
   const w = await student('deletedwaived');

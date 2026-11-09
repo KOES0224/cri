@@ -49,7 +49,7 @@ export default function ApplicationsTable({ initialApplications }: { initialAppl
   const filteredApplications = applications;
 
   const handleDelete = async (appId: string) => {
-    if (!confirm("Are you sure you want to permanently delete this application and all associated steps? This action cannot be undone.")) return;
+    if (!confirm("Are you sure you want to permanently delete this application and all associated steps? This action cannot be undone.\n\nIf its application fee was paid, deleting it does not refund the payment: refund it in the Toss Payments admin if needed (the spreadsheet view shows the order number).")) return;
     
     // Optimistic delete
     const previous = applications;

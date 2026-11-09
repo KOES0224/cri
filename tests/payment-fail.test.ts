@@ -17,9 +17,10 @@ test('a failure code from the payment window is grouped into what the payer can 
 });
 
 test('admissions hears about failures that are not the payer\'s choice or card', () => {
-  // The provider stopped payments for the merchant (numeric code), an unsupported currency, or a code we do not know.
-  for (const code of ['2003', 'UNKNOWN_X', 'NOT_SUPPORTED_CARD_TYPE']) assert.equal(failureNeedsReport(code), true, code);
-  for (const code of ['', 'PAY_PROCESS_CANCELED', 'USER_CANCEL', 'PAY_PROCESS_ABORTED', 'REJECT_CARD_COMPANY', 'EXCEED_MAX_AMOUNT', 'INVALID_CARD_NUMBER']) assert.equal(failureNeedsReport(code), false, code);
+  // The provider stopped payments for the merchant (numeric code), or a code we do not know.
+  for (const code of ['2003', 'UNKNOWN_X']) assert.equal(failureNeedsReport(code), true, code);
+  // A card that cannot pay in dollars is the payer's card, like a decline: no alarm.
+  for (const code of ['', 'PAY_PROCESS_CANCELED', 'USER_CANCEL', 'PAY_PROCESS_ABORTED', 'REJECT_CARD_COMPANY', 'EXCEED_MAX_AMOUNT', 'INVALID_CARD_NUMBER', 'NOT_SUPPORTED_CARD_TYPE']) assert.equal(failureNeedsReport(code), false, code);
 });
 
 test('a code from the address bar is reduced to letters, digits and underscores', () => {

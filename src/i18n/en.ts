@@ -813,6 +813,7 @@ export const en = {
       feeCodeRate: "Too many attempts. Please wait a few minutes and try again.",
       feeCodeWaives: "This code covers the whole fee. Apply it again, then submit without payment.",
       feeCodeLapsed: "The referral code on this order can no longer be used, and you have not been charged. Go back to your application to continue.",
+      applicationRemoved: "This application was removed by admissions. If you were charged for it and have not heard from us, contact support@cri.kr with your order reference.",
       paymentSuperseded: "This payment session is no longer active and you have not been charged. Go back to your application and pay again.",
       paymentPending: "We're still confirming this payment. Please don't pay again.",
       checkoutFailed: "Unable to prepare checkout. Your payment has not been started. Please try again.",

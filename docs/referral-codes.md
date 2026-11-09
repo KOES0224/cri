@@ -16,28 +16,37 @@ Admin → **Referral codes** (`/dashboard/fee-codes`).
 - **Uses allowed** and **Last valid day (KST)** are optional limits. The code works through the end of that day in Korea;
   a day that has already passed is refused.
 - **Edit** changes who the code is for, the note, the uses allowed and the last valid day (extend a code mid-season
-  instead of handing out a new one). The code text and the amount are fixed once created.
+  instead of handing out a new one). The code text and the amount are fixed once created. On an expired code the note
+  and the partner can be corrected with the day left as it is; changing the day to a later one, or emptying it, makes
+  the code usable again.
 - A code is never deleted, so past applications keep theirs. **Switch off** stops new use.
-- The number under **Used** links to the applications that used the code (the spreadsheet view, whose search also finds
-  codes). Deleting an application gives its use back.
+- The number under **Used** links to the spreadsheet view filtered to exactly the applications recorded with the code
+  (the sheet's search box also finds codes). Deleting an application in the admin gives its use back. Uses are not
+  given back when a whole user account is deleted or when the payment-review account's tests are cleaned up, and
+  that account's applications are not listed in the sheet: raise **Uses allowed** with Edit if a limited code was
+  used in a test.
 
 Choosing code text: anyone who learns a code can use it, and a short name such as `ABC` can be guessed. Prefer the
 partner's name plus a few random characters (`ABC-7KQ2`) or a "Suggest" code, and give waiving codes a use limit or a
 last valid day when the partner's numbers are known.
 
-Several codes at once: `npx tsx scripts/referral-codes.ts --file codes.json` shows what would be created,
+Several codes at once: `npx tsx scripts/referral-codes.ts --file ~/cri-codes.json` shows what would be created,
 `--apply` creates them; without `--file` it lists the codes and their use. The file format is in the script's header.
+Keep that file outside this repository (the script refuses one inside it): the repository is public, and partner
+names and codes must never be committed.
 
 ## What the applicant sees
 
 - "Have a referral code?" in the order summary of the last step opens the field. A code is checked when Apply (or
-  Enter) is pressed: ten tries per ten minutes per account.
+  Enter) is pressed: ten tries per ten minutes per account. Reloads that re-check a code that works do not use up
+  tries; misses always do, so codes cannot be guessed quickly.
 - Reduced fee: the summary shows the code, the reduction and the new total; the Pay button and the payment window
   charge that total.
 - Fee waived: the payment form disappears and the button reads "Submit application".
-- A code typed but not applied stops Pay with a reminder, so nobody pays the full fee by oversight.
+- A code typed but not applied stops Pay with a reminder, so nobody pays the full fee by oversight. Text the form has
+  already refused does not: the applicant was told to continue without it.
 - The applied code is remembered for the tab and the account. On another device it comes back from the applicant's own
-  unpaid order, if they had pressed Pay with it.
+  unpaid order, if they had pressed Pay with it. A code the applicant removed stays removed in that tab.
 - If a code stops working (switched off, expired, used up) between applying it and paying or submitting, the form
   removes it, says so, and shows the full fee before anything is charged.
 
@@ -57,7 +66,9 @@ Several codes at once: `npx tsx scripts/referral-codes.ts --file codes.json` sho
   the applicant's receipt mention it.
 - A reduced-fee code with a use limit can go slightly over the limit if several people start paying at the same
   moment: someone who has already paid the reduced fee is never refused afterwards.
-- `usedCount` is the number of applications on file that used the code: deleting an application in the admin lowers it.
+- `usedCount` goes up when an application is recorded with the code and down when that application is deleted with
+  the admin's delete button. Other ways an application disappears (deleting the user, the review-account cleanup
+  script) leave it as it is.
 
 ## Tests
 

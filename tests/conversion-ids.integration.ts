@@ -22,7 +22,7 @@ require.cache[require.resolve('../src/lib/meta/capi')] = {exports: {
   sendMetaEvent: async (event: {name: string; eventId: string}) => { calls.meta.push({name: event.name, eventId: event.eventId}); return {data: {}}; },
 }} as any;
 const {prisma: db} = require('../src/lib/prisma') as {prisma: PrismaClient};
-const {submitApplicationWithoutFee} = require('../src/app/actions/payment');
+const {beginApplicationCheckout, submitApplicationWithoutFee} = require('../src/app/actions/payment');
 const {submitContactForm} = require('../src/app/actions/contact');
 const {saveApplicationDraft} = require('../src/app/actions/applicationDrafts');
 const {checkFeeCode} = require('../src/app/actions/feeCodes');
@@ -118,6 +118,8 @@ test('with the fee off, a payment that reached the provider still has to be sett
     await db.applicationCheckout.deleteMany({where: {userId: user}});
     const submitted = await submitApplicationWithoutFee(program, keyedForm);
     assert.ok(submitted.success && !submitted.duplicate, JSON.stringify(submitted));
+    // A page left open from a fee period that presses Pay is told the fee is off (the form then reloads itself).
+    assert.equal((await beginApplicationCheckout(program, keyedForm)).code, 'feeDisabled');
     // Codes are only asked for while the fee is on: nothing is looked up, whatever is sent.
     assert.deepEqual(await checkFeeCode(code), {ok: false, code: 'feeCodeInvalid'});
     assert.deepEqual(await checkFeeCode(code, true), {ok: false, code: 'feeCodeInvalid'});
