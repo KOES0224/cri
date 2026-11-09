@@ -6,6 +6,9 @@ import { APPLICATION_CHARGE } from "./application-fee";
 export interface TossPaymentConfirmResult {
   success: boolean;
   error?: string;
+  /** Toss's own error code and message when it rejected the confirmation (e.g. INVALID_API_KEY). Not secret; for logs and the review account. */
+  providerCode?: string;
+  providerMessage?: string;
   paymentData?: {
     paymentKey: string;
     orderId: string;
@@ -65,17 +68,24 @@ export async function confirmTossPayment(
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Toss Payments confirmation failed", response.status);
+      // Toss's code and message say why (wrong key set, card declined, terminal not registered…); neither is secret.
+      const providerCode = typeof data?.code === "string" ? data.code.slice(0, 80) : undefined;
+      const providerMessage = typeof data?.message === "string" ? data.message.slice(0, 300) : undefined;
+      console.error("Toss Payments confirmation failed", response.status, providerCode, providerMessage);
       return {
         success: false,
         error: "Payment could not be confirmed. Contact support if your account shows a charge.",
+        providerCode,
+        providerMessage,
       };
     }
 
     if (data.status !== "DONE") {
+      console.error("Toss Payments confirmation returned a non-final status", data.status);
       return {
         success: false,
         error: "The payment has not completed. Check your payment provider before retrying.",
+        providerCode: typeof data.status === "string" ? `STATUS_${data.status}` : undefined,
       };
     }
 
