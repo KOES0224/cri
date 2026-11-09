@@ -11,8 +11,9 @@ import { applicationFeeFor, isPaymentReviewer } from '@/lib/payment-review';
 import { applicationSchema } from '@/lib/application-validation';
 import { allowRequest } from '@/lib/request-limit';
 import { confirmTossPayment, findConfirmedTossPayment, tossPaymentState } from '@/lib/toss';
-import { SETTLE_GRACE_MS, confirmRefusalIsFinal, confirmSaysNoPayment, nextCheckoutStep } from '@/lib/checkout-policy';
+import { SETTLE_GRACE_MS, checkoutLocksForm, confirmRefusalIsFinal, confirmSaysNoPayment, nextCheckoutStep } from '@/lib/checkout-policy';
 import type { PaidOrderResult, PaymentResult } from '@/lib/payment-result';
+import { feeCodeProblem, feeWithCode, normalizeFeeCode } from '@/lib/fee-code';
 import { revalidatePath } from 'next/cache';
 import { notifyApplicationReceived, notifyPaymentFormProblem, notifyPaymentNeedsReview, sendApplicationConfirmation } from '@/lib/notify';
 import { META_VALUES, applicantRegion, applicantTypeFromRole, programContent, type MetaCustomData } from '@/lib/meta/config';
@@ -36,7 +37,7 @@ function applicationData(program: ProgramForContent, role: string | null | undef
 }
 
 // `error` stays English for existing callers; `code` names a key in t.apply.errors so the form can show the visitor's language.
-export async function beginApplicationCheckout(programId: string, input: unknown) {
+export async function beginApplicationCheckout(programId: string, input: unknown, partnerCode?: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.', code: 'applySignIn' };
   const { feeEnabled, reviewer } = await applicationFeeFor(session.user.id);
@@ -55,6 +56,19 @@ export async function beginApplicationCheckout(programId: string, input: unknown
     if (!program || admissionState(program) !== 'OPEN') return { error: 'This program is no longer accepting applications. Please choose an available program.', code: 'programClosed' };
     if (!document) return { error: 'Please upload your CV again using this account.', code: 'resumeMissing' };
     if (existing) return { error: 'You have already applied to this program. Check your dashboard.', code: 'alreadyApplied' };
+    // A referral code prices the order. It is looked up again here, whatever the form showed; the use is counted when
+    // the application is recorded.
+    let due: number = APPLICATION_CHARGE.amount, feeCode: string | null = null;
+    if (partnerCode) {
+      const normalized = normalizeFeeCode(partnerCode);
+      const row = normalized ? await prisma.feeCode.findUnique({ where: { code: normalized } }) : null;
+      const problem = feeCodeProblem(row);
+      if (problem || !row) return { error: 'This referral code cannot be used. Remove it or check it with the organization that gave it to you.', code: problem === 'expired' ? 'feeCodeExpired' : problem === 'usedUp' ? 'feeCodeUsedUp' : 'feeCodeInvalid' };
+      due = feeWithCode(row, APPLICATION_CHARGE.amount);
+      feeCode = row.code;
+      // Nothing to charge: the form sends a waived application through the no-payment path instead.
+      if (due === 0) return { error: 'This referral code waives the application fee. Submit the application without payment.', code: 'feeCodeWaives' };
+    }
     // An earlier attempt that reached the provider is judged by the provider's record of that payment. It is read
     // before the transaction so the lock below is never held across a network call (rules: src/lib/checkout-policy.ts).
     const earlier = await prisma.applicationCheckout.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { id: true, status: true, paymentKey: true, amount: true, currency: true } });
@@ -71,7 +85,7 @@ export async function beginApplicationCheckout(programId: string, input: unknown
       const pending = await tx.applicationCheckout.findUnique({ where: { userId_programId: { userId: session.user.id, programId } } });
       // A pending checkout saved under an older form shape (e.g. before residenceCountry existed) counts as changed.
       const previous = pending ? applicationSchema.safeParse(pending.formData) : null;
-      const step = nextCheckoutStep(pending, { unchanged: Boolean(previous?.success && JSON.stringify(previous.data) === JSON.stringify(parsed.data)), charge: APPLICATION_CHARGE, now: new Date(), keyState });
+      const step = nextCheckoutStep(pending, { unchanged: Boolean(previous?.success && JSON.stringify(previous.data) === JSON.stringify(parsed.data)), charge: { amount: due, currency: APPLICATION_CHARGE.currency }, now: new Date(), keyState });
       if (step === 'completed') throw new Error('Already completed');
       if (step === 'reuse') return pending!;
       if (step === 'review' || step === 'recover') throw new Error('CHECKOUT_REVIEW');
@@ -82,7 +96,7 @@ export async function beginApplicationCheckout(programId: string, input: unknown
       }
       return tx.applicationCheckout.create({ data: {
         id: `CRI_${randomUUID()}`, userId: session.user.id, programId, formData: parsed.data,
-        amount: APPLICATION_CHARGE.amount, currency: APPLICATION_CHARGE.currency, keyTracked: true,
+        amount: due, currency: APPLICATION_CHARGE.currency, keyTracked: true, feeCode,
         expiresAt: new Date(Date.now() + 30 * 60 * 1000),
       } });
     });
@@ -109,7 +123,8 @@ export async function finalizePaidApplication({ paymentKey: receivedKey, orderId
     const order = await prisma.applicationCheckout.findUnique({ where: { id: orderId } });
     // The order was replaced by a newer attempt (another tab, or Pay pressed again): this one is never confirmed, so nothing is charged for it.
     if (!order) return { error: 'This payment session is no longer active and you have not been charged. Go back to your application and pay again.', code: 'paymentSuperseded' };
-    if (order.userId !== session.user.id || order.amount !== amount || amount !== APPLICATION_CHARGE.amount || order.currency !== APPLICATION_CHARGE.currency) return { error: 'Payment details could not be verified. Contact support if you have a receipt.', code: 'paymentMismatch' };
+    // The order row is the price: the normal fee, or less when it was made with a referral code. Never more, never zero.
+    if (order.userId !== session.user.id || order.amount !== amount || order.amount <= 0 || order.amount > APPLICATION_CHARGE.amount || order.currency !== APPLICATION_CHARGE.currency) return { error: 'Payment details could not be verified. Contact support if you have a receipt.', code: 'paymentMismatch' };
     const reviewer = await isPaymentReviewer(session.user.id);
     if (order.status === 'COMPLETED' && order.applicationId) return completedOrder(order.id, order.applicationId, reviewer);
     const program = await prisma.program.findUnique({ where: { id: order.programId }, include: { professors: PROGRAM_CONTENT.select.professors } });
@@ -168,7 +183,7 @@ export async function finalizePaidApplication({ paymentKey: receivedKey, orderId
       if (locked.applicationId) return locked.applicationId;
       const app = await tx.application.create({ data: {
         userId: session.user.id, programId: order.programId, status: 'PENDING', stage: 'REVIEW', expectedWaitDays: 7,
-        content: JSON.stringify({ ...(order.formData as Record<string, unknown>), payment: { feeStatus: 'PAID', amount: payment.totalAmount, currency: payment.currency, orderId, receiptUrl: payment.receiptUrl, approvedAt: payment.approvedAt, method: payment.method } }),
+        content: JSON.stringify({ ...(order.formData as Record<string, unknown>), payment: { feeStatus: 'PAID', amount: payment.totalAmount, currency: payment.currency, orderId, receiptUrl: payment.receiptUrl, approvedAt: payment.approvedAt, method: payment.method, ...(order.feeCode ? { code: order.feeCode, normalFee: APPLICATION_CHARGE.amount } : {}) } }),
         steps: { create: [
           { title: 'Application & Fee Submitted', status: 'COMPLETED', order: 1, date: new Date() },
           // Not "in progress" yet: the terms and the refund policy turn on when admissions actually starts examining
@@ -180,6 +195,8 @@ export async function finalizePaidApplication({ paymentKey: receivedKey, orderId
       } });
       await tx.applicationCheckout.update({ where: { id: orderId }, data: { status: 'COMPLETED', applicationId: app.id, formData: {} } });
       await tx.applicationDraft.deleteMany({where: {userId: session.user.id, programId: order.programId}});
+      // The reduced fee is already paid, so the use is counted without re-checking the code's limit or expiry.
+      if (order.feeCode) await tx.$executeRaw`UPDATE "FeeCode" SET "usedCount" = "usedCount" + 1, "updatedAt" = now() WHERE "code" = ${order.feeCode}`;
       created = true;
       return app.id;
     });
@@ -187,7 +204,7 @@ export async function finalizePaidApplication({ paymentKey: receivedKey, orderId
     // Best effort: the application and charge are already committed.
     let emailed = false;
     if (created) try {
-      const details = { applicationId, programTitle: program?.title || 'CRI program', accountEmail: session.user.email, form: order.formData as Record<string, unknown>, payment: { orderId, amount: payment.totalAmount, currency: payment.currency, receiptUrl: payment.receiptUrl, method: payment.method, approvedAt: payment.approvedAt }, test: reviewer };
+      const details = { applicationId, programTitle: program?.title || 'CRI program', accountEmail: session.user.email, form: order.formData as Record<string, unknown>, payment: { orderId, amount: payment.totalAmount, currency: payment.currency, receiptUrl: payment.receiptUrl, method: payment.method, approvedAt: payment.approvedAt }, feeCode: order.feeCode, test: reviewer };
       const [, confirmation] = await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);
       emailed = Boolean(confirmation?.sent);
     } catch { console.error('Application saved; notification emails failed.'); }
@@ -328,13 +345,17 @@ export async function resolvePendingCheckout(programId: string) {
 }
 
 /**
- * Free submission path, used while APPLICATION_FEE_ENABLED is off (except for the payment-review account). Same validation and admission
- * checks as the paid checkout; the application is created directly with the fee marked as waived.
+ * Submission without a payment: while APPLICATION_FEE_ENABLED is off (except for the payment-review account), or,
+ * with the fee on, for an applicant whose referral code waives it. Same validation and admission checks as the paid
+ * checkout; the application is created directly with the fee marked as waived.
  */
-export async function submitApplicationWithoutFee(programId: string, input: unknown) {
+export async function submitApplicationWithoutFee(programId: string, input: unknown, partnerCode?: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !canApply(session.user.role)) return { error: 'Sign in with a student or parent account before applying.', code: 'applySignIn' };
-  if ((await applicationFeeFor(session.user.id)).feeEnabled) return { error: 'An application fee is required for this program. Please continue to payment.', code: 'feeRequired' };
+  const { feeEnabled, reviewer } = await applicationFeeFor(session.user.id);
+  // With the fee on, only a referral code that waives it opens this path. It is checked and counted in the transaction below.
+  const waiverCode = feeEnabled ? normalizeFeeCode(partnerCode) : null;
+  if (feeEnabled && !waiverCode) return { error: 'An application fee is required for this program. Please continue to payment.', code: 'feeRequired' };
   const parsed = applicationSchema.safeParse(input);
   if (!parsed.success) { const field = parsed.error.issues[0]?.path.join('.') || 'application'; return { error: `Check the application fields and word limits: ${field}.`, code: `invalidFields:${field}` }; }
   try {
@@ -352,9 +373,18 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${session.user.id + ':' + programId}))`;
       const again = await tx.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { id: true } });
       if (again) return { id: again.id, created: false };
+      if (waiverCode) {
+        // A payment that already reached the provider for this application is settled first, never waived over.
+        const unsettled = await tx.applicationCheckout.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { status: true, paymentKey: true, keyTracked: true } });
+        if (checkoutLocksForm(unsettled)) throw new Error('CHECKOUT_REVIEW');
+        // One statement checks the code and counts the use, so a limited code cannot be over-used by submissions that
+        // arrive together. Only a code that waives the whole fee qualifies.
+        const used = await tx.$executeRaw`UPDATE "FeeCode" SET "usedCount" = "usedCount" + 1, "updatedAt" = now() WHERE "code" = ${waiverCode} AND "active" = true AND "feeAmount" = 0 AND ("expiresAt" IS NULL OR "expiresAt" > now()) AND ("maxUses" IS NULL OR "usedCount" < "maxUses")`;
+        if (used !== 1) throw new Error('FEE_CODE');
+      }
       const app = await tx.application.create({ data: {
         userId: session.user.id, programId, status: 'PENDING', stage: 'REVIEW', expectedWaitDays: 7,
-        content: JSON.stringify({ ...parsed.data, payment: { feeStatus: 'WAIVED', amount: 0, currency: 'USD', submittedAt: submittedAt.toISOString() } }),
+        content: JSON.stringify({ ...parsed.data, payment: { feeStatus: 'WAIVED', amount: 0, currency: 'USD', submittedAt: submittedAt.toISOString(), ...(waiverCode ? { code: waiverCode, normalFee: APPLICATION_CHARGE.amount } : {}) } }),
         steps: { create: [
           { title: 'Application Submitted', status: 'COMPLETED', order: 1, date: submittedAt },
           { title: 'Admissions Review', status: 'IN_PROGRESS', order: 2 },
@@ -372,15 +402,19 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
     if (!saved.created) return { success: true, applicationId: saved.id, duplicate: true };
     const applicationId = saved.id;
     try {
-      const details = { applicationId, programTitle: program.title, accountEmail: session.user.email, form: parsed.data as Record<string, unknown>, payment: null };
+      const details = { applicationId, programTitle: program.title, accountEmail: session.user.email, form: parsed.data as Record<string, unknown>, payment: null, feeCode: waiverCode, test: reviewer };
       await Promise.all([notifyApplicationReceived(details), sendApplicationConfirmation(details)]);
     } catch { console.error('Application saved; notification emails failed.'); }
     await syncContactFromApplicationBestEffort(applicationId, 'APPLIED');
     revalidatePath('/dashboard', 'layout');
+    // The payment-review account is not a prospect: no ad-measurement events.
+    if (reviewer) return { success: true, applicationId };
     // The application id is the event id, shared with the browser's pixel call.
     const { data: meta } = await sendMetaEvent({ name: 'SubmitApplication', eventId: applicationId, person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, META_VALUES.submitApplication ? { value: META_VALUES.submitApplication, currency: 'USD' } : undefined) });
     return { success: true, applicationId, tracking: meta, eventId: applicationId };
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === 'FEE_CODE') return { error: 'This referral code cannot be used. Remove it or check it with the organization that gave it to you.', code: 'feeCodeInvalid' };
+    if (error instanceof Error && error.message === 'CHECKOUT_REVIEW') return { error: 'Your earlier checkout needs review. Contact admissions before paying again so we can check its payment status.', code: 'checkoutReview' };
     return { error: 'We could not submit your application. Your draft is saved; please try again or contact support@cri.kr.', code: 'submitFailed' };
   }
 }

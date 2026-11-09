@@ -67,6 +67,8 @@ type PaidApplication = {
   accountEmail?: string | null;
   form: Record<string, unknown>;
   payment: { orderId: string; amount: number; currency: string; receiptUrl?: string | null; method?: string | null; approvedAt?: string | null } | null;
+  /** Referral code the fee was waived or reduced with, if any. */
+  feeCode?: string | null;
   /** Submitted by the payment-gateway review account: subjects are labelled so nobody processes it. */
   test?: boolean;
 };
@@ -94,7 +96,7 @@ export async function notifyApplicationReceived(app: PaidApplication) {
     `Area of interest: ${str(f.areaOfInterest) || '-'}`,
     `First-choice professor: ${str(f.firstChoiceProfessor) || '-'}`,
     ``,
-    app.payment ? `Fee: ${app.payment.amount.toLocaleString()} ${app.payment.currency} · order ${app.payment.orderId}${app.payment.receiptUrl ? ` · receipt ${app.payment.receiptUrl}` : ''}` : `Fee: none (waived)`,
+    app.payment ? `Fee: ${app.payment.amount.toLocaleString()} ${app.payment.currency} · order ${app.payment.orderId}${app.payment.receiptUrl ? ` · receipt ${app.payment.receiptUrl}` : ''}${app.feeCode ? ` · reduced with referral code ${app.feeCode}` : ''}` : app.feeCode ? `Fee: waived with referral code ${app.feeCode}` : `Fee: none (waived)`,
     ``,
     `Review: ${SITE_URL}/dashboard/applications-admin`,
   ].filter((line): line is string => line !== null);
@@ -171,14 +173,14 @@ export async function sendApplicationConfirmation(app: PaidApplication) {
     `Hi ${student},`,
     ``,
     paid ? `Your payment was received and your application to "${app.programTitle}" has been submitted to CRI admissions.` : `Thank you. Your application to "${app.programTitle}" has been received.`,
-    ...(paid ? [``, ...paid] : []),
+    ...(paid ? [``, ...paid, ...(app.feeCode ? [`Referral code applied: ${app.feeCode}`] : [])] : []),
     ``,
     `What happens next:`,
     `1. Admissions reviews the application for research readiness and fit (usually within about a week).`,
     `2. We may invite you to a short admissions interview.`,
     `3. You receive a decision by email and in your CRI portal.`,
     ``,
-    paid ? `Tuition is separate and is not included in this payment. It is due only after admission.` : `There was no application fee. Program tuition is only due after admission.`,
+    paid ? `Tuition is separate and is not included in this payment. It is due only after admission.` : app.feeCode ? `The application fee was waived with your referral code (${app.feeCode}). Program tuition is only due after admission.` : `There was no application fee. Program tuition is only due after admission.`,
     ``,
     `Track your application: ${SITE_URL}/dashboard/applications`,
     ...(paid ? [`Refunds follow our Refund Policy: ${SITE_URL}/refunds`, `Terms of Service: ${SITE_URL}/terms`, ``, `Don't recognize this charge, or have a question? Reply to this email and we'll help. Keep this email as your receipt.`] : [`Questions: reply to this email or write to support@cri.kr.`]),

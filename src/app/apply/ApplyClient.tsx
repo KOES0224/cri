@@ -5,6 +5,7 @@ import Link from "@/i18n/link";
 import { Lock, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { beginApplicationCheckout, reportPaymentProblem, resolvePendingCheckout, submitApplicationWithoutFee } from '@/app/actions/payment';
+import { checkFeeCode } from '@/app/actions/feeCodes';
 import { saveApplicationDraft } from '@/app/actions/applicationDrafts';
 import { applicationErrorMessage, applicationErrors, applicationLabels, personalFields } from '@/lib/application-validation';
 import { APPLICATION_CHARGE, APPLICATION_CHARGE_LABEL, APPLICATION_CHARGE_PRICE, TOSS_AGREEMENT_VARIANT_KEY } from '@/lib/application-fee';
@@ -54,6 +55,47 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   const [widgetState, setWidgetState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   // The button says what the click does: pay by card here, or continue to PayPal's own page.
   const [payMethod, setPayMethod] = useState<'card' | 'paypal'>('card');
+  // Referral code: given by a school, counselor or agency, it reduces the fee or waives it. What the form shows is only
+  // a preview; the server looks the code up again when the order is made or the application is submitted.
+  const [feeCode, setFeeCode] = useState<{ code: string; feeAmount: number } | null>(null);
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [codeInput, setCodeInput] = useState('');
+  const [codeBusy, setCodeBusy] = useState(false);
+  const [codeError, setCodeError] = useState('');
+  const due = feeCode ? feeCode.feeAmount : APPLICATION_CHARGE.amount;
+  const waived = feeEnabled && due === 0;
+  const dollars = (amount: number) => `$${amount.toFixed(2)}`;
+  // Kept for this tab, so coming back after a declined card does not quietly fall back to the full fee.
+  const codeStoreKey = `cri_fee_code_${program.id}`;
+  const rememberCode = (value: { code: string; feeAmount: number } | null) => {
+    try { if (value) sessionStorage.setItem(codeStoreKey, JSON.stringify(value)); else sessionStorage.removeItem(codeStoreKey); } catch {}
+  };
+  // True while a remembered code is being re-checked: Pay waits, so the order is never priced without it.
+  const [codeRestoring, setCodeRestoring] = useState(false);
+  const dueRef = useRef(due);
+  useEffect(() => { dueRef.current = due; }, [due]);
+  useEffect(() => {
+    if (!feeEnabled) return;
+    let stored: { code: string; feeAmount: number } | null = null;
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem(codeStoreKey) || 'null');
+      if (parsed && typeof parsed.code === 'string' && Number.isInteger(parsed.feeAmount) && parsed.feeAmount >= 0 && parsed.feeAmount < APPLICATION_CHARGE.amount) stored = { code: parsed.code, feeAmount: parsed.feeAmount };
+    } catch {}
+    if (!stored) return;
+    const remembered = stored;
+    let active = true;
+    const timer = window.setTimeout(() => { if (active) setCodeRestoring(true); }, 0);
+    const finish = (value: { code: string; feeAmount: number } | null) => { if (!active) return; setFeeCode(value); setCodeRestoring(false); };
+    checkFeeCode(remembered.code, true).then(result => {
+      if (!active) return;
+      if (result.ok) { const fresh = { code: result.code, feeAmount: result.feeAmount }; try { sessionStorage.setItem(codeStoreKey, JSON.stringify(fresh)); } catch {} finish(fresh); return; }
+      // Only a definite "this code no longer works" forgets it. A busy or failed check keeps what was applied: the
+      // server prices the order again at Pay, and the payment form charges exactly that.
+      if (['feeCodeInvalid', 'feeCodeExpired', 'feeCodeUsedUp'].includes(result.code)) { try { sessionStorage.removeItem(codeStoreKey); } catch {} finish(null); }
+      else finish(remembered);
+    }).catch(() => finish(remembered));
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [feeEnabled, codeStoreKey]);
   // Per-instance ids: Next can keep a hidden copy of the page, and the widget mounts by CSS selector.
   const widgetId = useId();
   // Attribute selectors need no escaping, so nothing browser-only runs during server rendering.
@@ -110,7 +152,8 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
-    if (step !== 3 || !feeEnabled || !paymentAvailable || !key) return;
+    // A code that waives the fee leaves nothing to pay: no payment form is shown.
+    if (step !== 3 || !feeEnabled || waived || !paymentAvailable || !key) return;
     let cancelled = false;
     let methods: PaymentMethodsUi | undefined, agreement: Awaited<ReturnType<TossWidgets['renderAgreement']>> | undefined;
     setWidgetState('loading');
@@ -118,7 +161,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       try {
         const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
         const widgets = (await loadTossPayments(key)).widgets({ customerKey: user.id });
-        await widgets.setAmount({ currency: APPLICATION_CHARGE.currency, value: APPLICATION_CHARGE.amount });
+        await widgets.setAmount({ currency: APPLICATION_CHARGE.currency, value: dueRef.current });
         if (cancelled) return;
         [methods, agreement] = await Promise.all([
           widgets.renderPaymentMethods({ selector: methodsSelector, variantKey: paymentVariantKey }),
@@ -137,7 +180,31 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       }
     })();
     return () => { cancelled = true; widgetRef.current = null; try { methods?.destroy(); agreement?.destroy(); } catch {} };
-  }, [step, feeEnabled, paymentAvailable, user.id, methodsSelector, agreementSelector, paymentVariantKey]);
+  }, [step, feeEnabled, waived, paymentAvailable, user.id, methodsSelector, agreementSelector, paymentVariantKey, program.id, reviewMode]);
+  // A reduced fee changes the amount the already-rendered payment form will charge.
+  useEffect(() => {
+    const current = widgetRef.current;
+    if (!current || widgetState !== 'ready' || waived) return;
+    void current.widgets.setAmount({ currency: APPLICATION_CHARGE.currency, value: due }).catch(() => {});
+  }, [due, widgetState, waived]);
+
+  async function applyCode() {
+    // Never while a payment or submission is starting: the order must be priced with the code the form showed.
+    if (codeBusy || busy || !codeInput.trim()) return;
+    setCodeBusy(true); setCodeError('');
+    try {
+      const result = await checkFeeCode(codeInput);
+      if (!result.ok) { setCodeError(result.code === 'feeCodeRetry' ? copy.pay.codeFailed : errorText(result.code)); return; }
+      const applied = { code: result.code, feeAmount: result.feeAmount };
+      setFeeCode(applied); setCodeInput(''); setCodeOpen(false); setNotice('');
+      rememberCode(applied);
+    } catch { setCodeError(copy.pay.codeFailed); }
+    finally { setCodeBusy(false); }
+  }
+  function removeCode() {
+    setFeeCode(null); setCodeError('');
+    rememberCode(null);
+  }
 
   const persist = useCallback((snapshot: Record<string, string>, currentStep: number, currentRevision: number) => {
     const task = queue.current.then(async () => {
@@ -201,7 +268,8 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     } catch (error) { setErrors(previous => ({ ...previous, resumeUrl: error instanceof Error && error.message ? errorText(error.message) : copy.notices.uploadFailed })); }
     finally { setUploading(false); }
   }
-  async function submitFree() {
+  // Without a payment: the fee is off, or a referral code waives it (the code is checked and counted on the server).
+  async function submitFree(code?: string) {
     if (paymentLock.current) return;
     const issues = applicationErrors(form);
     if (Object.keys(issues).length) { setErrors(issues); setStep(personalFields.includes(Object.keys(issues)[0]) ? 1 : 2); setNotice(copy.notices.completeBeforeSubmit); return; }
@@ -209,9 +277,10 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     setBusy(true); setNotice('');
     try {
       if (!await persist(form, step, revision.current)) throw new Error(copy.notices.saveBeforeSubmit);
-      const result = await submitApplicationWithoutFee(program.id, form);
+      const result = await submitApplicationWithoutFee(program.id, form, code);
       if (result.error || !result.applicationId) throw new Error(actionText(result, copy.notices.submitFailed));
       savedRevision.current = revision.current;
+      rememberCode(null);
       // One conversion per application: a repeat submission (already applied, or a second tab) reports nothing. The
       // application id is the transaction id for GTM and the event id for Meta, so every platform can deduplicate.
       if (!reviewMode && !result.duplicate) trackEvent('application_submitted', { program_id: program.id, program_title: program.title, value: 0, currency: 'USD', transaction_id: result.applicationId });
@@ -229,13 +298,15 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       if (!checkoutRef.current && !await persist(form, step, revision.current)) throw new Error(copy.notices.saveBeforePay);
       const widget = widgetRef.current;
       if (!paymentAvailable || !widget) throw new Error(copy.notices.paymentUnavailable);
-      const order = await beginApplicationCheckout(program.id, form);
+      const order = await beginApplicationCheckout(program.id, form, feeCode?.code);
       // An earlier payment for this application had gone through unrecorded; it is recorded now, with no second charge.
       if ('alreadyPaid' in order && order.alreadyPaid) { savedRevision.current = revision.current; router.replace('/dashboard/applications'); return; }
       if (order.error || !order.orderId) throw new Error(actionText(order, copy.notices.preparePaymentFailed));
       checkoutRef.current = true; setCheckoutStarted(true);
       if (!reviewMode) trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
       if (!reviewMode && order.tracking) metaTrack('InitiateCheckout', order.tracking, order.eventId);
+      // The payment form charges exactly what the server priced, whatever the form last showed.
+      await widget.widgets.setAmount({ currency: order.currency!, value: order.amount! });
       // PayPal (if offered) needs the order contents; cards do not.
       const selected = await widget.methods.getSelectedPaymentMethod().catch(() => null);
       const paypal = selected?.code === 'PAYPAL';
@@ -281,7 +352,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
     {!checkoutStarted && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs"><span role="status" className={saveState === 'error' ? 'text-red-700' : 'text-slate-600'}>{saveState === 'saving' ? copy.saving : saveState === 'unsaved' ? copy.unsaved : saveState === 'error' ? saveError : savedAt ? copy.savedAt(new Date(savedAt).toLocaleTimeString()) : copy.autosave}</span><button type="button" onClick={() => void persist(form, step, revision.current)} disabled={saveState === 'saving' || busy} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-semibold disabled:opacity-50">{copy.saveDraft}</button></div>}
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"><h2 ref={titleRef} tabIndex={-1} className="mb-6 text-xl font-bold text-slate-900 outline-none">{copy.headings[step - 1]}</h2>
       {reviewMode && <div role="note" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">{copy.review.banner}</div>}
-      {step === 3 && feeEnabled && <p className="-mt-3 mb-5 text-sm text-slate-600">{copy.pay.lead}</p>}
+      {step === 3 && feeEnabled && !waived && <p className="-mt-3 mb-5 text-sm text-slate-600">{copy.pay.lead}</p>}
       {notice && !(step === 3 && feeEnabled) && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{notice}</div>}
       {step === 1 && <div className="grid gap-5 sm:grid-cols-2">
         {parentApplying && <p className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-950 sm:col-span-2">{copy.parentApplying.a}<strong>{copy.parentApplying.strong}</strong>{copy.parentApplying.b}</p>}
@@ -309,13 +380,31 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
               <div className="min-w-0"><p className="font-semibold text-slate-900">{copy.pay.item}</p><p className="mt-0.5 break-words text-sm text-slate-600">{program.title}</p><p className="mt-1 text-xs text-slate-500">{copy.pay.itemNote}</p></div>
               <p className="shrink-0 font-semibold tabular-nums text-slate-900">{APPLICATION_CHARGE_PRICE}</p>
             </div>
+            {feeCode && <div className="mt-3 flex items-start justify-between gap-4 text-sm">
+              <p className="min-w-0 break-words text-emerald-800">{copy.pay.codeApplied(feeCode.code)} {!checkoutStarted && <button type="button" onClick={removeCode} disabled={busy} className="ml-1 text-xs font-semibold text-slate-500 underline">{copy.pay.codeRemove}</button>}</p>
+              <p className="shrink-0 font-semibold tabular-nums text-emerald-800">−{dollars(APPLICATION_CHARGE.amount - due)}</p>
+            </div>}
             <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-slate-200 pt-4">
               <p className="font-semibold text-slate-900">{copy.pay.total}</p>
-              <p className="text-2xl font-bold tabular-nums text-slate-900">{APPLICATION_CHARGE_PRICE} <span className="text-sm font-semibold text-slate-500">{APPLICATION_CHARGE.currency}</span></p>
+              <p className="text-2xl font-bold tabular-nums text-slate-900">{dollars(due)} <span className="text-sm font-semibold text-slate-500">{APPLICATION_CHARGE.currency}</span></p>
             </div>
-            {user.email && <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500"><Mail aria-hidden className="h-3.5 w-3.5 shrink-0 text-slate-400" />{copy.pay.receipt(user.email)}</p>}
+            {waived && <p role="status" className="mt-2 text-sm text-emerald-800">{copy.pay.waivedNote}</p>}
+            {!waived && user.email && <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500"><Mail aria-hidden className="h-3.5 w-3.5 shrink-0 text-slate-400" />{copy.pay.receipt(user.email)}</p>}
+            {/* Behind a link, so nobody without a code feels they are missing a discount. */}
+            {!feeCode && !checkoutStarted && (codeOpen ? (
+              <div className="mt-4">
+                <label htmlFor={`${widgetId}code`} className="mb-1 block text-xs font-semibold text-slate-700">{copy.pay.codeLabel}</label>
+                <div className="flex gap-2">
+                  <input id={`${widgetId}code`} value={codeInput} onChange={event => { setCodeInput(event.target.value); setCodeError(''); }} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void applyCode(); } }} maxLength={32} autoCapitalize="characters" autoComplete="off" spellCheck={false} aria-invalid={Boolean(codeError)} aria-describedby={`${widgetId}codehelp`} className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm uppercase text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+                  <button type="button" onClick={() => void applyCode()} disabled={codeBusy || busy || !codeInput.trim()} className="shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 disabled:opacity-50">{codeBusy ? copy.pay.codeChecking : copy.pay.codeApply}</button>
+                </div>
+                <p id={`${widgetId}codehelp`} className={`mt-1 text-xs ${codeError ? 'text-red-700' : 'text-slate-500'}`} role={codeError ? 'alert' : undefined}>{codeError || copy.pay.codeHelp}</p>
+              </div>
+            ) : (
+              <button type="button" onClick={() => setCodeOpen(true)} className="mt-3 text-xs font-semibold text-blue-700 underline">{copy.pay.codeLink}</button>
+            ))}
           </div>
-          <div className="p-5 sm:p-6">
+          {!waived && <div className="p-5 sm:p-6">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{copy.pay.methodTitle}</h3>
             <div className="mt-3 rounded-xl border border-slate-200 p-1">
               {widgetState === 'loading' && <p role="status" className="px-3 py-6 text-center text-sm text-slate-500">{copy.widget.loading}</p>}
@@ -325,14 +414,14 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
             </div>
             {(locale === 'ko' || form.residenceCountry === 'KR') && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-950">{copy.pay.koreanCard}</p>}
             <p className="mt-3 flex gap-2 text-xs leading-relaxed text-slate-600"><Lock aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" /><span>{copy.pay.secure}</span></p>
-          </div>
+          </div>}
         </section>}
       </div>}
       {step === 3 && feeEnabled && notice && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{notice}</div>}
-      {step === 3 && feeEnabled && <p className="mt-6 text-xs leading-relaxed text-slate-600">{copy.pay.billed(`${APPLICATION_CHARGE_PRICE}`, COMPANY.legalName)}</p>}
-      <div className={`${step === 3 && feeEnabled ? 'mt-4' : 'mt-8'} flex flex-wrap items-center justify-between gap-3`}>{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable || widgetState !== 'ready' || earlierPayment !== 'none'} className={`${actionClass} inline-flex items-center justify-center gap-2`}><Lock aria-hidden className="h-4 w-4" />{busy ? copy.pay.processing : payMethod === 'paypal' ? copy.pay.continuePaypal : copy.pay.button(APPLICATION_CHARGE_PRICE)}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>
-      {step === 3 && feeEnabled && <div className="mt-3 space-y-1 text-right text-xs leading-relaxed text-slate-500">
-        <p>{payMethod === 'paypal' ? copy.pay.paypalHelper(APPLICATION_CHARGE_PRICE) : copy.pay.cardHelper}</p>
+      {step === 3 && feeEnabled && !waived && <p className="mt-6 text-xs leading-relaxed text-slate-600">{copy.pay.billed(dollars(due), COMPANY.legalName)}</p>}
+      <div className={`${step === 3 && feeEnabled ? 'mt-4' : 'mt-8'} flex flex-wrap items-center justify-between gap-3`}>{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled && waived ? <button type="button" onClick={() => void submitFree(feeCode?.code)} disabled={busy || codeBusy || codeRestoring || earlierPayment !== 'none'} className={actionClass}>{busy ? copy.free.submitting : copy.pay.submitWaived}</button> : feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || codeBusy || codeRestoring || !paymentAvailable || widgetState !== 'ready' || earlierPayment !== 'none'} className={`${actionClass} inline-flex items-center justify-center gap-2`}><Lock aria-hidden className="h-4 w-4" />{busy ? copy.pay.processing : payMethod === 'paypal' ? copy.pay.continuePaypal : copy.pay.button(dollars(due))}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>
+      {step === 3 && feeEnabled && !waived && <div className="mt-3 space-y-1 text-right text-xs leading-relaxed text-slate-500">
+        <p>{payMethod === 'paypal' ? copy.pay.paypalHelper(dollars(due)) : copy.pay.cardHelper}</p>
         <p>{copy.pay.legalA}<Link href="/terms" className="underline">{copy.pay.terms}</Link>{copy.pay.legalAnd}<Link href="/refunds" className="underline">{copy.pay.refunds}</Link>{copy.pay.legalB}<Link href="/privacy" className="underline">{copy.pay.privacy}</Link>{copy.pay.legalC}</p>
         <p>{copy.pay.refundNote}</p>
       </div>}
