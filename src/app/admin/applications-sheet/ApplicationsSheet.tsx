@@ -72,7 +72,7 @@ function csvFor(rows: SheetRow[], columns: Column[]) {
   return csvDocument([cols.map((c) => c.label), ...rows.map((r) => cols.map((c) => c.get(r)))]);
 }
 
-export default function ApplicationsSheet({ rows: initialRows, programs }: { rows: SheetRow[]; programs: string[] }) {
+export default function ApplicationsSheet({ rows: initialRows, programs, initialSearch = "" }: { rows: SheetRow[]; programs: string[]; initialSearch?: string }) {
   const [rows, setRows] = useState(initialRows);
   useEffect(() => setRows(initialRows), [initialRows]);
   const base = useMemo(() => buildColumns(rows), [rows]);
@@ -101,7 +101,7 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
   const tableWidth = columns.reduce((sum, c) => sum + c.width, 0);
 
   // Filters and sort
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [stageFilter, setStageFilter] = useState("ALL");
   const [programFilter, setProgramFilter] = useState("ALL");
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 } | null>(null);
@@ -112,7 +112,7 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
       if (stageFilter !== "ALL" && (r.stage || "REVIEW") !== stageFilter) return false;
       if (programFilter !== "ALL" && r.program.title !== programFilter) return false;
       if (!q) return true;
-      const hay = `${r.user.name || ""} ${r.user.email} ${r.program.title} ${str(r.form.studentFirstName)} ${str(r.form.studentLastName)} ${str(r.form.studentEmail)} ${str(r.form.school)} ${r.user.studentCode || ""}`.toLowerCase();
+      const hay = `${r.user.name || ""} ${r.user.email} ${r.program.title} ${str(r.form.studentFirstName)} ${str(r.form.studentLastName)} ${str(r.form.studentEmail)} ${str(r.form.school)} ${r.user.studentCode || ""} ${fee(r)}`.toLowerCase();
       return hay.includes(q);
     });
     if (sort) {
@@ -203,7 +203,7 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
         </div>
         <label className="relative">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email, school…" className="w-64 rounded-lg border border-slate-200 py-1.5 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email, school, code…" className="w-64 rounded-lg border border-slate-200 py-1.5 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none" />
         </label>
         <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm">
           <option value="ALL">All stages</option>

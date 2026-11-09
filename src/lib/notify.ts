@@ -104,13 +104,14 @@ export async function notifyApplicationReceived(app: PaidApplication) {
 }
 
 /** A checkout that could not be settled automatically: admissions gets the order number to look up in the Toss admin. */
-export async function notifyPaymentNeedsReview(input: { orderId: string; accountEmail?: string | null; programTitle?: string | null; situation: string }) {
+export async function notifyPaymentNeedsReview(input: { orderId: string; accountEmail?: string | null; programTitle?: string | null; situation: string; expected?: string | null }) {
   const text = [
     `An application-fee payment could not be settled automatically and may need a manual check.`,
     ``,
     `Order number: ${input.orderId}`,
     input.accountEmail ? `Account email: ${input.accountEmail}` : null,
     input.programTitle ? `Program: ${input.programTitle}` : null,
+    input.expected ? `Amount of this order: ${input.expected}` : null,
     `What happened: ${input.situation}`,
     ``,
     `What to do: look the order number up in the Toss Payments admin (결제조회).`,
@@ -132,7 +133,7 @@ export async function notifyPaymentFormProblem(input: { accountEmail?: string | 
     ``,
     `What to check:`,
     `- Toss Payments admin: the payment UI named in NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY exists and is connected to the US-dollar merchant id, and that merchant id's contract is complete.`,
-    `- If it cannot be fixed quickly, remove NEXT_PUBLIC_APPLICATION_FEE_ENABLED in Vercel and redeploy: applications are then free again.`,
+    `- If it cannot be fixed quickly, set NEXT_PUBLIC_APPLICATION_FEE_ENABLED to false in Vercel and redeploy: applications are then free again. A payment that already reached Toss keeps its applicant's form locked until it is settled, so nobody is charged and also submitted for free.`,
     `This alert is sent at most a few times an hour.`,
   ].filter((line): line is string => line !== null).join('\n');
   return send({ to: ADMISSIONS_INBOX, subject: `[CRI payment problem] applicants cannot reach payment`, text, replyTo: validEmail(input.accountEmail) ? input.accountEmail! : undefined });

@@ -228,10 +228,19 @@ export async function deleteApplication(applicationId: string) {
   }
 
   try {
-    await prisma.application.delete({
-      where: { id: applicationId }
+    await prisma.$transaction(async (tx) => {
+      const application = await tx.application.delete({ where: { id: applicationId }, select: { userId: true, programId: true, content: true } });
+      // The finished checkout of a paid application goes with it. Left behind, it would mark the program as
+      // "already paid for" and that account could never save a draft or pay for the same program again. The payment
+      // itself stays on record at the payment provider.
+      await tx.applicationCheckout.deleteMany({ where: { userId: application.userId, programId: application.programId, OR: [{ applicationId }, { status: "COMPLETED" }] } });
+      // A referral code's count is the number of applications on file that used it: deleting one gives the use back.
+      let code: unknown;
+      try { code = JSON.parse(application.content || "{}")?.payment?.code; } catch {}
+      if (typeof code === "string" && code) await tx.feeCode.updateMany({ where: { code, usedCount: { gt: 0 } }, data: { usedCount: { decrement: 1 } } });
     });
-    
+
+    revalidatePath("/dashboard/fee-codes");
     revalidatePath("/dashboard/applications-admin");
     revalidatePath("/admin/applications-sheet");
     return { success: true };

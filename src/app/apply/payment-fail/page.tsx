@@ -1,29 +1,31 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, RotateCcw, MessageSquare, Loader2 } from "lucide-react";
 import Link from "@/i18n/link";
 import { useT } from "@/i18n/client";
+import { failureNeedsReport, paymentFailReason, sanitizeFailCode } from "@/lib/payment-fail-reason";
+import { reportPaymentProblem } from "@/app/actions/payment";
 
 /** Where the payment provider sends the payer when a payment ends inside its window without an approval. Nothing has been charged. */
 function PaymentFailContent() {
   const { t } = useT();
   const copy = t.payment.fail;
   const searchParams = useSearchParams();
-  const code = (searchParams.get("code") || "").replace(/[^A-Z0-9_]/gi, "").slice(0, 60);
+  const code = sanitizeFailCode(searchParams.get("code"));
   const programId = searchParams.get("programId");
-  // The provider's codes, grouped into what a payer can act on. Its own text is never shown: it may be in Korean, and a
-  // lost, stolen or flagged card is reported as a plain decline.
-  // Only the payer's own cancel reads as "you canceled". PAY_PROCESS_ABORTED is the provider's general "this payment
-  // failed in the window" (a failed bank verification, a refusal), so it gets the try-another-card wording.
-  const reason = !code || /^(PAY_PROCESS_CANCELED|USER_CANCEL|PAYMENT_CANCELLED)$/i.test(code) ? copy.reasons.canceled
-    : /ABORTED/i.test(code) ? copy.reasons.notApproved
-    : /NOT_SUPPORTED/i.test(code) ? copy.reasons.currency
-    : /REJECT_CARD_PAYMENT|EXCEED/i.test(code) ? copy.reasons.limit
-    : /INVALID_CARD_NUMBER|INVALID_CARD_EXPIRATION|INVALID_CARD_IDENTITY|INVALID_PASSWORD/i.test(code) ? copy.reasons.details
-    : /REJECT|INVALID_CARD|INVALID_STOPPED|RESTRICTED|LOST|FDS/i.test(code) ? copy.reasons.declined
-    : copy.reasons.generic;
+  const message = searchParams.get("message");
+  // The provider's codes are grouped into what a payer can act on (src/lib/payment-fail-reason.ts).
+  const reason = copy.reasons[paymentFailReason(code)];
+  // A failure that is not the payer's choice or card means the payment window is not working: admissions is told once
+  // per visit (the server limits how often a mail goes out and skips the payment-review account).
+  const reported = useRef(false);
+  useEffect(() => {
+    if (reported.current || !programId || !failureNeedsReport(code)) return;
+    reported.current = true;
+    void reportPaymentProblem(programId, "window", code, message ?? undefined).catch(() => {});
+  }, [code, programId, message]);
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-6 flex items-center justify-center">

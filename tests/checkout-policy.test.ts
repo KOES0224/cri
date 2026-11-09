@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {checkoutLocksForm, confirmRefusalIsFinal, confirmSaysNoPayment, nextCheckoutStep, type CheckoutRow} from '../src/lib/checkout-policy';
+import {checkoutLocksForm, checkoutLocksFormNow, confirmRefusalIsFinal, confirmSaysNoPayment, nextCheckoutStep, type CheckoutRow} from '../src/lib/checkout-policy';
 
 const now = new Date('2026-11-09T05:00:00Z');
 const charge = {amount: 50, currency: 'USD'};
@@ -62,4 +62,19 @@ test('only a real refusal of this attempt counts as final', () => {
   assert.equal(confirmSaysNoPayment('NOT_FOUND_PAYMENT_SESSION'), true);
   assert.equal(confirmSaysNoPayment('REJECT_CARD_COMPANY'), false);
   assert.equal(confirmSaysNoPayment(undefined), false);
+});
+
+test('with the fee switched off, only a payment that reached the provider still locks the form', () => {
+  const pending = {status: 'PENDING', keyTracked: true, paymentKey: null as string | null};
+  // Fee on: the usual rule.
+  assert.equal(checkoutLocksFormNow({...pending, paymentKey: 'key'}, true), true);
+  assert.equal(checkoutLocksFormNow({...pending, keyTracked: false}, true), true);
+  assert.equal(checkoutLocksFormNow(pending, true), false);
+  // Fee off: an unsettled payment must be settled before a free application is submitted over it...
+  assert.equal(checkoutLocksFormNow({...pending, paymentKey: 'key'}, false), true);
+  // ...but rows that never reached the provider do not hold a free applicant up.
+  assert.equal(checkoutLocksFormNow({...pending, keyTracked: false}, false), false);
+  assert.equal(checkoutLocksFormNow(pending, false), false);
+  assert.equal(checkoutLocksFormNow({status: 'COMPLETED', keyTracked: true, paymentKey: 'key'}, false), false);
+  assert.equal(checkoutLocksFormNow(null, false), false);
 });

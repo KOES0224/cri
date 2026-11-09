@@ -11,7 +11,7 @@ import { applicationFeeFor, isPaymentReviewer } from '@/lib/payment-review';
 import { applicationSchema } from '@/lib/application-validation';
 import { allowRequest } from '@/lib/request-limit';
 import { confirmTossPayment, findConfirmedTossPayment, tossPaymentState } from '@/lib/toss';
-import { SETTLE_GRACE_MS, checkoutLocksForm, confirmRefusalIsFinal, confirmSaysNoPayment, nextCheckoutStep } from '@/lib/checkout-policy';
+import { SETTLE_GRACE_MS, checkoutLocksFormNow, confirmRefusalIsFinal, confirmSaysNoPayment, nextCheckoutStep } from '@/lib/checkout-policy';
 import type { PaidOrderResult, PaymentResult } from '@/lib/payment-result';
 import { feeCodeProblem, feeWithCode, normalizeFeeCode } from '@/lib/fee-code';
 import { revalidatePath } from 'next/cache';
@@ -151,6 +151,13 @@ export async function finalizePaidApplication({ paymentKey: receivedKey, orderId
     if (!recovered.success && !canCharge) return {error: 'This program is no longer accepting applications, so the payment was not taken. Contact admissions if you need help.', code: 'checkoutExpired'};
     let confirmed = recovered;
     if (!recovered.success) {
+      // A reduced price holds while the order is fresh (30 minutes from pricing). On an older order the code must
+      // still be usable: if it was switched off, expired or used up meanwhile, nothing is charged and the applicant
+      // prices a new order from the form.
+      if (order.feeCode && !order.paymentKey && order.expiresAt <= new Date() && feeCodeProblem(await prisma.feeCode.findUnique({ where: { code: order.feeCode } }))) {
+        await releaseCheckout(order, null);
+        return { error: 'The referral code on this order can no longer be used, and you have not been charged. Go back to your application to continue.', code: 'feeCodeLapsed' };
+      }
       // The key is stored before the provider is asked to charge, so a row without one provably has no charge. The
       // update is conditional: if the order was replaced in another tab meanwhile, nothing is confirmed.
       // First key wins: the row accepts this key only while it holds none, this same one, or the one just judged dead.
@@ -196,7 +203,7 @@ export async function finalizePaidApplication({ paymentKey: receivedKey, orderId
       await tx.applicationCheckout.update({ where: { id: orderId }, data: { status: 'COMPLETED', applicationId: app.id, formData: {} } });
       await tx.applicationDraft.deleteMany({where: {userId: session.user.id, programId: order.programId}});
       // The reduced fee is already paid, so the use is counted without re-checking the code's limit or expiry.
-      if (order.feeCode) await tx.$executeRaw`UPDATE "FeeCode" SET "usedCount" = "usedCount" + 1, "updatedAt" = now() WHERE "code" = ${order.feeCode}`;
+      if (order.feeCode) await tx.$executeRaw`UPDATE "FeeCode" SET "usedCount" = "usedCount" + 1, "updatedAt" = (now() AT TIME ZONE 'UTC') WHERE "code" = ${order.feeCode}`;
       created = true;
       return app.id;
     });
@@ -250,8 +257,13 @@ async function completedOrder(orderId: string, applicationId: string, reviewer: 
 async function alertPaymentReview(orderId: string, accountEmail: string | null | undefined, programId: string | null, situation: string) {
   try {
     if (!await allowRequest('payment-review-mail', orderId, 1, 3600)) return;
-    const program = programId ? await prisma.program.findUnique({ where: { id: programId }, select: { title: true } }) : null;
-    await notifyPaymentNeedsReview({ orderId, accountEmail, programTitle: program?.title, situation });
+    // What the Toss admin should show for this order: the order's own price, which is below the normal fee when a
+    // referral code was applied. Best effort: the alert goes out without it when the order cannot be read.
+    const order = await prisma.applicationCheckout.findUnique({ where: { id: orderId }, select: { programId: true, amount: true, currency: true, feeCode: true } }).catch(() => null);
+    const title = programId ?? order?.programId;
+    const program = title ? await prisma.program.findUnique({ where: { id: title }, select: { title: true } }).catch(() => null) : null;
+    const expected = order ? `${order.amount.toFixed(2)} ${order.currency}${order.feeCode ? ` (referral code ${order.feeCode}; the normal fee is ${APPLICATION_CHARGE.amount.toFixed(2)} ${APPLICATION_CHARGE.currency})` : ''}` : null;
+    await notifyPaymentNeedsReview({ orderId, accountEmail, programTitle: program?.title, situation, expected });
   } catch { console.error('Payment review alert failed.'); }
 }
 
@@ -285,9 +297,10 @@ export async function settleReturnedOrder(orderId: string): Promise<PaymentResul
 
 /**
  * Removes a checkout whose payment ended without a charge and makes sure the applicant's form survives as a draft, so
- * they return to an editable application. Conditional on the exact payment key that was judged.
+ * they return to an editable application. Conditional on the exact payment key that was judged (null: an order that
+ * never reached the provider).
  */
-async function releaseCheckout(order: { id: string; userId: string; programId: string; formData: unknown }, paymentKey: string): Promise<boolean> {
+async function releaseCheckout(order: { id: string; userId: string; programId: string; formData: unknown }, paymentKey: string | null): Promise<boolean> {
   return prisma.$transaction(async tx => {
     const removed = await tx.applicationCheckout.deleteMany({ where: { id: order.id, status: 'PENDING', paymentKey } });
     if (removed.count !== 1) return false;
@@ -373,14 +386,20 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${session.user.id + ':' + programId}))`;
       const again = await tx.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { id: true } });
       if (again) return { id: again.id, created: false };
+      // A payment that already reached the provider for this application is settled first, never submitted over:
+      // with a waiving code, and also when the fee was switched off while that payment was still unsettled.
+      const unsettled = await tx.applicationCheckout.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { status: true, paymentKey: true, keyTracked: true } });
+      if (checkoutLocksFormNow(unsettled, feeEnabled)) throw new Error('CHECKOUT_REVIEW');
       if (waiverCode) {
-        // A payment that already reached the provider for this application is settled first, never waived over.
-        const unsettled = await tx.applicationCheckout.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { status: true, paymentKey: true, keyTracked: true } });
-        if (checkoutLocksForm(unsettled)) throw new Error('CHECKOUT_REVIEW');
         // One statement checks the code and counts the use, so a limited code cannot be over-used by submissions that
-        // arrive together. Only a code that waives the whole fee qualifies.
-        const used = await tx.$executeRaw`UPDATE "FeeCode" SET "usedCount" = "usedCount" + 1, "updatedAt" = now() WHERE "code" = ${waiverCode} AND "active" = true AND "feeAmount" = 0 AND ("expiresAt" IS NULL OR "expiresAt" > now()) AND ("maxUses" IS NULL OR "usedCount" < "maxUses")`;
-        if (used !== 1) throw new Error('FEE_CODE');
+        // arrive together. Only a code that waives the whole fee qualifies. The column holds UTC without a zone, so
+        // the clock is read as UTC whatever the database session's time zone is.
+        const used = await tx.$executeRaw`UPDATE "FeeCode" SET "usedCount" = "usedCount" + 1, "updatedAt" = (now() AT TIME ZONE 'UTC') WHERE "code" = ${waiverCode} AND "active" = true AND "feeAmount" = 0 AND ("expiresAt" IS NULL OR "expiresAt" > (now() AT TIME ZONE 'UTC')) AND ("maxUses" IS NULL OR "usedCount" < "maxUses")`;
+        if (used !== 1) {
+          // Say why, the way the form's own check does: expired and used up are worth telling apart.
+          const problem = feeCodeProblem(await tx.feeCode.findUnique({ where: { code: waiverCode } }));
+          throw new Error(problem === 'expired' ? 'FEE_CODE:feeCodeExpired' : problem === 'usedUp' ? 'FEE_CODE:feeCodeUsedUp' : 'FEE_CODE:feeCodeInvalid');
+        }
       }
       const app = await tx.application.create({ data: {
         userId: session.user.id, programId, status: 'PENDING', stage: 'REVIEW', expectedWaitDays: 7,
@@ -413,7 +432,7 @@ export async function submitApplicationWithoutFee(programId: string, input: unkn
     const { data: meta } = await sendMetaEvent({ name: 'SubmitApplication', eventId: applicationId, person: applicantPerson(session.user, parsed.data), data: applicationData(program, session.user.role, parsed.data.residenceCountry, META_VALUES.submitApplication ? { value: META_VALUES.submitApplication, currency: 'USD' } : undefined) });
     return { success: true, applicationId, tracking: meta, eventId: applicationId };
   } catch (error) {
-    if (error instanceof Error && error.message === 'FEE_CODE') return { error: 'This referral code cannot be used. Remove it or check it with the organization that gave it to you.', code: 'feeCodeInvalid' };
+    if (error instanceof Error && error.message.startsWith('FEE_CODE:')) return { error: 'This referral code cannot be used. Remove it or check it with the organization that gave it to you.', code: error.message.slice('FEE_CODE:'.length) };
     if (error instanceof Error && error.message === 'CHECKOUT_REVIEW') return { error: 'Your earlier checkout needs review. Contact admissions before paying again so we can check its payment status.', code: 'checkoutReview' };
     return { error: 'We could not submit your application. Your draft is saved; please try again or contact support@cri.kr.', code: 'submitFailed' };
   }
