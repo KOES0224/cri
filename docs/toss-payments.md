@@ -10,13 +10,27 @@ The application fee is **USD 50**, charged through Toss Payments' **payment widg
 | `TOSS_SECRET_KEY` | matching widget secret key `test_gsk_…` / `live_gsk_…` (Sensitive). Client and secret keys must be from the same set. |
 | `NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY` | variantKey of the 해외결제 (overseas) payment-method UI created in the Toss admin for the USD merchant id. `DEFAULT` until it exists. |
 | `NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY_KRW` | variantKey of the payment UI connected to the **won** merchant id. Only the review sample product (`/pg-review`) uses it. `DEFAULT` when unset. |
-| `NEXT_PUBLIC_APPLICATION_FEE_ENABLED` | `true` to charge every applicant; unset/false keeps applications free except for the payment-review account. **On since 2026-11-09.** |
+| `NEXT_PUBLIC_APPLICATION_FEE_ENABLED` | `true` to charge every applicant; unset/false keeps applications free except for the payment-review account. **Currently `false`**: on for a few hours on 2026-11-09, then switched off the same evening because Toss had not opened dollar payments (see "Current state" below). |
 | `NEXT_PUBLIC_APPLICATION_FEE_SINCE` | ISO time the fee was switched on. Drafts last saved before it show a one-line "a fee has been introduced" notice. Set it together with the switch. |
 | `NEXT_PUBLIC_TOSS_AGREEMENT_VARIANT_KEY` | variantKey of an English terms UI made in the Toss admin (결제 > 약관 설정). Unset renders Toss's default Korean terms (`AGREEMENT`). |
 
 Changing `NEXT_PUBLIC_*` values needs a redeploy (they are baked in at build time).
 
-To switch the fee off again: remove `NEXT_PUBLIC_APPLICATION_FEE_ENABLED` and redeploy. Applications are then free; a checkout whose payment already reached Toss is kept and still settled.
+To switch the fee off: set `NEXT_PUBLIC_APPLICATION_FEE_ENABLED` to `false` (or remove it) and redeploy. Applications are then free; a checkout whose payment already reached Toss is kept and still settled.
+
+To switch it on: set `NEXT_PUBLIC_APPLICATION_FEE_ENABLED` to `true`, set `NEXT_PUBLIC_APPLICATION_FEE_SINCE` to the time of the switch (ISO, e.g. `2026-11-20T03:00:00Z`), and redeploy.
+
+### Current state (2026-11-09 evening): fee off
+
+The fee was on from about 15:30 to 20:00 KST on 2026-11-09. No application and no checkout was created in that window. It was switched off because a live dollar payment does not go through yet: on `/pg-review/usd` the Toss window ends with code `2003` ("업체 사정으로 인해 결제를 일시 중지하였습니다"), which is decided on Toss's side for the foreign-currency merchant id. Won payments on `/pg-review` work.
+
+Before switching the fee on again:
+
+1. Get Toss's answer on the foreign-currency merchant id (whether it is open, and whether the `criUSD` payment UI is connected to it).
+2. Make one dollar payment succeed on `/pg-review/usd` (USD 1.00, review account or an admin) and cancel it in the Toss admin.
+3. Then switch on as described above.
+
+While the fee is off, the payment step and the referral code field are not shown to applicants. Referral codes stay in `/dashboard/fee-codes` and work again when the fee is on.
 
 Toss issued two live merchant ids (won and foreign currency). The widget key pair is shared by the whole store; which merchant id a payment goes to is decided by the payment UI (variantKey) chosen in the Toss admin, not by the key. The per-merchant-id keys under "API 개별 연동 키" (`live_ck_…`, secret and security keys) are not used by this site. A confirm error `NOT_AVAILABLE_PAYMENT_BY_MERCHANT` means the UI in use points at a merchant id without a completed contract.
 
