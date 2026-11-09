@@ -9,6 +9,8 @@ import { confirmReviewPayment } from "@/app/actions/pgReview";
 function Content() {
   const params = useSearchParams();
   const started = useRef(false);
+  // Which sample product this was (won or US dollars), so the way back leads to the same page.
+  const [back] = useState(() => (params.get("product") === "usd" || (params.get("orderId") || "").startsWith("CRI_REVIEWUSD_") ? "/pg-review/usd" : "/pg-review"));
   const [state, setState] = useState<{ loading: boolean; error?: string; result?: { orderId: string; amount: number; currency: string; method: string; approvedAt?: string; receiptUrl?: string } }>({ loading: true });
 
   useEffect(() => {
@@ -36,7 +38,7 @@ function Content() {
             <h1 className="mt-4 text-2xl font-black">결제가 완료되었습니다</h1>
             <dl className="mt-6 space-y-2 rounded-xl bg-slate-50 p-4 text-left text-sm">
               <div className="flex justify-between gap-4"><dt className="text-slate-500">주문번호</dt><dd className="break-all font-mono text-xs text-slate-800">{state.result!.orderId}</dd></div>
-              <div className="flex justify-between"><dt className="text-slate-500">결제 금액</dt><dd className="font-semibold">{state.result!.amount.toLocaleString()} {state.result!.currency}</dd></div>
+              <div className="flex justify-between"><dt className="text-slate-500">결제 금액</dt><dd className="font-semibold">{state.result!.currency === "USD" ? `$${Number(state.result!.amount).toFixed(2)} USD` : `${state.result!.amount.toLocaleString()} ${state.result!.currency}`}</dd></div>
               <div className="flex justify-between"><dt className="text-slate-500">결제 수단</dt><dd className="font-semibold">{state.result!.method}</dd></div>
               {state.result!.approvedAt && <div className="flex justify-between"><dt className="text-slate-500">승인 시각</dt><dd>{new Date(state.result!.approvedAt).toLocaleString("ko-KR")}</dd></div>}
             </dl>
@@ -44,7 +46,7 @@ function Content() {
           </>
         )}
         <div className="mt-8 flex flex-col gap-2">
-          <Link href="/pg-review" className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white">상품 페이지로</Link>
+          <Link href={back} className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white">상품 페이지로</Link>
           <Link href="/refunds" className="text-sm text-slate-600 underline">취소 및 환불 규정</Link>
         </div>
       </div>

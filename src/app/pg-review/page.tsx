@@ -36,7 +36,7 @@ export default async function PgReviewPage() {
           <ReviewProduct viewer={viewer} paymentAvailable={paymentAvailable} variantKey={TOSS_WIDGET_VARIANT_KEY_KRW} />
         </section>
 
-        <p className="mt-6 text-xs text-slate-500">이 페이지는 결제 심사용 샘플 상품 페이지이며 심사 계정에만 표시됩니다. 문의: support@cri.kr</p>
+        <p className="mt-6 text-xs text-slate-500">이 페이지는 결제 심사용 샘플 상품 페이지이며 심사 계정에만 표시됩니다. 문의: support@cri.kr · <Link href="/pg-review/usd" className="text-blue-700 underline">달러 결제 테스트</Link></p>
       </div>
     </div>
   );
