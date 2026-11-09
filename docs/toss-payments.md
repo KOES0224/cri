@@ -9,9 +9,12 @@ The application fee is **USD 50**, charged through Toss Payments' **payment widg
 | `NEXT_PUBLIC_TOSS_CLIENT_KEY` | **결제위젯 연동 키** client key: `test_gck_…` (test) / `live_gck_…` (live). API 개별 연동 키 (`test_ck_…`) do not work with the widget; the checkout then shows "online payment unavailable". |
 | `TOSS_SECRET_KEY` | matching widget secret key `test_gsk_…` / `live_gsk_…` (Sensitive). Client and secret keys must be from the same set. |
 | `NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY` | variantKey of the 해외결제 (overseas) payment-method UI created in the Toss admin for the USD merchant id. `DEFAULT` until it exists. |
+| `NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY_KRW` | variantKey of the payment UI connected to the **won** merchant id. Only the review sample product (`/pg-review`) uses it. `DEFAULT` when unset. |
 | `NEXT_PUBLIC_APPLICATION_FEE_ENABLED` | `true` to charge every applicant; unset/false keeps applications free except for the payment-review account. |
 
 Changing `NEXT_PUBLIC_*` values needs a redeploy (they are baked in at build time).
+
+Toss issued two live merchant ids (won and foreign currency). The widget key pair is shared by the whole store; which merchant id a payment goes to is decided by the payment UI (variantKey) chosen in the Toss admin, not by the key. The per-merchant-id keys under "API 개별 연동 키" (`live_ck_…`, secret and security keys) are not used by this site. A confirm error `NOT_AVAILABLE_PAYMENT_BY_MERCHANT` means the UI in use points at a merchant id without a completed contract.
 
 ## What Toss must provide
 
