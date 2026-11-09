@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import { createFeeCode, type FeeCodeFormState } from "@/app/actions/feeCodes";
 
 const input = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
@@ -13,13 +13,35 @@ function suggestion() {
   return `CRI-${Array.from(values, (value) => alphabet[value % alphabet.length]).join("")}`;
 }
 
-/** Admin form for a new referral code. `normalFee` is the application fee without a code, in US dollars. */
+/**
+ * Admin form for a new referral code. `normalFee` is the application fee without a code, in US dollars.
+ * Submitted by hand rather than as a form action: React resets a form after its action, which would wipe what the
+ * admin typed whenever the server refuses it and leave the waived/reduced choice out of step with the amount field.
+ */
 export default function FeeCodeForm({ normalFee }: { normalFee: number }) {
-  const [state, action, pending] = useActionState<FeeCodeFormState, FormData>(createFeeCode, {});
+  const [state, setState] = useState<FeeCodeFormState>({});
+  const [pending, startTransition] = useTransition();
   const [kind, setKind] = useState<"waive" | "reduce">("waive");
   const code = useRef<HTMLInputElement>(null);
+
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    data.set("kind", kind);
+    startTransition(async () => {
+      try {
+        const result = await createFeeCode(data);
+        setState(result);
+        // Only a saved code clears the form; a refusal keeps every field as typed.
+        if (result.created) { form.reset(); setKind("waive"); }
+      } catch { setState({ error: "The code could not be saved. Please try again." }); }
+    });
+  }
+
   return (
-    <form action={action} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+    <form onSubmit={submit} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
       <h2 className="text-lg font-bold text-slate-900">New code</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
@@ -38,16 +60,16 @@ export default function FeeCodeForm({ normalFee }: { normalFee: number }) {
         <fieldset>
           <legend className={label}>What the applicant pays</legend>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-800">
-            <label className="inline-flex items-center gap-2"><input type="radio" name="kind" checked={kind === "waive"} onChange={() => setKind("waive")} className="h-4 w-4 accent-blue-600" />Nothing (fee waived)</label>
-            <label className="inline-flex items-center gap-2"><input type="radio" name="kind" checked={kind === "reduce"} onChange={() => setKind("reduce")} className="h-4 w-4 accent-blue-600" />A reduced fee</label>
+            <label className="inline-flex items-center gap-2"><input type="radio" checked={kind === "waive"} onChange={() => setKind("waive")} className="h-4 w-4 accent-blue-600" />Nothing (fee waived)</label>
+            <label className="inline-flex items-center gap-2"><input type="radio" checked={kind === "reduce"} onChange={() => setKind("reduce")} className="h-4 w-4 accent-blue-600" />A reduced fee</label>
           </div>
-          {kind === "reduce" ? (
+          {kind === "reduce" && (
             <div className="mt-2 flex items-center gap-2">
               <span className="text-sm text-slate-600">$</span>
               <input name="feeAmount" type="number" min={1} max={normalFee - 1} step={1} required defaultValue={Math.floor(normalFee / 2)} aria-label="Reduced fee in US dollars" className={`${input} max-w-[7rem]`} />
               <span className="text-sm text-slate-600">USD instead of ${normalFee}</span>
             </div>
-          ) : <input type="hidden" name="feeAmount" value="0" />}
+          )}
         </fieldset>
         <div className="grid grid-cols-2 gap-4">
           <div>

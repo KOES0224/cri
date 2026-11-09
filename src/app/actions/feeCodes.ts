@@ -11,23 +11,28 @@ import { feeCodeProblem, feeWithCode, normalizeFeeCode } from "@/lib/fee-code";
 
 /**
  * What a referral code would do for the signed-in applicant: the fee they would pay with it. Nothing is reserved here;
- * the code is checked again, and counted, when the application is recorded. `code` names a key in t.apply.errors.
+ * the code is checked again, and counted, when the application is recorded. `code` names a key in t.apply.errors,
+ * except `feeCodeRetry`: the check itself failed and says nothing about the code.
+ *
+ * `restore` is the form re-checking a code it already applied in this tab (on every page load): it has its own,
+ * roomier budget, so reloads and returns from a declined payment never use up the tries for typing a code.
  */
-export async function checkFeeCode(input: string): Promise<{ ok: true; code: string; feeAmount: number } | { ok: false; code: string }> {
+export async function checkFeeCode(input: string, restore = false): Promise<{ ok: true; code: string; feeAmount: number } | { ok: false; code: string }> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || !canApply(session.user.role)) return { ok: false, code: "applySignIn" };
-  // A handful of tries is plenty for someone who was given a code; it is not enough to guess one.
-  if (!await allowRequest("fee-code", session.user.id, 10, 600)) return { ok: false, code: "feeCodeRate" };
-  const code = normalizeFeeCode(input);
-  if (!code) return { ok: false, code: "feeCodeInvalid" };
   try {
+    // A handful of tries is plenty for someone who was given a code; it is not enough to guess one.
+    const allowed = restore === true ? await allowRequest("fee-code-restore", session.user.id, 40, 600) : await allowRequest("fee-code", session.user.id, 10, 600);
+    if (!allowed) return { ok: false, code: "feeCodeRate" };
+    const code = normalizeFeeCode(input);
+    if (!code) return { ok: false, code: "feeCodeInvalid" };
     const row = await prisma.feeCode.findUnique({ where: { code } });
     const problem = feeCodeProblem(row);
     // "Switched off" reads the same as "no such code": an applicant has no use for the difference.
     if (problem || !row) return { ok: false, code: problem === "expired" ? "feeCodeExpired" : problem === "usedUp" ? "feeCodeUsedUp" : "feeCodeInvalid" };
     return { ok: true, code: row.code, feeAmount: feeWithCode(row, APPLICATION_CHARGE.amount) };
   } catch {
-    return { ok: false, code: "feeCodeInvalid" };
+    return { ok: false, code: "feeCodeRetry" };
   }
 }
 
@@ -39,14 +44,18 @@ function field(form: FormData, name: string) {
 export type FeeCodeFormState = { error?: string; created?: string };
 
 /**
- * Admin: add a referral code. `feeAmount` is what the applicant pays in whole US dollars; 0 waives the fee. Shaped for
- * useActionState: the result is shown under the form instead of throwing.
+ * Admin: add a referral code. `kind` says whether the fee is waived or reduced; for a reduced fee `feeAmount` is what
+ * the applicant pays in whole US dollars. The result is shown under the form instead of throwing.
  */
-export async function createFeeCode(_previous: FeeCodeFormState, form: FormData): Promise<FeeCodeFormState> {
+export async function createFeeCode(form: FormData): Promise<FeeCodeFormState> {
   try { await requireAdmin(); } catch { return { error: "Administrator access required." }; }
   const code = normalizeFeeCode(field(form, "code"));
   const partner = field(form, "partner").slice(0, 120);
-  const feeAmount = Number(field(form, "feeAmount") || "0");
+  // The choice decides, not whichever amount field happened to be on screen: a waiver is always 0.
+  const kind = field(form, "kind");
+  if (kind !== "waive" && kind !== "reduce") return { error: "Choose whether the fee is waived or reduced." };
+  const feeAmount = kind === "waive" ? 0 : Number(field(form, "feeAmount") || "NaN");
+  if (kind === "reduce" && !(Number.isInteger(feeAmount) && feeAmount >= 1)) return { error: `A reduced fee must be a whole number from 1 to ${APPLICATION_CHARGE.amount - 1}.` };
   const maxUsesText = field(form, "maxUses");
   const maxUses = maxUsesText ? Number(maxUsesText) : null;
   const expiresText = field(form, "expiresAt");

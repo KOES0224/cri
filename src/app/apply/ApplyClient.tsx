@@ -67,20 +67,34 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   const dollars = (amount: number) => `$${amount.toFixed(2)}`;
   // Kept for this tab, so coming back after a declined card does not quietly fall back to the full fee.
   const codeStoreKey = `cri_fee_code_${program.id}`;
+  const rememberCode = (value: { code: string; feeAmount: number } | null) => {
+    try { if (value) sessionStorage.setItem(codeStoreKey, JSON.stringify(value)); else sessionStorage.removeItem(codeStoreKey); } catch {}
+  };
+  // True while a remembered code is being re-checked: Pay waits, so the order is never priced without it.
+  const [codeRestoring, setCodeRestoring] = useState(false);
   const dueRef = useRef(due);
   useEffect(() => { dueRef.current = due; }, [due]);
   useEffect(() => {
     if (!feeEnabled) return;
-    let stored = '';
-    try { stored = sessionStorage.getItem(codeStoreKey) || ''; } catch {}
+    let stored: { code: string; feeAmount: number } | null = null;
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem(codeStoreKey) || 'null');
+      if (parsed && typeof parsed.code === 'string' && Number.isInteger(parsed.feeAmount) && parsed.feeAmount >= 0 && parsed.feeAmount < APPLICATION_CHARGE.amount) stored = { code: parsed.code, feeAmount: parsed.feeAmount };
+    } catch {}
     if (!stored) return;
+    const remembered = stored;
     let active = true;
-    checkFeeCode(stored).then(result => {
+    const timer = window.setTimeout(() => { if (active) setCodeRestoring(true); }, 0);
+    const finish = (value: { code: string; feeAmount: number } | null) => { if (!active) return; setFeeCode(value); setCodeRestoring(false); };
+    checkFeeCode(remembered.code, true).then(result => {
       if (!active) return;
-      if (result.ok) setFeeCode({ code: result.code, feeAmount: result.feeAmount });
-      else { try { sessionStorage.removeItem(codeStoreKey); } catch {} }
-    }).catch(() => {});
-    return () => { active = false; };
+      if (result.ok) { const fresh = { code: result.code, feeAmount: result.feeAmount }; try { sessionStorage.setItem(codeStoreKey, JSON.stringify(fresh)); } catch {} finish(fresh); return; }
+      // Only a definite "this code no longer works" forgets it. A busy or failed check keeps what was applied: the
+      // server prices the order again at Pay, and the payment form charges exactly that.
+      if (['feeCodeInvalid', 'feeCodeExpired', 'feeCodeUsedUp'].includes(result.code)) { try { sessionStorage.removeItem(codeStoreKey); } catch {} finish(null); }
+      else finish(remembered);
+    }).catch(() => finish(remembered));
+    return () => { active = false; window.clearTimeout(timer); };
   }, [feeEnabled, codeStoreKey]);
   // Per-instance ids: Next can keep a hidden copy of the page, and the widget mounts by CSS selector.
   const widgetId = useId();
@@ -175,19 +189,21 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   }, [due, widgetState, waived]);
 
   async function applyCode() {
-    if (codeBusy || !codeInput.trim()) return;
+    // Never while a payment or submission is starting: the order must be priced with the code the form showed.
+    if (codeBusy || busy || !codeInput.trim()) return;
     setCodeBusy(true); setCodeError('');
     try {
       const result = await checkFeeCode(codeInput);
-      if (!result.ok) { setCodeError(errorText(result.code)); return; }
-      setFeeCode({ code: result.code, feeAmount: result.feeAmount }); setCodeInput(''); setCodeOpen(false); setNotice('');
-      try { sessionStorage.setItem(codeStoreKey, result.code); } catch {}
+      if (!result.ok) { setCodeError(result.code === 'feeCodeRetry' ? copy.pay.codeFailed : errorText(result.code)); return; }
+      const applied = { code: result.code, feeAmount: result.feeAmount };
+      setFeeCode(applied); setCodeInput(''); setCodeOpen(false); setNotice('');
+      rememberCode(applied);
     } catch { setCodeError(copy.pay.codeFailed); }
     finally { setCodeBusy(false); }
   }
   function removeCode() {
     setFeeCode(null); setCodeError('');
-    try { sessionStorage.removeItem(codeStoreKey); } catch {}
+    rememberCode(null);
   }
 
   const persist = useCallback((snapshot: Record<string, string>, currentStep: number, currentRevision: number) => {
@@ -264,7 +280,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       const result = await submitApplicationWithoutFee(program.id, form, code);
       if (result.error || !result.applicationId) throw new Error(actionText(result, copy.notices.submitFailed));
       savedRevision.current = revision.current;
-      try { sessionStorage.removeItem(codeStoreKey); } catch {}
+      rememberCode(null);
       // One conversion per application: a repeat submission (already applied, or a second tab) reports nothing. The
       // application id is the transaction id for GTM and the event id for Meta, so every platform can deduplicate.
       if (!reviewMode && !result.duplicate) trackEvent('application_submitted', { program_id: program.id, program_title: program.title, value: 0, currency: 'USD', transaction_id: result.applicationId });
@@ -289,6 +305,8 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       checkoutRef.current = true; setCheckoutStarted(true);
       if (!reviewMode) trackEvent('checkout_begin', { program_id: program.id, program_title: program.title, value: order.amount, currency: order.currency });
       if (!reviewMode && order.tracking) metaTrack('InitiateCheckout', order.tracking, order.eventId);
+      // The payment form charges exactly what the server priced, whatever the form last showed.
+      await widget.widgets.setAmount({ currency: order.currency!, value: order.amount! });
       // PayPal (if offered) needs the order contents; cards do not.
       const selected = await widget.methods.getSelectedPaymentMethod().catch(() => null);
       const paypal = selected?.code === 'PAYPAL';
@@ -378,7 +396,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
                 <label htmlFor={`${widgetId}code`} className="mb-1 block text-xs font-semibold text-slate-700">{copy.pay.codeLabel}</label>
                 <div className="flex gap-2">
                   <input id={`${widgetId}code`} value={codeInput} onChange={event => { setCodeInput(event.target.value); setCodeError(''); }} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void applyCode(); } }} maxLength={32} autoCapitalize="characters" autoComplete="off" spellCheck={false} aria-invalid={Boolean(codeError)} aria-describedby={`${widgetId}codehelp`} className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm uppercase text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
-                  <button type="button" onClick={() => void applyCode()} disabled={codeBusy || !codeInput.trim()} className="shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 disabled:opacity-50">{codeBusy ? copy.pay.codeChecking : copy.pay.codeApply}</button>
+                  <button type="button" onClick={() => void applyCode()} disabled={codeBusy || busy || !codeInput.trim()} className="shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 disabled:opacity-50">{codeBusy ? copy.pay.codeChecking : copy.pay.codeApply}</button>
                 </div>
                 <p id={`${widgetId}codehelp`} className={`mt-1 text-xs ${codeError ? 'text-red-700' : 'text-slate-500'}`} role={codeError ? 'alert' : undefined}>{codeError || copy.pay.codeHelp}</p>
               </div>
@@ -401,7 +419,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
       </div>}
       {step === 3 && feeEnabled && notice && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{notice}</div>}
       {step === 3 && feeEnabled && !waived && <p className="mt-6 text-xs leading-relaxed text-slate-600">{copy.pay.billed(dollars(due), COMPANY.legalName)}</p>}
-      <div className={`${step === 3 && feeEnabled ? 'mt-4' : 'mt-8'} flex flex-wrap items-center justify-between gap-3`}>{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled && waived ? <button type="button" onClick={() => void submitFree(feeCode?.code)} disabled={busy || earlierPayment !== 'none'} className={actionClass}>{busy ? copy.free.submitting : copy.pay.submitWaived}</button> : feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || !paymentAvailable || widgetState !== 'ready' || earlierPayment !== 'none'} className={`${actionClass} inline-flex items-center justify-center gap-2`}><Lock aria-hidden className="h-4 w-4" />{busy ? copy.pay.processing : payMethod === 'paypal' ? copy.pay.continuePaypal : copy.pay.button(dollars(due))}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>
+      <div className={`${step === 3 && feeEnabled ? 'mt-4' : 'mt-8'} flex flex-wrap items-center justify-between gap-3`}>{step > 1 && !checkoutStarted ? <button type="button" disabled={busy} onClick={() => move(step - 1)} className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold">{copy.backButton}</button> : <span />}{step < 3 ? <button type="button" disabled={uploading} onClick={() => move(step + 1)} className={actionClass}>{step === 1 ? copy.continueResearch : copy.reviewApplication}</button> : (feeEnabled && waived ? <button type="button" onClick={() => void submitFree(feeCode?.code)} disabled={busy || codeBusy || codeRestoring || earlierPayment !== 'none'} className={actionClass}>{busy ? copy.free.submitting : copy.pay.submitWaived}</button> : feeEnabled ? <button type="button" onClick={() => void checkout()} disabled={busy || codeBusy || codeRestoring || !paymentAvailable || widgetState !== 'ready' || earlierPayment !== 'none'} className={`${actionClass} inline-flex items-center justify-center gap-2`}><Lock aria-hidden className="h-4 w-4" />{busy ? copy.pay.processing : payMethod === 'paypal' ? copy.pay.continuePaypal : copy.pay.button(dollars(due))}</button> : <button type="button" onClick={() => void submitFree()} disabled={busy} className={actionClass}>{busy ? copy.free.submitting : copy.free.submit}</button>)}</div>
       {step === 3 && feeEnabled && !waived && <div className="mt-3 space-y-1 text-right text-xs leading-relaxed text-slate-500">
         <p>{payMethod === 'paypal' ? copy.pay.paypalHelper(dollars(due)) : copy.pay.cardHelper}</p>
         <p>{copy.pay.legalA}<Link href="/terms" className="underline">{copy.pay.terms}</Link>{copy.pay.legalAnd}<Link href="/refunds" className="underline">{copy.pay.refunds}</Link>{copy.pay.legalB}<Link href="/privacy" className="underline">{copy.pay.privacy}</Link>{copy.pay.legalC}</p>
