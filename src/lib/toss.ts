@@ -36,7 +36,8 @@ export async function confirmTossPayment(
   paymentKey: string,
   orderId: string,
   amount: number,
-  currency: string = APPLICATION_CHARGE.currency
+  currency: string = APPLICATION_CHARGE.currency,
+  options: { recoveryDelayMs?: number } = {}
 ): Promise<TossPaymentConfirmResult> {
   const secretKey = process.env.TOSS_SECRET_KEY;
 
@@ -55,14 +56,16 @@ export async function confirmTossPayment(
       headers: {
         Authorization: `Basic ${basicToken}`,
         "Content-Type": "application/json",
-        "Idempotency-Key": orderId,
+        // One key per payment attempt: the application order id is reused when a visitor pays again after a failed
+        // attempt, and a key shared across attempts would make Toss replay the first attempt's answer.
+        "Idempotency-Key": paymentKey.slice(0, 300),
       },
       body: JSON.stringify({
         paymentKey,
         orderId,
         amount,
       }),
-      signal: AbortSignal.timeout(10000), // 10s timeout
+      signal: AbortSignal.timeout(30000), // card networks, overseas ones especially, can take well over 10s to answer
     });
 
     const data = await response.json();
@@ -115,6 +118,14 @@ export async function confirmTossPayment(
     };
   } catch {
     console.error("Payment provider confirmation unavailable.");
+    // The approval may still complete at the provider after our request gave up. Ask about this payment a few times
+    // before telling the payer it failed, so a charge that went through is recorded instead of reported as an error.
+    const delay = options.recoveryDelayMs ?? 3000;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+      const recovered = await findConfirmedTossPayment(paymentKey, orderId, amount, currency);
+      if (recovered.success) return recovered;
+    }
     return {
       success: false,
       error: "Payment verification is unavailable. If a charge appears, contact support before trying again.",
@@ -122,13 +133,17 @@ export async function confirmTossPayment(
   }
 }
 
-/** Read-only reconciliation: recovers a confirmed charge after a database/network failure. */
-export async function findConfirmedTossPayment(orderId: string, amount: number, currency: string = APPLICATION_CHARGE.currency): Promise<TossPaymentConfirmResult> {
+/**
+ * Read-only reconciliation: finds an already-approved charge for this payment key (after a timeout, a database failure
+ * or a repeated request). Looks the payment up by its key, which the payment-widget secret key is allowed to do; the
+ * order-id lookup is reserved for the per-merchant-id keys and does not work here.
+ */
+export async function findConfirmedTossPayment(paymentKey: string, orderId: string, amount: number, currency: string = APPLICATION_CHARGE.currency): Promise<TossPaymentConfirmResult> {
   if (!process.env.TOSS_SECRET_KEY) return { success: false };
   try {
-    const response = await fetch(`https://api.tosspayments.com/v1/payments/orders/${encodeURIComponent(orderId)}`, {
+    const response = await fetch(`https://api.tosspayments.com/v1/payments/${encodeURIComponent(paymentKey)}`, {
       headers: { Authorization: `Basic ${Buffer.from(`${process.env.TOSS_SECRET_KEY}:`).toString('base64')}` },
-      cache: 'no-store', signal: AbortSignal.timeout(10000),
+      cache: 'no-store', signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) return { success: false };
     const data = await response.json();

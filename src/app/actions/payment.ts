@@ -104,10 +104,11 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
     const existing = await prisma.application.findUnique({ where: { userId_programId: { userId: session.user.id, programId: order.programId } } });
     if (existing) return { error: 'An application already exists. Check your dashboard before making another payment.', code: 'alreadyAppliedPaid' };
     // A successful prior charge may be reconciled even after admissions close.
-    const recovered = await findConfirmedTossPayment(orderId, order.amount);
+    const recovered = await findConfirmedTossPayment(paymentKey, orderId, order.amount);
     if (!recovered.success && !canCharge) return {error: 'This checkout has expired or the program has closed. Contact support with your order reference before paying again.', code: 'checkoutExpired'};
     const confirmed = recovered.success ? recovered : await confirmTossPayment(paymentKey, orderId, order.amount);
-    if (!confirmed.success || !confirmed.paymentData) return { error: confirmed.error || 'Payment could not be confirmed. Please try again or contact support.', code: 'paymentUnconfirmed' };
+    // The provider's own reason is only shown to the payment-review account, whose job is to test this path.
+    if (!confirmed.success || !confirmed.paymentData) return { error: confirmed.error || 'Payment could not be confirmed. Please try again or contact support.', code: 'paymentUnconfirmed', providerReason: reviewer && confirmed.providerCode ? `${confirmed.providerCode}${confirmed.providerMessage ? ` · ${confirmed.providerMessage}` : ''}` : undefined };
     const payment = confirmed.paymentData;
     let created = false;
     const applicationId = await prisma.$transaction(async tx => {
