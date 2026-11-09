@@ -60,7 +60,8 @@ function PaymentSuccessContent() {
       });
 
       if (res.error) {
-        setError(actionText(res));
+        const reason = "providerReason" in res && res.providerReason ? ` (Toss: ${res.providerReason})` : "";
+        setError(actionText(res) + reason);
         setLoading(false);
       } else {
         setResult({

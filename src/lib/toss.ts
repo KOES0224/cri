@@ -55,14 +55,16 @@ export async function confirmTossPayment(
       headers: {
         Authorization: `Basic ${basicToken}`,
         "Content-Type": "application/json",
-        "Idempotency-Key": orderId,
+        // One key per payment attempt: the application order id is reused when a visitor pays again after a failed
+        // attempt, and a key shared across attempts would make Toss replay the first attempt's answer.
+        "Idempotency-Key": paymentKey.slice(0, 300),
       },
       body: JSON.stringify({
         paymentKey,
         orderId,
         amount,
       }),
-      signal: AbortSignal.timeout(10000), // 10s timeout
+      signal: AbortSignal.timeout(30000), // card networks, overseas ones especially, can take well over 10s to answer
     });
 
     const data = await response.json();
@@ -115,11 +117,35 @@ export async function confirmTossPayment(
     };
   } catch {
     console.error("Payment provider confirmation unavailable.");
+    // The approval may still have completed at the provider after our request gave up: look the order up once before
+    // telling the payer it failed.
+    const recovered = await findConfirmedTossPayment(orderId, amount, currency);
+    if (recovered.success) return recovered;
     return {
       success: false,
       error: "Payment verification is unavailable. If a charge appears, contact support before trying again.",
     };
   }
+}
+
+/**
+ * What the provider knows about an order id: `paid` (a charge exists), `none` (no payment was ever created for it, or
+ * the attempt ended without a charge), `unknown` (still open, or the provider could not be asked). Read-only.
+ */
+export async function tossOrderState(orderId: string): Promise<"paid" | "none" | "unknown"> {
+  if (!process.env.TOSS_SECRET_KEY) return "unknown";
+  try {
+    const response = await fetch(`https://api.tosspayments.com/v1/payments/orders/${encodeURIComponent(orderId)}`, {
+      headers: { Authorization: `Basic ${Buffer.from(`${process.env.TOSS_SECRET_KEY}:`).toString("base64")}` },
+      cache: "no-store", signal: AbortSignal.timeout(10000),
+    });
+    if (response.status === 404) return "none";
+    if (!response.ok) return "unknown";
+    const data = await response.json();
+    if (["DONE", "PARTIAL_CANCELED", "WAITING_FOR_DEPOSIT"].includes(data?.status)) return "paid";
+    if (["ABORTED", "EXPIRED", "CANCELED"].includes(data?.status)) return "none";
+    return "unknown";
+  } catch { return "unknown"; }
 }
 
 /** Read-only reconciliation: recovers a confirmed charge after a database/network failure. */

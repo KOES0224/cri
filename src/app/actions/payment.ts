@@ -10,7 +10,7 @@ import { APPLICATION_CHARGE } from '@/lib/application-fee';
 import { applicationFeeFor, isPaymentReviewer } from '@/lib/payment-review';
 import { applicationSchema } from '@/lib/application-validation';
 import { allowRequest } from '@/lib/request-limit';
-import { confirmTossPayment, findConfirmedTossPayment } from '@/lib/toss';
+import { confirmTossPayment, findConfirmedTossPayment, tossOrderState } from '@/lib/toss';
 import { revalidatePath } from 'next/cache';
 import { notifyApplicationReceived, sendApplicationConfirmation } from '@/lib/notify';
 import { META_VALUES, applicantRegion, applicantTypeFromRole, programContent, type MetaCustomData } from '@/lib/meta/config';
@@ -52,6 +52,10 @@ export async function beginApplicationCheckout(programId: string, input: unknown
     if (!program || admissionState(program) !== 'OPEN') return { error: 'This program is no longer accepting applications. Please choose an available program.', code: 'programClosed' };
     if (!document) return { error: 'Please upload your CV again using this account.', code: 'resumeMissing' };
     if (existing) return { error: 'You have already applied to this program. Check your dashboard.', code: 'alreadyApplied' };
+    // An expired checkout is restarted only when the provider confirms that no charge exists for it. The lookup runs
+    // before the transaction so the lock below is never held across a network call.
+    const stale = await prisma.applicationCheckout.findUnique({ where: { userId_programId: { userId: session.user.id, programId } }, select: { id: true, status: true, expiresAt: true } });
+    const staleState = stale && stale.status !== 'COMPLETED' && stale.expiresAt <= new Date() ? await tossOrderState(stale.id) : null;
     const order = await prisma.$transaction(async tx => {
       // Only one active checkout per student/program can reach the provider.
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${session.user.id + ':' + programId}))`;
@@ -62,8 +66,13 @@ export async function beginApplicationCheckout(programId: string, input: unknown
         await tx.applicationCheckout.delete({ where: { id: pending.id } });
         pending = null;
       }
+      if (pending && pending.expiresAt <= new Date()) {
+        // Anything other than a confirmed "no charge" for this exact order goes to admissions for reconciliation.
+        if (staleState !== 'none' || stale?.id !== pending.id) throw new Error('CHECKOUT_REVIEW');
+        await tx.applicationCheckout.delete({ where: { id: pending.id } });
+        pending = null;
+      }
       if (pending) {
-        if (pending.expiresAt <= new Date()) throw new Error('CHECKOUT_REVIEW');
         // A pending checkout saved under an older form shape (e.g. before residenceCountry existed) is treated as changed.
         const previous = applicationSchema.safeParse(pending.formData);
         if (!previous.success || JSON.stringify(previous.data) !== JSON.stringify(parsed.data)) throw new Error('CHECKOUT_CHANGED');
@@ -107,7 +116,8 @@ export async function finalizePaidApplication({ paymentKey, orderId, amount }: {
     const recovered = await findConfirmedTossPayment(orderId, order.amount);
     if (!recovered.success && !canCharge) return {error: 'This checkout has expired or the program has closed. Contact support with your order reference before paying again.', code: 'checkoutExpired'};
     const confirmed = recovered.success ? recovered : await confirmTossPayment(paymentKey, orderId, order.amount);
-    if (!confirmed.success || !confirmed.paymentData) return { error: confirmed.error || 'Payment could not be confirmed. Please try again or contact support.', code: 'paymentUnconfirmed' };
+    // The provider's own reason is only shown to the payment-review account, whose job is to test this path.
+    if (!confirmed.success || !confirmed.paymentData) return { error: confirmed.error || 'Payment could not be confirmed. Please try again or contact support.', code: 'paymentUnconfirmed', providerReason: reviewer && confirmed.providerCode ? `${confirmed.providerCode}${confirmed.providerMessage ? ` · ${confirmed.providerMessage}` : ''}` : undefined };
     const payment = confirmed.paymentData;
     let created = false;
     const applicationId = await prisma.$transaction(async tx => {
