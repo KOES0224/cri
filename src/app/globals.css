@@ -3,6 +3,9 @@
 
 /* Hover-capable, desktop-width devices (mouse/trackpad). Touch tablets never match, so they get the content directly. */
 @custom-variant hoverable (@media (hover: hover) and (min-width: 768px));
+/* Desktop layout in a low window (1366x768 laptops, Windows at 150% scaling): lets a sticky sidebar tighten itself
+   so it still fits under the navigation. Used by the program page's sidebar. */
+@custom-variant short (@media (min-width: 64rem) and (max-height: 700px));
 
 :root {
   --background: #ffffff;
