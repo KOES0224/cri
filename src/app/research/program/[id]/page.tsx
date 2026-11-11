@@ -248,11 +248,12 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
                        {mentor.role && <p className="text-xs text-gray-600 line-clamp-2 short:hidden">{mentor.role}</p>}
                        {mentor.university && <p className="text-xs font-semibold text-blue-700 leading-snug">{mentor.university}</p>}
                      </div>
+                     {/* Fixed slot, so the text does not re-wrap when the image arrives. Hidden where the card is narrowest. */}
                      {mentor.universityLogo && (
                        <img
                          src={mentor.universityLogo}
                          alt={mentor.university ? "" : t.logo}
-                         className="h-8 max-w-[56px] object-contain shrink-0"
+                         className="h-8 w-14 object-contain object-right shrink-0 lg:hidden xl:block"
                        />
                      )}
                    </div>
