@@ -5,7 +5,7 @@ import { applicationFeeFor } from '@/lib/payment-review';
 import { getProgramById } from "@/lib/public-data";
 import Link from "@/i18n/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Calendar, Users, MapPin, Tag, ChevronRight, CheckCircle2, CreditCard } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MapPin, ChevronRight, CheckCircle2, CreditCard } from "lucide-react";
 import { admissionState, programHref } from "@/lib/program-policy";
 import { admissionLabelLocalized, formatProgramDateRange, programFactsLocalized } from "@/lib/program-facts-i18n";
 import { getDictionary, getLocale } from "@/i18n";
@@ -56,6 +56,13 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
   const open = admissionState(program) === "OPEN";
   const admissionLabel = admissionLabelLocalized(program, locale);
   const nav = getDictionary(locale).nav;
+  const mentor = program.professors?.[0];
+  const durationText = facts.kind === "individual" ? facts.duration : program.startDate ? formatProgramDateRange(program.startDate, program.endDate, locale) : t.scheduleOnInquiry;
+  const tuitionText = program.tuition != null ? `$${program.tuition.toLocaleString()} USD` : t.availableOnInquiry;
+  // Sidebar fact rows: label left, value right on one line.
+  const factRow = "flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 py-2 short:py-1.5";
+  const factLabel = "flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider";
+  const factValue = "font-semibold text-gray-900";
   return (
     <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-36 lg:pb-32">
       <JsonLd
@@ -66,14 +73,13 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
       />
       <TrackProgramView programId={program.id} programTitle={program.title} open={open} content={programContent(program)} />
       <div className="max-w-7xl mx-auto px-6">
-        <Link href={programHref(program.category)} className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-10">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t.back}
-        </Link>
-        
-        <div className="grid lg:grid-cols-3 gap-12">
-           {/* Main Content Area */}
+        <div className="grid lg:grid-cols-3 gap-12 lg:gap-8 xl:gap-12">
+           {/* Main Content Area. The back link sits inside it so the sidebar starts level with it, not below it. */}
            <div className="lg:col-span-2">
+              <Link href={programHref(program.category)} className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-10">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {t.back}
+              </Link>
               <div className="flex flex-wrap gap-2 mb-6">
                  {open ? (
                    <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider rounded-full flex items-center">
@@ -100,10 +106,10 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
 
               {/* Key facts for phones: dates, format, cohort size and tuition were far below the fold. */}
               <dl className="lg:hidden grid grid-cols-2 gap-3 mb-8 text-sm">
-                <div className="rounded-2xl bg-white border border-gray-200 p-3"><dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{t.duration}</dt><dd className="mt-1 font-semibold text-gray-900">{facts.kind === "individual" ? facts.duration : program.startDate ? formatProgramDateRange(program.startDate, program.endDate, locale) : t.scheduleOnInquiry}</dd></div>
+                <div className="rounded-2xl bg-white border border-gray-200 p-3"><dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{t.duration}</dt><dd className="mt-1 font-semibold text-gray-900">{durationText}</dd></div>
                 <div className="rounded-2xl bg-white border border-gray-200 p-3"><dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{t.format}</dt><dd className="mt-1 font-semibold text-gray-900">{facts.format}</dd></div>
                 {facts.capacity != null && <div className="rounded-2xl bg-white border border-gray-200 p-3"><dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{t.capacity}</dt><dd className="mt-1 font-semibold text-gray-900">{t.students(facts.capacity)}</dd></div>}
-                <div className="rounded-2xl bg-white border border-gray-200 p-3"><dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{t.tuition}</dt><dd className="mt-1 font-semibold text-gray-900">{program.tuition != null ? `$${program.tuition.toLocaleString()} USD` : t.availableOnInquiry}</dd></div>
+                <div className="rounded-2xl bg-white border border-gray-200 p-3"><dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{t.tuition}</dt><dd className="mt-1 font-semibold text-gray-900">{tuitionText}</dd></div>
               </dl>
               
               <div className="prose prose-lg prose-gray max-w-none mb-12">
@@ -216,126 +222,112 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
               </div>
            </div>
            
-           {/* Sidebar */}
-           <div className="lg:col-span-1 lg:sticky lg:top-[calc(7rem+var(--banner-h,0px))] self-start">
-              <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl">
-                 <h3 className="text-xl font-bold text-gray-900 mb-6">{t.details}</h3>
-
-                 {program.professors && program.professors.length > 0 && (
-                   <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-blue-50/60 to-indigo-50/40 border border-blue-100">
-                     <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider mb-3">{t.facultyMentor}</p>
-                     <div className="flex items-center gap-3">
-                       {program.professors[0].imageUrl ? (
-                         <img
-                           src={program.professors[0].imageUrl}
-                           alt={program.professors[0].name}
-                           className="w-13 h-13 rounded-full object-cover border-2 border-white shadow-md ring-1 ring-blue-100 shrink-0"
-                         />
-                       ) : (
-                         <div className="w-13 h-13 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
-                           {program.professors[0].name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
-                         </div>
-                       )}
-                       <div className="min-w-0 flex-1">
-                         <h4 className="font-bold text-gray-900 text-sm leading-snug">{program.professors[0].name}</h4>
-                         <p className="text-xs text-gray-600 line-clamp-1">{program.professors[0].role}</p>
-                         {program.professors[0].university && (
-                           <p className="text-xs font-semibold text-blue-700">{program.professors[0].university}</p>
-                         )}
+           {/* Sidebar. Kept short enough to fit one laptop screen under the navigation, so the price and the Apply
+               button are visible without scrolling. The short: classes (globals.css) tighten it further on low
+               windows, e.g. a 1366x768 laptop or Windows at 150% scaling; below that the card scrolls inside itself. */}
+           <aside aria-labelledby="program-details-heading" className="lg:col-span-1 lg:sticky lg:top-[calc(7rem+var(--banner-h,0px))] self-start">
+              {/* Not shown, but keeps a heading stop for screen readers now that the visible title is gone. */}
+              <h3 id="program-details-heading" className="sr-only">{t.details}</h3>
+              <div className="bg-white rounded-3xl p-6 lg:p-5 xl:p-6 short:p-4 border border-gray-100 shadow-xl lg:max-h-[calc(100dvh-8rem-var(--banner-h,0px))] lg:overflow-y-auto">
+                 {mentor && (
+                   <div className="mb-3 short:mb-2 flex items-center gap-3 rounded-2xl bg-gradient-to-br from-blue-50/60 to-indigo-50/40 border border-blue-100 p-3 short:p-2.5">
+                     {mentor.imageUrl ? (
+                       <img
+                         src={mentor.imageUrl}
+                         alt={mentor.name}
+                         className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-md ring-1 ring-blue-100 shrink-0"
+                       />
+                     ) : (
+                       <div aria-hidden="true" className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+                         {mentor.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
                        </div>
+                     )}
+                     <div className="min-w-0 flex-1">
+                       <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">{t.facultyMentor}</p>
+                       <p className="font-bold text-gray-900 text-sm leading-snug">{mentor.name}</p>
+                       {mentor.role && <p className="text-xs text-gray-600 line-clamp-2 short:hidden">{mentor.role}</p>}
+                       {mentor.university && <p className="text-xs font-semibold text-blue-700 leading-snug">{mentor.university}</p>}
                      </div>
-                     {program.professors[0].universityLogo && (
-                       <div className="mt-3 pt-3 border-t border-blue-100/70 flex items-center justify-between">
-                         <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400">{t.affiliation}</span>
-                         <img
-                           src={program.professors[0].universityLogo}
-                           alt={program.professors[0].university || t.logo}
-                           className="h-6 max-w-[90px] object-contain"
-                         />
-                       </div>
+                     {/* Fixed slot, so the text does not re-wrap when the image arrives. Hidden where the card is narrowest. */}
+                     {mentor.universityLogo && (
+                       <img
+                         src={mentor.universityLogo}
+                         alt={mentor.university ? "" : t.logo}
+                         className="h-8 w-14 object-contain object-right shrink-0 lg:hidden xl:block"
+                       />
                      )}
                    </div>
                  )}
-                 
-                 <div className="space-y-6 mb-8">
-                    <div className="flex items-center text-gray-700">
-                       <Calendar className="h-5 w-5 mr-4 text-blue-600 shrink-0" />
-                       <div>
-                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.duration}</p>
-                         <p className="font-medium">
-                           {facts.kind === 'individual' ? facts.duration : program.startDate ? formatProgramDateRange(program.startDate, program.endDate, locale) : t.scheduleOnInquiry}
-                         </p>
-                       </div>
-                    </div>
-                    
-                    <div className="h-px bg-gray-100 w-full" />
-                    
-                    {facts.capacity != null && <>
-                    <div className="flex items-center text-gray-700">
-                       <Users className="h-5 w-5 mr-4 text-blue-600 shrink-0" />
-                       <div>
-                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.capacity}</p>
-                         <p className="font-semibold text-gray-900">
-                           {t.students(facts.capacity)}
-                         </p>
-                       </div>
-                    </div>
-                    
-                    </>}
-                    <div className="h-px bg-gray-100 w-full" />
-                    
-                    <div className="flex items-center text-gray-700">
-                       <MapPin className="h-5 w-5 mr-4 text-blue-600 shrink-0" />
-                       <div>
-                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.format}</p>
-                         <p className="font-semibold text-gray-900">
-                           {facts.format}
-                         </p>
-                       </div>
-                    </div>
-                 </div>
-                 
-                 <div className="rounded-2xl bg-gray-50 border border-gray-200 p-4 mb-4">
-                   <p className="font-bold text-gray-900">{t.tuition}</p>
-                   <p className="text-xl font-bold">{program.tuition != null ? `$${program.tuition.toLocaleString()} USD` : t.availableOnInquiry}</p>
-                   <p className="text-sm text-gray-600 mt-2">{APPLICATION_FEE_ENABLED ? t.tuitionNote : t.free.tuitionNote}</p>
-                 </div>
-                 {/* Application Fee Notice (or the no-fee notice while the fee is switched off) */}
-                 {open && !APPLICATION_FEE_ENABLED && (
-                   <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4 text-left">
-                     <p className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />{t.free.title}</p>
-                     <p className="text-xs text-emerald-900/80 leading-relaxed mt-1.5">{t.free.body}</p>
-                   </div>
-                 )}
-                 {open && APPLICATION_FEE_ENABLED && (
-                   <div className="bg-gradient-to-br from-blue-50/90 to-indigo-50/70 border border-blue-100/90 rounded-2xl p-4 mb-4 text-left shadow-xs">
-                     <div className="flex items-center justify-between mb-1.5">
-                       <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
-                         <CreditCard className="w-3.5 h-3.5 text-blue-600" />
-                         {t.applicationFee}
-                       </span>
-                       <span className="font-black text-gray-900 text-sm">$50 USD</span>
-                     </div>
-                     <p className="text-xs text-blue-900/70 leading-relaxed font-normal">
-                       {t.feeNote(APPLICATION_CHARGE_LABEL)}
-                     </p>
-                   </div>
-                 )}
 
-                 {open ? (
-                   <ApplyButton programId={program.id} programTitle={program.title} label={t.apply} pendingLabel={t.applyLoading} />
-                 ) : (
-                   <div className="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl text-center font-bold text-lg border border-gray-200">
-                     {admissionLabel}
+                 {/* A value too long for its row drops under the label instead of squeezing it. */}
+                 <dl className="divide-y divide-gray-100 text-sm">
+                    <div className={factRow}>
+                       <dt className={factLabel}><Calendar aria-hidden="true" className="h-4 w-4 text-blue-600 shrink-0" />{t.duration}</dt>
+                       <dd className={factValue}>{durationText}</dd>
+                    </div>
+                    {facts.capacity != null && (
+                      <div className={factRow}>
+                         <dt className={factLabel}><Users aria-hidden="true" className="h-4 w-4 text-blue-600 shrink-0" />{t.capacity}</dt>
+                         <dd className={factValue}>{t.students(facts.capacity)}</dd>
+                      </div>
+                    )}
+                    <div className={factRow}>
+                       <dt className={factLabel}><MapPin aria-hidden="true" className="h-4 w-4 text-blue-600 shrink-0" />{t.format}</dt>
+                       <dd className={factValue}>{facts.format}</dd>
+                    </div>
+                 </dl>
+
+                 <div className="mt-2 rounded-2xl bg-gray-50 border border-gray-200 px-4 lg:px-3 xl:px-4 py-3 short:py-2">
+                   <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                     <p className="text-sm font-bold text-gray-900">{t.tuition}</p>
+                     <p className="text-lg font-bold text-gray-900">{tuitionText}</p>
                    </div>
-                 )}
-                 <p className="text-center text-xs text-gray-400 mt-4 px-4">
-                   {APPLICATION_FEE_ENABLED ? t.reviewNote : t.free.reviewNote}
+                   {/* The notes are about applying, so a closed or completed program shows the tuition alone. */}
+                   {open && <p className="text-xs text-gray-600 mt-0.5">{APPLICATION_FEE_ENABLED ? t.tuitionNote : t.free.tuitionNote}</p>}
+                   {/* Application fee, only while the fee is switched on. */}
+                   {open && APPLICATION_FEE_ENABLED && (
+                     <div className="mt-2 pt-2 border-t border-gray-200">
+                       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                         <p className="text-sm font-bold text-gray-900">{t.applicationFee}</p>
+                         <p className="text-sm font-bold text-gray-900">{APPLICATION_CHARGE_LABEL}</p>
+                       </div>
+                       <p className="text-xs text-gray-600 mt-0.5">{t.feeNote}</p>
+                     </div>
+                   )}
+                 </div>
+
+                 <div className="mt-3 short:mt-2">
+                   {open ? (
+                     <>
+                       <ApplyButton programId={program.id} programTitle={program.title} label={t.apply} pendingLabel={t.applyLoading} className="short:h-12" />
+                       {!APPLICATION_FEE_ENABLED && (
+                         <p className="mt-2.5 text-center text-xs font-semibold text-emerald-800">
+                           <CheckCircle2 aria-hidden="true" className="inline-block align-[-2px] mr-1 h-3.5 w-3.5 text-emerald-600" />
+                           {t.free.title} · {t.free.body}
+                         </p>
+                       )}
+                       <p className={`text-center text-xs text-gray-500 ${APPLICATION_FEE_ENABLED ? "mt-2.5" : "mt-1"}`}>
+                         {APPLICATION_FEE_ENABLED ? t.reviewNote : t.free.reviewNote}
+                       </p>
+                     </>
+                   ) : (
+                     <>
+                       <div className="w-full h-12 flex items-center justify-center bg-gray-100 text-gray-500 rounded-2xl font-bold border border-gray-200">
+                         {admissionLabel}
+                       </div>
+                       <Link href="/research" className="mt-2 flex h-12 w-full items-center justify-center rounded-2xl border border-gray-300 bg-white text-sm font-bold text-gray-900 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600">
+                         {t.browseUpcoming}
+                         <ChevronRight aria-hidden="true" className="ml-1 h-4 w-4" />
+                       </Link>
+                     </>
+                   )}
+                 </div>
+                 <p className="mt-2 flex flex-wrap justify-center gap-x-4 text-xs">
+                   <Link href="/admissions" className="inline-block py-1 text-blue-700 underline underline-offset-2">{t.stepsLink}</Link>
+                   <Link href="/refunds" className="inline-block py-1 text-blue-700 underline underline-offset-2">{t.refundsLink}</Link>
                  </p>
-                 <Link href="/admissions" className="block text-center text-blue-700 underline mt-4 text-sm">{t.stepsLink}</Link><Link href="/refunds" className="block text-center text-blue-700 underline mt-3 text-sm">{t.refundsLink}</Link>
-                 {!open && <Link href="/research" className="block text-center text-blue-700 underline mt-4">{t.browseUpcoming}</Link>}
               </div>
-           </div>
+           </aside>
         </div>
       </div>
 
