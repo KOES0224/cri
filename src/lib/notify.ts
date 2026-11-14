@@ -238,3 +238,16 @@ export async function sendWebinarConfirmation(input: { to: string; locale: strin
     : [`Hello, your seat for the CRI online info session is confirmed.`, ``, `When: ${WEBINAR_WHEN.en}`, `Where: online (Zoom). The join link is sent to you the day before.`, ``, `Programs: ${SITE_URL}/research`, `Questions: support@cri.kr`].join('\n');
   return send({ to: input.to, subject: ko ? `CRI 온라인 설명회 신청 확인 · ${WEBINAR_WHEN.ko}` : `Your CRI info session seat · ${WEBINAR_WHEN.en}`, text, replyTo: ADMISSIONS_INBOX });
 }
+
+/** KakaoTalk chatbot passed a conversation to a person: the recent turns, so admissions can answer in the channel admin. */
+export async function notifyKakaoHandoff(input: { userKey: string; reason: string; turns: Array<{ role: string; text: string; at: Date }> }) {
+  const lines = [
+    `The KakaoTalk channel bot handed a conversation to a person (${input.reason}).`,
+    `Answer it in the channel admin chat: https://center-pf.kakao.com (채팅 메뉴).`,
+    ``,
+    ...input.turns.flatMap(t => [`[${t.at.toISOString().slice(0, 16).replace('T', ' ')} UTC] ${t.role === 'user' ? 'Customer' : 'Bot'}:`, t.text, ``]),
+    `Kakao user key: ${input.userKey}`,
+    `Bot conversations: ${SITE_URL}/dashboard/kakao`,
+  ];
+  return send({ to: process.env.KAKAO_HANDOFF_EMAIL || ADMISSIONS_INBOX, subject: `[CRI KakaoTalk] ${input.reason}`, text: lines.join('\n') });
+}
