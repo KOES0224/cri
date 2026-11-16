@@ -81,6 +81,8 @@ const HANDOFF_RULES: Array<[RegExp, string]> = [
   [/상담원|담당자|사람(이랑|과|하고)?\s*(연결|통화|상담|얘기|이야기)|직접\s*(통화|상담)|전화\s*(주세요|부탁|해\s*주)|human|real person/i, 'asked for a person'],
   [/결제(가|이)?\s*(안|오류|실패|됐|되었|두\s*번)|이중\s*결제|영수증/i, 'payment problem'],
   [/합격\s*(보장|확실)|불합격|떨어졌/i, 'admission decision'],
+  // Someone asking for other people's data: lists, contacts, application files. The bot has none, but a person should see it.
+  [/(학생|지원자|참가자|참여자|수강생|회원|학부모)\s*(들의?|분들의?)?\s*(명단|목록|리스트|연락처|전화\s*번호|이메일|개인\s*정보|정보\s*(좀\s*)?(보내|넘겨|공유|줘|주세요))|명단\s*(좀\s*)?(보내|넘겨|공유|줘|주세요|알려)|(student|applicant)s?\s*(list|data|contact|info)/i, 'request for student data'],
 ];
 
 export function ruleHandoff(utterance: string): string | null {
