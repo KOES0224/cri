@@ -6,6 +6,7 @@ export const adminNavigation = [
     { href: "/dashboard/webinar", label: "Webinar", icon: "inquiries" },
     { href: "/dashboard/contacts", label: "Customers", icon: "customers" },
     { href: "/dashboard/messages", label: "Messages", icon: "messages" },
+    { href: "/dashboard/kakao", label: "KakaoTalk bot", icon: "messages" },
   ] },
   { group: "Management", items: [
     { href: "/dashboard/programs", label: "Programs", icon: "programs" },

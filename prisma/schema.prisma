@@ -544,3 +544,18 @@ model WebinarRegistration {
   @@unique([webinarKey, dedupeKey])
   @@index([webinarKey, createdAt])
 }
+
+// KakaoTalk channel chatbot (src/app/api/kakao/skill): one row per message in or out. userKey is Kakao's per-bot
+// anonymous user id (botUserKey), not a phone number or Kakao account. role: user | assistant. handoff marks a turn
+// the bot passed to a person instead of answering; the bot stays on hold for that user for a while after it.
+model KakaoChatMessage {
+  id        String   @id @default(cuid())
+  userKey   String
+  role      String
+  text      String
+  handoff   Boolean  @default(false)
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([userKey, createdAt])
+}
