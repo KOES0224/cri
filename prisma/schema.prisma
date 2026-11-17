@@ -8,35 +8,35 @@ generator client {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  sessionVersion Int      @default(0)
-  role          String    @default("STUDENT") // STUDENT, PARENT, ADMIN
-  studentCode   String?   @unique // 8-digit random code
-  isAgency      Boolean   @default(false) // Hidden flag for parent accounts
-  agencyName    String?   // Name of the Agency if isAgency is true
+  id              String    @id @default(cuid())
+  name            String?
+  email           String    @unique
+  emailVerified   DateTime?
+  image           String?
+  password        String?
+  sessionVersion  Int       @default(0)
+  role            String    @default("STUDENT") // STUDENT, PARENT, ADMIN
+  studentCode     String?   @unique // 8-digit random code
+  isAgency        Boolean   @default(false) // Hidden flag for parent accounts
+  agencyName      String? // Name of the Agency if isAgency is true
   // Payment-gateway review account (scripts/payment-review-account.ts): sees the paid checkout while the fee is off,
   // gets a pre-filled application, and its submissions stay out of ad measurement and the admissions sheet.
-  paymentReviewer Boolean @default(false)
+  paymentReviewer Boolean   @default(false)
 
-  accounts     Account[]
-  sessions     Session[]
-  applications Application[]
-  studentApplications Application[] @relation("ApplicationStudent")
+  accounts             Account[]
+  sessions             Session[]
+  applications         Application[]
+  studentApplications  Application[]          @relation("ApplicationStudent")
   applicationDocuments ApplicationDocument[]
   applicationCheckouts ApplicationCheckout[]
-  applicationDrafts ApplicationDraft[]
-  enrollments  Enrollment[]
-  submissions  AssignmentSubmission[]
-  messagesSent Message[]     @relation("SentMessages")
-  messagesRecv Message[]     @relation("ReceivedMessages")
-  leads        Lead[]
-  activities   UserActivity[]
-  notifications Notification[]
+  applicationDrafts    ApplicationDraft[]
+  enrollments          Enrollment[]
+  submissions          AssignmentSubmission[]
+  messagesSent         Message[]              @relation("SentMessages")
+  messagesRecv         Message[]              @relation("ReceivedMessages")
+  leads                Lead[]
+  activities           UserActivity[]
+  notifications        Notification[]
 
   // Parent-Student Relationship
   parentId String?
@@ -86,39 +86,39 @@ model VerificationToken {
 }
 
 model Program {
-  id           String         @id @default(cuid())
-  title        String
-  description  String
-  category     String // e.g. "Research", "Mentorship"
-  subCategory  String? // e.g. "1-on-1", "Group"
-  tuition      Int?
-  order        Int            @default(0)
-  status       String         @default("OPEN")
-  startDate    DateTime?
-  endDate      DateTime?
-  content      String?        @db.Text
-  isPublished  Boolean        @default(true)
-  
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  category    String // e.g. "Research", "Mentorship"
+  subCategory String? // e.g. "1-on-1", "Group"
+  tuition     Int?
+  order       Int       @default(0)
+  status      String    @default("OPEN")
+  startDate   DateTime?
+  endDate     DateTime?
+  content     String?   @db.Text
+  isPublished Boolean   @default(true)
+
   teachingHoursProf String?
   teachingHoursTA   String?
   courseSchedule    String?
-  locationFormat    String?        @default("Online (Remote)")
-  capacity          Int?           @default(5)
+  locationFormat    String? @default("Online (Remote)")
+  capacity          Int?    @default(5)
 
   applications Application[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   Enrollment   Enrollment[]
   assignments  Assignment[]
-  professors   Professor[]    @relation("ProgramProfessors")
+  professors   Professor[]   @relation("ProgramProfessors")
 }
 
 model Application {
-  id               String            @id @default(cuid())
+  id               String  @id @default(cuid())
   userId           String
   programId        String
-  status           String            @default("PENDING") // PENDING, ACCEPTED, REJECTED
-  step             Int               @default(1) // Legacy step (can keep for backward compatibility)
+  status           String  @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  step             Int     @default(1) // Legacy step (can keep for backward compatibility)
   expectedWaitDays Int? // Expected remaining time
   content          String? // For storing application responses/essays
 
@@ -131,14 +131,14 @@ model Application {
   generalComments       String?   @db.Text
 
   // The student account this application is for, when a parent or agency applied on the student's behalf.
-  studentId        String?
-  student          User?             @relation("ApplicationStudent", fields: [studentId], references: [id], onDelete: SetNull)
+  studentId String?
+  student   User?   @relation("ApplicationStudent", fields: [studentId], references: [id], onDelete: SetNull)
 
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  program          Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
-  steps            ApplicationStep[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program   Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  steps     ApplicationStep[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
 
   @@unique([userId, programId])
   @@index([userId])
@@ -152,7 +152,7 @@ model ApplicationStep {
   title         String
   description   String?
   status        String      @default("UPCOMING") // COMPLETED, IN_PROGRESS, UPCOMING, WAIVED
-  date          DateTime?   // The date the step occurs or was completed
+  date          DateTime? // The date the step occurs or was completed
   order         Int         @default(0)
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   createdAt     DateTime    @default(now())
@@ -176,20 +176,20 @@ model Message {
 }
 
 model Enrollment {
-  id                      String   @id @default(cuid())
+  id                      String                 @id @default(cuid())
   userId                  String
   programId               String
-  status                  String   @default("ONGOING") // ONGOING, PAST, ACCEPTED (for upcoming)
+  status                  String                 @default("ONGOING") // ONGOING, PAST, ACCEPTED (for upcoming)
   midGrade                String?
   finalGrade              String?
   homeworkUrls            String? // JSON string or comma-separated URLs
-  recommendationRequested Boolean  @default(false)
-  recommendationCompleted Boolean  @default(false)
-  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  program                 Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  recommendationRequested Boolean                @default(false)
+  recommendationCompleted Boolean                @default(false)
+  user                    User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program                 Program                @relation(fields: [programId], references: [id], onDelete: Cascade)
   submissions             AssignmentSubmission[]
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
 
   @@unique([userId, programId])
   @@index([userId])
@@ -197,15 +197,15 @@ model Enrollment {
 }
 
 model Assignment {
-  id          String   @id @default(cuid())
+  id          String                 @id @default(cuid())
   programId   String
   title       String
   description String?
   dueDate     DateTime
-  program     Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  program     Program                @relation(fields: [programId], references: [id], onDelete: Cascade)
   submissions AssignmentSubmission[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
 
   @@index([programId])
 }
@@ -231,27 +231,27 @@ model AssignmentSubmission {
 }
 
 model Lead {
-  id        String    @id @default(cuid())
-  userId    String?   // Links to the authenticated user submitting the inquiry
-  name      String
-  email     String?
-  phone     String?
-  status      String    @default("NEW") // NEW, CONTACTED, MET, ENROLLED, WAITLISTED, REJECTED
-  
-  // Rich CRM Profile Fields
-  grade       String?
-  interest    String?
-  institution String?
-  agencyName  String?
-  parentName  String?
-  kakaoId     String?
-  parentPhone String?
-  country       String?   // ISO-3166 alpha-2 residence country from the contact form
-  applicantType String?   // parent | student | other, as chosen on the contact form
+  id     String  @id @default(cuid())
+  userId String? // Links to the authenticated user submitting the inquiry
+  name   String
+  email  String?
+  phone  String?
+  status String  @default("NEW") // NEW, CONTACTED, MET, ENROLLED, WAITLISTED, REJECTED
 
-  notes       String?   // Initial inquiry message
-  deadline    DateTime?
-  createdBy   String?   // Stores the Admin User ID who created this
+  // Rich CRM Profile Fields
+  grade         String?
+  interest      String?
+  institution   String?
+  agencyName    String?
+  parentName    String?
+  kakaoId       String?
+  parentPhone   String?
+  country       String? // ISO-3166 alpha-2 residence country from the contact form
+  applicantType String? // parent | student | other, as chosen on the contact form
+
+  notes     String? // Initial inquiry message
+  deadline  DateTime?
+  createdBy String? // Stores the Admin User ID who created this
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -263,9 +263,9 @@ model Lead {
 model LeadActivity {
   id        String   @id @default(cuid())
   leadId    String
-  adminName String?  // The admin who recorded the log
-  action    String   // "NOTE_ADDED", "STATUS_CHANGE"
-  content   String?  // The actual text log or note
+  adminName String? // The admin who recorded the log
+  action    String // "NOTE_ADDED", "STATUS_CHANGE"
+  content   String? // The actual text log or note
   createdAt DateTime @default(now())
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
@@ -275,7 +275,7 @@ model Notification {
   id        String   @id @default(cuid())
   leadId    String?
   userId    String?
-  adminName String?  // The admin who created the notification
+  adminName String? // The admin who created the notification
   message   String
   dueDate   DateTime
   isRead    Boolean  @default(false)
@@ -291,19 +291,19 @@ model Notification {
 }
 
 model Post {
-  id          String   @id @default(cuid())
-  slug        String?  @unique @default(cuid())
-  title       String
-  excerpt     String?
-  content     String
-  category    String   @default("Uncategorized")
-  author      String   @default("CRI Editorial")
-  imageUrl    String?
+  id           String    @id @default(cuid())
+  slug         String?   @unique @default(cuid())
+  title        String
+  excerpt      String?
+  content      String
+  category     String    @default("Uncategorized")
+  author       String    @default("CRI Editorial")
+  imageUrl     String?
   externalLink String?
-  publishedAt DateTime?
-  eventDate   DateTime? // Add eventDate for Dashboard Event Countdown
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  publishedAt  DateTime?
+  eventDate    DateTime? // Add eventDate for Dashboard Event Countdown
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model SuccessStory {
@@ -323,16 +323,16 @@ model SuccessStory {
 }
 
 model Professor {
-  id               String   @id @default(cuid())
+  id               String  @id @default(cuid())
   name             String
   role             String
   university       String?
   bio              String
   imageUrl         String?
   universityLogo   String?
-  acceptingMentees Boolean  @default(true)
-  publications     Int      @default(0)
-  
+  acceptingMentees Boolean @default(true)
+  publications     Int     @default(0)
+
   // Curriculum specific fields natively attached to the Professor
   courseTitle       String?
   courseDescription String?
@@ -341,9 +341,9 @@ model Professor {
   relatedMajor      String?
   keywords          String?
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  programs         Program[] @relation("ProgramProfessors")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  programs  Program[] @relation("ProgramProfessors")
 }
 
 model SiteContent {
@@ -354,16 +354,16 @@ model SiteContent {
   page      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([key])
 }
 
 model UserActivity {
   id        String   @id @default(cuid())
   userId    String
-  adminName String?  // The admin who recorded the log
-  action    String   // "NOTE_ADDED", "STATUS_CHANGE"
-  content   String?  // The actual text log or note
+  adminName String? // The admin who recorded the log
+  action    String // "NOTE_ADDED", "STATUS_CHANGE"
+  content   String? // The actual text log or note
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -371,9 +371,10 @@ model UserActivity {
 
 // Public-form limits are shared across server instances.
 model RequestLimit {
-  key       String   @id
-  count     Int      @default(1)
-  resetAt   DateTime
+  key     String   @id
+  count   Int      @default(1)
+  resetAt DateTime
+
   @@index([resetAt])
 }
 
@@ -384,31 +385,33 @@ model ApplicationDocument {
   filename  String
   data      Bytes
   createdAt DateTime @default(now())
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 
 // Server-owned order data binds the fee and application to the authenticated user.
 model ApplicationCheckout {
-  id            String   @id
+  id            String    @id
   userId        String
   programId     String
   formData      Json
   amount        Int
   currency      String
-  status        String   @default("PENDING")
+  status        String    @default("PENDING")
   applicationId String?
   // Set just before the provider is asked to confirm a charge. On a row created by code that stores it (keyTracked),
   // empty means no confirm was ever sent for this order, so no charge can exist for it; set means the provider's
   // record of that payment decides what may happen next. Rows from before this was stored are keyTracked = false.
   paymentKey    String?
   paymentKeyAt  DateTime?
-  keyTracked    Boolean  @default(false)
+  keyTracked    Boolean   @default(false)
   // Referral code the order was priced with, if any; `amount` above is already the reduced fee.
   feeCode       String?
   expiresAt     DateTime
-  createdAt     DateTime @default(now())
-  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, programId])
 }
 
@@ -434,49 +437,50 @@ model FeeCode {
 
 // Private, resumable application drafts; versions prevent lost updates across tabs.
 model ApplicationDraft {
-  id String @id @default(cuid())
-  userId String
+  id        String   @id @default(cuid())
+  userId    String
   programId String
-  formData Json
-  step Int @default(1)
-  version Int @default(1)
+  formData  Json
+  step      Int      @default(1)
+  version   Int      @default(1)
   updatedAt DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, programId])
 }
 
 // Customer directory (docs/customers.md): everyone who enrolled in a program, with or without a portal account.
 // Segments such as "high school, graduating this year" are computed from studentLevel + gradYear and never stored.
 model Contact {
-  id             String    @id @default(cuid())
+  id             String           @id @default(cuid())
   firstName      String
   lastName       String
   gender         String?
-  email          String    @unique
+  email          String           @unique
   phone          String?
   parentName     String?
   parentEmail    String?
   parentPhone    String?
-  parentPhoneKey String?   // digits only, for sibling matching
+  parentPhoneKey String? // digits only, for sibling matching
   school         String?
-  studentLevel   String?   // SCHOOL | UNIVERSITY; null until known
+  studentLevel   String? // SCHOOL | UNIVERSITY; null until known
   gradYear       Int?
-  levelSource    String    @default("IMPORT") // IMPORT | INFERRED (from the school name) | MANUAL | APPLICATION
-  reviewNeeded   Boolean   @default(false)
+  levelSource    String           @default("IMPORT") // IMPORT | INFERRED (from the school name) | MANUAL | APPLICATION
+  reviewNeeded   Boolean          @default(false)
   reviewReason   String?
   reviewedAt     DateTime?
   reviewedBy     String?
-  channel        String?   // normalised acquisition channel (Lourus, AM, Supia, Direct ...)
+  channel        String? // normalised acquisition channel (Lourus, AM, Supia, Direct ...)
   agencyRaw      String?
   howLearned     String?
-  householdId    String?   // shared by confirmed siblings
-  pinnedNote     String?   @db.Text
+  householdId    String? // shared by confirmed siblings
+  pinnedNote     String?          @db.Text
   emailOptOutAt  DateTime?
   emailBouncedAt DateTime?
-  userId         String?   // student's portal account, when one exists
-  parentUserId   String?   // guardian's portal account, when one exists
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  userId         String? // student's portal account, when one exists
+  parentUserId   String? // guardian's portal account, when one exists
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   programs       ContactProgram[]
 
   @@index([parentEmail])
@@ -490,7 +494,7 @@ model Contact {
 model ContactProgram {
   id             String    @id @default(cuid())
   contactId      String
-  cohortKey      String    // 2026S, 2025W, 2025S, or program:<programId> for portal applications
+  cohortKey      String // 2026S, 2025W, 2025S, or program:<programId> for portal applications
   cohortLabel    String
   professor      String?
   status         String    @default("ENROLLED") // APPLIED | ENROLLED | UNPAID | CANCELLED
@@ -514,7 +518,7 @@ model ContactProgram {
 model ContactAudienceSync {
   id         String   @id @default(cuid())
   name       String
-  recipient  String   // STUDENT | PARENT | BOTH
+  recipient  String // STUDENT | PARENT | BOTH
   filters    Json
   audienceId String?
   total      Int      @default(0)
@@ -531,14 +535,14 @@ model WebinarRegistration {
   id         String   @id @default(cuid())
   webinarKey String
   name       String
-  role       String?  // PARENT | STUDENT | OTHER
+  role       String? // PARENT | STUDENT | OTHER
   phone      String?
   email      String?
   kakaoId    String?
   question   String?  @db.Text
   locale     String?
-  userId     String?  // portal account, when the visitor was signed in
-  dedupeKey  String   // normalised email, phone digits or kakao id: the same person registers once
+  userId     String? // portal account, when the visitor was signed in
+  dedupeKey  String // normalised email, phone digits or kakao id: the same person registers once
   createdAt  DateTime @default(now())
 
   @@unique([webinarKey, dedupeKey])
@@ -558,4 +562,28 @@ model KakaoChatMessage {
   createdAt DateTime @default(now())
 
   @@index([userKey, createdAt])
+}
+
+// A payment link: a page at /pay/<token> that anyone holding the link can pay without signing in (a parent who missed a
+// payment, tuition for one student). Created by an admin at /dashboard/payment-links; one link takes one payment.
+// Rules in src/lib/payment-links.ts. Student names live here, not in the (public) repository.
+model PaymentLink {
+  id           String    @id @default(cuid())
+  token        String    @unique
+  studentName  String
+  orderName    String
+  amount       Int
+  currency     String    @default("KRW")
+  note         String?
+  active       Boolean   @default(true)
+  // OPEN: waiting for payment. PROCESSING: a payment key was claimed and sent to Toss for confirmation. PAID: done.
+  status       String    @default("OPEN")
+  orderId      String?   @unique
+  paymentKey   String?   @unique
+  paymentKeyAt DateTime?
+  method       String?
+  receiptUrl   String?
+  paidAt       DateTime?
+  createdBy    String?
+  createdAt    DateTime  @default(now())
 }

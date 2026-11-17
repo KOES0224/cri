@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/dashboard", "/admin", "/api", "/apply", "/auth", "/onboarding", "/pg-review"],
+        disallow: ["/dashboard", "/admin", "/api", "/apply", "/auth", "/onboarding", "/pg-review", "/pay"],
       },
     ],
     // Google and Bing accept an RSS feed as a sitemap; it surfaces new articles faster.
