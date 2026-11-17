@@ -59,15 +59,6 @@ async function safely(label: string, query: () => Promise<Entry[]>): Promise<Ent
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-
-  const staticEntries: Entry[] = STATIC_ROUTES.map(([path, priority, changeFrequency]) => ({
-    url: abs(path),
-    lastModified: now,
-    changeFrequency,
-    priority,
-  }));
-
   const [programs, posts, stories] = await Promise.all([
     safely("programs", async () => {
       const rows = await prisma.program.findMany({
@@ -91,7 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: abs(`/blog/${p.slug ?? p.id}`),
         lastModified: p.updatedAt,
         changeFrequency: "monthly" as const,
-        priority: 0.5,
+        priority: 0.6,
       }));
     }),
     safely("success stories", async () => {
@@ -104,6 +95,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }));
     }),
   ]);
+
+  // Static pages carry no lastmod: stamping them with "now" on every regeneration teaches Google to ignore
+  // lastmod for the whole sitemap, including the real dates on articles. /blog takes its newest article's date.
+  const newestPost = posts.reduce<Date | undefined>((latest, p) => {
+    const at = p.lastModified ? new Date(p.lastModified) : undefined;
+    return at && (!latest || at > latest) ? at : latest;
+  }, undefined);
+  const staticEntries: Entry[] = STATIC_ROUTES.map(([path, priority, changeFrequency]) => ({
+    url: abs(path),
+    ...(path === "/blog" && newestPost ? { lastModified: newestPost } : {}),
+    changeFrequency,
+    priority,
+  }));
 
   // De-duplicate by URL (a post may be reachable by both slug and id).
   const seen = new Set<string>();

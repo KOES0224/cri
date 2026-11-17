@@ -16,18 +16,36 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPost((await params).slug);
   if (!post) return {};
-  return pageMetadata({
+  const meta = await pageMetadata({
     title: `${post.title} | CRI`,
     description: summarize(post.excerpt || post.content),
     path: `/blog/${post.slug || post.id}`,
     image: post.imageUrl,
     type: "article",
   });
+  return {
+    ...meta,
+    alternates: { ...meta.alternates, types: { "application/rss+xml": [{ url: "/feed.xml", title: "CRI Institute Blog" }] } },
+    openGraph: {
+      ...meta.openGraph,
+      type: "article",
+      ...(post.publishedAt ? { publishedTime: post.publishedAt.toISOString() } : {}),
+      modifiedTime: post.updatedAt.toISOString(),
+      section: post.category,
+    },
+    // Drafts are reachable by URL for preview but must not be indexed.
+    ...(post.publishedAt ? {} : { robots: { index: false, follow: true } }),
+  };
+}
+
+const RELATED_COUNT = 3;
+
+function wordCount(markdown: string) {
+  return markdown.replace(/!\[[^\]]*\]\([^)]*\)/g, "").split(/\s+/).filter(Boolean).length;
 }
 
 function readingMinutes(markdown: string) {
-  const words = markdown.replace(/!\[[^\]]*\]\([^)]*\)/g, "").split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(words / 230));
+  return Math.max(1, Math.round(wordCount(markdown) / 230));
 }
 
 export default async function BlogPostPage({ params }: Props) {
@@ -40,9 +58,11 @@ export default async function BlogPostPage({ params }: Props) {
   const label = (category: string) => t.categories[category] ?? category;
   const date = format(new Date(post.publishedAt ?? post.createdAt), t.dateFormat);
   const naverSource = post.externalLink?.includes("blog.naver.com");
-  const related = (await getPublishedPostCards())
-    .filter((p) => p.id !== post.id && p.category === post.category)
-    .slice(0, 3);
+  // Same category first, topped up with the newest other articles so every page links onward.
+  const others = (await getPublishedPostCards()).filter((p) => p.id !== post.id);
+  const sameCategory = others.filter((p) => p.category === post.category);
+  const related = [...sameCategory, ...others.filter((p) => p.category !== post.category)].slice(0, RELATED_COUNT);
+  const relatedHeading = sameCategory.length >= RELATED_COUNT ? t.moreIn(label(post.category)) : t.keepReading;
 
   const path = `/blog/${post.slug || post.id}`;
   return (
@@ -57,6 +77,8 @@ export default async function BlogPostPage({ params }: Props) {
             published: post.publishedAt ?? post.createdAt,
             modified: post.updatedAt,
             basedOn: naverSource ? post.externalLink : null,
+            section: post.category,
+            wordCount: wordCount(post.content),
           }),
           breadcrumbJsonLd(locale, [["CRI", "/"], [t.title, "/blog"], [post.title, path]]),
         ]}
@@ -84,7 +106,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         <div className="relative w-full aspect-[16/9] mb-10 rounded-3xl overflow-hidden shadow-sm border border-gray-100 bg-gray-100">
           {post.imageUrl ? (
-            <Image src={post.imageUrl} alt="" fill priority sizes="(max-width: 896px) 100vw, 896px" className="object-cover" referrerPolicy="no-referrer" />
+            <Image src={post.imageUrl} alt={post.title} fill priority sizes="(max-width: 896px) 100vw, 896px" className="object-cover" referrerPolicy="no-referrer" />
           ) : (
             <EditorialCover category={post.category} label={label(post.category)} size="hero" />
           )}
@@ -115,7 +137,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         {related.length > 0 && (
           <section className="mt-20" aria-labelledby="related-heading">
-            <h2 id="related-heading" className="text-2xl font-black tracking-tight text-gray-900 mb-6">{t.moreIn(label(post.category))}</h2>
+            <h2 id="related-heading" className="text-2xl font-black tracking-tight text-gray-900 mb-6">{relatedHeading}</h2>
             <div className="grid sm:grid-cols-3 gap-6">
               {related.map((item) => (
                 <Link key={item.id} href={`/blog/${item.slug || item.id}`} className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col">

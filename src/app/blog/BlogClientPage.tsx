@@ -156,6 +156,27 @@ export default function BlogClientPage({ posts }: { posts: Post[] }) {
               </div>
             )}
 
+            {/* Every article linked from /blog in the server HTML, so crawlers reach the ones behind "Show more". */}
+            <section className="mt-20" aria-labelledby="archive-heading">
+              <h2 id="archive-heading" className="text-2xl font-black tracking-tight text-gray-900 mb-8">{t.archiveTitle}</h2>
+              <div className="grid md:grid-cols-2 gap-x-12 gap-y-10">
+                {categories.map(([cat]) => (
+                  <div key={cat}>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-blue-600 mb-3">{label(cat)}</h3>
+                    <ul className="space-y-2">
+                      {publishedPosts.filter((p) => p.category === cat).map((post) => (
+                        <li key={post.id}>
+                          <Link href={`/blog/${post.slug || post.id}`} className="text-gray-700 hover:text-blue-700 hover:underline underline-offset-4 leading-snug">
+                            {post.title}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </section>
+
             <Link
               href="/success"
               className="group mt-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl bg-gray-900 text-white p-8 md:p-10"
