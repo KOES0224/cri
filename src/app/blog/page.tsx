@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = getDictionary(await getLocale()).blog;
-  return pageMetadata({ title: `${t.title} | CRI`, description: t.subtitle, path: "/blog" });
+  const meta = await pageMetadata({ title: `${t.title} | CRI`, description: t.subtitle, path: "/blog" });
+  return { ...meta, alternates: { ...meta.alternates, types: { "application/rss+xml": [{ url: "/feed.xml", title: "CRI Institute Blog" }] } } };
 }
 
 export default async function BlogPage() {

@@ -149,9 +149,11 @@ type ArticleInput = {
   modified: Date | string;
   /** The Korean post on CRI's Naver blog this article was adapted from. */
   basedOn?: string | null;
+  section?: string;
+  wordCount?: number;
 };
 
-export function articleJsonLd({ path, headline, description, image, published, modified, basedOn }: ArticleInput): Json {
+export function articleJsonLd({ path, headline, description, image, published, modified, basedOn, section, wordCount }: ArticleInput): Json {
   const url = abs(path);
   return {
     "@context": "https://schema.org",
@@ -168,6 +170,8 @@ export function articleJsonLd({ path, headline, description, image, published, m
     author: { "@id": ORG_ID, "@type": "Organization", name: "CRI", url: SITE_URL },
     publisher: { "@id": ORG_ID },
     ...(basedOn ? { isBasedOn: basedOn } : {}),
+    ...(section ? { articleSection: section } : {}),
+    ...(wordCount ? { wordCount } : {}),
   };
 }
 

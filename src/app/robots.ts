@@ -10,6 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/dashboard", "/admin", "/api", "/apply", "/auth", "/onboarding", "/pg-review"],
       },
     ],
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    // Google and Bing accept an RSS feed as a sitemap; it surfaces new articles faster.
+    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/feed.xml`],
   };
 }
