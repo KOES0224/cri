@@ -108,7 +108,7 @@ export default function LeadHeaderActions({ leadId, linkedUser, createdBy }: { l
         className="inline-flex items-center text-sm font-bold bg-white text-rose-600 px-4 py-2 rounded-xl border border-rose-200 hover:bg-rose-50 hover:border-rose-300 transition-colors shadow-sm disabled:opacity-50"
       >
         <Trash2 className="w-4 h-4 mr-2" />
-        {isDeleting ? 'Deleting...' : 'Delete Lead'}
+        {isDeleting ? 'Deleting...' : 'Delete inquiry'}
       </button>
     </div>
   );

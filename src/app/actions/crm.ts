@@ -323,6 +323,23 @@ export async function deleteLead(leadId: string) {
   }
 }
 
+/** Deletes several inquiries at once (spam cleanup from the list page). Notes and reminders go with them. */
+export async function deleteLeads(leadIds: string[]) {
+  await requireAdmin();
+  if (!Array.isArray(leadIds)) return { success: false, error: "No inquiries selected." };
+  const ids = [...new Set(leadIds.filter((id): id is string => typeof id === "string" && id.length > 0 && id.length <= 64))];
+  if (ids.length === 0) return { success: false, error: "No inquiries selected." };
+  if (ids.length > 100) return { success: false, error: "Delete at most 100 inquiries at a time." };
+  try {
+    const { count } = await prisma.lead.deleteMany({ where: { id: { in: ids } } });
+    revalidatePath("/dashboard/leads");
+    revalidatePath("/dashboard");
+    return { success: true, count };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not delete inquiries." };
+  }
+}
+
 // ----------------------------------------------------------------------
 // MEETING & CALENDAR ACTIONS
 // ----------------------------------------------------------------------
