@@ -61,3 +61,13 @@ Rules live in `src/lib/checkout-policy.ts`; the reasoning is in its header.
 ## Review account
 
 `scripts/payment-review-account.ts` (see its header) creates the account that sees this checkout while the fee is off for everyone else.
+
+## Payment links (won, no sign-in)
+
+`/dashboard/payment-links` makes a page at `/pay/<token>` for one student and one won amount (for example a parent who has not paid yet). Whoever has the link pays in the Toss window without an account; the payer's name is not asked. It uses the won merchant id's payment UI (`NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY_KRW`, `criKRW`), the same widget keys, and stores the student name and state in the `PaymentLink` table (never in the repository, which is public).
+
+- One link, one payment: the confirm action claims the link with the payment key before asking Toss to confirm, so a second payer or tab is refused before any charge exists.
+- A refused or expired payment reopens the link. If Toss does not answer, the link stays "승인 확인 중", admissions gets a `[CRI payment check]` mail, and the next page view re-checks Toss after two minutes.
+- A paid link mails admissions (`[CRI payment link]`) and shows "결제 완료" with the receipt. Refunds are made in the Toss admin by order number (`CRI_PAY_…`).
+- Virtual accounts are refused before the window opens (no deposit webhook on this site).
+- Per-card limits are the payer's: a large amount may need a card with a high limit or 계좌이체/간편결제, whatever the `criKRW` UI offers.

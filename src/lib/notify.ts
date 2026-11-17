@@ -251,3 +251,37 @@ export async function notifyKakaoHandoff(input: { userKey: string; reason: strin
   ];
   return send({ to: process.env.KAKAO_HANDOFF_EMAIL || ADMISSIONS_INBOX, subject: `[CRI KakaoTalk] ${input.reason}`, text: lines.join('\n') });
 }
+
+/** A payment link was paid: admissions gets the student, amount and order number (rules in src/lib/payment-links.ts). */
+export async function notifyPaymentLinkPaid(input: { studentName: string; amount: number; orderId: string; method?: string | null; receiptUrl?: string | null }) {
+  const text = [
+    `A payment link has been paid.`,
+    ``,
+    `Student: ${input.studentName}`,
+    `Amount: ${input.amount.toLocaleString('ko-KR')} KRW`,
+    input.method ? `Method: ${input.method}` : null,
+    `Order number: ${input.orderId}`,
+    input.receiptUrl ? `Receipt: ${input.receiptUrl}` : null,
+    ``,
+    `All links: ${SITE_URL}/dashboard/payment-links`,
+  ].filter((line): line is string => line !== null).join('\n');
+  return send({ to: ADMISSIONS_INBOX, subject: `[CRI payment link] ${input.studentName} · ${input.amount.toLocaleString('ko-KR')} KRW paid`, text });
+}
+
+/** A payment-link payment could not be settled automatically: the link stays locked until someone checks Toss. */
+export async function notifyPaymentLinkCheck(input: { studentName: string; orderId: string; situation: string }) {
+  const text = [
+    `A payment-link payment could not be settled automatically and needs a manual check.`,
+    ``,
+    `Student: ${input.studentName}`,
+    `Order number: ${input.orderId}`,
+    `What happened: ${input.situation}`,
+    ``,
+    `What to do: look the order number up in the Toss Payments admin (결제조회).`,
+    `- Approved there: open the payment link once; it records the payment by itself.`,
+    `- Failed or expired there: the link unlocks by itself the next time it is opened.`,
+    ``,
+    `All links: ${SITE_URL}/dashboard/payment-links`,
+  ].join('\n');
+  return send({ to: ADMISSIONS_INBOX, subject: `[CRI payment check] ${input.orderId}`, text });
+}
