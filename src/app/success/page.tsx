@@ -8,7 +8,7 @@ import { getDictionary, getLocale } from "@/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = getDictionary(await getLocale()).success;
-  return pageMetadata({ title: `${t.title} | CRI`, description: t.subtitle, path: "/success" });
+  return pageMetadata({ title: `${t.title} | CRI`, description: t.subtitle, path: "/success", card: "success" });
 }
 
 export default async function SuccessPage() {

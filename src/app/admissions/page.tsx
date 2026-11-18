@@ -8,7 +8,7 @@ import { applicationFeeFor } from '@/lib/payment-review';
 import { getDictionary, getLocale } from '@/i18n';
 export async function generateMetadata(): Promise<Metadata> {
   const meta = getDictionary(await getLocale()).system.meta.admissions;
-  return pageMetadata({ title: meta.title, description: meta.description, path: '/admissions' });
+  return pageMetadata({ title: meta.title, description: meta.description, path: '/admissions', card: 'admissions' });
 }
 export default async function AdmissionsPage() {
   const t = getDictionary(await getLocale()).admissions;

@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = getDictionary(await getLocale()).webinar.meta;
-  return pageMetadata({ title: t.title, description: t.description, path: "/webinar", type: "website" });
+  return pageMetadata({ title: t.title, description: t.description, path: "/webinar", card: "webinar", type: "website" });
 }
 
 /** Public sign-up page for the current webinar; the form closes itself once the session has started. */

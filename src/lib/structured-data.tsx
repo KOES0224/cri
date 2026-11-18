@@ -46,7 +46,7 @@ export function organizationJsonLd(locale: Locale, description: string): Json[] 
       legalName: "Elite Research Co., Ltd.",
       url: SITE_URL,
       logo: `${SITE_URL}/icon.svg`,
-      image: `${SITE_URL}/opengraph-image.png`,
+      image: `${SITE_URL}/opengraph-image.jpg`,
       description,
       email: "support@cri.kr",
       telephone: "+82-2-6203-8999",
