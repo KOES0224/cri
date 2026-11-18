@@ -31,10 +31,8 @@ export function JsonLd({ data }: { data: Json | Json[] }) {
 }
 
 export function organizationJsonLd(locale: Locale, description: string): Json[] {
-  const address =
-    locale === "ko"
-      ? { streetAddress: "논현로153길 53", addressLocality: "강남구", addressRegion: "서울특별시" }
-      : { streetAddress: "53, Nonhyeon-ro 153-gil", addressLocality: "Gangnam-gu", addressRegion: "Seoul" };
+  // No postal address by owner decision (2026-11-18): CRI presents itself as a global institution founded in
+  // California, not as a Seoul organization. The legally required business address stays in the footer.
   return [
     {
       "@context": "https://schema.org",
@@ -52,7 +50,6 @@ export function organizationJsonLd(locale: Locale, description: string): Json[] 
       description,
       email: "support@cri.kr",
       telephone: "+82-2-6203-8999",
-      address: { "@type": "PostalAddress", ...address, postalCode: "06036", addressCountry: "KR" },
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "admissions",

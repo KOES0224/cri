@@ -1,5 +1,5 @@
 import Link from "@/i18n/link";
-import { Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
+import { Mail, Phone, ArrowUpRight } from "lucide-react";
 import { getDictionary, getLocale } from "@/i18n";
 import { COMPANY, FTC_LOOKUP_URL, companyLegalName } from "@/lib/company";
 
@@ -163,12 +163,6 @@ export default async function Footer() {
                 <a href="tel:+82262038999" className="hover:text-white transition-colors">
                   +82 2-6203-8999
                 </a>
-              </li>
-              <li className="flex items-start gap-2.5 text-xs text-gray-400 pt-1 leading-relaxed">
-                <MapPin className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                <span>
-                  {t.address}
-                </span>
               </li>
             </ul>
           </div>

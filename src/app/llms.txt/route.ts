@@ -76,7 +76,6 @@ export async function GET() {
     "",
     "- Email: support@cri.kr",
     "- Phone: +82 2-6203-8999",
-    `- Address: ${t.footer.address}`,
     "- Korean-language articles: https://blog.naver.com/cri_official",
     "",
   ].join("\n");

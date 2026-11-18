@@ -46,7 +46,6 @@ export const en = {
     portal: "Applicant Portal",
     inquiry: "Inquiry & Consultation",
     contactHeading: "Contact & Office",
-    address: "06036 · 53, Nonhyeon-ro 153-gil, Gangnam-gu, Seoul, Republic of Korea",
     business: {
       representative: "Representative",
       registration: "Business registration no.",
@@ -550,7 +549,7 @@ export const en = {
     title: "Get in Touch",
     intro: "Whether you have a question about our programs, or are ready to apply, our admissions team is here to guide you.",
     emailUs: "Email Us",
-    visitUs: "Visit Us (Seoul)",
+    visitUs: "Visit Us",
     address1: "53, Nonhyeon-ro 153-gil",
     address2: "Gangnam-gu, Seoul, Republic of Korea",
     sentTitle: "Message Sent!",

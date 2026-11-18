@@ -48,7 +48,6 @@ export const ko: Dictionary = {
     portal: "지원자 포털",
     inquiry: "문의 및 상담",
     contactHeading: "오시는 길 & 연락처",
-    address: "06036 · 서울특별시 강남구 논현로153길 53",
     business: {
       representative: "대표",
       registration: "사업자등록번호",
@@ -548,7 +547,7 @@ export const ko: Dictionary = {
     title: "문의하기",
     intro: "프로그램이 궁금하시거나 지원을 준비 중이시라면, 입학팀이 차근차근 안내해 드리겠습니다.",
     emailUs: "이메일",
-    visitUs: "오시는 길 (서울)",
+    visitUs: "오시는 길",
     address1: "서울특별시 강남구",
     address2: "논현로153길 53",
     sentTitle: "문의가 접수되었습니다",
