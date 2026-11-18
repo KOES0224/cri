@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title: `${program.title} | CRI`,
     description: summarize(program.description),
     path: `/research/program/${program.id}`,
-    // ./opengraph-image.tsx draws title + photo on a 1200x630 card. Named here because config images beat the
+    // ./opengraph-image.tsx draws the title on a 1200x630 brand card. Named here because config images beat the
     // file convention; ?v changes with each edit so Kakao/Facebook, which cache by URL, pick up a new title.
     image: {
       url: `/research/program/${program.id}/opengraph-image?v=${program.updatedAt.getTime()}`,
