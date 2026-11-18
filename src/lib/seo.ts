@@ -5,8 +5,15 @@ import { localeAlternates } from "@/i18n/routing";
 /** Canonical public origin. Used for metadataBase, robots and the sitemap. */
 export { SITE_URL } from "./site";
 
-/** Fallback social image: app/opengraph-image.png is served at this path. */
+/** Fallback social image: app/opengraph-image.png is served at this path (rebuilt by scripts/brand-images/build.py). */
 export const DEFAULT_OG_IMAGE = "/opengraph-image.png";
+export const DEFAULT_OG_ALT = "CRI — Limitless Potential. World-Class Research Mentorship.";
+
+/**
+ * The default card with its size spelled out: Facebook, Kakao and LinkedIn draw the first share without an image
+ * when width/height are missing, because they have not downloaded it yet.
+ */
+const DEFAULT_OG = { url: DEFAULT_OG_IMAGE, width: 1200, height: 630, type: "image/png", alt: DEFAULT_OG_ALT };
 
 /** Collapse whitespace and cut to ~`max` chars at a word boundary. */
 export function summarize(text: string | null | undefined, max = 155): string {
@@ -23,8 +30,8 @@ type PageMeta = {
   description: string;
   /** Unprefixed site-relative path, e.g. "/research" (also for the Korean page). */
   path: string;
-  /** Absolute or site-relative image URL; defaults to the site OG image. */
-  image?: string | null;
+  /** Absolute or site-relative image URL (or one with its size); defaults to the site OG image. */
+  image?: string | { url: string; width: number; height: number; alt?: string } | null;
   type?: "website" | "article";
 };
 
@@ -50,7 +57,7 @@ export function localeMetadata(path: string, locale: Locale): Pick<Metadata, "al
  * be set here or the root `opengraph-image.png` would be dropped.
  */
 export async function pageMetadata({ title, description, path, image, type = "website" }: PageMeta): Promise<Metadata> {
-  const images = [image || DEFAULT_OG_IMAGE];
+  const images = [typeof image === "string" ? { url: image } : image || DEFAULT_OG];
   const { alternates, openGraph } = localeMetadata(path, await getLocale());
   return {
     title,
