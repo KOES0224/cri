@@ -14,6 +14,8 @@ const KO_COOKIE = { path: "/", maxAge: ONE_YEAR, sameSite: "lax" } as const;
  */
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  // Share images are fetched by link-preview crawlers (Kakao sends Accept-Language: ko); never bounce them to /ko.
+  if (pathname.endsWith("/opengraph-image")) return NextResponse.next();
   const { locale: prefixed, path } = stripLocalePrefix(pathname);
   const headers = new Headers(request.headers);
   const cookie = request.cookies.get(LOCALE_COOKIE)?.value;
