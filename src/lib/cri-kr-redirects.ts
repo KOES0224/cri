@@ -9,7 +9,7 @@
  */
 export const CRI_KR_PAGES: [source: string, destination: string][] = [
   // Current WordPress pages (cri.kr/page-sitemap.xml, September 2026)
-  ["/home/about-us", "/"],
+  ["/home/about-us", "/about"],
   ["/home/contact-page", "/contact"],
   ["/home/professors", "/research"],
   ["/home/programs/1-on-1-advanced-research-program", "/research/1-on-1"],
