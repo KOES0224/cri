@@ -8,7 +8,7 @@ import { ABOUT } from "./content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const doc = ABOUT[await getLocale()];
-  return pageMetadata({ title: doc.metaTitle, description: doc.description, path: "/about" });
+  return pageMetadata({ title: doc.metaTitle, description: doc.description, path: "/about", card: "about" });
 }
 
 /** Who CRI is, in the owner's words. Copy lives in ./content.ts; keep it in step with llms.txt and the organization JSON-LD. */

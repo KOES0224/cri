@@ -5,8 +5,9 @@ Slack, Google results — draws the same shapes instead of falling back to whate
 
     python3 scripts/brand-images/build.py      # needs `npm ci` first (Pretendard fonts + sharp)
 
-Writes: src/app/icon.svg, src/app/favicon.ico, src/app/apple-icon.png, src/app/opengraph-image.png,
-public/icon-192.png, public/icon-512.png.
+Writes: src/app/icon.svg, src/app/favicon.ico, src/app/apple-icon.png, src/app/opengraph-image.jpg (site card),
+public/og/*.jpg (section cards), src/assets/og/program-bg-*.jpg (program card backdrops), public/icon-192.png,
+public/icon-512.png.
 """
 
 import io
@@ -67,24 +68,80 @@ def icon_svg(rounded: bool) -> str:
     )
 
 
-def og_svg() -> str:
-    """1200x630 share card. Everything sits in the centre so square and 2:1 crops (Kakao, WhatsApp, iMessage) keep it."""
-    w, h = 1200, 630
-    logo, (_, _, _, logo_bottom) = placed("Pretendard-Black.otf", "CRI.", 200, cx=w / 2, cy=232, spacing=-0.03)
-    line1, _ = placed("Pretendard-Bold.otf", "Limitless Potential.", 50, cx=w / 2, baseline=logo_bottom + 92)
-    line2, _ = placed("Pretendard-Bold.otf", "World-Class Research Mentorship.", 50, cx=w / 2, baseline=logo_bottom + 160)
-    domain, _ = placed("Pretendard-SemiBold.otf", "criglobal.org", 30, cx=w / 2, baseline=h - 52, fill="#C7D2FE")
-    return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}">'
-        '<defs>'
-        f'<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{NAVY}"/>'
-        f'<stop offset="0.55" stop-color="#1E3A8A"/><stop offset="1" stop-color="{INDIGO}"/></linearGradient>'
-        f'<radialGradient id="glow" cx="0.5" cy="0.38" r="0.55"><stop offset="0" stop-color="{BLUE}" stop-opacity="0.55"/>'
-        f'<stop offset="1" stop-color="{BLUE}" stop-opacity="0"/></radialGradient>'
-        '</defs>'
-        f'<rect width="{w}" height="{h}" fill="url(#bg)"/><rect width="{w}" height="{h}" fill="url(#glow)"/>'
-        f'{logo}{line1}{line2}{domain}</svg>'
+# Share cards. Real CRI class photos (professor + students) under a navy wash, with all text inside the centre
+# 630x630 square: KakaoTalk, iMessage and WhatsApp show a square crop on phones, Facebook/X/Slack the full 1.91:1.
+W, H = 1200, 630
+SAFE = 560  # widest a text line may be, so it survives the square crop
+EDITORIAL = ROOT / "public/editorial"
+PHOTOS = {
+    "classroom": "224154651312-01.jpg",  # professor teaching at a desk, students at laptops
+    "lecture": "224064517758-04.jpg",  # professor at the board
+    "seminar": "223956173133-10.jpg",  # 2025 Seoul Research Program evening seminar
+    "mentoring": "224155866504-05.jpg",  # professor and student at one laptop
+    "conversation": "224021442427-03.jpg",  # professor talking with students
+    "group": "224052005886-06.jpg",  # professor and students, group photo
+    "lineup": "224159932106-04.jpg",  # professor with a student team
+    "cohort": "224064517758-02.jpg",  # professor with a finished student cohort
+    "thumbs": "224164063133-02.jpg",  # professor and students, thumbs up
+    "pointing": "224154651312-02.jpg",  # professor explaining at the board
+    "team": "224079964888-04.jpg",  # faculty and students, Seoul program
+}
+# Section pages: (output name, photo, label lines). "home" becomes src/app/opengraph-image.jpg.
+SECTIONS = [
+    ("home", "classroom", ["World-Class", "Research Mentorship"]),
+    ("research", "lecture", ["Research Programs"]),
+    ("seoul", "seminar", ["Seoul Research", "Program"]),
+    ("winter", "conversation", ["Winter Online", "Research Program"]),
+    ("one-on-one", "mentoring", ["1-on-1 Research", "Mentorship"]),
+    ("about", "group", ["About CRI"]),
+    ("admissions", "lineup", ["Admissions"]),
+    ("contact", "thumbs", ["Contact Us"]),
+    ("webinar", "team", ["Free Webinar"]),
+    ("blog", "pointing", ["Research Ideas", "& Guides"]),
+    ("success", "cohort", ["Student Success", "Stories"]),
+]
+# Program cards draw on one of these (picked per program), already washed, with no text.
+PROGRAM_BACKGROUNDS = ["lecture", "classroom", "conversation", "seminar", "pointing", "team"]
+
+
+def photo_backdrop(name: str) -> Image.Image:
+    """The photo cropped to 1200x630 under the navy wash (darker in the middle, where the text goes)."""
+    from PIL import ImageOps
+    src = Image.open(EDITORIAL / PHOTOS[name]).convert("RGB")
+    photo = ImageOps.fit(src, (W, H), method=Image.LANCZOS, centering=(0.5, 0.45)).convert("RGBA")
+    wash = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}"><defs>'
+        '<radialGradient id="c" cx="0.5" cy="0.5" r="0.55"><stop offset="0" stop-color="#0B1638" stop-opacity="0.62"/>'
+        '<stop offset="1" stop-color="#0B1638" stop-opacity="0"/></radialGradient></defs>'
+        f'<rect width="{W}" height="{H}" fill="{NAVY}" fill-opacity="0.55"/><rect width="{W}" height="{H}" fill="url(#c)"/></svg>'
     )
+    return Image.alpha_composite(photo, render(wash, W, H))
+
+
+def fit_size(font_file: str, lines, size: float) -> float:
+    """Shrink `size` until the widest line fits the square-safe width."""
+    while size > 20:
+        widest = max(text_path(font_file, line, size)[1][2] - text_path(font_file, line, size)[1][0] for line in lines)
+        if widest <= SAFE:
+            return size
+        size -= 2
+    return size
+
+
+def card_text_svg(lines) -> str:
+    """Centred "CRI." + label lines + domain, transparent elsewhere."""
+    label_size = fit_size("Pretendard-Bold.otf", lines, 52)
+    gap = label_size * 1.25
+    block = 150 + 40 + gap * len(lines)  # logo cap height + spacing + label lines
+    top = (H - block) / 2 - 10
+    logo, (_, _, _, logo_bottom) = placed("Pretendard-Black.otf", "CRI.", 190, cx=W / 2, cy=top + 75, spacing=-0.03)
+    parts = [logo]
+    for i, line in enumerate(lines):
+        path, _ = placed("Pretendard-Bold.otf", line, label_size, cx=W / 2, baseline=logo_bottom + 40 + label_size + i * gap)
+        parts.append(path)
+    domain, _ = placed("Pretendard-SemiBold.otf", "criglobal.org", 28, cx=W / 2, baseline=H - 44, fill="#E0E7FF")
+    parts.append(domain)
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">{"".join(parts)}</svg>'
 
 
 def render(svg: str, width: int, height: int) -> Image.Image:
@@ -114,8 +171,14 @@ def main():
     render(square, 192, 192).convert("RGB").save(PUBLIC / "icon-192.png", optimize=True)
     render(square, 512, 512).convert("RGB").save(PUBLIC / "icon-512.png", optimize=True)
 
-    og = render(og_svg(), 1200, 630).convert("RGB")
-    og.save(APP / "opengraph-image.png", optimize=True)
+    (PUBLIC / "og").mkdir(exist_ok=True)
+    for name, photo, lines in SECTIONS:
+        card = Image.alpha_composite(photo_backdrop(photo), render(card_text_svg(lines), W, H)).convert("RGB")
+        out = APP / "opengraph-image.jpg" if name == "home" else PUBLIC / "og" / f"{name}.jpg"
+        card.save(out, quality=84, optimize=True, progressive=True)
+
+    for i, photo in enumerate(PROGRAM_BACKGROUNDS):
+        photo_backdrop(photo).convert("RGB").save(ROOT / f"src/assets/og/program-bg-{i}.jpg", quality=80, optimize=True)
     print("done")
 
 

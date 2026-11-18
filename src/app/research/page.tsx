@@ -9,7 +9,7 @@ export const revalidate = 30;
 
 export async function generateMetadata(): Promise<Metadata> {
   const meta = getDictionary(await getLocale()).system.meta.research;
-  return pageMetadata({ title: meta.title, description: meta.description, path: "/research" });
+  return pageMetadata({ title: meta.title, description: meta.description, path: "/research", card: "research" });
 }
 
 export default async function ResearchPage() {

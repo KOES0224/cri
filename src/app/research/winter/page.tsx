@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const meta = getDictionary(await getLocale()).system.meta.winter;
-  return pageMetadata({ title: meta.title, description: meta.description, path: "/research/winter" });
+  return pageMetadata({ title: meta.title, description: meta.description, path: "/research/winter", card: "winter" });
 }
 
 export default async function WinterResearchPage() {

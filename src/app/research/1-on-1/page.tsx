@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const meta = getDictionary(await getLocale()).system.meta.oneOnOne;
-  return pageMetadata({ title: meta.title, description: meta.description, path: "/research/1-on-1" });
+  return pageMetadata({ title: meta.title, description: meta.description, path: "/research/1-on-1", card: "one-on-one" });
 }
 
 export default async function OneOnOneResearchPage() {
