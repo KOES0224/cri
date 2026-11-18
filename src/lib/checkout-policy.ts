@@ -46,6 +46,16 @@ export function checkoutLocksForm(row: Pick<CheckoutRow, "status" | "paymentKey"
   return Boolean(row && row.status === "PENDING" && (row.paymentKey || !row.keyTracked));
 }
 
+/**
+ * The same question while the fee may be switched off. With the fee on, the rule above applies. With it off, only a
+ * payment that actually reached the provider still locks the form: it has to be settled (recorded, or released) before
+ * anything else is submitted for that application, or a charged payment could end up next to a free application. Rows
+ * that never got that far are ignored then, and cleared by the free submission.
+ */
+export function checkoutLocksFormNow(row: Pick<CheckoutRow, "status" | "paymentKey" | "keyTracked"> | null | undefined, feeEnabled: boolean): boolean {
+  return checkoutLocksForm(row) && (feeEnabled || Boolean(row?.paymentKey));
+}
+
 /** The provider says it has no such payment (unknown key, or the ten-minute confirm window passed): nothing was charged. */
 export function confirmSaysNoPayment(providerCode: string | undefined): boolean {
   return providerCode === "NOT_FOUND_PAYMENT" || providerCode === "NOT_FOUND_PAYMENT_SESSION";

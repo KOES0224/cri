@@ -22,9 +22,10 @@ require.cache[require.resolve('../src/lib/meta/capi')] = {exports: {
   sendMetaEvent: async (event: {name: string; eventId: string}) => { calls.meta.push({name: event.name, eventId: event.eventId}); return {data: {}}; },
 }} as any;
 const {prisma: db} = require('../src/lib/prisma') as {prisma: PrismaClient};
-const {submitApplicationWithoutFee} = require('../src/app/actions/payment');
+const {beginApplicationCheckout, submitApplicationWithoutFee} = require('../src/app/actions/payment');
 const {submitContactForm} = require('../src/app/actions/contact');
 const {saveApplicationDraft} = require('../src/app/actions/applicationDrafts');
+const {checkFeeCode} = require('../src/app/actions/feeCodes');
 
 const key = randomUUID().replaceAll('-', '');
 const userId = `ids-${key}`, programA = `ids-a-${key}`, programB = `ids-b-${key}`, documentId = `doc${key}`;
@@ -93,6 +94,41 @@ test('with the fee off, a checkout left over from a fee period does not block th
     await db.applicationDraft.deleteMany({where: {userId: user}});
     await db.applicationCheckout.deleteMany({where: {userId: user}});
     await db.applicationDocument.deleteMany({where: {userId: user}});
+    await db.program.deleteMany({where: {id: program}});
+    await db.user.delete({where: {id: user}});
+  }
+});
+
+test('with the fee off, a payment that reached the provider still has to be settled before a free submission', async () => {
+  const user = `keyed-${key}`, program = `keyed-p-${key}`, doc = `keyed${key}`, code = `OFF${key.slice(0, 8).toUpperCase()}`;
+  await db.user.create({data: {id: user, email: `keyed-${key}@example.test`, role: 'STUDENT'}});
+  await db.program.create({data: {id: program, title: 'QA Winter D', description: 'Local only', category: 'Winter', status: 'OPEN', endDate: new Date(Date.now() + 30 * 86400000)}});
+  await db.applicationDocument.create({data: {id: doc, userId: user, filename: 'cv.pdf', data: Buffer.from('%PDF-1.4 synthetic')}});
+  await db.applicationCheckout.create({data: {id: `CRI_keyed_${key}`, userId: user, programId: program, status: 'PENDING', amount: 50, currency: 'USD', formData: {}, keyTracked: true, paymentKey: 'unsettled-key', paymentKeyAt: new Date(), expiresAt: new Date(Date.now() + 60_000)}});
+  await db.feeCode.create({data: {code, partner: 'Fee off', feeAmount: 0}});
+  session = {user: {id: user, role: 'STUDENT', email: `keyed-${key}@example.test`}};
+  const keyedForm = {...form, resumeUrl: `/api/documents/${doc}`};
+  try {
+    // The card may have been charged for this application: neither a draft save nor a free submission goes over it.
+    assert.equal((await saveApplicationDraft(program, keyedForm, 3, 0)).code, 'draftClosed');
+    assert.equal((await submitApplicationWithoutFee(program, keyedForm)).code, 'checkoutReview');
+    assert.equal(await db.application.count({where: {userId: user}}), 0);
+    assert.equal(await db.applicationCheckout.count({where: {userId: user}}), 1);
+    // Once the payment is settled as "no charge" and the row is gone, the free submission goes through.
+    await db.applicationCheckout.deleteMany({where: {userId: user}});
+    const submitted = await submitApplicationWithoutFee(program, keyedForm);
+    assert.ok(submitted.success && !submitted.duplicate, JSON.stringify(submitted));
+    // A page left open from a fee period that presses Pay is told the fee is off (the form then reloads itself).
+    assert.equal((await beginApplicationCheckout(program, keyedForm)).code, 'feeDisabled');
+    // Codes are only asked for while the fee is on: nothing is looked up, whatever is sent.
+    assert.deepEqual(await checkFeeCode(code), {ok: false, code: 'feeCodeInvalid'});
+    assert.deepEqual(await checkFeeCode(code, true), {ok: false, code: 'feeCodeInvalid'});
+  } finally {
+    await db.application.deleteMany({where: {userId: user}});
+    await db.applicationDraft.deleteMany({where: {userId: user}});
+    await db.applicationCheckout.deleteMany({where: {userId: user}});
+    await db.applicationDocument.deleteMany({where: {userId: user}});
+    await db.feeCode.deleteMany({where: {code}});
     await db.program.deleteMany({where: {id: program}});
     await db.user.delete({where: {id: user}});
   }

@@ -104,13 +104,14 @@ export async function notifyApplicationReceived(app: PaidApplication) {
 }
 
 /** A checkout that could not be settled automatically: admissions gets the order number to look up in the Toss admin. */
-export async function notifyPaymentNeedsReview(input: { orderId: string; accountEmail?: string | null; programTitle?: string | null; situation: string }) {
+export async function notifyPaymentNeedsReview(input: { orderId: string; accountEmail?: string | null; programTitle?: string | null; situation: string; expected?: string | null }) {
   const text = [
     `An application-fee payment could not be settled automatically and may need a manual check.`,
     ``,
     `Order number: ${input.orderId}`,
     input.accountEmail ? `Account email: ${input.accountEmail}` : null,
     input.programTitle ? `Program: ${input.programTitle}` : null,
+    input.expected ? `Amount of this order: ${input.expected}` : null,
     `What happened: ${input.situation}`,
     ``,
     `What to do: look the order number up in the Toss Payments admin (결제조회).`,
@@ -121,8 +122,27 @@ export async function notifyPaymentNeedsReview(input: { orderId: string; account
   return send({ to: ADMISSIONS_INBOX, subject: `[CRI payment check] ${input.orderId}`, text, replyTo: validEmail(input.accountEmail) ? input.accountEmail! : undefined });
 }
 
-/** The payment form or window did not work for an applicant: nobody can apply while this lasts, so admissions hears at once. */
+/**
+ * The payment form or window did not work for an applicant: nobody can apply while this lasts, so admissions hears at
+ * once. `where: 'return'` is one payer sent back from the provider's window with an unusual code: worth a look, and an
+ * outage only if it repeats.
+ */
 export async function notifyPaymentFormProblem(input: { accountEmail?: string | null; programTitle?: string | null; where: string; code?: string | null; message?: string | null }) {
+  if (input.where === 'return') {
+    const text = [
+      `An applicant's application-fee payment ended inside the payment provider's window with a code that is neither the payer's own cancel nor a card problem.`,
+      ``,
+      input.accountEmail ? `Account email: ${input.accountEmail}` : null,
+      input.programTitle ? `Program: ${input.programTitle}` : null,
+      `Code from the payment provider: ${input.code || 'no code'}`,
+      ``,
+      `One such mail can be a one-off. Several in a row mean payments are not going through for anyone (for example Toss's code 2003: payments stopped for the merchant). Then:`,
+      `- Ask Toss Payments about the code, with the US-dollar merchant id.`,
+      `- If it cannot be fixed quickly, set NEXT_PUBLIC_APPLICATION_FEE_ENABLED to false in Vercel and redeploy: applications are then free again.`,
+      `This alert is sent at most a few times an hour.`,
+    ].filter((line): line is string => line !== null).join('\n');
+    return send({ to: ADMISSIONS_INBOX, subject: `[CRI payment problem] a payment ended with code ${input.code || 'unknown'}`, text, replyTo: validEmail(input.accountEmail) ? input.accountEmail! : undefined });
+  }
   const text = [
     `An applicant could not use the application-fee payment ${input.where === 'window' ? 'window' : 'form'}. While this lasts, applicants cannot pay and therefore cannot submit.`,
     ``,
@@ -132,7 +152,7 @@ export async function notifyPaymentFormProblem(input: { accountEmail?: string | 
     ``,
     `What to check:`,
     `- Toss Payments admin: the payment UI named in NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY exists and is connected to the US-dollar merchant id, and that merchant id's contract is complete.`,
-    `- If it cannot be fixed quickly, remove NEXT_PUBLIC_APPLICATION_FEE_ENABLED in Vercel and redeploy: applications are then free again.`,
+    `- If it cannot be fixed quickly, set NEXT_PUBLIC_APPLICATION_FEE_ENABLED to false in Vercel and redeploy: applications are then free again. A payment that already reached Toss keeps its applicant's form locked until it is settled, so nobody is charged and also submitted for free.`,
     `This alert is sent at most a few times an hour.`,
   ].filter((line): line is string => line !== null).join('\n');
   return send({ to: ADMISSIONS_INBOX, subject: `[CRI payment problem] applicants cannot reach payment`, text, replyTo: validEmail(input.accountEmail) ? input.accountEmail! : undefined });

@@ -36,6 +36,8 @@ const WIDE_FIELDS = new Set(["initialTopicIdeas", "essay", "shortAnswer", "previ
 
 const str = (v: unknown) => (v === null || v === undefined ? "" : typeof v === "object" ? JSON.stringify(v) : String(v));
 const day = (v: string | null | undefined) => (v ? v.slice(0, 10) : "");
+/** The referral code an application was recorded with, or "". */
+const paymentCode = (r: SheetRow) => { const p = r.form.payment; return p && typeof p === "object" ? str((p as Record<string, unknown>).code) : ""; };
 const fee = (r: SheetRow) => {
   const p = (r.form.payment && typeof r.form.payment === "object" ? r.form.payment : {}) as Record<string, unknown>;
   if (!p.feeStatus && !p.amount) return "";
@@ -72,7 +74,7 @@ function csvFor(rows: SheetRow[], columns: Column[]) {
   return csvDocument([cols.map((c) => c.label), ...rows.map((r) => cols.map((c) => c.get(r)))]);
 }
 
-export default function ApplicationsSheet({ rows: initialRows, programs }: { rows: SheetRow[]; programs: string[] }) {
+export default function ApplicationsSheet({ rows: initialRows, programs, initialCode = "" }: { rows: SheetRow[]; programs: string[]; initialCode?: string }) {
   const [rows, setRows] = useState(initialRows);
   useEffect(() => setRows(initialRows), [initialRows]);
   const base = useMemo(() => buildColumns(rows), [rows]);
@@ -102,6 +104,8 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
 
   // Filters and sort
   const [search, setSearch] = useState("");
+  // Exactly the applications recorded with one referral code (the link from /dashboard/fee-codes).
+  const [codeFilter, setCodeFilter] = useState(initialCode);
   const [stageFilter, setStageFilter] = useState("ALL");
   const [programFilter, setProgramFilter] = useState("ALL");
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 } | null>(null);
@@ -111,8 +115,9 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
     let list = rows.filter((r) => {
       if (stageFilter !== "ALL" && (r.stage || "REVIEW") !== stageFilter) return false;
       if (programFilter !== "ALL" && r.program.title !== programFilter) return false;
+      if (codeFilter && paymentCode(r) !== codeFilter) return false;
       if (!q) return true;
-      const hay = `${r.user.name || ""} ${r.user.email} ${r.program.title} ${str(r.form.studentFirstName)} ${str(r.form.studentLastName)} ${str(r.form.studentEmail)} ${str(r.form.school)} ${r.user.studentCode || ""}`.toLowerCase();
+      const hay = `${r.user.name || ""} ${r.user.email} ${r.program.title} ${str(r.form.studentFirstName)} ${str(r.form.studentLastName)} ${str(r.form.studentEmail)} ${str(r.form.school)} ${r.user.studentCode || ""} ${paymentCode(r)}`.toLowerCase();
       return hay.includes(q);
     });
     if (sort) {
@@ -120,7 +125,7 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
       if (col) list = [...list].sort((a, b) => col.get(a).localeCompare(col.get(b), undefined, { numeric: true }) * sort.dir);
     }
     return list;
-  }, [rows, search, stageFilter, programFilter, sort, base]);
+  }, [rows, search, stageFilter, programFilter, codeFilter, sort, base]);
 
   // Column resize by dragging the header edge
   const drag = useRef<{ key: string; startX: number; startWidth: number } | null>(null);
@@ -160,7 +165,10 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
   }, [saving]);
 
   const remove = async (row: SheetRow) => {
-    if (!window.confirm(`Delete the application of ${row.user.name || row.user.email}? This cannot be undone.`)) return;
+    // A paid application: deleting it refunds nothing. Say so, with the order number to refund in the Toss admin.
+    const payment = (row.form.payment && typeof row.form.payment === "object" ? row.form.payment : {}) as Record<string, unknown>;
+    const paidNote = str(payment.feeStatus) === "PAID" ? `\n\nThis application's fee was PAID ($${str(payment.amount)} ${str(payment.currency) || "USD"}, order ${str(payment.orderId)}). Deleting it does not refund the payment: refund it in the Toss Payments admin if needed. If this applicant applies again, they will be asked to pay again.` : "";
+    if (!window.confirm(`Delete the application of ${row.user.name || row.user.email}? This cannot be undone.${paidNote}`)) return;
     const kept = rows;
     setRows((rs) => rs.filter((r) => r.id !== row.id));
     const result = await deleteApplication(row.id);
@@ -203,8 +211,9 @@ export default function ApplicationsSheet({ rows: initialRows, programs }: { row
         </div>
         <label className="relative">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email, school…" className="w-64 rounded-lg border border-slate-200 py-1.5 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email, school, code…" className="w-64 rounded-lg border border-slate-200 py-1.5 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none" />
         </label>
+        {codeFilter && <button type="button" onClick={() => setCodeFilter("")} title="Show all applications" className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-sm font-semibold text-blue-800">Referral code: <span className="font-mono">{codeFilter}</span> <span aria-hidden>×</span></button>}
         <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm">
           <option value="ALL">All stages</option>
           {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}

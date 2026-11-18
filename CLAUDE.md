@@ -4,7 +4,7 @@ Public site + student/admin portal for CRI student research programs.
 Stack: Next.js 16 (App Router), React 19, Tailwind 4, Prisma 5 (PostgreSQL on Supabase), next-auth 4, Toss Payments, Vercel Blob, Resend.
 
 ## Deploy
-- GitHub `KOES0224/cri`, branch `main` auto-deploys to Vercel project `cri-portal` (criglobal.org).
+- GitHub `KOES0224/cri`, branch `main` auto-deploys to Vercel project `cri-portal-2024` (criglobal.org). The older Vercel project `cri-portal` is not the live site.
 - Secrets live in `.env` locally and in Vercel project settings. Never commit `.env`.
 - `npm run build` runs `npx prisma db push` first, which mutates the **production** database. For a local compile check use `npx next build` instead.
 
@@ -12,7 +12,7 @@ Stack: Next.js 16 (App Router), React 19, Tailwind 4, Prisma 5 (PostgreSQL on Su
 - `npm run dev` — local dev server (uses `.env` DATABASE_URL, i.e. the live DB; be careful with writes)
 - `npx next build` — production compile check without touching the DB
 - `npm test` — unit tests (`tests/*.test.ts`)
-- `npm run test:integration` — needs a disposable local PostgreSQL
+- `npm run test:integration` — needs a disposable local PostgreSQL (how to get one without installing anything: `docs/toss-payments.md`, "Testing locally")
 - `npm run inventory:programs` / `inventory:review` — program/faculty data scripts (`--apply` to persist)
 
 ## Key paths

@@ -11,7 +11,7 @@ Pixel / dataset id `2270683237022393`. Code lives in `src/lib/meta/` and `src/co
 | StartApplication (custom, `step` 1–3) | apply form opened / step advanced | – | `ApplyClient` |
 | CompleteRegistration | sign-up (credentials + Google onboarding) | `/api/auth/register`, `/api/auth/onboard` | user id |
 | Lead | contact form success | `submitContactForm` | lead id |
-| InitiateCheckout | Toss window requested | `beginApplicationCheckout` | checkout order id |
+| InitiateCheckout | Toss window requested | `beginApplicationCheckout` | `checkout_<account>_<program>` (one per applicant and program, however many attempts) |
 | SubmitApplication | free submission success | `submitApplicationWithoutFee` | application id |
 | Purchase | payment-success page | `finalizePaidApplication` | Toss order id |
 

@@ -12,3 +12,10 @@ export async function allowRequest(scope: string, identifier: string, max: numbe
     RETURNING "count"`;
   return rows[0].count <= max;
 }
+
+/** Whether a budget is already used up, without spending from it. */
+export async function limitReached(scope: string, identifier: string, max: number): Promise<boolean> {
+  const key = createHash('sha256').update(`${scope}:${identifier}`).digest('hex');
+  const rows = await prisma.$queryRaw<Array<{ count: number }>>`SELECT "count" FROM "RequestLimit" WHERE "key" = ${key} AND "resetAt" > NOW()`;
+  return rows.length > 0 && rows[0].count >= max;
+}

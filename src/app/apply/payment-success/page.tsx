@@ -79,7 +79,7 @@ function PaymentSuccessContent() {
           // The charge may exist although recording failed: offer "Check again" rather than a dead end.
           if (res.code === "finalizeFailed") setPending(true);
           const reason = res.providerReason ? ` (Toss: ${res.providerReason})` : "";
-          setDeclined(["paymentDeclined", "paymentNotStarted", "paymentSuperseded"].includes(res.code));
+          setDeclined(["paymentDeclined", "paymentNotStarted", "paymentSuperseded", "feeCodeLapsed"].includes(res.code));
           setError((res.code === "paymentNotStarted" ? copy.missingDetails : actionText(res)) + reason);
           setLoading(false);
           return true;
@@ -95,10 +95,11 @@ function PaymentSuccessContent() {
           if (res.submit?.tracking) metaTrack("SubmitApplication", res.submit.tracking, res.submit.eventId);
         }
         setLoading(false);
-        // Clean up draft storage
+        // Clean up draft storage, and the referral code this tab remembered for the program: it has been used.
         try {
           sessionStorage.removeItem("cri_apply_draft");
           localStorage.removeItem("cri_apply_draft");
+          if (programId) for (const key of Object.keys(sessionStorage)) if (key.startsWith("cri_fee_code_") && key.endsWith(`_${programId}`)) sessionStorage.removeItem(key);
         } catch {}
         return true;
       };

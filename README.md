@@ -21,7 +21,7 @@ Next.js 16 (App Router), React 19, Tailwind 4, Prisma 5 on PostgreSQL (Supabase)
 
 ## Deploy
 
-- GitHub `KOES0224/cri`; the `main` branch auto-deploys to the Vercel project `cri-portal` (criglobal.org).
+- GitHub `KOES0224/cri`; the `main` branch auto-deploys to the Vercel project `cri-portal-2024` (criglobal.org). An older Vercel project named `cri-portal` is not the live site; set environment variables in `cri-portal-2024`.
 - Secrets live in `.env` locally and in the Vercel project settings. Never commit `.env`.
 - `src/app/sitemap.ts` and `src/app/robots.ts` generate `/sitemap.xml` and `/robots.txt`; the canonical origin is set in `src/lib/seo.ts`.
 
@@ -37,6 +37,7 @@ Set these in `.env` locally and in Vercel. Values are never committed.
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob token for admin media uploads (`cri_READ_WRITE_TOKEN` is accepted as an alias). |
 | `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET`, `GOOGLE_CALENDAR_REFRESH_TOKEN` | Google Calendar integration for consultation scheduling. |
 | `NEXT_PUBLIC_TOSS_CLIENT_KEY`, `TOSS_SECRET_KEY` | Toss Payments keys for the application fee checkout. Missing keys fail closed. |
+| `NEXT_PUBLIC_APPLICATION_FEE_ENABLED`, `NEXT_PUBLIC_APPLICATION_FEE_SINCE` | The application-fee switch (exactly `true` turns it on) and the time it was switched on. Set together; see `docs/toss-payments.md`. |
 | `RESEND_API_KEY`, `AUTH_EMAIL_FROM` | Transactional email (password recovery, notifications). `AUTH_EMAIL_FROM` must be a verified sender. |
 | `ADMISSIONS_NOTIFY_EMAIL` | Inbox that receives new-application notifications. |
 | `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_META_PIXEL_ID` | Optional analytics IDs; analytics are disabled when unset. |
