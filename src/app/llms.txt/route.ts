@@ -1,3 +1,4 @@
+import { ABOUT_FACTS } from "@/app/about/content";
 import { getDictionary } from "@/i18n/config";
 import { SITE_URL, summarize } from "@/lib/seo";
 import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from "@/lib/application-fee";
@@ -42,7 +43,11 @@ export async function GET() {
     "",
     `> ${line(t.system.site.description)}`,
     "",
-    "CRI (CRI Global, operated by Elite Research Co., Ltd.) is based in Seoul, Korea. Students in Grades 9–12, and some university students, research a question of their own with a university professor and a teaching assistant, and write their own paper. The site is in English, with Korean program and admissions pages under https://criglobal.org/ko. Articles are in English, adapted from CRI's Korean Naver blog.",
+    `CRI is a research education institution. It began in California in ${ABOUT_FACTS.foundingYear}, founded as ${ABOUT_FACTS.foundingName}, and today operates from Korea, working with students and faculty around the world (hence criglobal.org). Students in Grades 9–12, and some university students, research a question of their own with a university professor and a teaching assistant, and write their own paper. Faculty come from top-30 universities in the US and UK, and more than 90% are full professors.`,
+    "",
+    `CRI cares most about the middle of a research project: reading, choosing a method, getting stuck and revising, rather than the paper alone or admissions results. Its stated goal is not admission to a particular university but helping each student develop what they love through honest, rigorous work. More: [About CRI](${url("/about")}).`,
+    "",
+    "The site is in English, with Korean pages under https://criglobal.org/ko. Blog articles are in English.",
     "",
     "## Programs",
     "",

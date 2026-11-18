@@ -8,6 +8,7 @@ export const en = {
     switchTo: { en: "Switch to English", ko: "한국어로 전환" },
   },
   nav: {
+    about: "About",
     research: "Research",
     projects: "Projects",
     intern: "Intern",
@@ -38,6 +39,7 @@ export const en = {
     internships: "Internship Fellowships",
     admissionsSuccess: "Admissions Success",
     blog: "Research Insights & Blog",
+    about: "About CRI",
     admissionsHeading: "Admissions & Portal",
     signIn: "Student / Parent Sign In",
     createAccount: "Create Applicant Account",

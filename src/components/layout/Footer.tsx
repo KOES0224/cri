@@ -113,6 +113,11 @@ export default async function Footer() {
                   {t.blog}
                 </Link>
               </li>
+              <li>
+                <Link href="/about" className="text-gray-300 hover:text-white transition-colors">
+                  {t.about}
+                </Link>
+              </li>
             </ul>
           </div>
 

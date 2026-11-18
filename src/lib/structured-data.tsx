@@ -6,6 +6,7 @@ import type { Locale } from "@/i18n";
 import { SITE_URL, summarize } from "@/lib/seo";
 import { localizedPath } from "@/i18n/routing";
 import { programFacts, seoulDay } from "@/lib/program-policy";
+import { ABOUT_FACTS } from "@/app/about/content";
 
 type Json = Record<string, unknown>;
 
@@ -40,7 +41,10 @@ export function organizationJsonLd(locale: Locale, description: string): Json[] 
       "@type": "EducationalOrganization",
       "@id": ORG_ID,
       name: "CRI",
-      alternateName: "CRI Global",
+      alternateName: ["CRI Global", ABOUT_FACTS.foundingName],
+      foundingDate: String(ABOUT_FACTS.foundingYear),
+      foundingLocation: { "@type": "Place", name: "California, United States" },
+      areaServed: "Worldwide",
       legalName: "Elite Research Co., Ltd.",
       url: SITE_URL,
       logo: `${SITE_URL}/icon.svg`,
@@ -69,6 +73,19 @@ export function organizationJsonLd(locale: Locale, description: string): Json[] 
       publisher: { "@id": ORG_ID },
     },
   ];
+}
+
+export function aboutPageJsonLd(locale: Locale, input: { name: string; description: string; path: string }): Json {
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    name: input.name,
+    description: input.description,
+    url: abs(input.path, locale),
+    inLanguage: IN_LANGUAGE[locale],
+    isPartOf: { "@id": WEBSITE_ID },
+    about: { "@id": ORG_ID },
+  };
 }
 
 export function breadcrumbJsonLd(locale: Locale, items: Array<[name: string, path: string]>): Json {

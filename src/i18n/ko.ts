@@ -10,6 +10,7 @@ export const ko: Dictionary = {
     switchTo: { en: "Switch to English", ko: "한국어로 전환" },
   },
   nav: {
+    about: "소개",
     research: "리서치",
     projects: "프로젝트",
     intern: "인턴십",
@@ -40,6 +41,7 @@ export const ko: Dictionary = {
     internships: "인턴십",
     admissionsSuccess: "입시 성과",
     blog: "블로그 & 인사이트",
+    about: "CRI 소개",
     admissionsHeading: "지원 & 포털",
     signIn: "학생·학부모 로그인",
     createAccount: "지원자 계정 만들기",
