@@ -497,11 +497,11 @@ export const en = {
   },
   /** Webinar banner and sign-up page (src/lib/webinar.ts holds the date). */
   webinar: {
-    banner: { text: "Online info session · Sat 31 Oct, 10:00 AM (KST) · Free", cta: "Save my seat", dismiss: "Hide" },
-    meta: { title: "Online Info Session, 31 October | CRI", description: "A free one-hour online session for families: how CRI's professor-guided research programs work, how to apply, and live Q&A. Saturday 31 October, 10:00 AM Korea time." },
+    banner: { text: "Online info session · Sat 5 Dec, 10:00 AM (KST) · Free", cta: "Save my seat", dismiss: "Hide" },
+    meta: { title: "Online Info Session, 5 December | CRI", description: "A free one-hour online session for families: how CRI's professor-guided research programs work, how to apply, and live Q&A. Saturday 5 December, 10:00 AM Korea time." },
     eyebrow: "Free online info session",
     title: "How student research works at CRI",
-    when: "Saturday 31 October 2026 · 10:00 AM (Korea time) · about 60 minutes · online on Zoom",
+    when: "Saturday 5 December 2026 · 10:00 AM (Korea time) · about 60 minutes · online on Zoom",
     intro: "For parents and students thinking about a research program this winter or next summer. We walk through the programs, what a student actually produces, how admissions decide, and answer your questions live.",
     agendaTitle: "What we cover",
     agenda: ["The summer, winter and 1-on-1 programs and who each one suits", "How a student goes from an interest to a finished paper with a professor mentor", "The application: steps, timeline and what admissions look for", "Live Q&A"],

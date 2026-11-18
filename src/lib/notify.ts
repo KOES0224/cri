@@ -210,7 +210,7 @@ export async function sendStudentAccountWelcome(input: { to: string; studentName
   return send({ to: input.to, subject: input.created ? 'Your CRI student account' : 'Your CRI account was linked to a guardian', text, replyTo: ADMISSIONS_INBOX });
 }
 
-const WEBINAR_WHEN = { ko: '10월 31일(토) 오전 10시 (한국 시간)', en: 'Saturday 31 October, 10:00 AM (Korea time)' };
+const WEBINAR_WHEN = { ko: '12월 5일(토) 오전 10시 (한국 시간)', en: 'Saturday 5 December, 10:00 AM (Korea time)' };
 
 /** Webinar sign-up → admissions inbox. */
 export async function notifyWebinarRegistration(input: { id: string; name: string; role: string; phone?: string; email?: string; kakaoId?: string; question?: string; locale: string }) {

@@ -4,12 +4,12 @@
  */
 export const WEBINAR = {
   /** Groups registrations; change it for every new webinar. */
-  key: "2026-10-31",
-  startsAt: new Date("2026-10-31T10:00:00+09:00"),
+  key: "2026-12-05",
+  startsAt: new Date("2026-12-05T10:00:00+09:00"),
   /** Sign-ups close when the session starts. */
-  closesAt: new Date("2026-10-31T10:00:00+09:00"),
+  closesAt: new Date("2026-12-05T10:00:00+09:00"),
   /** The banner and the page's sign-up form disappear after this moment (midnight after the webinar day). */
-  bannerUntil: new Date("2026-11-01T00:00:00+09:00"),
+  bannerUntil: new Date("2026-12-06T00:00:00+09:00"),
   durationMinutes: 60,
   platform: "Zoom",
 } as const;
