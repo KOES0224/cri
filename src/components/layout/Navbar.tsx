@@ -64,7 +64,10 @@ export default function Navbar({ bannerVisible = false }: { bannerVisible?: bool
               CRI.
             </Link>
             
-            <div className="hidden lg:flex items-center ml-12 space-x-6">
+            <div className="hidden lg:flex items-center ml-8 xl:ml-12 space-x-4 xl:space-x-6">
+              <Link href="/about" className={`text-sm font-semibold transition-colors ${navTextClass}`}>
+                {t.nav.about}
+              </Link>
               <Link href="/research" className={`text-sm font-semibold transition-colors ${navTextClass}`}>
                 {t.nav.research}
               </Link>
@@ -86,7 +89,7 @@ export default function Navbar({ bannerVisible = false }: { bannerVisible?: bool
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4 whitespace-nowrap">
             <LanguageToggle />
             {session ? (
               <div className="flex items-center space-x-3 bg-gray-50/80 backdrop-blur-md rounded-full p-1 pr-4 border border-gray-200">
@@ -143,6 +146,7 @@ export default function Navbar({ bannerVisible = false }: { bannerVisible?: bool
       {isOpen && (
         <div id="mobile-navigation" onClick={(event) => { if ((event.target as HTMLElement).closest("a")) setIsOpen(false); }} className="absolute top-full left-0 w-full px-4 mt-2 max-h-[calc(100dvh-110px)] overflow-y-auto">
           <div className="p-4 bg-white/95 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-2xl flex flex-col space-y-3">
+            <Link href="/about" className="text-sm font-semibold text-gray-800 px-2 py-3 rounded-lg hover:bg-gray-50">{t.nav.about}</Link>
             <Link href="/research" className="text-sm font-semibold text-gray-800 px-2 py-3 rounded-lg hover:bg-gray-50">{t.nav.research}</Link>
             <Link href="/projects" className="text-sm font-semibold text-gray-800 px-2 py-3 rounded-lg hover:bg-gray-50">{t.nav.projects}</Link>
             <Link href="/intern" className="text-sm font-semibold text-gray-800 px-2 py-3 rounded-lg hover:bg-gray-50">{t.nav.intern}</Link>

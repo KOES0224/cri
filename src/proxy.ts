@@ -52,6 +52,7 @@ export const config = {
     "/",
     "/ko",
     "/ko/:path*",
+    "/about",
     "/research/:path*",
     "/projects/:path*",
     "/intern/:path*",

@@ -6,6 +6,7 @@ import type { Locale } from "@/i18n";
 import { SITE_URL, summarize } from "@/lib/seo";
 import { localizedPath } from "@/i18n/routing";
 import { programFacts, seoulDay } from "@/lib/program-policy";
+import { ABOUT_FACTS } from "@/app/about/content";
 
 type Json = Record<string, unknown>;
 
@@ -30,17 +31,18 @@ export function JsonLd({ data }: { data: Json | Json[] }) {
 }
 
 export function organizationJsonLd(locale: Locale, description: string): Json[] {
-  const address =
-    locale === "ko"
-      ? { streetAddress: "논현로153길 53", addressLocality: "강남구", addressRegion: "서울특별시" }
-      : { streetAddress: "53, Nonhyeon-ro 153-gil", addressLocality: "Gangnam-gu", addressRegion: "Seoul" };
+  // No postal address by owner decision (2026-11-18): CRI presents itself as a global institution founded in
+  // California, not as a Seoul organization. The legally required business address stays in the footer.
   return [
     {
       "@context": "https://schema.org",
       "@type": "EducationalOrganization",
       "@id": ORG_ID,
       name: "CRI",
-      alternateName: "CRI Global",
+      alternateName: ["CRI Global", ABOUT_FACTS.foundingName],
+      foundingDate: String(ABOUT_FACTS.foundingYear),
+      foundingLocation: { "@type": "Place", name: "California, United States" },
+      areaServed: "Worldwide",
       legalName: "Elite Research Co., Ltd.",
       url: SITE_URL,
       logo: `${SITE_URL}/icon.svg`,
@@ -48,7 +50,6 @@ export function organizationJsonLd(locale: Locale, description: string): Json[] 
       description,
       email: "support@cri.kr",
       telephone: "+82-2-6203-8999",
-      address: { "@type": "PostalAddress", ...address, postalCode: "06036", addressCountry: "KR" },
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "admissions",
@@ -69,6 +70,19 @@ export function organizationJsonLd(locale: Locale, description: string): Json[] 
       publisher: { "@id": ORG_ID },
     },
   ];
+}
+
+export function aboutPageJsonLd(locale: Locale, input: { name: string; description: string; path: string }): Json {
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    name: input.name,
+    description: input.description,
+    url: abs(input.path, locale),
+    inLanguage: IN_LANGUAGE[locale],
+    isPartOf: { "@id": WEBSITE_ID },
+    about: { "@id": ORG_ID },
+  };
 }
 
 export function breadcrumbJsonLd(locale: Locale, items: Array<[name: string, path: string]>): Json {
