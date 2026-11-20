@@ -97,7 +97,9 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(error instanceof SlugError ? error.message : error);
+    // P2021 / P2022: the table or column is not there yet. The site's build (prisma db push) adds them.
+    const notDeployed = ["P2021", "P2022"].includes((error as { code?: string })?.code ?? "");
+    console.error(notDeployed ? "This database has no slug column yet. Deploy the site first; its build adds it." : error instanceof SlugError ? error.message : error);
     process.exitCode = 1;
   })
   .finally(() => db.$disconnect());
