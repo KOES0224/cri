@@ -4,9 +4,10 @@ Public site + student/admin portal for CRI student research programs.
 Stack: Next.js 16 (App Router), React 19, Tailwind 4, Prisma 5 (PostgreSQL on Supabase), next-auth 4, Toss Payments, Vercel Blob, Resend.
 
 ## Deploy
-- GitHub `KOES0224/cri`, branch `main` auto-deploys to Vercel project `cri-portal` (criglobal.org).
+- GitHub `KOES0224/cri`, branch `main` auto-deploys to Vercel project `cri-portal-2024` (criglobal.org). The older project `cri-portal` is not used.
 - Secrets live in `.env` locally and in Vercel project settings. Never commit `.env`.
 - `npm run build` runs `npx prisma db push` first, which mutates the **production** database. For a local compile check use `npx next build` instead.
+- Every Vercel build does the same, previews of pull requests included. While a new column or table is still empty, a build of any branch that lacks it drops it again without warning, so put data in it before merging the code that reads it. `@unique` on a new column of a table that has rows fails the build.
 
 ## Commands
 - `npm run dev` — local dev server (uses `.env` DATABASE_URL, i.e. the live DB; be careful with writes)
