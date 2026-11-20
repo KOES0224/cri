@@ -234,8 +234,8 @@ export async function sendWebinarConfirmation(input: { to: string; locale: strin
   // Fixed wording only: nothing a visitor typed is relayed to an address they chose.
   const ko = input.locale === 'ko';
   const text = ko
-    ? [`안녕하세요, CRI 무료 세미나 「논문 프로그램 전격 분석」 신청이 접수되었습니다.`, ``, `일시: ${WEBINAR_WHEN.ko}`, `방식: 온라인(Zoom). 참여 링크는 전날 이메일과 카카오톡으로 보내드립니다.`, ``, `프로그램 소개: ${SITE_URL}/ko/research`, `문의: support@cri.kr`].join('\n')
-    : [`Hello, your seat for the free CRI seminar "Research programs, compared" is confirmed.`, ``, `When: ${WEBINAR_WHEN.en}`, `Where: online (Zoom). The join link is sent to you the day before.`, ``, `Programs: ${SITE_URL}/research`, `Questions: support@cri.kr`].join('\n');
+    ? [`안녕하세요, CRI 무료 온라인 세미나 신청이 접수되었습니다.`, ``, `일시: ${WEBINAR_WHEN.ko}`, `방식: 온라인(Zoom). 참여 링크는 전날 이메일과 카카오톡으로 보내드립니다.`, ``, `프로그램 소개: ${SITE_URL}/ko/research`, `문의: support@cri.kr`].join('\n')
+    : [`Hello, your seat for the free CRI online seminar is confirmed.`, ``, `When: ${WEBINAR_WHEN.en}`, `Where: online (Zoom). The join link is sent to you the day before.`, ``, `Programs: ${SITE_URL}/research`, `Questions: support@cri.kr`].join('\n');
   return send({ to: input.to, subject: ko ? `CRI 세미나 신청 확인 · ${WEBINAR_WHEN.ko}` : `Your CRI seminar seat · ${WEBINAR_WHEN.en}`, text, replyTo: ADMISSIONS_INBOX });
 }
 
