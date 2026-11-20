@@ -42,6 +42,19 @@ const cachedProgramById = unstable_cache(
   { revalidate: CACHE_SECONDS, tags: [TAGS.programs, TAGS.professors] },
 );
 
+// The last part of a program address is its slug, a slug it used to have, or its id (links from before slugs existed).
+const cachedProgramByRef = unstable_cache(
+  async (ref: string) => {
+    const [bySlug, byId] = await Promise.all([
+      prisma.programSlug.findUnique({ where: { slug: ref }, select: { program: { include: { professors: true } } } }),
+      prisma.program.findUnique({ where: { id: ref }, include: { professors: true } }),
+    ]);
+    return bySlug?.program ?? byId;
+  },
+  ["program-by-ref"],
+  { revalidate: CACHE_SECONDS, tags: [TAGS.programs, TAGS.professors] },
+);
+
 /** All published programs with their faculty, newest first (used by the research hubs). */
 export async function getPublishedPrograms(): Promise<ProgramWithFaculty[]> {
   return (await cachedPublishedPrograms()).map(reviveProgram);
@@ -50,6 +63,15 @@ export async function getPublishedPrograms(): Promise<ProgramWithFaculty[]> {
 /** One program with faculty, or null. Unpublished programs are returned too; callers check isPublished. */
 export async function getProgramById(id: string): Promise<ProgramWithFaculty | null> {
   const program = await cachedProgramById(id);
+  return program ? reviveProgram(program) : null;
+}
+
+/**
+ * One program by the last part of its public address: slug, earlier slug or id. Compare `programRef(program)` with
+ * `ref` to tell whether the visitor is on the current address. Unpublished programs are returned too.
+ */
+export async function getProgramByRef(ref: string): Promise<ProgramWithFaculty | null> {
+  const program = await cachedProgramByRef(ref);
   return program ? reviveProgram(program) : null;
 }
 

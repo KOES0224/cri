@@ -6,6 +6,7 @@ import type { Locale } from "@/i18n";
 import { SITE_URL, summarize } from "@/lib/seo";
 import { localizedPath } from "@/i18n/routing";
 import { programFacts, seoulDay } from "@/lib/program-policy";
+import { programRef } from "@/lib/program-slug";
 import { ABOUT_FACTS } from "@/app/about/content";
 
 type Json = Record<string, unknown>;
@@ -113,6 +114,7 @@ export function faqJsonLd(locale: Locale, items: Array<{ q: string; a: string }>
 
 type CourseProgram = {
   id: string;
+  slug?: string | null;
   title: string;
   description: string;
   category: string;
@@ -127,7 +129,7 @@ const COURSE_MODE = { seoul: ["Onsite"], global: ["Onsite"], winter: ["Online"],
 
 export function courseJsonLd(locale: Locale, program: CourseProgram, audience: string): Json {
   const facts = programFacts(program);
-  const path = `/research/program/${program.id}`;
+  const path = `/research/program/${programRef(program)}`;
   const url = abs(path, locale);
   const start = program.startDate ? seoulDay(program.startDate) : null;
   const end = program.endDate ? seoulDay(program.endDate) : null;

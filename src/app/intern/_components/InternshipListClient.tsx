@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "@/i18n/link";
+import { programPath } from "@/lib/program-slug";
 import { Search, MapPin, Building, Calendar, ArrowRight } from "lucide-react";
 
 type Program = {
   id: string;
+  slug: string | null;
   title: string;
   description: string;
   category: string;
@@ -86,7 +88,7 @@ export default function InternshipListClient({ initialPrograms }: { initialProgr
                 </div>
 
                 <div className="shrink-0 flex items-center justify-end">
-                  <Link href={`/intern/${internship.id}`} className="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 bg-white border border-gray-200 text-gray-900 font-bold rounded-xl hover:bg-gray-900 hover:text-white transition-all click-press">
+                  <Link href={programPath(internship)} className="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 bg-white border border-gray-200 text-gray-900 font-bold rounded-xl hover:bg-gray-900 hover:text-white transition-all click-press">
                     View opportunity
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1" />
                   </Link>

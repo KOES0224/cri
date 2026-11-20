@@ -109,7 +109,7 @@ export default function OpenProgramsSection({
 
                     <div className="space-y-2">
                       <h3 className="text-xl font-black text-gray-900 tracking-tight leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
-                        <Link href={`/research/program/${program.id}`} className="after:absolute after:inset-0">
+                        <Link href={program.path} className="after:absolute after:inset-0">
                           {program.title}
                         </Link>
                       </h3>
@@ -138,7 +138,7 @@ export default function OpenProgramsSection({
                         <span className="text-gray-500 font-semibold">{copy.tuitionOnInquiry}</span>
                       )}
                     </div>
-                    <Link href={`/research/program/${program.id}`} className="relative z-10 inline-flex items-center h-11 px-5 rounded-xl bg-gray-900 group-hover:bg-blue-600 text-white text-sm font-bold transition-colors shrink-0">
+                    <Link href={program.path} className="relative z-10 inline-flex items-center h-11 px-5 rounded-xl bg-gray-900 group-hover:bg-blue-600 text-white text-sm font-bold transition-colors shrink-0">
                       {copy.viewApply} <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </div>

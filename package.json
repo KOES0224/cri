@@ -11,7 +11,7 @@
     "test": "tsx --test tests/*.test.ts",
     "inventory:review": "tsx scripts/update-professor-marketing-bios.ts",
     "inventory:programs": "tsx scripts/update-program-inventory.ts",
-    "test:integration": "tsx --test tests/server.integration.ts tests/conversion-ids.integration.ts"
+    "test:integration": "tsx --test tests/server.integration.ts tests/conversion-ids.integration.ts tests/program-slugs.integration.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

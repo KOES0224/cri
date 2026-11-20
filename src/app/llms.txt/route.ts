@@ -1,6 +1,7 @@
 import { ABOUT_FACTS } from "@/app/about/content";
 import { getDictionary } from "@/i18n/config";
 import { SITE_URL, summarize } from "@/lib/seo";
+import { programPath } from "@/lib/program-slug";
 import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from "@/lib/application-fee";
 import { getPublishedPostCards, getPublishedPrograms, getSuccessStoryCards } from "@/lib/public-data";
 import { admissionLabel, admissionState, programDate, programFacts } from "@/lib/program-policy";
@@ -35,7 +36,7 @@ export async function GET() {
     const dates = p.startDate ? `${programDate(p.startDate)}${p.endDate ? ` – ${programDate(p.endDate)}` : ""}` : null;
     const tuition = p.tuition != null ? `$${p.tuition.toLocaleString("en-US")} USD` : null;
     const details = [facts.name, facts.format, dates, tuition, admissionLabel(p)].filter(Boolean).join(" · ");
-    return `- [${line(p.title)}](${url(`/research/program/${p.id}`)}): ${details}. ${summarize(p.description, 220)}`;
+    return `- [${line(p.title)}](${url(programPath(p))}): ${details}. ${summarize(p.description, 220)}`;
   });
 
   const body = [
