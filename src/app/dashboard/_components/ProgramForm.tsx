@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { programFacts, inventoryFacts, programKind, seoulDay } from "@/lib/program-policy";
+import { MAX_SLUG_LENGTH, slugFromTitle } from "@/lib/program-slug";
 import { useRouter } from "next/navigation";
 import { createProgram, updateProgram } from "@/app/actions/programs";
 
 type ProgramFormProps = {
   initialData?: {
     id: string;
+    slug?: string | null;
     title: string;
     description: string;
     category: string;
@@ -55,6 +57,7 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
 
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
+    slug: initialData?.slug || "",
     description: initialData?.description || "",
     category: programFacts({ category: initialData?.category || "Seoul Research Program" }).name,
     subCategory: initialData?.subCategory || "",
@@ -130,6 +133,7 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
     try {
       const payload = {
         title: formData.title,
+        slug: formData.slug,
         description: formData.description,
         category: formData.category,
         subCategory: formData.subCategory,
@@ -271,6 +275,30 @@ export default function ProgramForm({ initialData, professors = [], onSuccess, o
           className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
           placeholder="e.g. Advanced AI Research"
         />
+      </div>
+
+      <div>
+        <label htmlFor="program-slug" className="block text-sm font-medium text-gray-700 mb-1">Page address</label>
+        <div className="flex items-stretch border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+          <span className="hidden sm:flex items-center pl-4 pr-1 bg-gray-50 text-sm text-gray-500 whitespace-nowrap select-none">
+            criglobal.org/{formData.category === "Internship" ? "intern" : "research/program"}/
+          </span>
+          <input
+            id="program-slug" type="text"
+            name="slug"
+            value={formData.slug}
+            onChange={handleChange}
+            maxLength={MAX_SLUG_LENGTH}
+            autoCapitalize="none"
+            spellCheck={false}
+            aria-describedby="program-slug-help"
+            className="flex-1 min-w-0 px-2 py-2 outline-none text-sm font-mono"
+            placeholder={slugFromTitle(formData.title) || "made-from-the-title"}
+          />
+        </div>
+        <p id="program-slug-help" className="mt-1 text-xs text-gray-500">
+          Lowercase words joined by hyphens. Leave it empty to make it from the title. If you change it later, the old address keeps working and redirects to the new one.
+        </p>
       </div>
 
       <div>

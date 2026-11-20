@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "@/i18n/link";
+import { programPath } from "@/lib/program-slug";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { ArrowLeft, Clock, FileText, Users, CreditCard, Save, CheckCircle2 } from "lucide-react";
@@ -46,7 +47,7 @@ export default async function ApplyStartPage({ searchParams }: { searchParams: P
   return (
     <div className="min-h-screen bg-slate-50 px-4 pb-20 pt-32 sm:px-6">
       <div className="mx-auto max-w-5xl">
-        <Link href={`/research/program/${program.id}`} className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900">
+        <Link href={programPath(program)} className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900">
           <ArrowLeft className="mr-2 h-4 w-4" /> {t.back}
         </Link>
 

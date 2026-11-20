@@ -1,16 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Real 404 status for unknown articles, stories and programs. Called from src/proxy.ts.
+ * Real 404 status for unknown articles, stories and programs, and a real 308 for a program reached on an address
+ * it no longer uses (its database id or an earlier slug). Called from src/proxy.ts.
  *
  * Every page streams under the root loading.tsx, so a notFound() inside a page can only produce
  * HTTP 200 with a noindex tag. For full page loads we check the record first (via a cached route
  * handler, since proxy code must not share modules with the app) and rewrite unknown URLs to a path
- * no route matches, which Next answers with the site's not-found page and a 404.
+ * no route matches, which Next answers with the site's not-found page and a 404. The same check reports the
+ * current slug of a program asked for by an older address; that becomes a permanent redirect which keeps the
+ * language prefix and the query string, so ad tracking parameters survive.
  *
  * `pathname` is the app path without any locale prefix (e.g. "/blog/some-slug"). `init` carries the
  * locale request headers from the proxy so the 404 page renders in the visitor's language. Returns the
- * rewrite for a missing record, or null when the request should continue normally.
+ * rewrite for a missing record, the redirect for a moved one, or null when the request should continue normally.
  */
 const ROUTES: [RegExp, string][] = [
   [/^\/blog\/([^/]+)$/, "blog"],
@@ -18,6 +21,9 @@ const ROUTES: [RegExp, string][] = [
   [/^\/research\/program\/([^/]+)$/, "program"],
   [/^\/intern\/([^/]+)$/, "intern"],
 ];
+
+/** Response header of /api/public/exists naming the address word a moved page answers on now. */
+export const CURRENT_REF_HEADER = "x-cri-current-ref";
 
 export async function missingPageRewrite(
   request: NextRequest,
@@ -37,6 +43,14 @@ export async function missingPageRewrite(
       check.searchParams.set("id", decodeURIComponent(match[1]));
       const res = await fetch(check, { signal: AbortSignal.timeout(2000) });
       if (res.status === 404) return NextResponse.rewrite(new URL("/_not-found-content", request.url), init);
+      const currentRef = res.headers.get(CURRENT_REF_HEADER);
+      if (currentRef && currentRef !== decodeURIComponent(match[1])) {
+        const target = request.nextUrl.clone();
+        target.pathname = target.pathname.replace(/[^/]+$/, encodeURIComponent(currentRef));
+        // Permanent for search engines, but never stored by browsers: a browser that remembers "A goes to B"
+        // would loop forever if the program is later renamed back to A (or its slug is removed).
+        return NextResponse.redirect(target, { status: 308, headers: { "Cache-Control": "no-store" } });
+      }
     } catch {
       // If the check itself fails, render the page as usual rather than risk hiding a real one.
     }

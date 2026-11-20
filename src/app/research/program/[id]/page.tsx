@@ -2,11 +2,13 @@ import { APPLICATION_CHARGE_LABEL } from '@/lib/application-fee';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { applicationFeeFor } from '@/lib/payment-review';
-import { getProgramById } from "@/lib/public-data";
+import { getProgramByRef } from "@/lib/public-data";
 import Link from "@/i18n/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ArrowLeft, Calendar, Users, MapPin, ChevronRight, CheckCircle2, CreditCard } from "lucide-react";
 import { admissionState, programHref } from "@/lib/program-policy";
+import { programRef } from "@/lib/program-slug";
+import { localizedPath } from "@/i18n/routing";
 import { admissionLabelLocalized, formatProgramDateRange, programFactsLocalized } from "@/lib/program-facts-i18n";
 import { getDictionary, getLocale } from "@/i18n";
 import ResearchGuide from "@/components/ResearchGuide";
@@ -24,8 +26,9 @@ import { JsonLd, breadcrumbJsonLd, courseJsonLd } from "@/lib/structured-data";
 // Force dynamic rendering since we are fetching from DB
 export const dynamic = "force-dynamic";
 
-// Shared between generateMetadata and the page so the request runs once per render.
-const getProgram = cache((id: string) => getProgramById(id));
+// Shared between generateMetadata and the page so the request runs once per render. The route parameter is the
+// program's slug; its id and earlier slugs also find it (src/lib/program-slug.ts).
+const getProgram = cache((ref: string) => getProgramByRef(ref));
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -35,7 +38,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return pageMetadata({
     title: `${program.title} | CRI`,
     description: summarize(program.description),
-    path: `/research/program/${program.id}`,
+    path: `/research/program/${programRef(program)}`,
+    // The share image keeps the id in its address, so cards cached before slugs existed stay valid.
     // ./opengraph-image.tsx draws subject + title + professor photo on a 1200x630 card. Named here because config images beat the
     // file convention; ?v changes with each edit so Kakao/Facebook, which cache by URL, pick up a new title.
     image: {
@@ -58,6 +62,11 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
   }
 
   const locale = await getLocale();
+  // Full page loads on an older address (the id, an earlier slug) are redirected by the proxy with a real 308.
+  // This covers what the proxy skips: client-side navigations, and the moment its lookup is unavailable.
+  if (resolvedParams.id !== programRef(program)) {
+    permanentRedirect(localizedPath(`/research/program/${programRef(program)}`, locale));
+  }
   const t = getDictionary(locale).programDetail;
   const facts = programFactsLocalized(program, locale);
   const open = admissionState(program) === "OPEN";
@@ -75,7 +84,7 @@ export default async function ProgramDetailsPage({ params }: { params: Promise<{
       <JsonLd
         data={[
           courseJsonLd(locale, program, facts.audience),
-          breadcrumbJsonLd(locale, [["CRI", "/"], [nav.research, "/research"], [program.title, `/research/program/${program.id}`]]),
+          breadcrumbJsonLd(locale, [["CRI", "/"], [nav.research, "/research"], [program.title, `/research/program/${programRef(program)}`]]),
         ]}
       />
       <TrackProgramView programId={program.id} programTitle={program.title} open={open} content={programContent(program)} />

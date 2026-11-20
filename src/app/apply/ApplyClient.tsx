@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import Link from "@/i18n/link";
+import { programPath } from "@/lib/program-slug";
 import { Lock, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { beginApplicationCheckout, reportPaymentProblem, resolvePendingCheckout, submitApplicationWithoutFee } from '@/app/actions/payment';
@@ -17,7 +18,7 @@ import { COUNTRY_CODES, countryName } from '@/lib/countries';
 import { metaTrack, metaTrackCustom, newEventId } from '@/lib/meta/pixel';
 import type { MetaCustomData } from '@/lib/meta/config';
 
-type Program = { id: string; title: string; category: string; tuition: number | null; professors: { id: string; name: string; university: string | null }[] };
+type Program = { id: string; slug: string | null; title: string; category: string; tuition: number | null; professors: { id: string; name: string; university: string | null }[] };
 type Props = { program: Program; content: MetaCustomData; user: { id: string; name?: string | null; email?: string | null }; applicantRole?: string | null; savedDraft?: Record<string, string>; draftVersion?: number; draftStep?: number; draftSavedAt?: string; checkoutPending?: boolean; resumeFilename?: string; paymentAvailable: boolean; paymentVariantKey?: string; feeEnabled: boolean; reviewMode?: boolean; feeIntroducedSinceDraft?: boolean };
 const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100';
 const actionClass = 'rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50';
@@ -341,7 +342,7 @@ export default function ApplyClient({ program, content, user, applicantRole = 'S
   }
 
   return <div className="min-h-screen bg-slate-50 px-4 pb-20 pt-32 sm:px-6"><div className="mx-auto max-w-3xl">
-    <Link href={`/research/program/${program.id}`} onClick={event => { if (revision.current !== savedRevision.current && !confirm(copy.leaveConfirm)) event.preventDefault(); }} className="text-sm text-slate-600 underline">{copy.back}</Link>
+    <Link href={programPath(program)} onClick={event => { if (revision.current !== savedRevision.current && !confirm(copy.leaveConfirm)) event.preventDefault(); }} className="text-sm text-slate-600 underline">{copy.back}</Link>
     <header className="my-6"><p className="text-xs font-semibold uppercase tracking-widest text-blue-700">{copy.eyebrow}</p><h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{program.title}</h1><p className="mt-3 text-sm text-slate-600">{feeEnabled ? <>{copy.feeLine.a}<strong>{APPLICATION_CHARGE_LABEL}</strong>{copy.feeLine.b}</> : copy.free.feeLine.a}<strong>{program.tuition == null ? copy.contactAdmissions : `$${program.tuition.toLocaleString()} USD`}</strong>{feeEnabled ? copy.feeLine.c : copy.free.feeLine.c}</p><p className="mt-2 text-sm text-slate-600">{feeEnabled ? copy.submittedNote : copy.free.submittedNote}<Link href="/admissions" className="text-blue-700 underline">{copy.stepsAndFees}</Link> · <Link href="/terms" className="text-blue-700 underline">{t.footer.terms}</Link> · <Link href="/privacy" className="text-blue-700 underline">{copy.privacy}</Link> · <Link href="/refunds" className="text-blue-700 underline">{copy.refunds}</Link></p></header>
     {feeEnabled && !paymentAvailable && <div role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">{copy.paymentUnavailable.a}<Link href="/contact" className="underline">{copy.paymentUnavailable.link}</Link>{copy.paymentUnavailable.b}</div>}
     {feeIntroducedSinceDraft && feeEnabled && <div role="note" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">{copy.feeIntroduced(APPLICATION_CHARGE_LABEL)}</div>}

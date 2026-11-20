@@ -1,18 +1,23 @@
 import React from "react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "@/i18n/link";
 import { ArrowLeft, Building2, Briefcase, MapPin, CheckCircle2, ChevronRight, Calendar } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getProgramByRef } from "@/lib/public-data";
+import { programRef } from "@/lib/program-slug";
+import { getLocale } from "@/i18n";
+import { localizedPath } from "@/i18n/routing";
 
 export default async function InternshipDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = await params;
   
-  const internship = await prisma.program.findUnique({
-    where: { id: unwrappedParams.id }
-  });
+  const internship = await getProgramByRef(unwrappedParams.id);
 
   if (!internship || !internship.isPublished || internship.category !== "Internship") {
     notFound();
+  }
+  // Reached on the id or an earlier slug without passing the proxy (see the program page): go to the current address.
+  if (unwrappedParams.id !== programRef(internship)) {
+    permanentRedirect(localizedPath(`/intern/${programRef(internship)}`, await getLocale()));
   }
 
   const reqs = ["Share your academic interests and relevant experience.", "Discuss your availability and preferred research or industry area.", "Our team will explain partner details, responsibilities, eligibility and terms for suitable opportunities before you proceed."];

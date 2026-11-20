@@ -3,6 +3,7 @@
 import Link from "@/i18n/link";
 import { ArrowLeft, Clock, Calendar, ChevronRight, Filter } from "lucide-react";
 import { admissionState, programKind } from "@/lib/program-policy";
+import { programPath } from "@/lib/program-slug";
 import { formatProgramDateRange, programFactsLocalized } from "@/lib/program-facts-i18n";
 import { useT } from "@/i18n/client";
 import ResearchGuide from "@/components/ResearchGuide";
@@ -239,7 +240,7 @@ export default function ResearchProgramsClient({
 
                     {/* Course Title & Research Focus */}
                     <div className="space-y-2">
-                      <Link href={`/research/program/${program.id}`}>
+                      <Link href={programPath(program)}>
                         <h3 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight group-hover:text-blue-600 transition-colors leading-snug">
                           {program.title}
                         </h3>
@@ -281,7 +282,7 @@ export default function ResearchProgramsClient({
 
                       {/* Explore Button */}
                       <Link 
-                        href={`/research/program/${program.id}`} 
+                        href={programPath(program)} 
                         className="h-12 px-7 rounded-2xl bg-gray-900 hover:bg-black text-white text-sm font-bold transition-all inline-flex items-center justify-center group/btn shadow-sm hover:shadow-md focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 shrink-0 whitespace-nowrap"
                       >
                         {copy.explore}

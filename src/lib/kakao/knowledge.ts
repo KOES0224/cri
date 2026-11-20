@@ -74,7 +74,7 @@ function programLine(p: OpenProgramCard): string {
     p.capacity ? `정원 ${p.capacity}명` : null,
     p.professor ? `교수 멘토 ${p.professor.name}${p.professor.university ? `, ${p.professor.university}` : ''}` : null,
     BOT_POLICY.shareTuition && p.tuition ? `수업료 ${p.tuition.toLocaleString()}` : null,
-    `상세·지원 ${SITE}/ko/research/program/${p.id}`,
+    `상세·지원 ${SITE}/ko${p.path}`,
   ].filter(Boolean);
   return parts.join(' · ');
 }

@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/seo";
 import { hasKoreanContent, localizedPath } from "@/i18n/routing";
+import { programPath } from "@/lib/program-slug";
 
 // Re-generate at most once an hour; DB failures fall back to static routes only.
 export const revalidate = 3600;
@@ -64,10 +65,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     safely("programs", async () => {
       const rows = await prisma.program.findMany({
         where: { isPublished: true },
-        select: { id: true, category: true, updatedAt: true },
+        select: { id: true, slug: true, category: true, updatedAt: true },
       });
       return rows.map((p) => ({
-        url: abs(p.category === "Internship" ? `/intern/${p.id}` : `/research/program/${p.id}`),
+        url: abs(programPath(p)),
         lastModified: p.updatedAt,
         changeFrequency: "weekly" as const,
         priority: 0.8,

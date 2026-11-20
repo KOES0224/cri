@@ -87,6 +87,9 @@ model VerificationToken {
 
 model Program {
   id          String    @id @default(cuid())
+  /// Words in the page address (/research/program/<slug>). Null until one is assigned; the page then answers on its id.
+  /// Not @unique: `prisma db push` refuses to add a unique column to a table with rows. ProgramSlug keeps slugs unique.
+  slug        String?
   title       String
   description String
   category    String // e.g. "Research", "Mentorship"
@@ -111,6 +114,20 @@ model Program {
   Enrollment   Enrollment[]
   assignments  Assignment[]
   professors   Professor[]   @relation("ProgramProfessors")
+  slugs        ProgramSlug[]
+
+  @@index([slug])
+}
+
+/// Every address word a program answers on: its current slug (also in Program.slug) and earlier ones, which redirect
+/// to the current address. The primary key keeps one slug from ever pointing at two programs. Rules: src/lib/program-slug.ts.
+model ProgramSlug {
+  slug      String   @id
+  programId String
+  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([programId])
 }
 
 model Application {

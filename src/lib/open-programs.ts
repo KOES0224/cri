@@ -1,9 +1,12 @@
 import { getPublishedPrograms } from "@/lib/public-data";
 import { admissionState, programFacts, programDate, programKind, type ProgramKind } from "@/lib/program-policy";
+import { programPath } from "@/lib/program-slug";
 
 /** Plain, serialisable card data for cohorts that are accepting applications right now. */
 export type OpenProgramCard = {
   id: string;
+  /** Site-relative address of the program page (unprefixed), e.g. "/research/program/oxford-psychology". */
+  path: string;
   title: string;
   description: string;
   season: string;
@@ -45,6 +48,7 @@ export async function getOpenPrograms(limit = 6): Promise<OpenProgramCard[]> {
             : null;
         return {
           id: p.id,
+          path: programPath(p),
           title: p.title,
           description: p.description,
           season: facts.name,
