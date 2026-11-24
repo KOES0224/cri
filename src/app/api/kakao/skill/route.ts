@@ -4,10 +4,10 @@ import { allowRequest } from "@/lib/request-limit";
 import { notifyKakaoHandoff } from "@/lib/notify";
 import { claudeConfigured, draftReply, type BotReply, type BotTurn } from "@/lib/kakao/reply";
 import {
-  FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, isWebinarSignupMessage, parseSkillRequest, ruleHandoff, secretMatches,
-  textResponse, webinarKakaoReply,
+  FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, parseSkillRequest, parseWebinarSignup, ruleHandoff, secretMatches,
+  textResponse, webinarKakaoReply, type WebinarSignupParse,
 } from "@/lib/kakao/skill";
-import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarJoinInfo, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
+import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarDayOf, webinarJoinInfo, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
 
 /**
  * KakaoTalk channel chatbot: Kakao i Open Builder calls this skill for every free-text message (fallback block).
@@ -46,11 +46,12 @@ export async function POST(request: Request) {
   const history: BotTurn[] = recent.reverse().map(m => ({ role: m.role === "assistant" ? "assistant" : "user", text: m.text }));
   await prisma.kakaoChatMessage.create({ data: { userKey: req.userKey, role: "user", text: req.utterance } });
 
-  // "세미나 신청": answered by a fixed rule with the join link, even while a person owns the thread, unless the
-  // message also touches a person-only topic ("세미나 신청 취소").
+  // "세미나 신청" (a message that is only a sign-up, see parseWebinarSignup): answered by a fixed rule with the join
+  // link, even while a person owns the thread, unless the message also touches a person-only topic.
   const topicReason = ruleHandoff(req.utterance);
-  if ((!topicReason || SIGNUP_DESPITE_HANDOFF.has(topicReason)) && isWebinarSignupMessage(req.utterance)) {
-    const { reply, linkMissing } = await webinarSignupReply(req.userKey);
+  const signup = parseWebinarSignup(req.utterance);
+  if (signup.signup && (!topicReason || SIGNUP_DESPITE_HANDOFF.has(topicReason))) {
+    const { reply, linkMissing } = await webinarSignupReply(req.userKey, signup);
     // A person sees it when the message also asked for one, or when there is no link to give (WEBINAR_JOIN_URL unset).
     const reason = topicReason ? `webinar signup + ${topicReason}` : linkMissing ? "webinar signup, WEBINAR_JOIN_URL not set" : "webinar signup";
     after(() => finish(req.userKey, { reply, handoff: Boolean(topicReason) || linkMissing, reason }));
@@ -60,14 +61,15 @@ export async function POST(request: Request) {
   // Decide without the model first: a person already owns this thread, or the topic is one the bot never answers.
   const ruleReason = lastHandoff ? "follow-up while waiting for a person" : topicReason;
   if (ruleReason) {
-    const reply = lastHandoff ? HOLD_REPLY : HANDOFF_REPLY;
+    const reply = (lastHandoff ? HOLD_REPLY : HANDOFF_REPLY) + seminarHint(req.utterance);
     after(() => finish(req.userKey, { reply, handoff: true, reason: ruleReason }));
     return NextResponse.json(textResponse(reply));
   }
 
   if (!claudeConfigured()) {
-    after(() => finish(req.userKey, { reply: FALLBACK_REPLY, handoff: true, reason: "ANTHROPIC_API_KEY not set" }));
-    return NextResponse.json(textResponse(FALLBACK_REPLY));
+    const reply = FALLBACK_REPLY + seminarHint(req.utterance);
+    after(() => finish(req.userKey, { reply, handoff: true, reason: "ANTHROPIC_API_KEY not set" }));
+    return NextResponse.json(textResponse(reply));
   }
 
   if (req.callbackUrl) {
@@ -90,16 +92,32 @@ export async function POST(request: Request) {
   return NextResponse.json(textResponse(result.reply));
 }
 
-/** Records a KakaoTalk sign-up for the current webinar (one per channel user) and returns the reply with the link. */
-async function webinarSignupReply(userKey: string): Promise<{ reply: string; linkMissing: boolean }> {
+/**
+ * On the seminar day, replies that send someone to a person (or fail) still tell them how to get the link right away
+ * when the message is about the seminar or a link.
+ */
+function seminarHint(utterance: string): string {
+  if (!webinarDayOf() || !/세미나|웨비나|설명회|줌|zoom|링크/i.test(utterance)) return "";
+  return "\n\n세미나 참여 링크가 필요하시면 ‘세미나 신청’이라고 짧게 보내 주세요. 바로 보내드려요.";
+}
+
+/**
+ * Records a KakaoTalk sign-up for the current webinar (one per channel user, with the phone or email the message
+ * carried) and returns the reply with the link.
+ */
+async function webinarSignupReply(userKey: string, contact: WebinarSignupParse): Promise<{ reply: string; linkMissing: boolean }> {
   const open = webinarKakaoOpen();
   let already = false;
   if (open) {
     const dedupeKey = `${KAKAO_BOT_DEDUPE_PREFIX}${userKey}`;
     try {
-      const existing = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { id: true } });
+      const existing = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { id: true, phone: true, email: true } });
       already = Boolean(existing);
-      if (!existing) await prisma.webinarRegistration.create({ data: { webinarKey: WEBINAR.key, name: "카카오톡 채널", locale: "ko", dedupeKey } });
+      if (!existing) {
+        await prisma.webinarRegistration.create({ data: { webinarKey: WEBINAR.key, name: "카카오톡 채널", locale: "ko", dedupeKey, phone: contact.phone, email: contact.email } });
+      } else if ((contact.phone && !existing.phone) || (contact.email && !existing.email)) {
+        await prisma.webinarRegistration.update({ where: { id: existing.id }, data: { phone: existing.phone ?? contact.phone, email: existing.email ?? contact.email } });
+      }
     } catch (error) {
       // A double tap races on the unique key; anything else is logged and the person still gets the link.
       if ((error as { code?: string }).code === "P2002") already = true;
@@ -108,19 +126,20 @@ async function webinarSignupReply(userKey: string): Promise<{ reply: string; lin
   }
   const join = webinarJoinInfo();
   if (open && !join) console.error("[kakao] WEBINAR_JOIN_URL is missing or not a zoom.us https link; the seminar keyword cannot give the link");
-  const pageUrl = webinarRegistrationOpen() ? "https://criglobal.org/ko/webinar" : null;
-  const reply = webinarKakaoReply({ open, already, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, join, pageUrl });
+  const formOpen = webinarRegistrationOpen();
+  const pageUrl = formOpen ? "https://criglobal.org/ko/webinar" : null;
+  const reply = webinarKakaoReply({ open, already, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, join, pageUrl, started: open && !formOpen });
   return { reply, linkMissing: open && !join };
 }
 
 async function answer(history: BotTurn[], utterance: string, budgetMs: number): Promise<BotReply> {
   try {
     const result = await draftReply(history, utterance, budgetMs);
-    if (!result.reply) return { reply: HANDOFF_REPLY, handoff: true, reason: result.reason ?? "no reply" };
+    if (!result.reply) return { reply: HANDOFF_REPLY + seminarHint(utterance), handoff: true, reason: result.reason ?? "no reply" };
     return result;
   } catch (error) {
     console.error("[kakao] reply failed:", error instanceof Error ? error.message : error);
-    return { reply: FALLBACK_REPLY, handoff: true, reason: "bot error or timeout" };
+    return { reply: FALLBACK_REPLY + seminarHint(utterance), handoff: true, reason: "bot error or timeout" };
   }
 }
 

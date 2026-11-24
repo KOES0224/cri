@@ -67,7 +67,16 @@ export function webinarBannerVisible(now = new Date()): boolean {
  * so someone who asks at 10:05 can still get in. The website form closes at the start, as before.
  */
 export function webinarKakaoOpen(now = new Date()): boolean {
-  return now.getTime() < WEBINAR.startsAt.getTime() + WEBINAR.durationMinutes * 60_000;
+  return now.getTime() < webinarEndsAt().getTime();
+}
+
+export function webinarEndsAt(): Date {
+  return new Date(WEBINAR.startsAt.getTime() + WEBINAR.durationMinutes * 60_000);
+}
+
+/** The seminar morning until the end (6 hours before the start): replies that send someone to a person also point to the keyword. */
+export function webinarDayOf(now = new Date()): boolean {
+  return now.getTime() >= WEBINAR.startsAt.getTime() - 6 * 3600_000 && webinarKakaoOpen(now);
 }
 
 /** Normalised contact used to keep one registration per person: email first, then phone digits, then Kakao id. */
