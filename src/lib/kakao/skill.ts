@@ -6,6 +6,7 @@
  * (single use, valid for one minute). callbackUrl is only present when the block has the callback feature switched on.
  */
 
+import { COMPANY } from '../company';
 import { WEBINAR } from '../webinar';
 
 export type SkillRequest = { utterance: string; userKey: string; callbackUrl: string | null; botId: string | null };
@@ -78,6 +79,8 @@ export function callbackAck(text = '확인해서 바로 안내드릴게요 :)') 
 /** 안 as a negation, not inside 동안, 제안, 불안, 편안, 방안, 대안, 보안, 답안. */
 const NOT = '(?<![동제불편방대보답])안\\s*';
 const SEMINAR_WORD = '(세미나|새미나|웨비나|설명회)';
+/** Not coming to the seminar, or changing a sign-up: nothing to talk through, admissions only has to see it. */
+const SEMINAR_CHANGE = 'seminar cancel or change';
 
 /**
  * Rules that only fire on statements: a question ("세미나 카메라 안 켜도 되나요?", "내용이 어렵나요?") goes to the
@@ -91,9 +94,9 @@ const STATEMENT_RULES: Array<[RegExp, string]> = [
     '어려울\\s*(것|거|듯)', '힘들\\s*(것|거|듯)', '어렵게\\s*(되|됐)', '어렵겠', '힘들겠', '패스(할|하겠|합|요|해)', '빠질', '쉴게', '접을게',
     '결석', '무리(일|예|에요|입니)', '다음\\s*(에|기회에)\\s*(들을|할게|신청|참석|볼게)', '지워', '삭제', '없던\\s*걸로', '빼\\s*(주|줘)', '변경',
     '바꾸', '바꿔', '바꿀', '(신청|등록|이메일|메일|번호|연락처|이름)[\\s\\S]{0,10}(수정|정정|고쳐|고치|오타|업데이트)', '다른\\s*걸로',
-  ].join('|') + ')'), 'seminar cancel or change'],
+  ].join('|') + ')'), SEMINAR_CHANGE],
   // Unmistakable declines and sign-up changes without the word 세미나.
-  [/불참|(참석|참여|참가)\s*(이|을|은|도|하기)?\s*(어렵|어려|힘들|곤란|불가)|참석\s*(못|안\s*(하|할|합|해|함))|참석하지\s*(않|못)|못\s*(갈|가|들을|볼)\s*(것|거|듯)|(이메일|메일|번호|연락처)[\s\S]{0,12}(잘못|틀렸|틀려|오타)|(번호|메일|이메일|연락처)[\s\S]{0,25}말고/, 'seminar cancel or change'],
+  [/불참|(참석|참여|참가)\s*(이|을|은|도|하기)?\s*(어렵|어려|힘들|곤란|불가)|참석\s*(못|안\s*(하|할|합|해|함))|참석하지\s*(않|못)|못\s*(갈|가|들을|볼)\s*(것|거|듯)|(이메일|메일|번호|연락처)[\s\S]{0,12}(잘못|틀렸|틀려|오타)|(번호|메일|이메일|연락처)[\s\S]{0,25}말고/, SEMINAR_CHANGE],
   // Problems getting in, with the link, sound or screen (on the seminar day above all): a person, not the same link again.
   [new RegExp('(세미나|새미나|웨비나|설명회|줌|zoom|링크|접속|입장|암호|비밀번호|비번|패스코드|회의\\s*id|화면|소리|음성|영상|호스트)[\\s\\S]{0,30}(' + [
     NOT + '(돼|되|됩|됐|됨|될|떠|뜨|열|들|나|보|켜|와|왔|옴|맞|눌|넘어|받)', '못\\s*(들|하|해|했|받)', '수\\s*(가|도|는)?\\s*없',
@@ -128,12 +131,28 @@ export function ruleHandoff(utterance: string): string | null {
   return null;
 }
 
-/** Hours after a handoff during which the bot holds instead of answering, so a person can pick the thread up. */
-export const HANDOFF_HOLD_HOURS = 12;
+/**
+ * Where a person answers. The channel's 1:1 chat is switched off (2026-11-24, so the "상담 연결" button is gone and
+ * the bot is never cut off), which means nobody can reply in the chat room: every reply that needs a person gives
+ * this number and none of them promises an answer in the chat.
+ */
+export const CONTACT_PHONE = COMPANY.phoneDomestic;
 
-export const HANDOFF_REPLY = '문의 주셔서 감사합니다. 이 내용은 담당자가 직접 확인한 뒤 답변드릴게요. 평일 기준 보통 하루 안에 연락드립니다 🙏';
-export const HOLD_REPLY = '담당자가 확인하고 있어요. 추가로 전하실 내용이 있으면 편하게 남겨 주세요. 함께 전달할게요.';
-export const FALLBACK_REPLY = '지금은 자동 안내가 잠시 어려워요. 남겨 주신 내용은 담당자에게 전달했고, 확인 후 답변드릴게요. 프로그램 정보는 criglobal.org/ko/research 에서도 보실 수 있어요.';
+export const HANDOFF_REPLY = `문의 주셔서 감사합니다. 이 내용은 담당자가 직접 안내드려야 하는 부분이에요. 이 채팅방은 AI 상담 도우미가 답변드리고 있어서, 번거로우시겠지만 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주시면 담당자가 도와드릴게요 🙏`;
+/** A seminar decline or change needs no conversation: the handoff email carries it, so nobody is asked to call for it. */
+export const SEMINAR_CHANGE_REPLY = `알려 주셔서 감사합니다. 말씀하신 내용은 담당자에게 전달했어요. 이 채팅방에서는 담당자가 따로 답장을 드리지 못하니, 확인이 필요하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요.`;
+
+/** "세미나 신청 취소할게요": it lands on the refund/cancellation rule, but it is a seminar decline, not money. */
+const SEMINAR_CANCEL = new RegExp(SEMINAR_WORD + '[\\s\\S]{0,40}(취소|캔슬|철회)');
+const ABOUT_MONEY_OR_A_PROGRAM = /환불|위약|반환|refund|결제|입금|수업료|등록금|프로그램|계약/i;
+
+/** The fixed reply for a topic the rules keep from the model (a ruleHandoff reason and the message it came from). */
+export function handoffReply(reason: string, utterance: string): string {
+  const seminarCancel = reason === 'refund or cancellation' && SEMINAR_CANCEL.test(utterance) && !ABOUT_MONEY_OR_A_PROGRAM.test(utterance);
+  return reason === SEMINAR_CHANGE || seminarCancel ? SEMINAR_CHANGE_REPLY : HANDOFF_REPLY;
+}
+export const FALLBACK_REPLY = `지금은 자동 안내가 잠시 어려워요. 잠시 후 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요. 프로그램 정보는 criglobal.org/ko/research 에서도 보실 수 있어요.`;
+export const RATE_LIMIT_REPLY = `메시지가 많이 와서 지금은 답변이 어려워요. 잠시 후 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요.`;
 
 /** Never echo a link to anywhere but our own site; the model is told the same, this enforces it. */
 export function stripForeignLinks(text: string): string {
@@ -282,7 +301,7 @@ export function webinarKakaoReply(input: {
     if (input.join.passcode) lines.push(`암호: ${input.join.passcode}`);
     lines.push('', input.started ? '지금 진행 중이에요. 위 링크로 바로 들어오세요.' : '링크는 이 대화방에 남아 있으니 당일 여기서 바로 들어오시면 돼요. 시작 5분 전 입장을 권해요.');
   } else {
-    lines.push('', '참여 링크는 담당자가 이 대화방으로 보내드릴게요.');
+    lines.push('', `참여 링크를 지금 바로 보내드리지 못했어요. 잠시 후 ‘세미나 신청’이라고 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요.`);
   }
   if (input.pageUrl) lines.push(`자세한 순서: ${input.pageUrl}`);
   return lines.join('\n');

@@ -117,14 +117,15 @@ test('KakaoTalk keyword keeps the sender\'s own contact and hands "담당자님"
   assert.equal(SIGNUP_DESPITE_HANDOFF.has('request for student data'), false);
 });
 
-test('KakaoTalk webinar reply: link and passcode when set, a promise otherwise, closed after the start', async () => {
+test('KakaoTalk webinar reply: link and passcode when set, the office phone otherwise, closed after the start', async () => {
   const { webinarKakaoReply } = await import('../src/lib/kakao/skill');
   const base = { open: true, already: false, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', pageUrl: 'https://criglobal.org/ko/webinar' };
   const withLink = webinarKakaoReply({ ...base, join: { url: 'https://us06web.zoom.us/j/123', passcode: '000000' } });
   assert.match(withLink, /접수/); assert.match(withLink, /zoom\.us\/j\/123/); assert.match(withLink, /암호: 000000/);
   assert.doesNotMatch(withLink, /전날/); // no reminder promise the owner would have to keep
   const noLink = webinarKakaoReply({ ...base, join: null });
-  assert.doesNotMatch(noLink, /zoom/); assert.match(noLink, /담당자/);
+  // No link to give: nobody can send it into the chat room later (1:1 chat is off), so try again or call.
+  assert.doesNotMatch(noLink, /zoom/); assert.match(noLink, /02-6203-8999/); assert.doesNotMatch(noLink, /담당자가|보내드릴게요/);
   assert.match(webinarKakaoReply({ ...base, already: true, join: null }), /이미 신청/);
   assert.match(webinarKakaoReply({ ...base, open: false, join: null }), /끝났어요/);
   assert.match(withLink, /자세한 순서: https:\/\/criglobal\.org\/ko\/webinar/);

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SIMPLE_TEXT_MAX, callbackAck, isKakaoCallbackUrl, parseSkillRequest, ruleHandoff, secretMatches, splitForKakao, stripForeignLinks, textResponse } from '../src/lib/kakao/skill';
+import { CONTACT_PHONE, FALLBACK_REPLY, HANDOFF_REPLY, RATE_LIMIT_REPLY, SEMINAR_CHANGE_REPLY, SIMPLE_TEXT_MAX, callbackAck, handoffReply, isKakaoCallbackUrl, parseSkillRequest, ruleHandoff, secretMatches, splitForKakao, stripForeignLinks, textResponse } from '../src/lib/kakao/skill';
+import { COMPANY } from '../src/lib/company';
 
 const sample = {
   intent: { name: '폴백 블록' },
@@ -46,6 +47,53 @@ test('sensitive topics go to a person before the model is called', () => {
   assert.equal(ruleHandoff('결제가 안 돼요'), 'payment problem');
   assert.equal(ruleHandoff('CRI 프로그램 알고싶어요'), null);
   assert.equal(ruleHandoff('겨울 프로그램 대상 학년이 어떻게 되나요?'), null);
+});
+
+test('replies that need a person give the office phone and promise nothing in the chat', () => {
+  // The channel's 1:1 chat is off: nobody can answer in the chat room, so no reply may say that someone will.
+  assert.equal(CONTACT_PHONE, '02-6203-8999');
+  for (const reply of [HANDOFF_REPLY, FALLBACK_REPLY, RATE_LIMIT_REPLY]) {
+    assert.match(reply, /02-6203-8999로 전화/);
+    assert.doesNotMatch(reply, /담당자가 (직접 )?(확인|답변)|연락드립니다|연락드릴게요|전달했|전달할게요|전달됩니다|보내드릴게요|확인하고 있어요/);
+    assert.ok(reply.length < SIMPLE_TEXT_MAX);
+  }
+  assert.match(HANDOFF_REPLY, /AI 상담 도우미/); // says why: a person does not write in this room
+  // The number as dialled in Korea is the same one the site shows in international form.
+  assert.equal(COMPANY.phoneDomestic.replace(/\D/g, ''), COMPANY.phone.replace(/\D/g, '').replace(/^82/, '0'));
+  assert.equal(COMPANY.phoneHref, `tel:+82${COMPANY.phoneDomestic.replace(/\D/g, '').slice(1)}`);
+});
+
+test('a seminar decline or change is passed on without asking for a call; every other rule gives the phone', () => {
+  // Admissions sees it in the handoff email, so "전달했어요" is true; a reply or a call back is still not promised.
+  // "취소" lands on the refund/cancellation rule; about the seminar alone it is still only a decline.
+  for (const said of ['세미나 못 갈 것 같아요', '세미나 참석이 어렵게 됐어요', '세미나 신청한 이메일 수정 부탁드립니다', '세미나 신청 취소할게요', '설명회 신청한 거 취소 부탁드립니다']) {
+    assert.equal(handoffReply(ruleHandoff(said) ?? '', said), SEMINAR_CHANGE_REPLY, said);
+  }
+  assert.match(SEMINAR_CHANGE_REPLY, /담당자에게 전달했어요/);
+  assert.match(SEMINAR_CHANGE_REPLY, /답장을 드리지 못하니/);
+  assert.match(SEMINAR_CHANGE_REPLY, /02-6203-8999로 전화/);
+  assert.doesNotMatch(SEMINAR_CHANGE_REPLY, /연락드릴|답변드릴게요|보내드릴게요|확인하고 있어요|도와드릴게요/);
+  for (const said of ['환불 받을 수 있나요?', '상담원 연결해주세요', '결제가 안 돼요', '줌 링크가 안 열려요', '학생 명단 보내주세요', '겨울 프로그램 취소하고 싶어요', '세미나 듣고 등록한 프로그램을 취소하고 환불 받고 싶어요']) {
+    assert.ok(ruleHandoff(said), said);
+    assert.equal(handoffReply(ruleHandoff(said) ?? '', said), HANDOFF_REPLY, said);
+  }
+});
+
+test('the model is told to give the office phone and not to promise a reply in the chat', async () => {
+  const { botInstructions } = await import('../src/lib/kakao/knowledge');
+  const prompt = botInstructions();
+  assert.match(prompt, /담당자는 이 채팅방으로 답장할 수 없다/);
+  assert.match(prompt, /CRI 공식 번호 02-6203-8999로 전화해 달라고 안내하고 handoff를 true로 한다/);
+  assert.match(prompt, /전화 받는 시간은 주어진 정보에 없으니 말하지 않는다/); // no invented office hours
+  assert.doesNotMatch(prompt, /"담당자가 확인 후 연락드릴게요"라는 취지|담당자가 확인해서 정확히 안내드릴게요|담당자에게 연결해 준다/);
+  assert.doesNotMatch(prompt, /\+82/); // the number as dialled in Korea, not the international form
+  // The seminar part of the instructions (only present while sign-ups are open) follows the same rule.
+  const { webinarContext } = await import('../src/lib/kakao/knowledge');
+  const { WEBINAR } = await import('../src/lib/webinar');
+  const seminar = webinarContext(new Date(WEBINAR.startsAt.getTime() - 24 * 3600_000));
+  assert.match(seminar, /담당자에게 전달했어요/);
+  assert.match(seminar, /급하면 CRI 공식 번호 02-6203-8999로 전화해 달라고 안내하고 handoff를 true로 한다/);
+  assert.doesNotMatch(seminar, /담당자가 확인해서 바로 도와드릴게요/);
 });
 
 test('requests for other students\' data go to a person', () => {

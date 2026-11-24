@@ -1,5 +1,6 @@
 import AdminLayout from "../_components/AdminLayout";
 import { requireAdmin } from "@/lib/admin";
+import { COMPANY } from "@/lib/company";
 import { prisma } from "@/lib/prisma";
 import { formatKST } from "@/lib/formatKST";
 import { claudeConfigured } from "@/lib/kakao/reply";
@@ -21,10 +22,11 @@ export default async function KakaoBotPage() {
       <header className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">KakaoTalk bot</h1>
         <p className="mt-2 max-w-3xl text-sm text-slate-500">
-          Conversations the channel chatbot answered in the last 14 days. Red turns were passed to a person and emailed to admissions; answer those in the
-          KakaoTalk channel admin chat. {ordered.length} customers · {rows.length} messages · {handoffs} handoffs.
+          Conversations the channel chatbot answered in the last 14 days. Red turns are the ones it did not answer itself: the customer was pointed to the
+          office phone ({COMPANY.phoneDomestic}) and the conversation was emailed to admissions. The channel&apos;s 1:1 chat is off, so nobody replies in KakaoTalk.{" "}
+          {ordered.length} customers · {rows.length} messages · {handoffs} handoffs.
         </p>
-        {!claudeConfigured() && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">ANTHROPIC_API_KEY is not set, so every message gets the fixed reply and is handed to a person.</p>}
+        {!claudeConfigured() && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">ANTHROPIC_API_KEY is not set, so every message gets the fixed reply (try again later, or call the office).</p>}
       </header>
       {ordered.length === 0 && <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">No conversations yet.</p>}
       <div className="space-y-4">

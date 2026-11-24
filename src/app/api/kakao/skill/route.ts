@@ -4,7 +4,7 @@ import { allowRequest } from "@/lib/request-limit";
 import { notifyKakaoHandoff } from "@/lib/notify";
 import { claudeConfigured, draftReply, type BotReply, type BotTurn } from "@/lib/kakao/reply";
 import {
-  FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, parseSkillRequest, parseWebinarSignup, ruleHandoff, secretMatches, withoutOwnContact,
+  FALLBACK_REPLY, HANDOFF_REPLY, RATE_LIMIT_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, handoffReply, parseSkillRequest, parseWebinarSignup, ruleHandoff, secretMatches, withoutOwnContact,
   textResponse, webinarKakaoReply, type WebinarSignupParse,
 } from "@/lib/kakao/skill";
 import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarDayOf, webinarJoinInfo, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
@@ -15,6 +15,9 @@ import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarDayOf, webinarJoinInfo, webina
  *
  * With the block's callback switched on, Kakao sends a callbackUrl: we acknowledge at once and post the real answer
  * within the minute. Without it Kakao waits only 5 s, so the model gets ~3.5 s and a fixed reply covers a timeout.
+ *
+ * The channel's 1:1 chat is off, so no person can write in the chat room. A "handoff" turn therefore points the
+ * customer to the office phone (CONTACT_PHONE) and emails admissions; the bot keeps answering the next message.
  */
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -35,35 +38,33 @@ export async function POST(request: Request) {
   if (process.env.KAKAO_BOT_ID && req.botId !== process.env.KAKAO_BOT_ID) return NextResponse.json({ error: "unknown bot" }, { status: 403 });
 
   if (!(await allowRequest("kakao-skill", req.userKey, 30, 60 * 60))) {
-    return NextResponse.json(textResponse("메시지가 많이 와서 잠시 쉬었다가 답변드릴게요. 급하신 내용은 담당자에게 전달됩니다."));
+    return NextResponse.json(textResponse(RATE_LIMIT_REPLY));
   }
 
   const since = new Date(Date.now() - HISTORY_HOURS * 3600_000);
-  const [recent, lastHandoff] = await Promise.all([
-    prisma.kakaoChatMessage.findMany({ where: { userKey: req.userKey, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: HISTORY_TURNS }),
-    prisma.kakaoChatMessage.findFirst({ where: { userKey: req.userKey, handoff: true, createdAt: { gte: new Date(Date.now() - HANDOFF_HOLD_HOURS * 3600_000) } }, orderBy: { createdAt: "desc" } }),
-  ]);
+  const recent = await prisma.kakaoChatMessage.findMany({ where: { userKey: req.userKey, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: HISTORY_TURNS });
   const history: BotTurn[] = recent.reverse().map(m => ({ role: m.role === "assistant" ? "assistant" : "user", text: m.text }));
   await prisma.kakaoChatMessage.create({ data: { userKey: req.userKey, role: "user", text: req.utterance } });
 
   // "세미나 신청" (a message that is only a sign-up, see parseWebinarSignup): answered by a fixed rule with the join
-  // link, even while a person owns the thread, unless the message also touches a person-only topic.
+  // link, unless the message also touches a person-only topic.
   const signup = parseWebinarSignup(req.utterance);
   // A sign-up that carries the parent's own number ("학부모 연락처 010-…") is not a request for other people's data.
   const topicReason = ruleHandoff(signup.signup && (signup.phone || signup.email) ? withoutOwnContact(req.utterance) : req.utterance);
   if (signup.signup && (!topicReason || SIGNUP_DESPITE_HANDOFF.has(topicReason))) {
     const { reply, linkMissing } = await webinarSignupReply(req.userKey, signup);
-    // A person sees it when the message also asked for one, or when there is no link to give (WEBINAR_JOIN_URL unset).
+    // Admissions gets an email when the message also asked for a person, or when there is no link to give (WEBINAR_JOIN_URL unset).
     const reason = topicReason ? `webinar signup + ${topicReason}` : linkMissing ? "webinar signup, WEBINAR_JOIN_URL not set" : "webinar signup";
     after(() => finish(req.userKey, { reply, handoff: Boolean(topicReason) || linkMissing, reason }));
     return NextResponse.json(textResponse(reply));
   }
 
-  // Decide without the model first: a person already owns this thread, or the topic is one the bot never answers.
-  const ruleReason = lastHandoff ? "follow-up while waiting for a person" : topicReason;
-  if (ruleReason) {
-    const reply = (lastHandoff ? HOLD_REPLY : HANDOFF_REPLY) + seminarHint(req.utterance);
-    after(() => finish(req.userKey, { reply, handoff: true, reason: ruleReason }));
+  // Decide without the model first: a topic the bot never answers gets the phone number (a seminar decline or change
+  // is only passed on). Only this turn: the next message is answered normally again, because nobody takes the thread
+  // over in the chat room.
+  if (topicReason) {
+    const reply = handoffReply(topicReason, req.utterance) + seminarHint(req.utterance);
+    after(() => finish(req.userKey, { reply, handoff: true, reason: topicReason }));
     return NextResponse.json(textResponse(reply));
   }
 
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
 }
 
 /**
- * On the seminar day, replies that send someone to a person (or fail) still tell them how to get the link right away
+ * On the seminar day, replies that send someone to the phone (or fail) still tell them how to get the link right away
  * when the message is about the seminar or a link.
  */
 function seminarHint(utterance: string): string {
@@ -144,7 +145,7 @@ async function answer(history: BotTurn[], utterance: string, budgetMs: number): 
   }
 }
 
-/** Log the bot's turn and, for a handoff, email the recent conversation to admissions. */
+/** Log the bot's turn and, for a handoff (the customer was pointed to the phone), email the recent conversation to admissions. */
 async function finish(userKey: string, result: BotReply) {
   try {
     await prisma.kakaoChatMessage.create({ data: { userKey, role: "assistant", text: result.reply, handoff: result.handoff, reason: result.reason } });
