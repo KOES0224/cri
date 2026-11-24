@@ -5,7 +5,7 @@ import { notifyKakaoHandoff } from "@/lib/notify";
 import { claudeConfigured, draftReply, type BotReply, type BotTurn } from "@/lib/kakao/reply";
 import {
   FALLBACK_REPLY, HANDOFF_REPLY, RATE_LIMIT_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, handoffReply, parsePhoneOnly, parseSkillRequest, phoneWithoutSignupReply, parseWebinarSignup, ruleHandoff, secretMatches, withoutOwnContact,
-  textResponse, webinarKakaoReply, webinarPhoneSavedReply, type WebinarSignupParse,
+  textResponse, webinarChannelCard, webinarKakaoReply, webinarPhoneSavedReply, type TextCard, type WebinarSignupParse,
 } from "@/lib/kakao/skill";
 import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, koreanMobile, webinarDayOf, webinarJoinInfo, webinarKakaoNoticesOpen, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
 
@@ -54,21 +54,23 @@ export async function POST(request: Request) {
   const phoneTopic = phoneOnly ? ruleHandoff(withoutOwnContact(req.utterance)) : null;
   if (phoneOnly && (!phoneTopic || SIGNUP_DESPITE_HANDOFF.has(phoneTopic))) {
     const saved = await saveKakaoSignupPhone(req.userKey, phoneOnly);
+    const noticesOpen = webinarKakaoNoticesOpen();
     // No KakaoTalk sign-up yet: say how to send both at once instead of letting the model guess.
-    const reply = saved ? webinarPhoneSavedReply(WEBINAR.label.ko, webinarKakaoNoticesOpen()) : phoneWithoutSignupReply(webinarKakaoNoticesOpen());
-    after(() => finish(req.userKey, { reply, handoff: Boolean(phoneTopic), reason: saved ? "webinar phone saved" : "phone without a sign-up" }));
-    return NextResponse.json(textResponse(reply));
+    const reply = saved ? webinarPhoneSavedReply(WEBINAR.label.ko, noticesOpen, req.friend) : phoneWithoutSignupReply(noticesOpen);
+    const card = saved ? webinarChannelCard({ friend: req.friend, started: webinarKakaoOpen() && !webinarRegistrationOpen(), noticesOpen }) : null;
+    after(() => finish(req.userKey, { reply, handoff: Boolean(phoneTopic), reason: withCardNote(saved ? "webinar phone saved" : "phone without a sign-up", card) }));
+    return NextResponse.json(textResponse(reply, [], card ? [card] : []));
   }
 
   const signup = parseWebinarSignup(req.utterance);
   // A sign-up that carries the parent's own number ("학부모 연락처 010-…") is not a request for other people's data.
   const topicReason = ruleHandoff(signup.signup && (signup.phone || signup.email) ? withoutOwnContact(req.utterance) : req.utterance);
   if (signup.signup && (!topicReason || SIGNUP_DESPITE_HANDOFF.has(topicReason))) {
-    const { reply, linkMissing } = await webinarSignupReply(req.userKey, signup);
+    const { reply, linkMissing, card } = await webinarSignupReply(req.userKey, signup, req.friend);
     // Admissions gets an email when the message also asked for a person, or when there is no link to give (WEBINAR_JOIN_URL unset).
     const reason = topicReason ? `webinar signup + ${topicReason}` : linkMissing ? "webinar signup, WEBINAR_JOIN_URL not set" : "webinar signup";
-    after(() => finish(req.userKey, { reply, handoff: Boolean(topicReason) || linkMissing, reason }));
-    return NextResponse.json(textResponse(reply));
+    after(() => finish(req.userKey, { reply, handoff: Boolean(topicReason) || linkMissing, reason: withCardNote(reason, card) }));
+    return NextResponse.json(textResponse(reply, [], card ? [card] : []));
   }
 
   // Decide without the model first: a topic the bot never answers gets the phone number (a seminar decline or change
@@ -116,6 +118,14 @@ function seminarHint(utterance: string): string {
 }
 
 /**
+ * The log (/dashboard/kakao) notes when the add-channel button went out, i.e. when Kakao did not say the sender had
+ * added the channel: that is how many KakaoTalk sign-ups were not channel friends yet.
+ */
+function withCardNote(reason: string, card: TextCard | null): string {
+  return card ? `${reason}, add-channel button shown` : reason;
+}
+
+/**
  * Records a KakaoTalk sign-up for the current webinar (one per channel user, with the phone or email the message
  * carried) and returns the reply with the link.
  */
@@ -133,7 +143,7 @@ async function saveKakaoSignupPhone(userKey: string, phone: string): Promise<boo
   }
 }
 
-async function webinarSignupReply(userKey: string, contact: WebinarSignupParse): Promise<{ reply: string; linkMissing: boolean }> {
+async function webinarSignupReply(userKey: string, contact: WebinarSignupParse, friend: boolean): Promise<{ reply: string; linkMissing: boolean; card: TextCard | null }> {
   const open = webinarKakaoOpen();
   let already = false;
   let hasPhone = Boolean(koreanMobile(contact.phone));
@@ -164,8 +174,10 @@ async function webinarSignupReply(userKey: string, contact: WebinarSignupParse):
   if (open && !join) console.error("[kakao] WEBINAR_JOIN_URL is missing or not a zoom.us https link; the seminar keyword cannot give the link");
   const formOpen = webinarRegistrationOpen();
   const pageUrl = formOpen ? "https://criglobal.org/ko/webinar" : null;
-  const reply = webinarKakaoReply({ open, already, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, join, pageUrl, started: open && !formOpen, hasPhone, noticesOpen: webinarKakaoNoticesOpen() });
-  return { reply, linkMissing: open && !join };
+  const started = open && !formOpen;
+  const noticesOpen = webinarKakaoNoticesOpen();
+  const reply = webinarKakaoReply({ open, already, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, join, pageUrl, started, hasPhone, noticesOpen, friend });
+  return { reply, linkMissing: open && !join, card: webinarChannelCard({ friend, started, noticesOpen }) };
 }
 
 async function answer(history: BotTurn[], utterance: string, budgetMs: number): Promise<BotReply> {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { BellRing, CheckCircle2, MessageCircle } from "lucide-react";
 import { useT } from "@/i18n/client";
 import { addWebinarPhone } from "@/app/actions/webinar";
-import { KAKAO_CHANNEL_URL } from "@/lib/webinar";
+import { KAKAO_CHANNEL_ADD_URL } from "@/lib/webinar";
 
 /**
  * "Get the notice on KakaoTalk": adds a mobile number to one sign-up. Shown on the success screen when no number was
@@ -33,7 +33,7 @@ export default function WebinarPhoneForm({ id, token, place }: { id: string; tok
       <div role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-left">
         <p className="inline-flex items-center gap-2 font-bold text-gray-900"><CheckCircle2 className="h-5 w-5 text-emerald-600" />{copy.savedTitle}</p>
         <p className="mt-1.5 text-sm leading-relaxed text-gray-700">{copy.savedBody}</p>
-        <a href={KAKAO_CHANNEL_URL} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex rounded-xl bg-[#FEE500] px-4 py-2.5 text-sm font-bold text-[#191919] hover:brightness-95">{copy.addChannel}</a>
+        <a href={KAKAO_CHANNEL_ADD_URL} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex rounded-xl bg-[#FEE500] px-4 py-2.5 text-sm font-bold text-[#191919] hover:brightness-95">{copy.addChannel}</a>
       </div>
     );
   }
@@ -61,7 +61,7 @@ export function KakaoChannelNudge() {
     <div className="rounded-2xl border-2 border-[#FEE500] bg-[#FFFBE0] p-5 text-left">
       <p className="inline-flex items-center gap-2 font-bold text-gray-900"><MessageCircle className="h-5 w-5 fill-[#191919] text-[#191919]" />{copy.channelTitle}</p>
       <p className="mt-1.5 text-sm leading-relaxed text-gray-700">{copy.channelBody}</p>
-      <a href={KAKAO_CHANNEL_URL} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex rounded-xl bg-[#FEE500] px-4 py-2.5 text-sm font-bold text-[#191919] hover:brightness-95">{copy.addChannel}</a>
+      <a href={KAKAO_CHANNEL_ADD_URL} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex rounded-xl bg-[#FEE500] px-4 py-2.5 text-sm font-bold text-[#191919] hover:brightness-95">{copy.addChannel}</a>
     </div>
   );
 }

@@ -88,7 +88,8 @@ function programLine(p: OpenProgramCard): string {
 export function webinarContext(now = new Date()): string {
   if (!webinarKakaoOpen(now)) return '';
   const numbers = webinarKakaoNoticesOpen(now)
-    ? `- 세미나 알림용 휴대폰 번호는 예외로 받을 수 있다. 다만 너는 번호를 저장하지 못한다. 번호를 다른 말과 섞어 보냈다면 저장됐다고 말하지 말고, "‘세미나 신청 010-1234-5678’처럼 보내 주시면 신청과 알림 번호가 함께 저장돼요"라고 안내한다. 이미 세미나를 신청했다면 번호만 한 줄로 다시 보내 달라고 한다.`
+    ? `- 세미나 알림용 휴대폰 번호는 예외로 받을 수 있다. 다만 너는 번호를 저장하지 못한다. 번호를 다른 말과 섞어 보냈다면 저장됐다고 말하지 말고, "‘세미나 신청 010-1234-5678’처럼 보내 주시면 신청과 알림 번호가 함께 저장돼요"라고 안내한다. 이미 세미나를 신청했다면 번호만 한 줄로 다시 보내 달라고 한다.
+- 카톡 알림은 CRI 채널을 추가한 사람에게만 간다. 이 채팅방에서 대화하는 것만으로는 채널이 추가되지 않는다. 채널 추가를 물으면 "‘${WEBINAR_KAKAO_KEYWORD}’ 답장 아래의 ‘채널 추가하기’ 버튼이나 CRI 채널 홈의 ‘채널 추가’로 하실 수 있어요"라고 안내한다(채널 주소 링크는 쓰지 않는다).`
     : `- 세미나 카카오톡 알림 명단은 마감됐다. 알림용 번호를 받지 말고, 참여 링크는 "${WEBINAR_KAKAO_KEYWORD}" 키워드로 바로 받을 수 있다고 안내한다.`;
   const site = webinarRegistrationOpen(now)
     ? ` 웹사이트 ${SITE}/ko/webinar 에서 신청해도 된다.`

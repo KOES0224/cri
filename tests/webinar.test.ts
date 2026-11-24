@@ -231,11 +231,46 @@ test('KakaoTalk sign-up reply asks for a number when there is none, and never du
   const { webinarKakaoReply } = await import('../src/lib/kakao/skill');
   const base = { open: true, already: false, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', join: { url: 'https://us06web.zoom.us/j/1', passcode: null }, pageUrl: null, noticesOpen: true };
   assert.doesNotMatch(webinarKakaoReply({ ...base, noticesOpen: false, hasPhone: false }), /휴대폰 번호/); // list exported: no ask
-  assert.match(webinarKakaoReply({ ...base, hasPhone: false }), /휴대폰 번호를 보내 주세요/);
-  assert.match(webinarKakaoReply({ ...base, already: true, hasPhone: false }), /휴대폰 번호를 보내 주세요/); // asked again when they come back
+  assert.match(webinarKakaoReply({ ...base, hasPhone: false }), /휴대폰 번호를 보내 주/);
+  assert.match(webinarKakaoReply({ ...base, hasPhone: false, friend: true }), /휴대폰 번호를 보내 주세요/);
+  assert.match(webinarKakaoReply({ ...base, already: true, hasPhone: false }), /휴대폰 번호를 보내 주/); // asked again when they come back
   assert.match(webinarKakaoReply({ ...base, hasPhone: true }), /남겨 주신 번호로/);
   assert.doesNotMatch(webinarKakaoReply({ ...base, started: true, hasPhone: false }), /휴대폰 번호/);
   assert.ok(webinarKakaoReply({ ...base, hasPhone: false }).length < 1000);
+});
+
+test('KakaoTalk seminar replies: senders who have not added the channel get the add button, friends do not', async () => {
+  const { webinarKakaoReply, webinarChannelCard, webinarPhoneSavedReply, textResponse } = await import('../src/lib/kakao/skill');
+  const label = '12월 5일(토) 오전 10시';
+  const base = { open: true, already: false, label, topic: 'AI 시대, 논문은 통할까', join: { url: 'https://us06web.zoom.us/j/1', passcode: '000000' }, pageUrl: 'https://criglobal.org/ko/webinar' };
+  for (const hasPhone of [true, false]) {
+    const stranger = webinarKakaoReply({ ...base, noticesOpen: true, hasPhone, friend: false });
+    assert.match(stranger, /아래 ‘채널 추가하기’/);
+    assert.doesNotMatch(webinarKakaoReply({ ...base, noticesOpen: true, hasPhone, friend: true }), /채널 추가/);
+  }
+  // Kakao documents no add bar at the top of the chat room, so no reply points there any more.
+  for (const friend of [true, false]) for (const hasPhone of [true, false])
+    assert.doesNotMatch(webinarKakaoReply({ ...base, noticesOpen: true, hasPhone, friend }), /채팅방 위/);
+  assert.doesNotMatch(webinarPhoneSavedReply(label, true, false) + webinarPhoneSavedReply(label, true, true), /채팅방 위/);
+
+  // Whenever a reply says "below", the card is there: every combination of the reply's inputs.
+  for (const open of [true, false]) for (const started of [true, false]) for (const noticesOpen of [true, false])
+    for (const hasPhone of [true, false]) for (const friend of [true, false]) {
+      if (started && !open) continue;
+      const reply = webinarKakaoReply({ ...base, open, started, noticesOpen, hasPhone, friend });
+      const card = webinarChannelCard({ friend, started, noticesOpen });
+      if (/아래 ‘채널 추가하기’/.test(reply)) assert.ok(card, `card missing: ${JSON.stringify({ open, started, noticesOpen, hasPhone, friend })}`);
+      if (friend || started) assert.equal(card, null);
+      // The reply and its card fit in Kakao's three outputs.
+      assert.equal(textResponse(reply, [], card ? [card] : []).template.outputs.length, card ? 2 : 1);
+    }
+  assert.match(webinarChannelCard({ friend: false, started: false, noticesOpen: true })!.textCard.description!, /알림/);
+  assert.match(webinarChannelCard({ friend: false, started: false, noticesOpen: false })!.textCard.description!, /앞으로 열리는 세미나/);
+
+  // A number sent on its own: the same rule.
+  assert.match(webinarPhoneSavedReply(label, true, false), /아래 ‘채널 추가하기’/);
+  assert.doesNotMatch(webinarPhoneSavedReply(label, true, true), /채널 추가/);
+  assert.match(webinarPhoneSavedReply(label, true, true), /전날 저녁과 당일 아침/);
 });
 
 test('the add-a-number link is signed per sign-up', async () => {

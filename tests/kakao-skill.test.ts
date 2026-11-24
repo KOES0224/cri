@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CONTACT_PHONE, FALLBACK_REPLY, HANDOFF_REPLY, RATE_LIMIT_REPLY, SEMINAR_CHANGE_REPLY, SIMPLE_TEXT_MAX, callbackAck, handoffReply, isKakaoCallbackUrl, parseSkillRequest, ruleHandoff, secretMatches, splitForKakao, stripForeignLinks, textResponse } from '../src/lib/kakao/skill';
+import { CONTACT_PHONE, FALLBACK_REPLY, HANDOFF_REPLY, RATE_LIMIT_REPLY, SEMINAR_CHANGE_REPLY, SIMPLE_TEXT_MAX, callbackAck, channelAddCard, handoffReply, isKakaoCallbackUrl, parseSkillRequest, ruleHandoff, secretMatches, splitForKakao, stripForeignLinks, textResponse } from '../src/lib/kakao/skill';
 import { COMPANY } from '../src/lib/company';
 
 const sample = {
@@ -11,12 +11,39 @@ const sample = {
 };
 
 test('parses an Open Builder request', () => {
-  assert.deepEqual(parseSkillRequest(sample), { utterance: 'CRI 프로그램 알고싶어요', userKey: 'bk-123', callbackUrl: 'https://bot-api.kakao.com/v1/callback/abc', botId: 'bot-9' });
+  assert.deepEqual(parseSkillRequest(sample), { utterance: 'CRI 프로그램 알고싶어요', userKey: 'bk-123', callbackUrl: 'https://bot-api.kakao.com/v1/callback/abc', botId: 'bot-9', friend: false });
   assert.equal(parseSkillRequest({ userRequest: { utterance: '', user: { id: 'x' } } }), null);
   assert.equal(parseSkillRequest({ userRequest: { utterance: 'hi' } }), null);
   assert.equal(parseSkillRequest(null), null);
   // Falls back to user.id when there is no botUserKey.
   assert.equal(parseSkillRequest({ userRequest: { utterance: 'hi', user: { id: 'u-2' } } })?.userKey, 'u-2');
+});
+
+test('reads whether the sender has added the channel (Kakao sends isFriend only for friends)', () => {
+  const withProps = (properties: Record<string, unknown>) => ({ ...sample, userRequest: { ...sample.userRequest, user: { ...sample.userRequest.user, properties } } });
+  assert.equal(parseSkillRequest(withProps({ botUserKey: 'bk-123', isFriend: true }))?.friend, true);
+  assert.equal(parseSkillRequest(sample)?.friend, false); // key missing: not known to be a friend
+  assert.equal(parseSkillRequest(withProps({ botUserKey: 'bk-123', isFriend: 'true' }))?.friend, false);
+  assert.equal(parseSkillRequest(withProps({ botUserKey: 'bk-123', isFriend: false }))?.friend, false);
+  assert.equal(parseSkillRequest({ userRequest: { utterance: 'hi', user: { id: 'u-2' } } })?.friend, false);
+});
+
+test('cards follow the text, stay inside Kakao limits and never push the text out', () => {
+  const card = channelAddCard('세미나 카톡 알림은 CRI 채널을 추가한 분께만 보내드려요.');
+  assert.deepEqual(textResponse('신청됐어요', [], [card]).template.outputs, [{ simpleText: { text: '신청됐어요' } }, card]);
+  const [button] = card.textCard.buttons;
+  assert.equal(button.action, 'webLink');
+  assert.equal(button.webLinkUrl, 'https://pf.kakao.com/_xhdzxln/friend');
+  assert.ok(button.label.length <= 14);
+  assert.ok((card.textCard.title ?? '').length <= 50);
+  assert.ok((card.textCard.title ?? '').length + (card.textCard.description ?? '').length <= 400);
+  // Three bubbles of text leave no room: the card is dropped, the text stays.
+  const long = Array.from({ length: 90 }, (_, i) => `문단 ${i} 입니다. 내용이 조금 길게 이어집니다.`).join('\n\n');
+  const outputs = textResponse(long, [], [card]).template.outputs;
+  assert.equal(outputs.length, 3);
+  assert.ok(outputs.every(o => 'simpleText' in o));
+  // No cards: the same response as before.
+  assert.deepEqual(textResponse('안녕하세요').template.outputs, [{ simpleText: { text: '안녕하세요' } }]);
 });
 
 test('only Kakao hosts are accepted as callback URLs', () => {

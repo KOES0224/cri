@@ -2,6 +2,7 @@ import { absoluteResumeUrl } from './resume-links';
 import { COMPANY } from '@/lib/company';
 import { Resend } from 'resend';
 import { createHash } from 'node:crypto';
+import { KAKAO_CHANNEL_ADD_URL, KAKAO_CHANNEL_CHAT_URL } from './webinar';
 
 /**
  * Transactional email for admissions. Every call is best effort: when RESEND_API_KEY or
@@ -240,7 +241,8 @@ export async function sendWebinarConfirmation(input: {
 }) {
   // Fixed wording only: nothing a visitor typed is relayed to an address they chose.
   const ko = input.locale === 'ko';
-  const channel = 'https://pf.kakao.com/_xhdzxln';
+  // The add link adds the channel in one step (the channel home needs a second tap).
+  const channel = KAKAO_CHANNEL_ADD_URL;
   const kakaoKo = input.kakaoNotices === 'ask' && input.phoneLink
     ? [``, `카카오톡 알림 받기: 전날 저녁과 당일 아침에 참여 링크를 카톡으로 보내드려요. 한국 휴대폰 번호를 남겨 주세요(알림에만 사용): ${input.phoneLink}`, `알림을 받으시려면 CRI 카카오톡 채널도 추가해 두셔야 해요: ${channel}`]
     : input.kakaoNotices === 'channel'
@@ -252,7 +254,7 @@ export async function sendWebinarConfirmation(input: {
       ? [``, `We also send a KakaoTalk reminder to your number the evening before and on the morning. Add CRI's KakaoTalk channel to receive it: ${channel}`]
       : [];
   const text = ko
-    ? [`안녕하세요, CRI 무료 온라인 세미나 신청이 접수되었습니다.`, ``, `주제: ${WEBINAR_TOPIC.ko}`, `일시: ${WEBINAR_WHEN.ko}`, `방식: 온라인(Zoom). 참여 링크는 시작 전에 이 이메일로 보내드립니다.`, ...kakaoKo, ``, `참여 링크를 지금 바로 받으시려면 CRI 카카오톡 채널에 ‘세미나 신청’이라고 보내 주세요: ${channel}/chat`, `프로그램 소개: ${SITE_URL}/ko/research`, `문의: support@cri.kr`].join('\n')
+    ? [`안녕하세요, CRI 무료 온라인 세미나 신청이 접수되었습니다.`, ``, `주제: ${WEBINAR_TOPIC.ko}`, `일시: ${WEBINAR_WHEN.ko}`, `방식: 온라인(Zoom). 참여 링크는 시작 전에 이 이메일로 보내드립니다.`, ...kakaoKo, ``, `참여 링크를 지금 바로 받으시려면 CRI 카카오톡 채널에 ‘세미나 신청’이라고 보내 주세요: ${KAKAO_CHANNEL_CHAT_URL}`, `프로그램 소개: ${SITE_URL}/ko/research`, `문의: support@cri.kr`].join('\n')
     : [`Hello, your seat for the free CRI online seminar is confirmed.`, ``, `Topic: ${WEBINAR_TOPIC.en}`, `When: ${WEBINAR_WHEN.en}`, `Where: online (Zoom), in Korean. The join link is emailed to you before the session starts.`, ...kakaoEn, ``, `Programs: ${SITE_URL}/research`, `Questions: support@cri.kr`].join('\n');
   return send({ to: input.to, subject: ko ? `CRI 세미나 신청 확인 · ${WEBINAR_WHEN.ko}` : `Your CRI seminar seat · ${WEBINAR_WHEN.en}`, text, replyTo: ADMISSIONS_INBOX });
 }
@@ -261,8 +263,8 @@ export async function sendWebinarConfirmation(input: {
 export async function sendWebinarPhoneAsk(input: { to: string; locale: string; phoneLink: string; registrationId: string; webinarKey: string }) {
   const ko = input.locale === 'ko';
   const text = ko
-    ? [`안녕하세요, CRI입니다. ${WEBINAR_WHEN.ko} 무료 세미나 「${WEBINAR_TOPIC.ko}」를 신청해 주셔서 감사합니다.`, ``, `전날 저녁과 당일 아침에 참여 링크를 카카오톡으로 보내드리려고 해요. 받으시려면 아래에서 한국 휴대폰 번호(010)를 남겨 주세요(알림에만 사용합니다). 해외 번호로는 카카오톡 알림을 보낼 수 없어 이메일로 보내드려요.`, input.phoneLink, ``, `CRI 카카오톡 채널도 추가해 두셔야 받으실 수 있어요: https://pf.kakao.com/_xhdzxln`, `번호를 남기지 않으셔도 참여 링크는 이메일로 보내드립니다.`, ``, `문의: support@cri.kr`].join('\n')
-    : [`Hello from CRI. Thank you for signing up for the free seminar on ${WEBINAR_WHEN.en}.`, ``, `We can send the join link on KakaoTalk the evening before and on the morning. Add a Korean mobile number (010…) here to get it (used for reminders only):`, input.phoneLink, ``, `Then add CRI's KakaoTalk channel: https://pf.kakao.com/_xhdzxln`, `Without a Korean mobile number you still get the link by email.`, ``, `Questions: support@cri.kr`].join('\n');
+    ? [`안녕하세요, CRI입니다. ${WEBINAR_WHEN.ko} 무료 세미나 「${WEBINAR_TOPIC.ko}」를 신청해 주셔서 감사합니다.`, ``, `전날 저녁과 당일 아침에 참여 링크를 카카오톡으로 보내드리려고 해요. 받으시려면 아래에서 한국 휴대폰 번호(010)를 남겨 주세요(알림에만 사용합니다). 해외 번호로는 카카오톡 알림을 보낼 수 없어 이메일로 보내드려요.`, input.phoneLink, ``, `CRI 카카오톡 채널도 추가해 두셔야 받으실 수 있어요: ${KAKAO_CHANNEL_ADD_URL}`, `번호를 남기지 않으셔도 참여 링크는 이메일로 보내드립니다.`, ``, `문의: support@cri.kr`].join('\n')
+    : [`Hello from CRI. Thank you for signing up for the free seminar on ${WEBINAR_WHEN.en}.`, ``, `We can send the join link on KakaoTalk the evening before and on the morning. Add a Korean mobile number (010…) here to get it (used for reminders only):`, input.phoneLink, ``, `Then add CRI's KakaoTalk channel: ${KAKAO_CHANNEL_ADD_URL}`, `Without a Korean mobile number you still get the link by email.`, ``, `Questions: support@cri.kr`].join('\n');
   return send({ to: input.to, subject: ko ? `[CRI] 세미나 알림을 카카오톡으로 받으시겠어요?` : `[CRI] Get the seminar reminder on KakaoTalk?`, text, replyTo: ADMISSIONS_INBOX, idempotencyKey: `webinar-${input.webinarKey}-phone-ask-${input.registrationId}` });
 }
 

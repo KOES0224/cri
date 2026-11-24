@@ -34,6 +34,21 @@ So a person cannot write in the chat room, and the bot must never say that someo
 
 If 1:1 chat is ever switched back on, the "상담 연결" button returns and this section has to be revisited.
 
+## Chatting does not make a channel friend
+
+Sending a message to the channel (the bot included) never adds it as a friend; only an explicit 채널 추가 does (Kakao help
+[1073196532](https://cs.kakao.com/helps_html/1073196532?locale=ko), Kakao staff on DevTalk 2026-07-06). Channel messages
+to a friend group, such as the seminar reminders, reach friends only. So:
+
+- Kakao sends `userRequest.user.properties.isFriend: true` only for a sender who has added the channel (the key is
+  missing otherwise, and always from Open Builder's test panel). `parseSkillRequest` turns it into `friend`.
+- Seminar replies to a sender without it end with a text card whose "채널 추가하기" button opens
+  `KAKAO_CHANNEL_ADD_URL` (`https://pf.kakao.com/_xhdzxln/friend`, KakaoTalk's own add screen on a phone). Open Builder
+  has no add-channel action, so it is a web link. Not shown during the live session (`webinarChannelCard`).
+- Those turns are logged with ", add-channel button shown" in the reason at /dashboard/kakao: the KakaoTalk sign-ups
+  that were not channel friends yet. Adds themselves show in the partner centre under 인사이트 → 친구 → 친구추가경로.
+- The website and the emails link to the same add address instead of the channel home.
+
 ## Code
 
 | What | Where |

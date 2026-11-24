@@ -34,6 +34,12 @@ export const PAST_WEBINARS = [{ key: "2026-10-31", label: "10/31 설명회" }] a
 /** CRI's KakaoTalk channel: adding it and sending the keyword below gets the join link from the channel bot. */
 export const KAKAO_CHANNEL_URL = "https://pf.kakao.com/_xhdzxln";
 export const KAKAO_CHANNEL_CHAT_URL = `${KAKAO_CHANNEL_URL}/chat`;
+/**
+ * Adds the channel in one step: on a phone it opens KakaoTalk's own add screen, on a computer a Kakao login and an
+ * add button. Only an explicit add makes someone a channel friend (chatting with the bot never does), and channel
+ * messages to a friend group reach friends only.
+ */
+export const KAKAO_CHANNEL_ADD_URL = `${KAKAO_CHANNEL_URL}/friend`;
 export const WEBINAR_KAKAO_KEYWORD = "세미나 신청";
 
 /**
