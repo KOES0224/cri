@@ -33,7 +33,11 @@ async function phoneAsk(now: Date) {
   const rows = await prisma.webinarRegistration.findMany({
     where: { webinarKey: WEBINAR.key, email: { not: null } },
     select: { id: true, email: true, phone: true, locale: true, createdAt: true },
-  }).then((all) => all.filter((r) => !koreanMobile(r.phone))); // overseas or landline numbers can't join a friend group
+  }).then((all) => {
+    // Someone with a Korean mobile on any sign-up for this seminar (website or KakaoTalk) is not asked again.
+    const covered = new Set(all.filter((r) => koreanMobile(r.phone)).map((r) => r.email!.trim().toLowerCase()));
+    return all.filter((r) => !koreanMobile(r.phone) && !covered.has(r.email!.trim().toLowerCase()));
+  });
   let sent = 0, failed = 0;
   for (const row of rows) {
     const at = webinarPhoneAskAt(row.createdAt);
@@ -60,7 +64,7 @@ async function reminders(now: Date) {
     const email = row.email!.trim().toLowerCase();
     if (seen.has(email)) continue;
     seen.add(email);
-    const result = await sendWebinarReminder({ kind, to: email, locale: row.locale || "ko", join, registrationId: row.id, webinarKey: WEBINAR.key });
+    const result = await sendWebinarReminder({ kind, to: email, locale: row.locale || "ko", join, webinarKey: WEBINAR.key, sameDay: sameKstDay(now, WEBINAR.startsAt) });
     if (result.sent) sent++; else failed++;
     await pause();
   }

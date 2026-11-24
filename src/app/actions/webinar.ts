@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { allowRequest } from "@/lib/request-limit";
-import { WEBINAR, koreanMobile, webinarDedupeKey, webinarJoinInfo, webinarKakaoNoticesOpen, webinarKakaoOpen, webinarRegistrationOpen, webinarReminderTimes } from "@/lib/webinar";
+import { WEBINAR, koreanMobile, sameKstDay, webinarDedupeKey, webinarJoinInfo, webinarKakaoNoticesOpen, webinarKakaoOpen, webinarRegistrationOpen, webinarReminderTimes } from "@/lib/webinar";
 import { webinarPhoneLink, webinarPhoneToken, webinarPhoneTokenValid } from "@/lib/webinar-phone";
 import { webinarRegistrationSchema, type WebinarRegistrationInput } from "@/lib/webinar-validation";
 import { notifyWebinarRegistration, sendWebinarConfirmation, sendWebinarReminder } from "@/lib/notify";
@@ -50,13 +50,13 @@ export async function addWebinarPhone(input: { id: string; token: string; phone:
 }
 
 /** After the evening-before email has gone, a new sign-up gets the join link straight away ("soon" after 09:30). */
-async function sendLateReminder(to: string, locale: string, registrationId: string) {
+async function sendLateReminder(to: string, locale: string) {
   const now = Date.now();
   const times = webinarReminderTimes();
   if (now < times.dayBefore.getTime() - 20 * 60_000) return;
   const join = webinarJoinInfo();
   if (!join) return;
-  await sendWebinarReminder({ kind: now >= times.soon.getTime() - 20 * 60_000 ? "soon" : "dayBefore", to, locale, join, registrationId, webinarKey: WEBINAR.key });
+  await sendWebinarReminder({ kind: now >= times.soon.getTime() - 20 * 60_000 ? "soon" : "dayBefore", to, locale, join, webinarKey: WEBINAR.key, sameDay: sameKstDay(new Date(now), WEBINAR.startsAt) });
 }
 
 export async function registerForWebinar(input: WebinarRegistrationInput): Promise<WebinarResult> {
@@ -95,7 +95,7 @@ export async function registerForWebinar(input: WebinarRegistrationInput): Promi
       notifyWebinarRegistration({ ...data, id: registration.id, locale }),
       data.email ? sendWebinarConfirmation({ to: data.email, locale, kakaoNotices: noticesOpen ? (mobile ? "channel" : "ask") : null, phoneLink: noticesOpen && !mobile ? webinarPhoneLink(SITE_URL, registration.id) : null }) : Promise.resolve(),
       // Signed up after a reminder email went out: the join link goes now (same idempotency key as the cron).
-      data.email ? sendLateReminder(data.email, locale, registration.id) : Promise.resolve(),
+      data.email ? sendLateReminder(data.email, locale) : Promise.resolve(),
     ]).catch((error) => console.error("webinar notifications failed", error instanceof Error ? error.message : error));
     const [firstName, ...rest] = data.name.split(/\s+/);
     const { data: tracking } = await sendMetaEvent({

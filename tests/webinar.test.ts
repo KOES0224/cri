@@ -258,3 +258,29 @@ test('KakaoTalk notices stop being promised at the friend-group cutoff', async (
   assert.match(webinarPhoneSavedReply('12월 5일(토) 오전 10시', false), /마감/);
   assert.doesNotMatch(webinarPhoneSavedReply('12월 5일(토) 오전 10시', false), /보내드릴게요/);
 });
+
+test('number replies: opt-outs, questions and other people\'s numbers are not saved; names with a grade are', async () => {
+  const { parsePhoneOnly, ruleHandoff, withoutOwnContact, phoneWithoutSignupReply } = await import('../src/lib/kakao/skill');
+  const { koreanMobile } = await import('../src/lib/webinar');
+  for (const m of ['수신거부 010-1234-5678', '010-1234-5678 수신거부요', '010-1234-5678 알림 그만 받을게요', '010-1234-5678 알림 안 받을게요', '010-1234-5678 번호 지워 주세요', '010-1234-5678 삭제요',
+    '이거 누구 번호예요? 010-1234-5678', '010-1234-5678 누구세요?', '번호 010-1234-5678 틀렸어요', '제 번호 010-1234-5678 아니에요', '010-1234-5678 친구 번호예요', '010-123-5678', '010-1234-5678 카톡 안 와요', '010-1234-5678 알림이 안 왔어요', '010-1234-5678 확인 부탁드려요'])
+    assert.equal(parsePhoneOnly(m), null, m);
+  for (const m of ['안지현 010-1234-5678', '김서연 학생 010-1234-5678', '김서연 학생 엄마 010-1234-5678', '고1 김서연 010-1234-5678', '중3 서연맘 010-1234-5678', '학부모 연락처 010-1234-5678', '학부모님 연락처입니다 010-1234-5678'])
+    assert.equal(parsePhoneOnly(m), '01012345678', m);
+  // the route checks the handoff rules on the text without the sender's own number and its label
+  assert.equal(ruleHandoff(withoutOwnContact('학부모 연락처 010-1234-5678')), null);
+  assert.equal(koreanMobile('010-123-5678'), null); // 010 has 11 digits
+  assert.equal(koreanMobile('011-234-5678'), '0112345678');
+  assert.match(phoneWithoutSignupReply(false), /마감/);
+  assert.match(phoneWithoutSignupReply(true), /세미나 신청 010-1234-5678/);
+  const t = performance.now();
+  parsePhoneOnly('제' + ' '.repeat(1485) + '010-1234-5678');
+  assert.ok(performance.now() - t < 50, 'parsePhoneOnly on a long run of spaces');
+});
+
+test('the follow-up ask comes at least a day before the friend-group list closes', async () => {
+  const { webinarPhoneAskAt } = await import('../src/lib/webinar');
+  const kst = (s: string) => new Date(`${s}+09:00`);
+  assert.equal(webinarPhoneAskAt(kst('2026-12-02T09:00:00'))?.toISOString(), kst('2026-12-03T10:00:00').toISOString());
+  assert.equal(webinarPhoneAskAt(kst('2026-12-02T11:00:00')), null); // would land on 12/4 10:00, two hours before the cutoff
+});

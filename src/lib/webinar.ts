@@ -110,7 +110,8 @@ export function webinarKakaoNoticesOpen(now = new Date()): boolean {
 /** A Korean mobile number as KakaoTalk friend groups take it (01012345678), or null for anything else. */
 export function koreanMobile(phone: string | null | undefined): string | null {
   const digits = (phone || "").replace(/\D/g, "").replace(/^820?(1\d{8,9})$/, "0$1");
-  return /^01[016789]\d{7,8}$/.test(digits) ? digits : null;
+  // 010 numbers always have 11 digits; the old 011/016–019 ranges have 10 or 11.
+  return /^(010\d{8}|01[16789]\d{7,8})$/.test(digits) ? digits : null;
 }
 
 const DAY = 24 * 3600_000;
@@ -131,7 +132,9 @@ function nextTenKst(at: Date): Date {
 export function webinarPhoneAskAt(createdAt: Date): Date | null {
   const raw = Math.min(createdAt.getTime() + 7 * DAY, Math.max(WEBINAR.phoneAskAt.getTime(), createdAt.getTime() + DAY));
   const at = nextTenKst(new Date(raw));
-  return at.getTime() <= WEBINAR.startsAt.getTime() - DAY ? at : null;
+  // At least a day before the friend-group list closes, so the link in the email still works when it is read.
+  const latest = Math.min(WEBINAR.startsAt.getTime(), WEBINAR.kakaoNoticeCutoff.getTime()) - DAY;
+  return at.getTime() <= latest ? at : null;
 }
 
 /** Email reminders with the join link: the evening before (19:00 KST) and 30 minutes before the start. */

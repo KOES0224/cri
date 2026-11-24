@@ -272,8 +272,9 @@ export function parseWebinarSignup(utterance: string): WebinarSignupParse {
 
 /** The message without the sender's own phone number or email and the words that label it, for the handoff rules. */
 export function withoutOwnContact(utterance: string): string {
-  const text = utterance.replace(EMAIL, ' ').replace(PHONE, ' ');
-  return text.replace(/(제|저의|저|엄마|아빠|어머니|아버지|학부모|부모님)?\s*(의)?\s*(전화\s*번호|휴대폰\s*번호|휴대폰|핸드폰|번호|연락처|이메일|메일)\s*(는|은|이|가|로|:)?/g, ' ');
+  // Spaces collapsed first: the optional groups below would otherwise backtrack badly on a long run of spaces.
+  const text = utterance.replace(/\s+/g, ' ').replace(EMAIL, ' ').replace(PHONE, ' ');
+  return text.replace(/(제|저의|저|엄마|아빠|어머니|아버지|학부모님|학부모|부모님)? ?(의)? ?(전화 ?번호|휴대폰 ?번호|휴대폰|핸드폰|번호|연락처|이메일|메일) ?(는|은|이|가|로|:)?/g, ' ');
 }
 
 export function isWebinarSignupMessage(utterance: string): boolean {
@@ -323,7 +324,11 @@ export function webinarPhoneSavedReply(label: string, noticesOpen: boolean): str
 }
 
 /** A number from someone with no KakaoTalk sign-up yet: how to sign up and leave the number in one message. */
-export const PHONE_WITHOUT_SIGNUP_REPLY = '세미나 알림 번호를 남기시려면 ‘세미나 신청 010-1234-5678’처럼 보내 주세요. 신청과 알림 번호가 함께 저장돼요.';
+export function phoneWithoutSignupReply(noticesOpen: boolean): string {
+  return noticesOpen
+    ? '세미나 알림 번호를 남기시려면 ‘세미나 신청 010-1234-5678’처럼 보내 주세요. 신청과 알림 번호가 함께 저장돼요.'
+    : '이번 세미나 알림 명단은 마감됐어요. 참여 링크는 이 채팅방에 ‘세미나 신청’이라고 보내 주시면 바로 받으실 수 있어요.';
+}
 
 /**
  * A message that is only a phone number ("010-1234-5678", "제 번호는 010-… 입니다", "네 010…"): the answer to the
@@ -334,9 +339,13 @@ export function parsePhoneOnly(utterance: string): string | null {
   if (!match) return null;
   const phone = koreanMobile(match[0]);
   if (!phone) return null;
+  // A question ("이거 누구 번호예요? 010-…") is not an answer to "send your number".
+  if (QUESTION.test(utterance.replace(/\s+/g, ' ').trim())) return null;
   let rest = compact(withoutOwnContact(utterance));
-  // Anything about the seminar, a request or a problem is not "just a number".
-  if (/세미나|웨비나|설명회|신청|링크|취소|변경|문의|상담|전화|연락|환불|등록|참석|불참|수업|프로그램/.test(rest)) return null;
+  // Anything about the seminar, a request, a problem, an opt-out or someone else's number is not "just a number".
+  if (/세미나|웨비나|설명회|신청|링크|취소|변경|문의|상담|전화|연락|환불|등록|참석|불참|수업|프로그램|수신|거부|그만|싫|안받|빼|지우|지워|삭제|차단|스팸|누구|아니|아닙|틀렸|틀려|잘못|필요없|친구|지인|남의|다른|선생님|카톡|카카오|알림이|안와|안왔|안옴|안오|안돼|안되|안됨|못받|왜|오류|에러|문제|확인/.test(rest)) return null;
+  // A grade ("고1", "중3", "2학년") says who the number belongs to; it is not a message of its own.
+  rest = rest.replace(/(초|중|고)\d|\d학년|학년/g, '');
   for (let pass = 0; pass < 3; pass++) {
     const before = rest;
     // Endings first, so "저장 부탁드립니다" is not read as "저" + "장…".
@@ -349,6 +358,6 @@ export function parsePhoneOnly(utterance: string): string | null {
     if (rest === before) break;
   }
   // What may stay: a short name or family word ("김서연", "서연맘", "학부모", "엄마").
-  if (!/^(이|[가-힣]{2,4}|[가-힣]{1,3}(맘|엄마|아빠|어머니|아버지|학부모)|학부모|학생|엄마|아빠|어머니|아버지)?$/.test(rest)) return null;
+  if (!/^(이|[가-힣]{2,4}|[가-힣]{1,4}(학생)?(맘|엄마|아빠|어머니|아버지|학부모)?|학부모|학생|엄마|아빠|어머니|아버지)?$/.test(rest)) return null;
   return phone;
 }

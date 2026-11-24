@@ -15,7 +15,7 @@ import WebinarPhoneForm, { KakaoChannelNudge } from "./WebinarPhoneForm";
 type Form = { name: string; role: "" | "PARENT" | "STUDENT" | "OTHER"; phone: string; email: string; kakaoId: string; question: string; consent: boolean };
 const input = "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-900 outline-none transition-all focus:ring-2 focus:ring-blue-500";
 
-export default function WebinarClient({ open, live: liveAtLoad = false, user }: { open: boolean; live?: boolean; user: { name: string; email: string; role: string } | null }) {
+export default function WebinarClient({ open, live: liveAtLoad = false, noticesOpen = true, user }: { open: boolean; live?: boolean; /** before the KakaoTalk friend-group cutoff */ noticesOpen?: boolean; user: { name: string; email: string; role: string } | null }) {
   const { t } = useT();
   const copy = t.webinar;
   const [form, setForm] = useState<Form>({ name: user?.name || "", role: (user?.role as Form["role"]) || "", phone: "", email: user?.email || "", kakaoId: "", question: "", consent: false });
@@ -108,6 +108,7 @@ export default function WebinarClient({ open, live: liveAtLoad = false, user }: 
               <p className="mt-3 text-gray-600">{result.alreadyRegistered ? copy.alreadyBody : copy.successBody}</p>
               {result.kakaoNotices === "ask" && result.phoneToken && <div className="mt-6"><WebinarPhoneForm id={result.eventId} token={result.phoneToken} place="success" /></div>}
               {result.kakaoNotices === "channel" && <div className="mt-6"><KakaoChannelNudge /></div>}
+              {result.kakaoNotices === null && !form.email && <p className="mt-4 rounded-xl bg-yellow-50 px-4 py-3 text-left text-sm font-semibold text-gray-800">{copy.linkViaKakao}</p>}
               <div className="mt-6"><KakaoSignupCard place="success" className="-mx-3 sm:mx-0" /></div>
               {!user && (
                 <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50 p-5 text-left">
@@ -142,10 +143,10 @@ export default function WebinarClient({ open, live: liveAtLoad = false, user }: 
                 {errors.role && <p className="mt-1 text-sm text-red-700">{errorText(errors.role)}</p>}
               </fieldset>
               <div className={`rounded-2xl border p-4 ${errors.contact ? "border-red-300 bg-red-50/40" : "border-gray-200"}`}>
-                <p className="mb-3 text-sm text-gray-600">{copy.contactHint}</p>
+                <p className="mb-3 text-sm text-gray-600">{noticesOpen ? copy.contactHint : copy.contactHintPlain}</p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div>
-                    <label htmlFor="webinar-phone" className="mb-1 block text-xs font-bold text-gray-600">{copy.phone}</label>
+                    <label htmlFor="webinar-phone" className="mb-1 block text-xs font-bold text-gray-600">{noticesOpen ? copy.phone : copy.phonePlain}</label>
                     <input id="webinar-phone" type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} maxLength={40} className={input} aria-invalid={Boolean(errors.phone)} />
                     {errors.phone && <p className="mt-1 text-xs text-red-700">{errorText(errors.phone)}</p>}
                   </div>

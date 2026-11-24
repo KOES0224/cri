@@ -1,6 +1,7 @@
 import { absoluteResumeUrl } from './resume-links';
 import { COMPANY } from '@/lib/company';
 import { Resend } from 'resend';
+import { createHash } from 'node:crypto';
 
 /**
  * Transactional email for admissions. Every call is best effort: when RESEND_API_KEY or
@@ -260,23 +261,29 @@ export async function sendWebinarConfirmation(input: {
 export async function sendWebinarPhoneAsk(input: { to: string; locale: string; phoneLink: string; registrationId: string; webinarKey: string }) {
   const ko = input.locale === 'ko';
   const text = ko
-    ? [`안녕하세요, CRI입니다. ${WEBINAR_WHEN.ko} 무료 세미나 「${WEBINAR_TOPIC.ko}」를 신청해 주셔서 감사합니다.`, ``, `전날 저녁과 당일 아침에 참여 링크를 카카오톡으로 보내드리려고 해요. 받으시려면 아래에서 휴대폰 번호를 남겨 주세요(알림에만 사용합니다).`, input.phoneLink, ``, `CRI 카카오톡 채널도 추가해 두셔야 받으실 수 있어요: https://pf.kakao.com/_xhdzxln`, `번호를 남기지 않으셔도 참여 링크는 이메일로 보내드립니다.`, ``, `문의: support@cri.kr`].join('\n')
-    : [`Hello from CRI. Thank you for signing up for the free seminar on ${WEBINAR_WHEN.en}.`, ``, `We can send the join link on KakaoTalk the evening before and on the morning. Add a mobile number here to get it (used for reminders only):`, input.phoneLink, ``, `Without a number you still get the link by email.`, ``, `Questions: support@cri.kr`].join('\n');
+    ? [`안녕하세요, CRI입니다. ${WEBINAR_WHEN.ko} 무료 세미나 「${WEBINAR_TOPIC.ko}」를 신청해 주셔서 감사합니다.`, ``, `전날 저녁과 당일 아침에 참여 링크를 카카오톡으로 보내드리려고 해요. 받으시려면 아래에서 한국 휴대폰 번호(010)를 남겨 주세요(알림에만 사용합니다). 해외 번호로는 카카오톡 알림을 보낼 수 없어 이메일로 보내드려요.`, input.phoneLink, ``, `CRI 카카오톡 채널도 추가해 두셔야 받으실 수 있어요: https://pf.kakao.com/_xhdzxln`, `번호를 남기지 않으셔도 참여 링크는 이메일로 보내드립니다.`, ``, `문의: support@cri.kr`].join('\n')
+    : [`Hello from CRI. Thank you for signing up for the free seminar on ${WEBINAR_WHEN.en}.`, ``, `We can send the join link on KakaoTalk the evening before and on the morning. Add a Korean mobile number (010…) here to get it (used for reminders only):`, input.phoneLink, ``, `Then add CRI's KakaoTalk channel: https://pf.kakao.com/_xhdzxln`, `Without a Korean mobile number you still get the link by email.`, ``, `Questions: support@cri.kr`].join('\n');
   return send({ to: input.to, subject: ko ? `[CRI] 세미나 알림을 카카오톡으로 받으시겠어요?` : `[CRI] Get the seminar reminder on KakaoTalk?`, text, replyTo: ADMISSIONS_INBOX, idempotencyKey: `webinar-${input.webinarKey}-phone-ask-${input.registrationId}` });
 }
 
-/** The join link: the evening before ("dayBefore") and 30 minutes before the start ("soon"). */
-export async function sendWebinarReminder(input: { kind: 'dayBefore' | 'soon'; to: string; locale: string; join: { url: string; passcode: string | null }; registrationId: string; webinarKey: string }) {
+/**
+ * The join link: the evening before ("dayBefore") and on the morning ("soon", 30 minutes before; also any later sign-up).
+ * The text names the day and the clock time, never "in 30 minutes", so a late send reads right; within one kind it is
+ * the same for the cron run and a late send, so the shared idempotency key (per email address) drops the repeat.
+ */
+export async function sendWebinarReminder(input: { kind: 'dayBefore' | 'soon'; to: string; locale: string; join: { url: string; passcode: string | null }; webinarKey: string; /** true when sent on the seminar day itself */ sameDay: boolean }) {
   const ko = input.locale === 'ko';
+  const to = input.to.trim().toLowerCase();
+  const dayKo = input.sameDay ? '오늘' : '내일';
+  const dayEn = input.sameDay ? 'Today' : 'Tomorrow';
   const passKo = input.join.passcode ? `암호: ${input.join.passcode}` : null;
   const passEn = input.join.passcode ? `Passcode: ${input.join.passcode}` : null;
   const text = ko
-    ? [input.kind === 'dayBefore' ? `내일 ${WEBINAR_WHEN.ko}, CRI 무료 세미나 「${WEBINAR_TOPIC.ko}」가 열립니다.` : `30분 뒤 CRI 무료 세미나 「${WEBINAR_TOPIC.ko}」가 시작합니다.`, ``, `참여 링크: ${input.join.url}`, passKo, ``, `시작 5분 전에 들어와 주세요. 마이크는 꺼 두시고, 질문은 채팅창에 남겨 주세요.`, `문의: support@cri.kr`].filter((l): l is string => l !== null).join('\n')
-    : [input.kind === 'dayBefore' ? `Tomorrow, ${WEBINAR_WHEN.en}: the free CRI seminar "${WEBINAR_TOPIC.en}".` : `The free CRI seminar "${WEBINAR_TOPIC.en}" starts in 30 minutes.`, ``, `Join: ${input.join.url}`, passEn, ``, `Please join five minutes early, keep your microphone off and ask questions in the chat. The seminar is in Korean.`, `Questions: support@cri.kr`].filter((l): l is string => l !== null).join('\n');
-  const subject = ko
-    ? (input.kind === 'dayBefore' ? `[CRI] 내일 오전 10시 세미나 참여 링크` : `[CRI] 30분 뒤 시작합니다 · 세미나 참여 링크`)
-    : (input.kind === 'dayBefore' ? `[CRI] Tomorrow's seminar: your join link` : `[CRI] Starting in 30 minutes: your join link`);
-  return send({ to: input.to, subject, text, replyTo: ADMISSIONS_INBOX, idempotencyKey: `webinar-${input.webinarKey}-${input.kind}-${input.registrationId}` });
+    ? [`${dayKo} ${WEBINAR_WHEN.ko}, CRI 무료 세미나 「${WEBINAR_TOPIC.ko}」가 열립니다.`, ``, `참여 링크: ${input.join.url}`, passKo, ``, `시작 5분 전에 들어와 주세요. 마이크는 꺼 두시고, 질문은 채팅창에 남겨 주세요.`, `문의: support@cri.kr`].filter((l): l is string => l !== null).join('\n')
+    : [`${dayEn}, ${WEBINAR_WHEN.en}: the free CRI seminar "${WEBINAR_TOPIC.en}" (in Korean).`, ``, `Join: ${input.join.url}`, passEn, ``, `Please join five minutes early, keep your microphone off and ask questions in the chat.`, `Questions: support@cri.kr`].filter((l): l is string => l !== null).join('\n');
+  const subject = ko ? `[CRI] ${dayKo} 오전 10시 세미나 참여 링크` : `[CRI] ${dayEn}'s seminar: your join link`;
+  const key = createHash('sha256').update(to).digest('hex').slice(0, 24);
+  return send({ to, subject, text, replyTo: ADMISSIONS_INBOX, idempotencyKey: `webinar-${input.webinarKey}-${input.kind}-${key}` });
 }
 
 /** KakaoTalk chatbot did not answer a turn itself and pointed the customer to the office phone: the recent turns, so admissions knows what a caller is about. */

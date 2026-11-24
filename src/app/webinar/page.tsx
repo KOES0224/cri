@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getDictionary, getLocale } from "@/i18n";
 import { pageMetadata } from "@/lib/seo";
 import { JsonLd, breadcrumbJsonLd, eventJsonLd } from "@/lib/structured-data";
-import { WEBINAR, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
+import { WEBINAR, webinarKakaoNoticesOpen, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
 import WebinarClient from "./WebinarClient";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ export default async function WebinarPage() {
   return (
     <>
       <JsonLd data={[eventJsonLd(locale, { name: t.webinar.meta.title.replace(/ \| CRI$/, ""), description: t.webinar.meta.description, startDate: WEBINAR.startsAt, durationMinutes: WEBINAR.durationMinutes, path: "/webinar" }), breadcrumbJsonLd(locale, [[t.nav.research, "/research"], [t.webinar.eyebrow, "/webinar"]])]} />
-      <WebinarClient open={open} live={live} user={user} />
+      <WebinarClient open={open} live={live} noticesOpen={webinarKakaoNoticesOpen()} user={user} />
     </>
   );
 }
