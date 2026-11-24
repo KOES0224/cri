@@ -44,10 +44,11 @@ test('KakaoTalk webinar reply: link and passcode when set, a promise otherwise, 
   const base = { open: true, already: false, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', pageUrl: 'https://criglobal.org/ko/webinar' };
   const withLink = webinarKakaoReply({ ...base, join: { url: 'https://us06web.zoom.us/j/123', passcode: '000000' } });
   assert.match(withLink, /접수/); assert.match(withLink, /zoom\.us\/j\/123/); assert.match(withLink, /암호: 000000/);
+  assert.doesNotMatch(withLink, /전날/); // no reminder promise the owner would have to keep
   const noLink = webinarKakaoReply({ ...base, join: null });
-  assert.doesNotMatch(noLink, /zoom/); assert.match(noLink, /전날/);
+  assert.doesNotMatch(noLink, /zoom/); assert.match(noLink, /담당자/);
   assert.match(webinarKakaoReply({ ...base, already: true, join: null }), /이미 신청/);
-  assert.match(webinarKakaoReply({ ...base, open: false, join: null }), /마감/);
+  assert.match(webinarKakaoReply({ ...base, open: false, join: null }), /끝났어요/);
   assert.ok(withLink.length < 1000);
 });
 
@@ -67,4 +68,12 @@ test('returning sign-ups are matched on any one contact', async () => {
   const { webinarContactKeys } = await import('../src/lib/webinar');
   assert.deepEqual(webinarContactKeys({ email: 'A@b.co', phone: '010-1234-5678', kakaoId: '' }), ['email:a@b.co', 'phone:01012345678']);
   assert.deepEqual(webinarContactKeys({ dedupeKey: 'kakaobot:bk-1' }), ['kakaobot:bk-1']);
+});
+
+test('KakaoTalk keeps giving the link until the session ends; the website form closes at the start', async () => {
+  const { webinarKakaoOpen, webinarRegistrationOpen } = await import('../src/lib/webinar');
+  assert.equal(webinarRegistrationOpen(new Date('2026-12-05T01:05:00Z')), false); // 10:05 KST: form closed
+  assert.equal(webinarKakaoOpen(new Date('2026-12-05T01:05:00Z')), true);         // ...but the keyword still works
+  assert.equal(webinarKakaoOpen(new Date('2026-12-05T01:59:00Z')), true);         // 10:59 KST
+  assert.equal(webinarKakaoOpen(new Date('2026-12-05T02:00:00Z')), false);        // 11:00 KST: session over
 });

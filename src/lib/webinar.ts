@@ -53,6 +53,14 @@ export function webinarBannerVisible(now = new Date()): boolean {
   return now < WEBINAR.bannerUntil;
 }
 
+/**
+ * The KakaoTalk keyword keeps registering people and giving the join link until the session ends (start + duration),
+ * so someone who asks at 10:05 can still get in. The website form closes at the start, as before.
+ */
+export function webinarKakaoOpen(now = new Date()): boolean {
+  return now.getTime() < WEBINAR.startsAt.getTime() + WEBINAR.durationMinutes * 60_000;
+}
+
 /** Normalised contact used to keep one registration per person: email first, then phone digits, then Kakao id. */
 export function webinarDedupeKey(input: { email?: string | null; phone?: string | null; kakaoId?: string | null }): string | null {
   const email = (input.email || "").trim().toLowerCase();

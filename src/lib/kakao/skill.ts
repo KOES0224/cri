@@ -129,15 +129,15 @@ export function isWebinarSignupMessage(utterance: string): boolean {
 export function webinarKakaoReply(input: {
   open: boolean; already: boolean; label: string; topic: string; join: { url: string; passcode: string | null } | null; pageUrl: string;
 }): string {
-  if (!input.open) return `이번 세미나(${input.label})는 신청이 마감되었어요. 다음 세미나 일정이 정해지면 이 채널로 먼저 알려드릴게요 🙂`;
+  if (!input.open) return `이번 세미나(${input.label})는 끝났어요. 다음 세미나 일정은 정해지는 대로 criglobal.org/ko/webinar 에 올릴게요.`;
   const head = input.already ? `이미 신청되어 있어요. 다시 안내드릴게요.` : `세미나 신청이 접수되었어요. 감사합니다!`;
   const lines = [head, '', `주제: ${input.topic}`, `일시: ${input.label} (한국 시간), 약 60분`, `방식: 온라인 Zoom`];
   if (input.join) {
     lines.push('', `참여 링크: ${input.join.url}`);
     if (input.join.passcode) lines.push(`암호: ${input.join.passcode}`);
-    lines.push('', '시작 5분 전에 들어와 주세요. 전날 이 채널로 한 번 더 알려드릴게요.');
+    lines.push('', '링크는 이 대화방에 남아 있으니 당일 여기서 바로 들어오시면 돼요. 시작 5분 전 입장을 권해요.');
   } else {
-    lines.push('', '참여 링크는 세미나 전날 이 채팅방으로 보내드릴게요.');
+    lines.push('', '참여 링크는 담당자가 이 대화방으로 보내드릴게요.');
   }
   lines.push(`자세한 순서: ${input.pageUrl}`);
   return lines.join('\n');

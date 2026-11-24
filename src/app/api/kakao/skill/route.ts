@@ -7,7 +7,7 @@ import {
   FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, callbackAck, isWebinarSignupMessage, parseSkillRequest, ruleHandoff, secretMatches,
   textResponse, webinarKakaoReply,
 } from "@/lib/kakao/skill";
-import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarJoinInfo, webinarRegistrationOpen } from "@/lib/webinar";
+import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarJoinInfo, webinarKakaoOpen } from "@/lib/webinar";
 
 /**
  * KakaoTalk channel chatbot: Kakao i Open Builder calls this skill for every free-text message (fallback block).
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
 
 /** Records a KakaoTalk sign-up for the current webinar (one per channel user) and returns the reply with the link. */
 async function webinarSignupReply(userKey: string): Promise<string> {
-  const open = webinarRegistrationOpen();
+  const open = webinarKakaoOpen();
   let already = false;
   if (open) {
     const dedupeKey = `${KAKAO_BOT_DEDUPE_PREFIX}${userKey}`;
