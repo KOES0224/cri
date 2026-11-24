@@ -240,11 +240,11 @@ export async function sendWebinarConfirmation(input: { to: string; locale: strin
   return send({ to: input.to, subject: ko ? `CRI 세미나 신청 확인 · ${WEBINAR_WHEN.ko}` : `Your CRI seminar seat · ${WEBINAR_WHEN.en}`, text, replyTo: ADMISSIONS_INBOX });
 }
 
-/** KakaoTalk chatbot passed a conversation to a person: the recent turns, so admissions can answer in the channel admin. */
+/** KakaoTalk chatbot did not answer a turn itself and pointed the customer to the office phone: the recent turns, so admissions knows what a caller is about. */
 export async function notifyKakaoHandoff(input: { userKey: string; reason: string; turns: Array<{ role: string; text: string; at: Date }> }) {
   const lines = [
-    `The KakaoTalk channel bot handed a conversation to a person (${input.reason}).`,
-    `Answer it in the channel admin chat: https://center-pf.kakao.com (채팅 메뉴).`,
+    `The KakaoTalk channel bot did not answer this one itself (${input.reason}).`,
+    `Nobody can reply in the KakaoTalk chat (the channel's 1:1 chat is off): the bot points customers to ${COMPANY.phoneDomestic} when a person is needed, so this is what the caller may be calling about.`,
     ``,
     ...input.turns.flatMap(t => [`[${t.at.toISOString().slice(0, 16).replace('T', ' ')} UTC] ${t.role === 'user' ? 'Customer' : 'Bot'}:`, t.text, ``]),
     `Kakao user key: ${input.userKey}`,

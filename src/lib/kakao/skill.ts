@@ -5,6 +5,7 @@
  * Callback: answer { version: "2.0", useCallback: true } within 5 s, then POST the real response to callbackUrl
  * (single use, valid for one minute). callbackUrl is only present when the block has the callback feature switched on.
  */
+import { COMPANY } from '@/lib/company';
 
 export type SkillRequest = { utterance: string; userKey: string; callbackUrl: string | null; botId: string | null };
 
@@ -94,12 +95,16 @@ export function ruleHandoff(utterance: string): string | null {
   return null;
 }
 
-/** Hours after a handoff during which the bot holds instead of answering, so a person can pick the thread up. */
-export const HANDOFF_HOLD_HOURS = 12;
+/**
+ * Where a person answers. The channel's 1:1 chat is switched off (2026-11-24, so the "상담 연결" button is gone and
+ * the bot is never cut off), which means nobody can reply in the chat room: every reply that needs a person gives
+ * this number and none of them promises an answer in the chat.
+ */
+export const CONTACT_PHONE = COMPANY.phoneDomestic;
 
-export const HANDOFF_REPLY = '문의 주셔서 감사합니다. 이 내용은 담당자가 직접 확인한 뒤 답변드릴게요. 평일 기준 보통 하루 안에 연락드립니다 🙏';
-export const HOLD_REPLY = '담당자가 확인하고 있어요. 추가로 전하실 내용이 있으면 편하게 남겨 주세요. 함께 전달할게요.';
-export const FALLBACK_REPLY = '지금은 자동 안내가 잠시 어려워요. 남겨 주신 내용은 담당자에게 전달했고, 확인 후 답변드릴게요. 프로그램 정보는 criglobal.org/ko/research 에서도 보실 수 있어요.';
+export const HANDOFF_REPLY = `문의 주셔서 감사합니다. 이 내용은 담당자가 직접 안내드려야 하는 부분이에요. 이 채팅방은 AI 상담 도우미가 답변드리고 있어서, 번거로우시겠지만 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주시면 담당자가 도와드릴게요 🙏`;
+export const FALLBACK_REPLY = `지금은 자동 안내가 잠시 어려워요. 잠시 후 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요. 프로그램 정보는 criglobal.org/ko/research 에서도 보실 수 있어요.`;
+export const RATE_LIMIT_REPLY = `메시지가 많이 와서 지금은 답변이 어려워요. 잠시 후 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요.`;
 
 /** Never echo a link to anywhere but our own site; the model is told the same, this enforces it. */
 export function stripForeignLinks(text: string): string {
@@ -212,7 +217,7 @@ export function webinarKakaoReply(input: {
     if (input.join.passcode) lines.push(`암호: ${input.join.passcode}`);
     lines.push('', input.started ? '지금 진행 중이에요. 위 링크로 바로 들어오세요.' : '링크는 이 대화방에 남아 있으니 당일 여기서 바로 들어오시면 돼요. 시작 5분 전 입장을 권해요.');
   } else {
-    lines.push('', '참여 링크는 담당자가 이 대화방으로 보내드릴게요.');
+    lines.push('', `참여 링크를 지금 바로 보내드리지 못했어요. 잠시 후 ‘세미나 신청’이라고 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요.`);
   }
   if (input.pageUrl) lines.push(`자세한 순서: ${input.pageUrl}`);
   return lines.join('\n');

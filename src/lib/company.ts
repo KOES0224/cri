@@ -18,6 +18,8 @@ export const COMPANY = {
   postalCode: "06036",
   address: { en: "53, Nonhyeon-ro 153-gil, Gangnam-gu, Seoul, Republic of Korea", ko: "서울특별시 강남구 논현로153길 53" } satisfies Record<Locale, string>,
   phone: "+82 2-6203-8999",
+  /** The same number as it is dialled inside Korea. The KakaoTalk bot gives this one. */
+  phoneDomestic: "02-6203-8999",
   phoneHref: "tel:+82262038999",
   email: "support@cri.kr",
   hostingProvider: "Vercel Inc.",

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SIMPLE_TEXT_MAX, callbackAck, isKakaoCallbackUrl, parseSkillRequest, ruleHandoff, secretMatches, splitForKakao, stripForeignLinks, textResponse } from '../src/lib/kakao/skill';
+import { CONTACT_PHONE, FALLBACK_REPLY, HANDOFF_REPLY, RATE_LIMIT_REPLY, SIMPLE_TEXT_MAX, callbackAck, isKakaoCallbackUrl, parseSkillRequest, ruleHandoff, secretMatches, splitForKakao, stripForeignLinks, textResponse } from '../src/lib/kakao/skill';
+import { COMPANY } from '../src/lib/company';
 
 const sample = {
   intent: { name: '폴백 블록' },
@@ -46,6 +47,30 @@ test('sensitive topics go to a person before the model is called', () => {
   assert.equal(ruleHandoff('결제가 안 돼요'), 'payment problem');
   assert.equal(ruleHandoff('CRI 프로그램 알고싶어요'), null);
   assert.equal(ruleHandoff('겨울 프로그램 대상 학년이 어떻게 되나요?'), null);
+});
+
+test('replies that need a person give the office phone and promise nothing in the chat', () => {
+  // The channel's 1:1 chat is off: nobody can answer in the chat room, so no reply may say that someone will.
+  assert.equal(CONTACT_PHONE, '02-6203-8999');
+  for (const reply of [HANDOFF_REPLY, FALLBACK_REPLY, RATE_LIMIT_REPLY]) {
+    assert.match(reply, /02-6203-8999로 전화/);
+    assert.doesNotMatch(reply, /담당자가 (직접 )?(확인|답변)|연락드립니다|연락드릴게요|전달했|전달할게요|전달됩니다|보내드릴게요|확인하고 있어요/);
+    assert.ok(reply.length < SIMPLE_TEXT_MAX);
+  }
+  assert.match(HANDOFF_REPLY, /AI 상담 도우미/); // says why: a person does not write in this room
+  // The number as dialled in Korea is the same one the site shows in international form.
+  assert.equal(COMPANY.phoneDomestic.replace(/\D/g, ''), COMPANY.phone.replace(/\D/g, '').replace(/^82/, '0'));
+  assert.equal(COMPANY.phoneHref, `tel:+82${COMPANY.phoneDomestic.replace(/\D/g, '').slice(1)}`);
+});
+
+test('the model is told to give the office phone and not to promise a reply in the chat', async () => {
+  const { botInstructions } = await import('../src/lib/kakao/knowledge');
+  const prompt = botInstructions();
+  assert.match(prompt, /담당자는 이 채팅방으로 답장할 수 없다/);
+  assert.match(prompt, /CRI 공식 번호 02-6203-8999로 전화해 달라고 안내하고 handoff를 true로 한다/);
+  assert.match(prompt, /전화 받는 시간은 주어진 정보에 없으니 말하지 않는다/); // no invented office hours
+  assert.doesNotMatch(prompt, /"담당자가 확인 후 연락드릴게요"라는 취지|담당자가 확인해서 정확히 안내드릴게요|담당자에게 연결해 준다/);
+  assert.doesNotMatch(prompt, /\+82/); // the number as dialled in Korea, not the international form
 });
 
 test('requests for other students\' data go to a person', () => {
