@@ -4,7 +4,7 @@ import { allowRequest } from "@/lib/request-limit";
 import { notifyKakaoHandoff } from "@/lib/notify";
 import { claudeConfigured, draftReply, type BotReply, type BotTurn } from "@/lib/kakao/reply";
 import {
-  FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, parseSkillRequest, parseWebinarSignup, ruleHandoff, secretMatches,
+  FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, parseSkillRequest, parseWebinarSignup, ruleHandoff, secretMatches, withoutOwnContact,
   textResponse, webinarKakaoReply, type WebinarSignupParse,
 } from "@/lib/kakao/skill";
 import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarDayOf, webinarJoinInfo, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
@@ -48,8 +48,9 @@ export async function POST(request: Request) {
 
   // "세미나 신청" (a message that is only a sign-up, see parseWebinarSignup): answered by a fixed rule with the join
   // link, even while a person owns the thread, unless the message also touches a person-only topic.
-  const topicReason = ruleHandoff(req.utterance);
   const signup = parseWebinarSignup(req.utterance);
+  // A sign-up that carries the parent's own number ("학부모 연락처 010-…") is not a request for other people's data.
+  const topicReason = ruleHandoff(signup.signup && (signup.phone || signup.email) ? withoutOwnContact(req.utterance) : req.utterance);
   if (signup.signup && (!topicReason || SIGNUP_DESPITE_HANDOFF.has(topicReason))) {
     const { reply, linkMissing } = await webinarSignupReply(req.userKey, signup);
     // A person sees it when the message also asked for one, or when there is no link to give (WEBINAR_JOIN_URL unset).
@@ -136,7 +137,7 @@ async function answer(history: BotTurn[], utterance: string, budgetMs: number): 
   try {
     const result = await draftReply(history, utterance, budgetMs);
     if (!result.reply) return { reply: HANDOFF_REPLY + seminarHint(utterance), handoff: true, reason: result.reason ?? "no reply" };
-    return result;
+    return result.handoff ? { ...result, reply: result.reply + seminarHint(utterance) } : result;
   } catch (error) {
     console.error("[kakao] reply failed:", error instanceof Error ? error.message : error);
     return { reply: FALLBACK_REPLY + seminarHint(utterance), handoff: true, reason: "bot error or timeout" };

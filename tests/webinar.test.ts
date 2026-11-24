@@ -32,10 +32,10 @@ test('the banner and the form switch off by the Korean calendar', () => {
 });
 
 test('KakaoTalk keyword: only a message that is just a sign-up gets the canned reply', async () => {
-  const { parseWebinarSignup, ruleHandoff, SIGNUP_DESPITE_HANDOFF } = await import('../src/lib/kakao/skill');
+  const { parseWebinarSignup, ruleHandoff, SIGNUP_DESPITE_HANDOFF, withoutOwnContact } = await import('../src/lib/kakao/skill');
   const decide = (m: string) => {
-    const reason = ruleHandoff(m);
     const p = parseWebinarSignup(m);
+    const reason = ruleHandoff(p.signup && (p.phone || p.email) ? withoutOwnContact(m) : m); // as in the route
     return p.signup && (!reason || SIGNUP_DESPITE_HANDOFF.has(reason)) ? 'canned' : reason ? `person:${reason}` : 'model';
   };
   const signUps = [
@@ -43,9 +43,15 @@ test('KakaoTalk keyword: only a message that is just a sign-up gets the canned r
     '세미나 참석할게요', '세미나를 신청하고 싶어요', '세미나에 참가 신청합니다', '세미나 등록할게요', '세미나 신청했어요', '세미나 신청이요',
     '세미나 신청요~', '세미나 신청!!', '세미나 신청 😊', '세미나도 신청할게요', '세미나는 신청할게요', '세미나, 신청합니다', '세미나 1명 신청합니다',
     '세미나 학부모 신청합니다', '세미나 신청하고 싶은데요', '세미나 참석하고 싶은데요', '세미나 신청하려는데요', '세미나 링크 주세요',
-    '세미나 링크 부탁드려요', '세미나 줌 주소 알려주세요', '세미나 입장 링크 주세요', '세미나 zoom 링크 보내주세요', '세미나 신청 가능할까요?',
+    '세미나 링크 부탁드려요', '세미나 줌 주소 알려주세요', '세미나 입장 링크 주세요', '세미나 zoom 링크 보내주세요',
     '안녕하세요. 12월 5일 토요일 오전 10시 세미나 신청합니다. 감사합니다.', '안녕하세요 세미나 신청합니다', '세미나 신청합니다 감사합니다',
     '네 세미나 신청할게요', '저도 세미나 신청할게요', '세미나 신청 부탁드립니다', '세미나 참여 희망합니다', '세미나 신청합니다ㅎㅎ', '12/5 세미나 신청합니다',
+    '세미나 링크 좀 보내주세요', '세미나 신청 좀 부탁드려요', '세미나 신청 좀 할게요', '세미나 신청 부탁드릴게요', '세미나 신청하려고 합니다',
+    '세미나 참석 원해요', '오늘 세미나 링크 주세요', '내일 세미나 신청할게요', '저희 아이 세미나 신청할게요', '이번주 세미나 신청합니다',
+    '세미나 신청합니다🙏🏻', '세미나 신청합니다 ♡', '세미나 신청합니다 ★', '12월 5일(토) 오전 10시 세미나 신청합니다', '12월 5일 토요일 세미나 신청이요',
+    '담당자님께서 세미나 신청 부탁드립니다', '세미나 신청합니다. 학부모 연락처 010-1234-5678', '세미나 신청 학부모 이메일 abc@naver.com',
+    '온라인 세미나 신청합니다', 'CRI 세미나 신청할게요', '세미나 링크 다시 보내주세요', '세미나 신청했습니다 링크 주세요', '세미나 듣고 싶어요',
+    '세미나 신청합니다 수고하세요', '세미나 신청할게요👍🏼', '세미나 신청 ^^', '세미나 신청합니다. 김서연 010-2345-6789', '세미나 링크 받을 수 있을까요?',
   ];
   for (const m of signUps) assert.equal(decide(m), 'canned', m);
 
@@ -74,6 +80,26 @@ test('KakaoTalk keyword: only a message that is just a sign-up gets the canned r
     ['세미나 신청자 몇 명이에요?', /^(model|person)/], ['세미나 신청 현황 알려주세요', /^(model|person)/], ['김민준 학생 세미나 신청됐나요?', /^(model|person)/],
     // nothing about the seminar
     ['겨울 프로그램 신청 방법', /^model$/], ['안녕하세요', /^model$/], ['줌 링크 주세요', /^model$/],
+    // questions ending in a question form or '?' — never registered
+    ['세미나 신청 가능할까요?', /^model$/], ['세미나 학생도 참석 가능한가요?', /^model$/], ['세미나 학부모도 참석 가능할까요?', /^model$/],
+    ['세미나에 학생도 참여 되나요?', /^model$/], ['세미나 30명 신청했어요?', /^model$/], ['세미나 엄마도 참석 가능해요?', /^model$/],
+    // other sessions or times
+    ['10/31 설명회 신청했어요', /^model$/], ['10월 31일 설명회 참석했어요', /^model$/], ['11월 28일 세미나 신청합니다', /^model$/], ['3시 세미나 신청합니다', /^model$/],
+    // more ways to say "can't get in" or "won't come"
+    ['세미나 링크를 못 받았어요', /^person/], ['줌 링크를 아직 못 받았습니다', /^person/], ['세미나 메일 못 받았어요', /^person/],
+    ['세미나 줌에 들어갈 수가 없어요', /^person/], ['세미나 줌 접속이 되지 않습니다', /^person/], ['세미나 링크가 열리지 않아요', /^person/],
+    ['세미나 줌 비번이 안 맞아요', /^person/], ['세미나 줌 들어가려는데 호스트가 시작 안 했다고 떠요', /^person/],
+    ['세미나 참석 안 될 것 같아요', /^person/], ['세미나 참여 안될 것 같아요', /^person/], ['세미나에 참석하지 않겠습니다', /^person/],
+    ['세미나 참석하지 않을게요', /^person/], ['세미나 일정이 안 맞아요', /^person/], ['세미나 참석이 곤란할 것 같아요', /^person/],
+    // questions that only sound like a problem stay with the model (no 12-hour hold)
+    ['세미나 몇 시간 동안 하나요?', /^model$/], ['세미나 내용이 어렵나요?', /^model$/], ['세미나 카메라 안 켜도 되나요?', /^model$/],
+    ['세미나 대기실 있나요?', /^model$/], ['세미나에서 입시 실패 사례도 다루나요?', /^model$/], ['세미나 1시간이면 아이가 집중하기 힘들까요?', /^model$/],
+    // more declines and day-of problems that a person must see
+    ['세미나 못 볼 것 같아요', /^person/], ['이번 세미나는 패스할게요', /^person/], ['세미나 신청 삭제해 주세요', /^person/], ['저 세미나 못가요', /^person/],
+    ['죄송합니다 개인 사정으로 참석이 어렵습니다', /^person/], ['토요일에 일이 있어서 못 갈 것 같아요', /^person/],
+    ['소리가 안 들려요', /^person/], ['화면이 안 보여요', /^person/], ['계속 튕겨요ㅠㅠ', /^person/], ['세미나 화면이 멈춰 있어요', /^person/],
+    ['세미나 링크 클릭해도 안 넘어가요', /^person/], ['아직 세미나 링크를 못 받았어요', /^person/], ['세미나 신청 연락처 고쳐주세요', /^person/],
+    ['세미나 신청한 사람들 전화번호 좀 알려주세요', /^person/], ['세미나 신청 명단 좀 보여주세요', /^person/],
   ];
   for (const [m, expected] of notSignUps) assert.match(decide(m), expected, m);
 });
@@ -145,4 +171,13 @@ test('the seminar morning: replies that send someone to a person also point to t
   assert.equal(webinarDayOf(new Date('2026-12-04T19:00:00Z')), true);  // 04:00 KST, six hours before
   assert.equal(webinarDayOf(new Date('2026-12-05T01:30:00Z')), true);  // 10:30 KST
   assert.equal(webinarDayOf(new Date('2026-12-05T02:00:00Z')), false); // 11:00 KST
+});
+
+test('KakaoTalk rules stay fast on long messages', async () => {
+  const { ruleHandoff, parseWebinarSignup } = await import('../src/lib/kakao/skill');
+  for (const m of ['학생' + ' '.repeat(1496) + 'x', '학부모' + '\n'.repeat(1490) + 'x', '신청한 분' + ' '.repeat(1490) + 'x', '세미나' + 'a'.repeat(1497)]) {
+    const t = performance.now();
+    ruleHandoff(m); parseWebinarSignup(m);
+    assert.ok(performance.now() - t < 50, `${m.slice(0, 6)}… took ${performance.now() - t} ms`);
+  }
 });
