@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getDictionary, getLocale } from "@/i18n";
 import { pageMetadata } from "@/lib/seo";
 import { JsonLd, breadcrumbJsonLd, eventJsonLd } from "@/lib/structured-data";
-import { WEBINAR, webinarRegistrationOpen } from "@/lib/webinar";
+import { WEBINAR, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
 import WebinarClient from "./WebinarClient";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +19,13 @@ export default async function WebinarPage() {
   const [locale, session] = await Promise.all([getLocale(), getServerSession(authOptions)]);
   const t = getDictionary(locale);
   const open = webinarRegistrationOpen();
+  // Between the start and the end the form is closed but the KakaoTalk keyword still hands out the link.
+  const live = !open && webinarKakaoOpen();
   const user = session?.user ? { name: session.user.name ?? "", email: session.user.email ?? "", role: session.user.role === "PARENT" ? "PARENT" : session.user.role === "STUDENT" ? "STUDENT" : "" } : null;
   return (
     <>
       <JsonLd data={[eventJsonLd(locale, { name: t.webinar.meta.title.replace(/ \| CRI$/, ""), description: t.webinar.meta.description, startDate: WEBINAR.startsAt, durationMinutes: WEBINAR.durationMinutes, path: "/webinar" }), breadcrumbJsonLd(locale, [[t.nav.research, "/research"], [t.webinar.eyebrow, "/webinar"]])]} />
-      <WebinarClient open={open} user={user} />
+      <WebinarClient open={open} live={live} user={user} />
     </>
   );
 }

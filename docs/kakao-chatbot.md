@@ -34,6 +34,8 @@ After a handoff the bot holds for 12 hours for that customer (`HANDOFF_HOLD_HOUR
 | `KAKAO_SKILL_SECRET` | Any long random string. Open Builder sends it as the `x-cri-kakao-secret` header; requests without it get 401. |
 | `KAKAO_BOT_ID` | Optional. The Open Builder bot id; other bots are refused. |
 | `KAKAO_HANDOFF_EMAIL` | Optional. Where handoffs go; defaults to `ADMISSIONS_NOTIFY_EMAIL` / support@cri.kr. |
+| `WEBINAR_JOIN_URL` | Zoom join link (https, zoom.us) for the current webinar in `src/lib/webinar.ts`. A short "세미나 신청" message registers the channel user and gets this link back until the session ends. Unset or invalid: the bot promises a person will send it and hands the chat off. Kept out of the repo because the repo is public. |
+| `WEBINAR_JOIN_PASSCODE` | Optional. Shown under the link for people who type the meeting ID. |
 
 ## Open Builder setup (owner, once)
 

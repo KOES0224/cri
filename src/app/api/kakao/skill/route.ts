@@ -7,7 +7,7 @@ import {
   FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, isWebinarSignupMessage, parseSkillRequest, ruleHandoff, secretMatches,
   textResponse, webinarKakaoReply,
 } from "@/lib/kakao/skill";
-import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarJoinInfo, webinarKakaoOpen } from "@/lib/webinar";
+import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarJoinInfo, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
 
 /**
  * KakaoTalk channel chatbot: Kakao i Open Builder calls this skill for every free-text message (fallback block).
@@ -108,7 +108,8 @@ async function webinarSignupReply(userKey: string): Promise<{ reply: string; lin
   }
   const join = webinarJoinInfo();
   if (open && !join) console.error("[kakao] WEBINAR_JOIN_URL is missing or not a zoom.us https link; the seminar keyword cannot give the link");
-  const reply = webinarKakaoReply({ open, already, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, join, pageUrl: "https://criglobal.org/ko/webinar" });
+  const pageUrl = webinarRegistrationOpen() ? "https://criglobal.org/ko/webinar" : null;
+  const reply = webinarKakaoReply({ open, already, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, join, pageUrl });
   return { reply, linkMissing: open && !join };
 }
 

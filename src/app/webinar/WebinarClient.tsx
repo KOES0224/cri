@@ -13,7 +13,7 @@ import { KAKAO_CHANNEL_CHAT_URL, WEBINAR } from "@/lib/webinar";
 type Form = { name: string; role: "" | "PARENT" | "STUDENT" | "OTHER"; phone: string; email: string; kakaoId: string; question: string; consent: boolean };
 const input = "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-900 outline-none transition-all focus:ring-2 focus:ring-blue-500";
 
-export default function WebinarClient({ open, user }: { open: boolean; user: { name: string; email: string; role: string } | null }) {
+export default function WebinarClient({ open, live = false, user }: { open: boolean; live?: boolean; user: { name: string; email: string; role: string } | null }) {
   const { t } = useT();
   const copy = t.webinar;
   const [form, setForm] = useState<Form>({ name: user?.name || "", role: (user?.role as Form["role"]) || "", phone: "", email: user?.email || "", kakaoId: "", question: "", consent: false });
@@ -72,7 +72,7 @@ export default function WebinarClient({ open, user }: { open: boolean; user: { n
             ))}
           </ol>
           <p className="mt-8 inline-flex items-start gap-2 text-sm text-gray-500"><Video className="mt-0.5 h-4 w-4 shrink-0" />{copy.joinNote}</p>
-          {!closed && (
+          {(!closed || live) && (
             <div className="mt-8 rounded-2xl border border-yellow-200 bg-[#FFFBE6] p-5">
               <p className="inline-flex items-center gap-2 font-bold text-gray-900"><MessageCircle className="h-5 w-5" />{copy.kakaoTitle}</p>
               <p className="mt-1.5 text-sm leading-relaxed text-gray-700">{copy.kakaoBody}</p>
@@ -82,7 +82,14 @@ export default function WebinarClient({ open, user }: { open: boolean; user: { n
         </div>
 
         <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-[0_20px_40px_rgb(0,0,0,0.04)] sm:p-10">
-          {closed ? (
+          {closed && live ? (
+            <div className="py-10 text-center">
+              <MessageCircle className="mx-auto h-10 w-10 text-yellow-500" />
+              <h2 className="mt-4 text-2xl font-bold text-gray-900">{copy.liveTitle}</h2>
+              <p className="mt-2 text-gray-600">{copy.liveBody}</p>
+              <a href={KAKAO_CHANNEL_CHAT_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("webinar_kakao_click", { topic: WEBINAR.key, method: "live" })} className="mt-6 inline-flex rounded-xl bg-[#FEE500] px-6 py-3 text-sm font-bold text-[#191919] hover:brightness-95">{copy.kakaoCta}</a>
+            </div>
+          ) : closed ? (
             <div className="py-10 text-center">
               <Clock className="mx-auto h-10 w-10 text-gray-300" />
               <h2 className="mt-4 text-2xl font-bold text-gray-900">{copy.closedTitle}</h2>

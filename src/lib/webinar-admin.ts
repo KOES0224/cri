@@ -40,8 +40,8 @@ export async function webinarRowsWithHistory(key: string) {
       otherSignups: keys.map((w) => labels.get(w) ?? w),
       /** Signed up for a session that came before this one. */
       cameBefore: keys.some((w) => w < key),
-      /** A KakaoTalk-channel row carries no contact, so "first time" cannot be known for it. */
-      historyUnknown: viaKakao && !keys.length,
+      /** A KakaoTalk-channel row carries no contact, so without an earlier match "first time" cannot be known. */
+      historyUnknown: viaKakao && !keys.some((w) => w < key),
     };
   });
 }

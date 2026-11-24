@@ -8,8 +8,8 @@ export const WEBINAR = {
   startsAt: new Date("2026-12-05T10:00:00+09:00"),
   /** Sign-ups close when the session starts. */
   closesAt: new Date("2026-12-05T10:00:00+09:00"),
-  /** The banner and the page's sign-up form disappear after this moment (midnight after the webinar day). */
-  bannerUntil: new Date("2026-12-06T00:00:00+09:00"),
+  /** The site-wide banner disappears when the session ends (until then it leads to the page, which offers KakaoTalk). */
+  bannerUntil: new Date("2026-12-05T11:00:00+09:00"),
   durationMinutes: 60,
   platform: "Zoom",
   /** Short label for admin screens and the KakaoTalk reply. */
@@ -27,7 +27,8 @@ export const WEBINAR_KAKAO_KEYWORD = "세미나 신청";
 
 /**
  * The Zoom join link comes from the environment (the repository is public): WEBINAR_JOIN_URL, optional
- * WEBINAR_JOIN_PASSCODE. Without it the KakaoTalk bot still records the sign-up and says the link follows the day before.
+ * WEBINAR_JOIN_PASSCODE (Vercel, Production; a redeploy applies a change). Without a valid one the KakaoTalk bot still
+ * records the sign-up, says a person will send the link, and hands the chat to admissions so someone does.
  */
 export function webinarJoinInfo(): { url: string; passcode: string | null } | null {
   const url = (process.env.WEBINAR_JOIN_URL || "").trim();
