@@ -6,6 +6,8 @@
  * (single use, valid for one minute). callbackUrl is only present when the block has the callback feature switched on.
  */
 
+import { WEBINAR } from '../webinar';
+
 export type SkillRequest = { utterance: string; userKey: string; callbackUrl: string | null; botId: string | null };
 
 /** simpleText holds at most 1000 characters and a response at most 3 outputs. */
@@ -76,9 +78,9 @@ export function callbackAck(text = '확인해서 바로 안내드릴게요 :)') 
 const HANDOFF_RULES: Array<[RegExp, string]> = [
   [/환불|취소|위약|반환|캔슬|철회|refund|cancel/i, 'refund or cancellation'],
   // The seminar: not coming or changing a sign-up. A person updates the list.
-  [/(세미나|웨비나|설명회)[\s\S]{0,30}(불참|못\s*(가|갈|갑|간|하|할|합|해|했|들)|안\s*(가|갈|갑|하|할|합|해)|어렵|어려|힘들|빼\s*(주|줘)|변경|바꾸|바꿔|바꿀|수정|정정)/, 'seminar cancel or change'],
+  [/(세미나|웨비나|설명회)[\s\S]{0,30}(불참|못\s*(가|갈|갑|간|하|할|합|해|했|들)|안\s*(가|갈|갑|하|할|합|해|될|돼|되|맞)|지\s*않|곤란|어렵|어려|힘들|빼\s*(주|줘)|변경|바꾸|바꿔|바꿀|수정|정정)/, 'seminar cancel or change'],
   // Problems getting in or with a link (on the seminar day above all): a person, not the same link again.
-  [/(세미나|웨비나|설명회|줌|zoom|링크|접속|입장|암호|비밀번호)[\s\S]{0,30}(안\s*(돼|되|됩|됐|됨|떠|뜨|열|들|나|보|켜|와|왔|옴)|못\s*(들|하|해|했)|틀려|틀렸|틀린|틀리|끊|오류|에러|실패|불가|만료|잘못|이상해|이상하|튕|대기실)/i, 'link or join problem'],
+  [/(세미나|웨비나|설명회|줌|zoom|링크|접속|입장|암호|비밀번호|비번)[\s\S]{0,30}(안\s*(돼|되|됩|됐|됨|될|떠|뜨|열|들|나|보|켜|와|왔|옴|맞)|못\s*(들|하|해|했|받)|수\s*(가|도|는)?\s*없|지\s*않|시작\s*안\s*(했|함|됐)|틀려|틀렸|틀린|틀리|끊|오류|에러|실패|불가|만료|잘못|이상해|이상하|튕|대기실)/i, 'link or join problem'],
   [/계약서|계약|contract/i, 'contract'],
   [/할인|깎|네고|discount/i, 'discount request'],
   [/불만|항의|실망|화가|사기|신고|소송|complain/i, 'complaint'],
@@ -90,7 +92,9 @@ const HANDOFF_RULES: Array<[RegExp, string]> = [
 ];
 
 export function ruleHandoff(utterance: string): string | null {
-  for (const [pattern, reason] of HANDOFF_RULES) if (pattern.test(utterance)) return reason;
+  // Runs of spaces collapsed first: several optional \s* in a row would otherwise backtrack badly on long input.
+  const text = utterance.replace(/\s+/g, ' ');
+  for (const [pattern, reason] of HANDOFF_RULES) if (pattern.test(text)) return reason;
   return null;
 }
 
@@ -132,16 +136,22 @@ export type WebinarSignupParse = { signup: boolean; phone: string | null; email:
 
 const PHONE = /(?:\+?82[\s.-]?)?0?1[016789][\s.-]?\d{3,4}[\s.-]?\d{4}/;
 const EMAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
-/** The seminar's own date and time, as people write them ("12월 5일", "12/5", "토요일 오전 10시"). */
-const DATE_TIME = /\d{1,2}\s*월\s*\d{1,2}\s*일|\d{1,2}\s*\/\s*\d{1,2}|토요일|오전\s*\d{1,2}\s*시|\d{1,2}\s*시/g;
+/** The seminar's own date and time only, as people write them ("12월 5일(토)", "12/5", "토요일 오전 10시"); other dates stay. */
+const DATE_TIME = (() => {
+  const kst = new Date(WEBINAR.startsAt.getTime() + 9 * 3600_000);
+  const m = kst.getUTCMonth() + 1, d = kst.getUTCDate(), h = kst.getUTCHours();
+  const day = '일월화수목금토'[kst.getUTCDay()];
+  const date = `(${m}\\s*월\\s*${d}\\s*일|${m}\\s*[/.]\\s*${d})(\\s*\\(?\\s*${day}(요일)?\\s*\\)?)?`;
+  return new RegExp(`${date}|${day}요일|(오전\\s*)?${h}\\s*시`, 'g');
+})();
 /** Words that may surround a sign-up without changing it (matched on the compact form). */
 const FILLERS = [
   /^(네|넵|넹|예)/,
   /안녕하세요|안녕하십니까|안녕하세여|안녕하세용|^안녕/g,
   /감사합니다|감사해요|감사드립니다|감사드려요|고맙습니다|고마워요|thankyou|thanks|땡큐/g,
-  /(담당자|선생|관리자|대표)님(께|께서)?/g,
-  /^(저희도|저희|저도|저|우리아이도|우리아이|아이도|아이)/,
-  /^(이번|이번주|주말)(에|의)?/,
+  /(담당자|선생|관리자|대표)님(께서|께)?/g,
+  /^(오늘|내일|이번주|이번|주말)(에|의)?/,
+  /^(저희|우리|저)?(집)?(아이|애|딸|아들)?(도|는|가)?/,
   /^(에|의)/,
 ];
 /** Only when the message carried a phone number or email: the words that introduce it. */
@@ -154,10 +164,11 @@ const SEMINAR_SIGNUP = new RegExp(
   '(참가|참여|참석)?' +
   '(신청|등록|예약|접수)?' +
   '(줌|zoom)?(참여|입장|접속)?(링크|주소)?' +
+  '(좀)?' +
   '(합니다|할게요|할께요|할래요|하겠습니다|하고싶어요|하고싶습니다|하고싶은데요|하고싶은데|하려고요|하려구요|하려는데요' +
-  '|희망합니다|원합니다|해요|했어요|했습니다|이요|요|용|드립니다|드려요|부탁드립니다|부탁드려요|부탁해요|부탁합니다' +
-  '|해주세요|해주세용|해주시겠어요|해주실수있나요|좀주세요|주세요|보내주세요|알려주세요|받고싶어요|받을게요' +
-  '|가능할까요|가능한가요|가능해요|될까요|되나요|할수있나요|할게|할께|함|해줘|줘)?$',
+  '|하려고합니다|하고자합니다|희망합니다|희망해요|원합니다|원해요|해요|했어요|했습니다|이요|요|용|드립니다|드려요|드릴게요' +
+  '|부탁드립니다|부탁드려요|부탁드릴게요|부탁해요|부탁합니다|해주세요|해주세용|해주시겠어요|주세요|보내주세요|알려주세요' +
+  '|받고싶어요|받을게요|할게|할께|함|해줘|줘)?$',
   'i',
 );
 const SIGNUP_ACTION = /참가|참여|참석|신청|등록|예약|접수|링크|주소|줌|zoom|입장|접속/i;
@@ -166,7 +177,7 @@ const SIGNUP_ACTION = /참가|참여|참석|신청|등록|예약|접수|링크|�
 function compact(text: string): string {
   return text
     .toLowerCase()
-    .replace(/\p{Extended_Pictographic}|️|‍/gu, '')
+    .replace(/\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}⃣️‍♡♥☆★]/gu, '')
     .replace(/[ㅋㅎㅠㅜ]+|\^\^/g, '')
     .replace(/[\s.,!?~…·:;'"“”‘’()[\]{}<>\-_/*+=|\\]+/g, '');
 }
@@ -183,8 +194,18 @@ export function parseWebinarSignup(utterance: string): WebinarSignupParse {
   let rest = compact(text);
   for (const pattern of FILLERS) rest = rest.replace(pattern, '');
   if (phone || email) for (const pattern of CONTACT_WORDS) rest = rest.replace(pattern, '');
-  const signup = rest.length > 0 && rest.length <= 40 && SIGNUP_ACTION.test(rest) && SEMINAR_SIGNUP.test(rest);
+  const signup = rest.length > 0 && rest.length <= 40 && SIGNUP_ACTION.test(rest) && SEMINAR_SIGNUP.test(rest)
+    // A question mark makes it a question ("세미나 학생도 참석 가능한가요?"): the model answers, it does not register.
+    && !/[?？]/.test(utterance)
+    // "참석했어요" is about a past session; a head count with 했어요 is about other people.
+    && !/(참석|참여|참가)(했어요|했습니다)$/.test(rest) && !/(\d+명|한명|두명)[^]*(했어요|했습니다)$/.test(rest);
   return { signup, phone: signup ? phone : null, email: signup ? email : null };
+}
+
+/** The message without the sender's own phone number or email and the words that label it, for the handoff rules. */
+export function withoutOwnContact(utterance: string): string {
+  const text = utterance.replace(EMAIL, ' ').replace(PHONE, ' ');
+  return text.replace(/(제|저의|저|엄마|아빠|어머니|아버지|학부모|부모님)?\s*(의)?\s*(전화\s*번호|휴대폰\s*번호|휴대폰|핸드폰|번호|연락처|이메일|메일)\s*(는|은|이|가|로|:)?/g, ' ');
 }
 
 export function isWebinarSignupMessage(utterance: string): boolean {
