@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "@/i18n/link";
-import { CalendarDays, CheckCircle2, Clock, MessageCircle, Video } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Video } from "lucide-react";
 import { useT } from "@/i18n/client";
 import { registerForWebinar, type WebinarResult } from "@/app/actions/webinar";
 import { webinarErrors } from "@/lib/webinar-validation";
 import { trackEvent } from "@/lib/analytics";
 import { metaTrack } from "@/lib/meta/pixel";
-import { KAKAO_CHANNEL_CHAT_URL, WEBINAR, webinarEndsAt } from "@/lib/webinar";
+import { WEBINAR, webinarEndsAt } from "@/lib/webinar";
+import KakaoSignupCard from "./KakaoSignupCard";
 
 type Form = { name: string; role: "" | "PARENT" | "STUDENT" | "OTHER"; phone: string; email: string; kakaoId: string; question: string; consent: boolean };
 const input = "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-900 outline-none transition-all focus:ring-2 focus:ring-blue-500";
@@ -76,6 +77,7 @@ export default function WebinarClient({ open, live: liveAtLoad = false, user }: 
             <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />{copy.when}</span>
           </p>
           <p className="mt-3 text-sm font-medium text-gray-500">{copy.audience}</p>
+          {!closed && <div className="mt-6"><KakaoSignupCard place="page" /></div>}
           <p className="mt-6 text-lg leading-relaxed text-gray-600">{copy.intro}</p>
           <p className="mt-5 border-l-4 border-blue-700 pl-4 text-lg font-bold leading-relaxed text-gray-900">{copy.conclusion}</p>
           <h2 className="mt-10 text-xl font-black text-gray-900">{copy.agendaTitle}</h2>
@@ -85,23 +87,12 @@ export default function WebinarClient({ open, live: liveAtLoad = false, user }: 
             ))}
           </ol>
           <p className="mt-8 inline-flex items-start gap-2 text-sm text-gray-500"><Video className="mt-0.5 h-4 w-4 shrink-0" />{copy.joinNote}</p>
-          {(!closed || live) && (
-            <div className="mt-8 rounded-2xl border border-yellow-200 bg-[#FFFBE6] p-5">
-              <p className="inline-flex items-center gap-2 font-bold text-gray-900"><MessageCircle className="h-5 w-5" />{copy.kakaoTitle}</p>
-              <p className="mt-1.5 text-sm leading-relaxed text-gray-700">{copy.kakaoBody}</p>
-              <a href={KAKAO_CHANNEL_CHAT_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("webinar_kakao_click", { topic: WEBINAR.key, method: "page" })} className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#FEE500] px-5 py-3 text-sm font-bold text-[#191919] hover:brightness-95">{copy.kakaoCta}</a>
-            </div>
-          )}
         </div>
 
-        <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-[0_20px_40px_rgb(0,0,0,0.04)] sm:p-10">
+        {/* While the seminar is on, this column holds the KakaoTalk route: on phones it moves above the description. */}
+        <div className={`rounded-[2rem] border border-gray-100 bg-white p-6 shadow-[0_20px_40px_rgb(0,0,0,0.04)] sm:p-10 ${closed && live ? "order-first lg:order-none" : ""}`}>
           {closed && live ? (
-            <div className="py-10 text-center">
-              <MessageCircle className="mx-auto h-10 w-10 text-yellow-500" />
-              <h2 className="mt-4 text-2xl font-bold text-gray-900">{copy.liveTitle}</h2>
-              <p className="mt-2 text-gray-600">{copy.liveBody}</p>
-              <a href={KAKAO_CHANNEL_CHAT_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("webinar_kakao_click", { topic: WEBINAR.key, method: "live" })} className="mt-6 inline-flex rounded-xl bg-[#FEE500] px-6 py-3 text-sm font-bold text-[#191919] hover:brightness-95">{copy.kakaoCta}</a>
-            </div>
+            <KakaoSignupCard place="live" className="-mx-3 sm:mx-0" />
           ) : closed ? (
             <div className="py-10 text-center">
               <Clock className="mx-auto h-10 w-10 text-gray-300" />
@@ -114,10 +105,7 @@ export default function WebinarClient({ open, live: liveAtLoad = false, user }: 
               <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
               <h2 className="mt-4 text-2xl font-bold text-gray-900">{result.alreadyRegistered ? copy.alreadyTitle : copy.successTitle}</h2>
               <p className="mt-3 text-gray-600">{result.alreadyRegistered ? copy.alreadyBody : copy.successBody}</p>
-              <div className="mt-6 rounded-2xl border border-yellow-200 bg-[#FFFBE6] p-4 text-left">
-                <p className="text-sm leading-relaxed text-gray-700">{copy.kakaoAfter}</p>
-                <a href={KAKAO_CHANNEL_CHAT_URL} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("webinar_kakao_click", { topic: WEBINAR.key, method: "success" })} className="mt-3 inline-flex rounded-xl bg-[#FEE500] px-4 py-2.5 text-sm font-bold text-[#191919] hover:brightness-95">{copy.kakaoCta}</a>
-              </div>
+              <div className="mt-6"><KakaoSignupCard place="success" className="-mx-3 sm:mx-0" /></div>
               {!user && (
                 <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50 p-5 text-left">
                   <p className="font-bold text-gray-900">{copy.nextTitle}</p>
