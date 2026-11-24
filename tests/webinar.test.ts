@@ -50,6 +50,8 @@ test('KakaoTalk keyword: only a message that is just a sign-up gets the canned r
     '세미나 참석 원해요', '오늘 세미나 링크 주세요', '내일 세미나 신청할게요', '저희 아이 세미나 신청할게요', '이번주 세미나 신청합니다',
     '세미나 신청합니다🙏🏻', '세미나 신청합니다 ♡', '세미나 신청합니다 ★', '12월 5일(토) 오전 10시 세미나 신청합니다', '12월 5일 토요일 세미나 신청이요',
     '담당자님께서 세미나 신청 부탁드립니다', '세미나 신청합니다. 학부모 연락처 010-1234-5678', '세미나 신청 학부모 이메일 abc@naver.com',
+    '온라인 세미나 신청합니다', 'CRI 세미나 신청할게요', '세미나 링크 다시 보내주세요', '세미나 신청했습니다 링크 주세요', '세미나 듣고 싶어요',
+    '세미나 신청합니다 수고하세요', '세미나 신청할게요👍🏼', '세미나 신청 ^^', '세미나 신청합니다. 김서연 010-2345-6789', '세미나 링크 받을 수 있을까요?',
   ];
   for (const m of signUps) assert.equal(decide(m), 'canned', m);
 
@@ -89,6 +91,15 @@ test('KakaoTalk keyword: only a message that is just a sign-up gets the canned r
     ['세미나 줌 비번이 안 맞아요', /^person/], ['세미나 줌 들어가려는데 호스트가 시작 안 했다고 떠요', /^person/],
     ['세미나 참석 안 될 것 같아요', /^person/], ['세미나 참여 안될 것 같아요', /^person/], ['세미나에 참석하지 않겠습니다', /^person/],
     ['세미나 참석하지 않을게요', /^person/], ['세미나 일정이 안 맞아요', /^person/], ['세미나 참석이 곤란할 것 같아요', /^person/],
+    // questions that only sound like a problem stay with the model (no 12-hour hold)
+    ['세미나 몇 시간 동안 하나요?', /^model$/], ['세미나 내용이 어렵나요?', /^model$/], ['세미나 카메라 안 켜도 되나요?', /^model$/],
+    ['세미나 대기실 있나요?', /^model$/], ['세미나에서 입시 실패 사례도 다루나요?', /^model$/], ['세미나 1시간이면 아이가 집중하기 힘들까요?', /^model$/],
+    // more declines and day-of problems that a person must see
+    ['세미나 못 볼 것 같아요', /^person/], ['이번 세미나는 패스할게요', /^person/], ['세미나 신청 삭제해 주세요', /^person/], ['저 세미나 못가요', /^person/],
+    ['죄송합니다 개인 사정으로 참석이 어렵습니다', /^person/], ['토요일에 일이 있어서 못 갈 것 같아요', /^person/],
+    ['소리가 안 들려요', /^person/], ['화면이 안 보여요', /^person/], ['계속 튕겨요ㅠㅠ', /^person/], ['세미나 화면이 멈춰 있어요', /^person/],
+    ['세미나 링크 클릭해도 안 넘어가요', /^person/], ['아직 세미나 링크를 못 받았어요', /^person/], ['세미나 신청 연락처 고쳐주세요', /^person/],
+    ['세미나 신청한 사람들 전화번호 좀 알려주세요', /^person/], ['세미나 신청 명단 좀 보여주세요', /^person/],
   ];
   for (const [m, expected] of notSignUps) assert.match(decide(m), expected, m);
 });
