@@ -210,7 +210,8 @@ export async function sendStudentAccountWelcome(input: { to: string; studentName
   return send({ to: input.to, subject: input.created ? 'Your CRI student account' : 'Your CRI account was linked to a guardian', text, replyTo: ADMISSIONS_INBOX });
 }
 
-const WEBINAR_WHEN = { ko: '10월 31일(토) 오전 10시 (한국 시간)', en: 'Saturday 31 October, 10:00 AM (Korea time)' };
+const WEBINAR_TOPIC = { ko: 'AI 시대, 논문은 통할까', en: 'Does a research paper still count in the AI era?' };
+const WEBINAR_WHEN = { ko: '12월 5일(토) 오전 10시 (한국 시간)', en: 'Saturday 5 December, 10:00 AM (Korea time)' };
 
 /** Webinar sign-up → admissions inbox. */
 export async function notifyWebinarRegistration(input: { id: string; name: string; role: string; phone?: string; email?: string; kakaoId?: string; question?: string; locale: string }) {
@@ -234,9 +235,9 @@ export async function sendWebinarConfirmation(input: { to: string; locale: strin
   // Fixed wording only: nothing a visitor typed is relayed to an address they chose.
   const ko = input.locale === 'ko';
   const text = ko
-    ? [`안녕하세요, CRI 온라인 설명회 신청이 접수되었습니다.`, ``, `일시: ${WEBINAR_WHEN.ko}`, `방식: 온라인(Zoom). 참여 링크는 전날 이메일과 카카오톡으로 보내드립니다.`, ``, `프로그램 소개: ${SITE_URL}/ko/research`, `문의: support@cri.kr`].join('\n')
-    : [`Hello, your seat for the CRI online info session is confirmed.`, ``, `When: ${WEBINAR_WHEN.en}`, `Where: online (Zoom). The join link is sent to you the day before.`, ``, `Programs: ${SITE_URL}/research`, `Questions: support@cri.kr`].join('\n');
-  return send({ to: input.to, subject: ko ? `CRI 온라인 설명회 신청 확인 · ${WEBINAR_WHEN.ko}` : `Your CRI info session seat · ${WEBINAR_WHEN.en}`, text, replyTo: ADMISSIONS_INBOX });
+    ? [`안녕하세요, CRI 무료 온라인 세미나 신청이 접수되었습니다.`, ``, `주제: ${WEBINAR_TOPIC.ko}`, `일시: ${WEBINAR_WHEN.ko}`, `방식: 온라인(Zoom). 참여 링크는 시작 전에 남겨 주신 연락처로 보내드립니다.`, ``, `프로그램 소개: ${SITE_URL}/ko/research`, `카카오톡 채널에서 ‘세미나 신청’이라고 보내 주시면 참여 링크를 카톡으로도 받아 두실 수 있습니다: https://pf.kakao.com/_xhdzxln`, `문의: support@cri.kr`].join('\n')
+    : [`Hello, your seat for the free CRI online seminar is confirmed.`, ``, `Topic: ${WEBINAR_TOPIC.en}`, `When: ${WEBINAR_WHEN.en}`, `Where: online (Zoom). The join link is sent to you before the session starts.`, ``, `Programs: ${SITE_URL}/research`, `Questions: support@cri.kr`].join('\n');
+  return send({ to: input.to, subject: ko ? `CRI 세미나 신청 확인 · ${WEBINAR_WHEN.ko}` : `Your CRI seminar seat · ${WEBINAR_WHEN.en}`, text, replyTo: ADMISSIONS_INBOX });
 }
 
 /** KakaoTalk chatbot passed a conversation to a person: the recent turns, so admissions can answer in the channel admin. */

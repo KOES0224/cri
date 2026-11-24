@@ -4,8 +4,10 @@ import { allowRequest } from "@/lib/request-limit";
 import { notifyKakaoHandoff } from "@/lib/notify";
 import { claudeConfigured, draftReply, type BotReply, type BotTurn } from "@/lib/kakao/reply";
 import {
-  FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, callbackAck, parseSkillRequest, ruleHandoff, secretMatches, textResponse,
+  FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, isWebinarSignupMessage, parseSkillRequest, ruleHandoff, secretMatches,
+  textResponse, webinarKakaoReply,
 } from "@/lib/kakao/skill";
+import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarJoinInfo, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
 
 /**
  * KakaoTalk channel chatbot: Kakao i Open Builder calls this skill for every free-text message (fallback block).
@@ -44,8 +46,19 @@ export async function POST(request: Request) {
   const history: BotTurn[] = recent.reverse().map(m => ({ role: m.role === "assistant" ? "assistant" : "user", text: m.text }));
   await prisma.kakaoChatMessage.create({ data: { userKey: req.userKey, role: "user", text: req.utterance } });
 
+  // "세미나 신청": answered by a fixed rule with the join link, even while a person owns the thread, unless the
+  // message also touches a person-only topic ("세미나 신청 취소").
+  const topicReason = ruleHandoff(req.utterance);
+  if ((!topicReason || SIGNUP_DESPITE_HANDOFF.has(topicReason)) && isWebinarSignupMessage(req.utterance)) {
+    const { reply, linkMissing } = await webinarSignupReply(req.userKey);
+    // A person sees it when the message also asked for one, or when there is no link to give (WEBINAR_JOIN_URL unset).
+    const reason = topicReason ? `webinar signup + ${topicReason}` : linkMissing ? "webinar signup, WEBINAR_JOIN_URL not set" : "webinar signup";
+    after(() => finish(req.userKey, { reply, handoff: Boolean(topicReason) || linkMissing, reason }));
+    return NextResponse.json(textResponse(reply));
+  }
+
   // Decide without the model first: a person already owns this thread, or the topic is one the bot never answers.
-  const ruleReason = lastHandoff ? "follow-up while waiting for a person" : ruleHandoff(req.utterance);
+  const ruleReason = lastHandoff ? "follow-up while waiting for a person" : topicReason;
   if (ruleReason) {
     const reply = lastHandoff ? HOLD_REPLY : HANDOFF_REPLY;
     after(() => finish(req.userKey, { reply, handoff: true, reason: ruleReason }));
@@ -75,6 +88,29 @@ export async function POST(request: Request) {
   const result = await answer(history, req.utterance, SYNC_BUDGET_MS);
   after(() => finish(req.userKey, result));
   return NextResponse.json(textResponse(result.reply));
+}
+
+/** Records a KakaoTalk sign-up for the current webinar (one per channel user) and returns the reply with the link. */
+async function webinarSignupReply(userKey: string): Promise<{ reply: string; linkMissing: boolean }> {
+  const open = webinarKakaoOpen();
+  let already = false;
+  if (open) {
+    const dedupeKey = `${KAKAO_BOT_DEDUPE_PREFIX}${userKey}`;
+    try {
+      const existing = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { id: true } });
+      already = Boolean(existing);
+      if (!existing) await prisma.webinarRegistration.create({ data: { webinarKey: WEBINAR.key, name: "카카오톡 채널", locale: "ko", dedupeKey } });
+    } catch (error) {
+      // A double tap races on the unique key; anything else is logged and the person still gets the link.
+      if ((error as { code?: string }).code === "P2002") already = true;
+      else console.error("[kakao] webinar sign-up failed:", error instanceof Error ? error.message : error);
+    }
+  }
+  const join = webinarJoinInfo();
+  if (open && !join) console.error("[kakao] WEBINAR_JOIN_URL is missing or not a zoom.us https link; the seminar keyword cannot give the link");
+  const pageUrl = webinarRegistrationOpen() ? "https://criglobal.org/ko/webinar" : null;
+  const reply = webinarKakaoReply({ open, already, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, join, pageUrl });
+  return { reply, linkMissing: open && !join };
 }
 
 async function answer(history: BotTurn[], utterance: string, budgetMs: number): Promise<BotReply> {

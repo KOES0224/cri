@@ -116,3 +116,48 @@ export function secretMatches(expected: string | undefined, given: string | null
   for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ given.charCodeAt(i);
   return diff === 0;
 }
+
+/**
+ * "세미나 신청" and close variants: the bot answers these itself (no model call) with the join link and records a
+ * sign-up. Questions that only mention the seminar ("세미나 주제가 뭐예요?") still go to the model.
+ */
+/** Longer messages carry a question or a story: they go to the model (or a person), never to the canned reply. */
+export const WEBINAR_KEYWORD_MAX_CHARS = 30;
+const WEBINAR_KEYWORD = /(세미나|웨비나|설명회)(을|를|에|에서)?(참가|참여|참석|신청|등록|예약|접수|링크|줌|zoom|주소|입장|접속)/i;
+/**
+ * Not a plain sign-up, so a person or the model reads it: a story or follow-up ("~는데"), a problem on the day,
+ * not coming, a change, another topic in the same message, or a request about other sign-ups (lists, counts).
+ */
+const NOT_A_PLAIN_SIGNUP = /했던|했었|는데|은데|안돼|안되|안열|안들|안나|안보|안했|안해|안할|않|못들|못가|못할|못해|불참|오류|에러|틀리|취소|변경|괜찮|말고|싫|프로그램|상담|겨울|여름|수업|비용|가격|신청자|참가자|참여자|명단|목록|리스트|몇명/;
+
+export function isWebinarSignupMessage(utterance: string): boolean {
+  const text = utterance.replace(/\s+/g, '');
+  if (!text || text.length > WEBINAR_KEYWORD_MAX_CHARS) return false;
+  if (NOT_A_PLAIN_SIGNUP.test(text)) return false;
+  return WEBINAR_KEYWORD.test(text);
+}
+
+/**
+ * ruleHandoff reasons that do not contradict a sign-up ("세미나 신청합니다, 담당자님 감사합니다", a parent adding their
+ * own phone number): the person is registered and gets the link, and the turn still goes to a person.
+ */
+export const SIGNUP_DESPITE_HANDOFF = new Set(['asked for a person', 'request for student data']);
+
+export function webinarKakaoReply(input: {
+  open: boolean; already: boolean; label: string; topic: string; join: { url: string; passcode: string | null } | null;
+  /** The website page, linked only while its form is open (after the start it shows the closed panel). */
+  pageUrl: string | null;
+}): string {
+  if (!input.open) return `이번 세미나(${input.label})는 끝났어요. 다음 세미나 일정은 정해지는 대로 criglobal.org/ko/webinar 에 올릴게요.`;
+  const head = input.already ? `이미 신청되어 있어요. 다시 안내드릴게요.` : `세미나 신청이 접수되었어요. 감사합니다!`;
+  const lines = [head, '', `주제: ${input.topic}`, `일시: ${input.label} (한국 시간), 약 60분`, `방식: 온라인 Zoom`];
+  if (input.join) {
+    lines.push('', `참여 링크: ${input.join.url}`);
+    if (input.join.passcode) lines.push(`암호: ${input.join.passcode}`);
+    lines.push('', '링크는 이 대화방에 남아 있으니 당일 여기서 바로 들어오시면 돼요. 시작 5분 전 입장을 권해요.');
+  } else {
+    lines.push('', '참여 링크는 담당자가 이 대화방으로 보내드릴게요.');
+  }
+  if (input.pageUrl) lines.push(`자세한 순서: ${input.pageUrl}`);
+  return lines.join('\n');
+}
