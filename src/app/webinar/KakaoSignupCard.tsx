@@ -13,7 +13,7 @@ type Place = "page" | "success" | "live";
  * copies them and opens the CRI channel, so the visitor only has to paste and send. The bot answers that message with
  * the sign-up and the Zoom link (src/app/api/kakao/skill).
  */
-export default function KakaoSignupCard({ place }: { place: Place }) {
+export default function KakaoSignupCard({ place, className = "" }: { place: Place; className?: string }) {
   const { t } = useT();
   const copy = t.webinar.kakaoSignup;
   const [copied, setCopied] = useState(false);
@@ -33,7 +33,7 @@ export default function KakaoSignupCard({ place }: { place: Place }) {
   const lead = place === "success" ? copy.afterLead : place === "live" ? copy.liveLead : copy.lead;
 
   return (
-    <section aria-labelledby={`kakao-${place}`} className="overflow-hidden rounded-3xl border-2 border-[#FEE500] bg-white text-left shadow-[0_12px_32px_rgb(0,0,0,0.06)]">
+    <section aria-labelledby={`kakao-${place}`} className={`overflow-hidden rounded-3xl border-2 border-[#FEE500] bg-white text-left shadow-[0_12px_32px_rgb(0,0,0,0.06)] ${className}`}>
       <div className="flex items-center gap-2 bg-[#FEE500] px-5 py-3">
         <MessageCircle className="h-5 w-5 shrink-0 fill-[#191919] text-[#191919]" aria-hidden />
         <h2 id={`kakao-${place}`} className="text-base font-black text-[#191919] sm:text-lg">{title}</h2>
@@ -60,7 +60,7 @@ export default function KakaoSignupCard({ place }: { place: Place }) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={onOpen}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FEE500] px-5 py-4 text-base font-black text-[#191919] shadow-sm transition hover:brightness-95"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FEE500] px-3 py-4 text-[15px] font-black text-[#191919] shadow-sm transition hover:brightness-95 sm:px-5 sm:text-base"
         >
           {copied ? <Check className="h-5 w-5" aria-hidden /> : <Copy className="h-5 w-5" aria-hidden />}
           {copied ? copy.copied : copy.button}
@@ -68,7 +68,7 @@ export default function KakaoSignupCard({ place }: { place: Place }) {
         <p role="status" className="sr-only">{copied ? copy.copied : ""}</p>
 
         {place === "page" && (
-          <ol className="mt-4 grid gap-2 text-sm text-gray-700 sm:grid-cols-3 sm:gap-3">
+          <ol className="mt-4 grid gap-2 text-sm text-gray-700 xl:grid-cols-3 xl:gap-3">
             {copy.steps.map((step, i) => (
               <li key={step} className="flex items-start gap-2 rounded-xl bg-gray-50 px-3 py-2">
                 <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#191919] text-[11px] font-bold text-white">{i + 1}</span>

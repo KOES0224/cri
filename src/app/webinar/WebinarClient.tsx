@@ -77,7 +77,7 @@ export default function WebinarClient({ open, live: liveAtLoad = false, user }: 
             <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />{copy.when}</span>
           </p>
           <p className="mt-3 text-sm font-medium text-gray-500">{copy.audience}</p>
-          {(!closed || live) && <div className="mt-6"><KakaoSignupCard place={closed ? "live" : "page"} /></div>}
+          {!closed && <div className="mt-6"><KakaoSignupCard place="page" /></div>}
           <p className="mt-6 text-lg leading-relaxed text-gray-600">{copy.intro}</p>
           <p className="mt-5 border-l-4 border-blue-700 pl-4 text-lg font-bold leading-relaxed text-gray-900">{copy.conclusion}</p>
           <h2 className="mt-10 text-xl font-black text-gray-900">{copy.agendaTitle}</h2>
@@ -89,9 +89,10 @@ export default function WebinarClient({ open, live: liveAtLoad = false, user }: 
           <p className="mt-8 inline-flex items-start gap-2 text-sm text-gray-500"><Video className="mt-0.5 h-4 w-4 shrink-0" />{copy.joinNote}</p>
         </div>
 
-        <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-[0_20px_40px_rgb(0,0,0,0.04)] sm:p-10">
+        {/* While the seminar is on, this column holds the KakaoTalk route: on phones it moves above the description. */}
+        <div className={`rounded-[2rem] border border-gray-100 bg-white p-6 shadow-[0_20px_40px_rgb(0,0,0,0.04)] sm:p-10 ${closed && live ? "order-first lg:order-none" : ""}`}>
           {closed && live ? (
-            <KakaoSignupCard place="live" />
+            <KakaoSignupCard place="live" className="-mx-3 sm:mx-0" />
           ) : closed ? (
             <div className="py-10 text-center">
               <Clock className="mx-auto h-10 w-10 text-gray-300" />
@@ -104,7 +105,7 @@ export default function WebinarClient({ open, live: liveAtLoad = false, user }: 
               <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
               <h2 className="mt-4 text-2xl font-bold text-gray-900">{result.alreadyRegistered ? copy.alreadyTitle : copy.successTitle}</h2>
               <p className="mt-3 text-gray-600">{result.alreadyRegistered ? copy.alreadyBody : copy.successBody}</p>
-              <div className="mt-6"><KakaoSignupCard place="success" /></div>
+              <div className="mt-6"><KakaoSignupCard place="success" className="-mx-3 sm:mx-0" /></div>
               {!user && (
                 <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50 p-5 text-left">
                   <p className="font-bold text-gray-900">{copy.nextTitle}</p>
