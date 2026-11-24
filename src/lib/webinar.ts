@@ -12,7 +12,38 @@ export const WEBINAR = {
   bannerUntil: new Date("2026-12-06T00:00:00+09:00"),
   durationMinutes: 60,
   platform: "Zoom",
+  /** Short label for admin screens and the KakaoTalk reply. */
+  label: { ko: "12월 5일(토) 오전 10시", en: "Sat 5 Dec, 10:00 AM KST" },
+  topic: { ko: "AI 시대, 논문은 통할까", en: "Does a research paper still count in the AI era?" },
 } as const;
+
+/** Earlier webinars, newest first: the admin list can switch to them and marks people who came back. */
+export const PAST_WEBINARS = [{ key: "2026-10-31", label: "10/31 설명회" }] as const;
+
+/** CRI's KakaoTalk channel: adding it and sending the keyword below gets the join link from the channel bot. */
+export const KAKAO_CHANNEL_URL = "https://pf.kakao.com/_xhdzxln";
+export const KAKAO_CHANNEL_CHAT_URL = `${KAKAO_CHANNEL_URL}/chat`;
+export const WEBINAR_KAKAO_KEYWORD = "세미나 신청";
+
+/**
+ * The Zoom join link comes from the environment (the repository is public): WEBINAR_JOIN_URL, optional
+ * WEBINAR_JOIN_PASSCODE. Without it the KakaoTalk bot still records the sign-up and says the link follows the day before.
+ */
+export function webinarJoinInfo(): { url: string; passcode: string | null } | null {
+  const url = (process.env.WEBINAR_JOIN_URL || "").trim();
+  if (!/^https:\/\/([a-z0-9-]+\.)*zoom\.us\//i.test(url)) return null;
+  return { url, passcode: (process.env.WEBINAR_JOIN_PASSCODE || "").trim() || null };
+}
+
+/** Sign-ups made through the KakaoTalk channel bot carry this dedupe prefix (no name or contact is asked there). */
+export const KAKAO_BOT_DEDUPE_PREFIX = "kakaobot:";
+
+/** Normalised contact keys of one person, for spotting someone who also signed up for an earlier webinar. */
+export function webinarContactKeys(r: { email?: string | null; phone?: string | null; kakaoId?: string | null; dedupeKey?: string | null }): string[] {
+  const keys = [webinarDedupeKey({ email: r.email }), webinarDedupeKey({ phone: r.phone }), webinarDedupeKey({ kakaoId: r.kakaoId })];
+  if (r.dedupeKey?.startsWith(KAKAO_BOT_DEDUPE_PREFIX)) keys.push(r.dedupeKey);
+  return keys.filter((k): k is string => Boolean(k));
+}
 
 export function webinarRegistrationOpen(now = new Date()): boolean {
   return now < WEBINAR.closesAt;

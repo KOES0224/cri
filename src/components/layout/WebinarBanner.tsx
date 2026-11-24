@@ -36,7 +36,8 @@ export default function WebinarBanner({ initialVisible }: { initialVisible: bool
     <div className="h-10 bg-blue-700 text-white">
       <div className="mx-auto flex h-10 max-w-7xl items-center justify-center gap-3 px-4 text-sm sm:px-6">
         <Link href="/webinar" className="flex min-w-0 items-center gap-2 font-semibold hover:underline">
-          <span className="truncate">{t.webinar.banner.text}</span>
+          <span className="truncate sm:hidden">{t.webinar.banner.short}</span>
+          <span className="hidden truncate sm:inline">{t.webinar.banner.text}</span>
           <span className="inline-flex shrink-0 items-center rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-bold">{t.webinar.banner.cta} <ArrowRight className="ml-1 h-3 w-3" /></span>
         </Link>
         <button type="button" onClick={dismiss} aria-label={t.webinar.banner.dismiss} className="ml-2 shrink-0 rounded-md p-1 text-white/70 hover:bg-white/10 hover:text-white"><X className="h-4 w-4" /></button>

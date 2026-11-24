@@ -116,3 +116,29 @@ export function secretMatches(expected: string | undefined, given: string | null
   for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ given.charCodeAt(i);
   return diff === 0;
 }
+
+/**
+ * "세미나 신청" and close variants: the bot answers these itself (no model call) with the join link and records a
+ * sign-up. Questions that only mention the seminar ("세미나 주제가 뭐예요?") still go to the model.
+ */
+export function isWebinarSignupMessage(utterance: string): boolean {
+  const text = utterance.replace(/\s+/g, '');
+  return /(세미나|웨비나|설명회)(참가|참여)?(신청|링크|줌|zoom|주소)/i.test(text);
+}
+
+export function webinarKakaoReply(input: {
+  open: boolean; already: boolean; label: string; topic: string; join: { url: string; passcode: string | null } | null; pageUrl: string;
+}): string {
+  if (!input.open) return `이번 세미나(${input.label})는 신청이 마감되었어요. 다음 세미나 일정이 정해지면 이 채널로 먼저 알려드릴게요 🙂`;
+  const head = input.already ? `이미 신청되어 있어요. 다시 안내드릴게요.` : `세미나 신청이 접수되었어요. 감사합니다!`;
+  const lines = [head, '', `주제: ${input.topic}`, `일시: ${input.label} (한국 시간), 약 60분`, `방식: 온라인 Zoom`];
+  if (input.join) {
+    lines.push('', `참여 링크: ${input.join.url}`);
+    if (input.join.passcode) lines.push(`암호: ${input.join.passcode}`);
+    lines.push('', '시작 5분 전에 들어와 주세요. 전날 이 채널로 한 번 더 알려드릴게요.');
+  } else {
+    lines.push('', '참여 링크는 세미나 전날 이 채팅방으로 보내드릴게요.');
+  }
+  lines.push(`자세한 순서: ${input.pageUrl}`);
+  return lines.join('\n');
+}

@@ -22,7 +22,8 @@ export type FunnelEvent =
   | 'application_submitted' // fee confirmed, application created
   | 'contact_submitted'     // contact form sent
   | 'sign_up'               // account created
-  | 'webinar_registered';   // webinar sign-up sent
+  | 'webinar_registered'   // webinar sign-up sent
+  | 'webinar_kakao_click';  // opened the KakaoTalk channel to sign up there
 
 // Only keys listed in FUNNEL_PARAMS (src/lib/gtm.ts), so the dataLayer reset always covers every parameter.
 type Params = Partial<Record<FunnelParam, string | number | boolean | undefined>>;

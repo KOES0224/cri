@@ -2,6 +2,7 @@ import { APPLICATION_CHARGE_LABEL, APPLICATION_FEE_ENABLED } from '@/lib/applica
 import { COMPANY } from '@/lib/company';
 import { getOpenPrograms, type OpenProgramCard } from '@/lib/open-programs';
 import { programFacts } from '@/lib/program-policy';
+import { WEBINAR, WEBINAR_KAKAO_KEYWORD, webinarRegistrationOpen } from '@/lib/webinar';
 
 /**
  * What the KakaoTalk bot may say. Everything it states must come from here; anything else goes to a person.
@@ -79,10 +80,21 @@ function programLine(p: OpenProgramCard): string {
   return parts.join(' · ');
 }
 
+/** The free webinar, while sign-ups are open. The bot itself answers the keyword; the model only points to it. */
+export function webinarContext(now = new Date()): string {
+  if (!webinarRegistrationOpen(now)) return '';
+  return `\n\n무료 온라인 세미나 (신청 받는 중):
+- 주제: ${WEBINAR.topic.ko}. 일시: ${WEBINAR.label.ko}(한국 시간), 약 60분, Zoom. 참가비 없음. 발표 CRI 대표.
+- 다루는 내용: AI로 시험 부정까지 나오는 지금 학생 논문은 믿을 수 있나, 연구가 미국 대학 입시에서 아직 중요한가, 연구를 어떻게·언제 해야 학생 본인의 것으로 인정받나, 출판은 꼭 해야 하나·한다면 어디에, 연구 프로그램 고르는 법, 실제 학생 사례와 CRI 겨울 과정, 질의응답. 미국 입학처·대회 주최 측 공식 자료로 설명한다.
+- 신청 방법: 이 채팅방에 "${WEBINAR_KAKAO_KEYWORD}"이라고 보내면 바로 접수되고 참여 안내를 받는다. 웹사이트 ${SITE}/ko/webinar 에서 신청해도 된다.
+- 세미나 이야기를 하거나 관심을 보이면 위 신청 방법을 알려 준다. Zoom 링크나 암호는 네가 직접 쓰지 않는다(키워드로만 전달된다).`;
+}
+
 /** Volatile part: cohorts open right now, read from the database (60 s cache shared with the public site). */
 export async function openProgramsContext(now = new Date()): Promise<string> {
   const programs = await getOpenPrograms(12);
   const today = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'long' }).format(now);
-  if (!programs.length) return `오늘은 ${today}(한국 시간)이다.\n지금 모집 중인 프로그램: 없음. 다음 모집 일정은 담당자가 안내한다고 말하고, 원하면 연락처를 남기도록 ${SITE}/ko/contact 를 안내한다.`;
-  return `오늘은 ${today}(한국 시간)이다.\n지금 모집 중인 프로그램:\n${programs.map(programLine).join('\n')}`;
+  const webinar = webinarContext(now);
+  if (!programs.length) return `오늘은 ${today}(한국 시간)이다.\n지금 모집 중인 프로그램: 없음. 다음 모집 일정은 담당자가 안내한다고 말하고, 원하면 연락처를 남기도록 ${SITE}/ko/contact 를 안내한다.${webinar}`;
+  return `오늘은 ${today}(한국 시간)이다.\n지금 모집 중인 프로그램:\n${programs.map(programLine).join('\n')}${webinar}`;
 }
