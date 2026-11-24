@@ -24,9 +24,9 @@ test('one registration per person: email wins, then phone digits, then kakao id'
 });
 
 test('the banner and the form switch off by the Korean calendar', () => {
-  assert.equal(WEBINAR.startsAt.toISOString(), '2026-10-31T01:00:00.000Z'); // 10:00 KST
-  assert.equal(webinarRegistrationOpen(new Date('2026-10-31T00:59:00Z')), true);
-  assert.equal(webinarRegistrationOpen(new Date('2026-10-31T01:00:00Z')), false);
-  assert.equal(webinarBannerVisible(new Date('2026-10-31T14:59:00Z')), true);   // 23:59 KST on the day
-  assert.equal(webinarBannerVisible(new Date('2026-10-31T15:00:00Z')), false);  // midnight KST → gone
+  assert.equal(WEBINAR.startsAt.toISOString(), '2026-12-05T01:00:00.000Z'); // 10:00 KST
+  assert.equal(webinarRegistrationOpen(new Date('2026-12-05T00:59:00Z')), true);
+  assert.equal(webinarRegistrationOpen(new Date('2026-12-05T01:00:00Z')), false);
+  assert.equal(webinarBannerVisible(new Date('2026-12-05T14:59:00Z')), true);   // 23:59 KST on the day
+  assert.equal(webinarBannerVisible(new Date('2026-12-05T15:00:00Z')), false);  // midnight KST → gone
 });
