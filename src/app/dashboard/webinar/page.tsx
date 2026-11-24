@@ -1,4 +1,5 @@
-import { Download } from "lucide-react";
+import { Download, MessageCircle } from "lucide-react";
+import { koreanMobile } from "@/lib/webinar";
 import AdminLayout from "../_components/AdminLayout";
 import { requireAdmin } from "@/lib/admin";
 import { formatKST } from "@/lib/formatKST";
@@ -36,6 +37,9 @@ export default async function WebinarAdminPage({ searchParams }: { searchParams:
     return `/dashboard/webinar${s ? `?${s}` : ""}`;
   };
   const exportHref = `/dashboard/webinar/export${key !== options[0].key ? `?key=${encodeURIComponent(key)}` : ""}`;
+  const phonesHref = `/dashboard/webinar/phones${key !== options[0].key ? `?key=${encodeURIComponent(key)}` : ""}`;
+  // KakaoTalk channel friend groups take Korean mobile numbers only.
+  const mobiles = new Set(all.map((r) => koreanMobile(r.phone)).filter(Boolean)).size;
   const chip = (active: boolean) => `rounded-full px-3 py-1.5 text-sm font-semibold ${active ? "bg-slate-900 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"}`;
   return (
     <AdminLayout>
@@ -44,7 +48,10 @@ export default async function WebinarAdminPage({ searchParams }: { searchParams:
           <h1 className="text-3xl font-bold tracking-tight">Webinar sign-ups</h1>
           <p className="mt-2 text-sm text-slate-500">{counts.website} via website ({counts.parents} parents, {counts.students} students) · {counts.kakao} via KakaoTalk channel, some may also be on the website list · {counts.returning} came to an earlier session</p>
         </div>
-        <a href={exportHref} className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-black"><Download className="h-4 w-4" /> Export CSV</a>
+        <div className="flex flex-wrap gap-2">
+          <a href={phonesHref} title="One Korean mobile number per line: upload or paste it as a KakaoTalk channel friend group for the scheduled notices" className="inline-flex items-center gap-2 rounded-xl bg-[#FEE500] px-4 py-2.5 text-sm font-semibold text-[#191919] hover:brightness-95"><MessageCircle className="h-4 w-4" /> KakaoTalk friend-group numbers ({mobiles})</a>
+          <a href={exportHref} className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-black"><Download className="h-4 w-4" /> Export CSV</a>
+        </div>
       </header>
       <nav className="mb-3 flex flex-wrap gap-2" aria-label="Session">
         {options.map((w) => <a key={w.key} href={href({ key: w.key, only: "" })} className={chip(w.key === key)}>{w.label}{w.current ? " (current)" : ""}</a>)}

@@ -122,7 +122,7 @@ test('KakaoTalk webinar reply: link and passcode when set, the office phone othe
   const base = { open: true, already: false, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', pageUrl: 'https://criglobal.org/ko/webinar' };
   const withLink = webinarKakaoReply({ ...base, join: { url: 'https://us06web.zoom.us/j/123', passcode: '000000' } });
   assert.match(withLink, /접수/); assert.match(withLink, /zoom\.us\/j\/123/); assert.match(withLink, /암호: 000000/);
-  assert.doesNotMatch(withLink, /전날/); // no reminder promise the owner would have to keep
+  assert.doesNotMatch(withLink, /이 채널로 한 번 더/); // reminders come from the scheduled channel message and email, not this chat
   const noLink = webinarKakaoReply({ ...base, join: null });
   // No link to give: nobody can send it into the chat room later (1:1 chat is off), so try again or call.
   assert.doesNotMatch(noLink, /zoom/); assert.match(noLink, /02-6203-8999/); assert.doesNotMatch(noLink, /담당자가|보내드릴게요/);
@@ -181,4 +181,106 @@ test('KakaoTalk rules stay fast on long messages', async () => {
     ruleHandoff(m); parseWebinarSignup(m);
     assert.ok(performance.now() - t < 50, `${m.slice(0, 6)}… took ${performance.now() - t} ms`);
   }
+});
+
+test('phone numbers: Korean mobiles for KakaoTalk friend groups', async () => {
+  const { koreanMobile } = await import('../src/lib/webinar');
+  assert.equal(koreanMobile('010-1234-5678'), '01012345678');
+  assert.equal(koreanMobile('+82 10-1234-5678'), '01012345678');
+  assert.equal(koreanMobile('011 234 5678'), '0112345678');
+  assert.equal(koreanMobile('02-6203-8999'), null);      // landline
+  assert.equal(koreanMobile('+1 (213) 555-0100'), null); // overseas
+  assert.equal(koreanMobile(''), null);
+});
+
+test('people without a number are asked once more: 7 days after signing up or at phoneAskAt, never in the last day', async () => {
+  const { webinarPhoneAskAt } = await import('../src/lib/webinar');
+  const kst = (s: string) => new Date(`${s}+09:00`);
+  assert.equal(webinarPhoneAskAt(kst('2026-11-24T13:00:00'))?.toISOString(), kst('2026-12-01T10:00:00').toISOString()); // phoneAskAt comes first
+  assert.equal(webinarPhoneAskAt(kst('2026-11-20T09:00:00'))?.toISOString(), kst('2026-11-27T10:00:00').toISOString()); // a week after
+  assert.equal(webinarPhoneAskAt(kst('2026-12-02T09:00:00'))?.toISOString(), kst('2026-12-03T10:00:00').toISOString()); // late: next morning
+  assert.equal(webinarPhoneAskAt(kst('2026-12-03T11:00:00')), null); // would land on the seminar day: reminders cover it
+});
+
+test('email reminders: 19:00 the evening before and 30 minutes before the start', async () => {
+  const { webinarReminderTimes, sameKstDay } = await import('../src/lib/webinar');
+  const { dayBefore, soon } = webinarReminderTimes();
+  assert.equal(dayBefore.toISOString(), '2026-12-04T10:00:00.000Z'); // 19:00 KST
+  assert.equal(soon.toISOString(), '2026-12-05T00:30:00.000Z');      // 09:30 KST
+  assert.equal(sameKstDay(new Date('2026-12-04T15:30:00Z'), new Date('2026-12-05T00:30:00Z')), true); // 00:30 and 09:30 KST on 12/5
+});
+
+test('KakaoTalk: a message that is just a number is recognised; a sign-up with a number is not "just a number"', async () => {
+  const { parsePhoneOnly } = await import('../src/lib/kakao/skill');
+  assert.equal(parsePhoneOnly('010-1234-5678'), '01012345678');
+  assert.equal(parsePhoneOnly('제 번호는 010 1234 5678 입니다'), '01012345678');
+  assert.equal(parsePhoneOnly('네 01012345678'), '01012345678');
+  assert.equal(parsePhoneOnly('+82 10-1234-5678'), '01012345678');
+  assert.equal(parsePhoneOnly('세미나 신청 010-1234-5678'), null);
+  assert.equal(parsePhoneOnly('010-1234-5678로 전화 주세요'), null);
+  assert.equal(parsePhoneOnly('세미나 주제가 뭐예요?'), null);
+  // natural answers to "send your number"
+  for (const m of ['김서연 010-1234-5678', '010-1234-5678 김서연입니다', '서연맘 010-1234-5678', '학부모 010-1234-5678', '김서연 엄마 010-1234-5678', '네네 010-1234-5678', '넵넵 010-1234-5678', '알겠습니다 010-1234-5678', '010-1234-5678로 보내주세요', '010-1234-5678 이 번호로 알림 부탁드려요', '번호 남겨요 010-1234-5678', '010-1234-5678 저장 부탁드립니다'])
+    assert.equal(parsePhoneOnly(m), '01012345678', m);
+  // not a Korean mobile, or more than a number
+  for (const m of ['+1 213 555 0100', '02-1234-5678', '010-1234-5678 취소할게요', '세미나 010-1234-5678', '010-1234-5678 겨울 프로그램 문의드려요'])
+    assert.equal(parsePhoneOnly(m), null, m);
+});
+
+test('KakaoTalk sign-up reply asks for a number when there is none, and never during the session', async () => {
+  const { webinarKakaoReply } = await import('../src/lib/kakao/skill');
+  const base = { open: true, already: false, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', join: { url: 'https://us06web.zoom.us/j/1', passcode: null }, pageUrl: null, noticesOpen: true };
+  assert.doesNotMatch(webinarKakaoReply({ ...base, noticesOpen: false, hasPhone: false }), /휴대폰 번호/); // list exported: no ask
+  assert.match(webinarKakaoReply({ ...base, hasPhone: false }), /휴대폰 번호를 보내 주세요/);
+  assert.match(webinarKakaoReply({ ...base, already: true, hasPhone: false }), /휴대폰 번호를 보내 주세요/); // asked again when they come back
+  assert.match(webinarKakaoReply({ ...base, hasPhone: true }), /남겨 주신 번호로/);
+  assert.doesNotMatch(webinarKakaoReply({ ...base, started: true, hasPhone: false }), /휴대폰 번호/);
+  assert.ok(webinarKakaoReply({ ...base, hasPhone: false }).length < 1000);
+});
+
+test('the add-a-number link is signed per sign-up', async () => {
+  process.env.NEXTAUTH_SECRET ||= 'test-secret';
+  const { webinarPhoneToken, webinarPhoneTokenValid, webinarPhoneLink } = await import('../src/lib/webinar-phone');
+  const token = webinarPhoneToken('reg_1');
+  assert.equal(webinarPhoneTokenValid('reg_1', token), true);
+  assert.equal(webinarPhoneTokenValid('reg_2', token), false);
+  assert.equal(webinarPhoneTokenValid('reg_1', token.slice(0, -1) + (token.endsWith('A') ? 'B' : 'A')), false);
+  assert.equal(webinarPhoneTokenValid('reg_1', ''), false);
+  assert.match(webinarPhoneLink('https://criglobal.org/', 'reg_1'), /^https:\/\/criglobal\.org\/webinar\/phone\?r=reg_1&t=/);
+});
+
+test('KakaoTalk notices stop being promised at the friend-group cutoff', async () => {
+  const { webinarKakaoNoticesOpen } = await import('../src/lib/webinar');
+  const { webinarPhoneSavedReply } = await import('../src/lib/kakao/skill');
+  assert.equal(webinarKakaoNoticesOpen(new Date('2026-12-04T02:59:00Z')), true);  // 11:59 KST on 12/4
+  assert.equal(webinarKakaoNoticesOpen(new Date('2026-12-04T03:00:00Z')), false); // 12:00 KST
+  assert.match(webinarPhoneSavedReply('12월 5일(토) 오전 10시', true), /전날 저녁과 당일 아침/);
+  assert.match(webinarPhoneSavedReply('12월 5일(토) 오전 10시', false), /마감/);
+  assert.doesNotMatch(webinarPhoneSavedReply('12월 5일(토) 오전 10시', false), /보내드릴게요/);
+});
+
+test('number replies: opt-outs, questions and other people\'s numbers are not saved; names with a grade are', async () => {
+  const { parsePhoneOnly, ruleHandoff, withoutOwnContact, phoneWithoutSignupReply } = await import('../src/lib/kakao/skill');
+  const { koreanMobile } = await import('../src/lib/webinar');
+  for (const m of ['수신거부 010-1234-5678', '010-1234-5678 수신거부요', '010-1234-5678 알림 그만 받을게요', '010-1234-5678 알림 안 받을게요', '010-1234-5678 번호 지워 주세요', '010-1234-5678 삭제요',
+    '이거 누구 번호예요? 010-1234-5678', '010-1234-5678 누구세요?', '번호 010-1234-5678 틀렸어요', '제 번호 010-1234-5678 아니에요', '010-1234-5678 친구 번호예요', '010-123-5678', '010-1234-5678 카톡 안 와요', '010-1234-5678 알림이 안 왔어요', '010-1234-5678 확인 부탁드려요'])
+    assert.equal(parsePhoneOnly(m), null, m);
+  for (const m of ['안지현 010-1234-5678', '김서연 학생 010-1234-5678', '김서연 학생 엄마 010-1234-5678', '고1 김서연 010-1234-5678', '중3 서연맘 010-1234-5678', '학부모 연락처 010-1234-5678', '학부모님 연락처입니다 010-1234-5678'])
+    assert.equal(parsePhoneOnly(m), '01012345678', m);
+  // the route checks the handoff rules on the text without the sender's own number and its label
+  assert.equal(ruleHandoff(withoutOwnContact('학부모 연락처 010-1234-5678')), null);
+  assert.equal(koreanMobile('010-123-5678'), null); // 010 has 11 digits
+  assert.equal(koreanMobile('011-234-5678'), '0112345678');
+  assert.match(phoneWithoutSignupReply(false), /마감/);
+  assert.match(phoneWithoutSignupReply(true), /세미나 신청 010-1234-5678/);
+  const t = performance.now();
+  parsePhoneOnly('제' + ' '.repeat(1485) + '010-1234-5678');
+  assert.ok(performance.now() - t < 50, 'parsePhoneOnly on a long run of spaces');
+});
+
+test('the follow-up ask comes at least a day before the friend-group list closes', async () => {
+  const { webinarPhoneAskAt } = await import('../src/lib/webinar');
+  const kst = (s: string) => new Date(`${s}+09:00`);
+  assert.equal(webinarPhoneAskAt(kst('2026-12-02T09:00:00'))?.toISOString(), kst('2026-12-03T10:00:00').toISOString());
+  assert.equal(webinarPhoneAskAt(kst('2026-12-02T11:00:00')), null); // would land on 12/4 10:00, two hours before the cutoff
 });
