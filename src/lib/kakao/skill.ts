@@ -1,15 +1,19 @@
 /**
  * Kakao i Open Builder skill protocol (version 2.0). Pure helpers so the route stays thin and the rules are testable.
- * Request:  { userRequest: { utterance, callbackUrl?, user: { id, properties: { botUserKey? } } }, bot: { id }, ... }
- * Response: { version: "2.0", template: { outputs: [{ simpleText: { text } }], quickReplies? } }
+ * Request:  { userRequest: { utterance, callbackUrl?, user: { id, properties: { botUserKey?, isFriend? } } }, bot: { id }, ... }
+ * Response: { version: "2.0", template: { outputs: [{ simpleText: { text } } | { textCard }], quickReplies? } }
  * Callback: answer { version: "2.0", useCallback: true } within 5 s, then POST the real response to callbackUrl
  * (single use, valid for one minute). callbackUrl is only present when the block has the callback feature switched on.
  */
 
 import { COMPANY } from '../company';
-import { WEBINAR, koreanMobile } from '../webinar';
+import { KAKAO_CHANNEL_ADD_URL, WEBINAR, koreanMobile } from '../webinar';
 
-export type SkillRequest = { utterance: string; userKey: string; callbackUrl: string | null; botId: string | null };
+/**
+ * `friend`: Kakao sends properties.isFriend = true only when the sender has added the channel; for everyone else the
+ * key is missing. Read a missing key as "not known to be a friend" (Open Builder's test panel never sends it either).
+ */
+export type SkillRequest = { utterance: string; userKey: string; callbackUrl: string | null; botId: string | null; friend: boolean };
 
 /** simpleText holds at most 1000 characters and a response at most 3 outputs. */
 export const SIMPLE_TEXT_MAX = 1000;
@@ -21,13 +25,13 @@ export function parseSkillRequest(body: unknown): SkillRequest | null {
   if (!body || typeof body !== 'object') return null;
   const req = (body as { userRequest?: unknown }).userRequest;
   if (!req || typeof req !== 'object') return null;
-  const r = req as { utterance?: unknown; callbackUrl?: unknown; user?: { id?: unknown; properties?: { botUserKey?: unknown } } };
+  const r = req as { utterance?: unknown; callbackUrl?: unknown; user?: { id?: unknown; properties?: { botUserKey?: unknown; isFriend?: unknown } } };
   const utterance = typeof r.utterance === 'string' ? r.utterance.trim().slice(0, UTTERANCE_MAX) : '';
   const userKey = [r.user?.properties?.botUserKey, r.user?.id].find((v): v is string => typeof v === 'string' && v.length > 0) ?? '';
   if (!utterance || !userKey) return null;
   const callbackUrl = typeof r.callbackUrl === 'string' && isKakaoCallbackUrl(r.callbackUrl) ? r.callbackUrl : null;
   const bot = (body as { bot?: { id?: unknown } }).bot;
-  return { utterance, userKey: userKey.slice(0, 200), callbackUrl, botId: typeof bot?.id === 'string' ? bot.id : null };
+  return { utterance, userKey: userKey.slice(0, 200), callbackUrl, botId: typeof bot?.id === 'string' ? bot.id : null, friend: r.user?.properties?.isFriend === true };
 }
 
 /** Only POST to Kakao's own callback hosts, never to a URL a forged request supplies. */
@@ -58,12 +62,30 @@ export function splitForKakao(text: string): string[] {
 
 export type QuickReply = { label: string; action: 'message'; messageText: string };
 
-export function textResponse(text: string, quickReplies: QuickReply[] = []) {
-  const outputs = splitForKakao(text).map(t => ({ simpleText: { text: t } }));
+/** A text card with link buttons. Kakao's limits: title 50 characters, title + description 400, button label 14. */
+export type TextCard = { textCard: { title?: string; description?: string; buttons: Array<{ action: 'webLink'; label: string; webLinkUrl: string }> } };
+
+/**
+ * The text bubbles, then any cards. Kakao takes at most three outputs: the text always goes first and a card that
+ * does not fit is dropped.
+ */
+export function textResponse(text: string, quickReplies: QuickReply[] = [], cards: TextCard[] = []) {
+  const texts = splitForKakao(text).map(t => ({ simpleText: { text: t } }));
+  const outputs = [...(texts.length ? texts : [{ simpleText: { text: '메시지를 확인했어요.' } }]), ...cards].slice(0, MAX_OUTPUTS);
   return {
     version: '2.0' as const,
-    template: { outputs: outputs.length ? outputs : [{ simpleText: { text: '메시지를 확인했어요.' } }], ...(quickReplies.length ? { quickReplies: quickReplies.slice(0, 10) } : {}) },
+    template: { outputs, ...(quickReplies.length ? { quickReplies: quickReplies.slice(0, 10) } : {}) },
   };
+}
+
+export const CHANNEL_ADD_LABEL = '채널 추가하기';
+
+/**
+ * A button that adds the CRI channel. Open Builder has no "add channel" action, so it is a web link to the channel's
+ * add page, which on a phone hands over to KakaoTalk's own add screen.
+ */
+export function channelAddCard(description: string): TextCard {
+  return { textCard: { title: 'CRI 카카오톡 채널 추가', description, buttons: [{ action: 'webLink', label: CHANNEL_ADD_LABEL, webLinkUrl: KAKAO_CHANNEL_ADD_URL }] } };
 }
 
 /** Immediate answer when the block uses callbacks; `text` fills the waiting message if the block template uses it. */
@@ -297,6 +319,8 @@ export function webinarKakaoReply(input: {
   hasPhone?: boolean;
   /** Before the friend-group cutoff: KakaoTalk notices are still promised and numbers still asked for. */
   noticesOpen?: boolean;
+  /** The sender has added the channel. Otherwise the reply points to the add button that follows it (webinarChannelCard). */
+  friend?: boolean;
 }): string {
   if (!input.open) return `이번 세미나(${input.label})는 끝났어요. 다음 세미나 일정은 정해지는 대로 criglobal.org/ko/webinar 에 올릴게요.`;
   const head = input.already ? `이미 신청되어 있어요. 다시 안내드릴게요.` : `세미나 신청이 접수되었어요. 감사합니다!`;
@@ -309,18 +333,38 @@ export function webinarKakaoReply(input: {
     lines.push('', `참여 링크를 지금 바로 보내드리지 못했어요. 잠시 후 ‘세미나 신청’이라고 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요.`);
   }
   if (!input.started && input.noticesOpen) {
-    lines.push('', input.hasPhone
-      ? '전날 저녁과 당일 아침 알림은 남겨 주신 번호로 카톡 보내드려요. 알림을 받으시려면 이 채팅방 위의 ‘채널 추가’를 눌러 두세요.'
-      : '📱 전날 저녁·당일 아침 알림을 카톡으로 받으시려면 휴대폰 번호를 보내 주세요 (예: 010-1234-5678). 알림에만 사용하고, 이 채팅방 위의 ‘채널 추가’도 눌러 두셔야 받으실 수 있어요.');
+    if (input.hasPhone) {
+      lines.push('', input.friend
+        ? '전날 저녁과 당일 아침 알림은 남겨 주신 번호로 카톡 보내드려요.'
+        : `전날 저녁과 당일 아침 알림은 남겨 주신 번호로 카톡 보내드려요. CRI 채널을 추가한 분께만 가니, 아래 ‘${CHANNEL_ADD_LABEL}’를 눌러 주세요.`);
+    } else {
+      lines.push('', input.friend
+        ? '📱 전날 저녁·당일 아침 알림을 카톡으로 받으시려면 휴대폰 번호를 보내 주세요 (예: 010-1234-5678). 번호는 알림에만 사용해요.'
+        : `📱 전날 저녁·당일 아침 알림을 카톡으로 받으시려면 휴대폰 번호를 보내 주시고 (예: 010-1234-5678), 아래 ‘${CHANNEL_ADD_LABEL}’로 CRI 채널도 추가해 주세요. 번호는 알림에만 사용해요.`);
+    }
   }
   if (input.pageUrl) lines.push(`자세한 순서: ${input.pageUrl}`);
   return lines.join('\n');
 }
 
+/**
+ * The add-channel button under a seminar reply, for a sender who has not added the channel: the KakaoTalk notices
+ * reach channel friends only, and after the list closes (or the seminar is over) the channel is where the next one is
+ * announced. Not while the session is on: then the only job is getting in.
+ */
+export function webinarChannelCard(input: { friend: boolean; started: boolean; noticesOpen: boolean }): TextCard | null {
+  if (input.friend || input.started) return null;
+  return channelAddCard(input.noticesOpen
+    ? '세미나 전날 저녁·당일 아침 카톡 알림은 CRI 채널을 추가한 분께만 보내드려요.'
+    : '채널을 추가하시면 앞으로 열리는 세미나 소식을 카카오톡으로 받아 보실 수 있어요.');
+}
+
 /** Reply when someone sends just their number after signing up on KakaoTalk. */
-export function webinarPhoneSavedReply(label: string, noticesOpen: boolean): string {
+export function webinarPhoneSavedReply(label: string, noticesOpen: boolean, friend = false): string {
   if (!noticesOpen) return `번호를 남겼어요. 이번 세미나 알림 명단은 이미 마감돼서 카톡 알림은 보내드리기 어려워요. 참여 링크는 이 채팅방에 ‘세미나 신청’이라고 보내 주시면 바로 받으실 수 있어요.`;
-  return `번호를 남겼어요. ${label} 세미나 전날 저녁과 당일 아침에 카톡으로 알림을 보내드릴게요.\n알림을 받으시려면 이 채팅방 위의 ‘채널 추가’를 눌러 두세요. 번호는 세미나 알림에만 사용해요.`;
+  return friend
+    ? `번호를 남겼어요. ${label} 세미나 전날 저녁과 당일 아침에 카톡으로 알림을 보내드릴게요. 번호는 세미나 알림에만 사용해요.`
+    : `번호를 남겼어요. ${label} 세미나 전날 저녁과 당일 아침에 카톡으로 알림을 보내드릴게요.\n알림은 CRI 채널을 추가한 분께만 가니, 아래 ‘${CHANNEL_ADD_LABEL}’도 눌러 주세요. 번호는 세미나 알림에만 사용해요.`;
 }
 
 /** A number from someone with no KakaoTalk sign-up yet: how to sign up and leave the number in one message. */
