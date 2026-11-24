@@ -170,26 +170,6 @@ export default function ProjectsClient({ content }: { content: Record<string, st
         </div>
       </div>
 
-      {/* Featured Showcase Section */}
-      <div className="py-24 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-3xl mx-auto space-y-8">
-             <div className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold text-gray-300 bg-gray-800 border border-gray-700">
-                Showcase
-             </div>
-             <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">Pioneering the Future</h2>
-             <p className="text-xl text-gray-400 leading-relaxed">"The environment at CRI allowed me to turn an abstract machine learning concept into a functional diagnostic app in under three months."</p>
-             <div className="flex items-center justify-center gap-4 text-left border-t border-gray-800 pt-8 mt-8 inline-block mx-auto max-w-sm">
-                <div className="w-12 h-12 bg-gray-800 rounded-full border border-gray-700"></div>
-                <div>
-                   <p className="font-bold text-white">Sarah Jenkins</p>
-                   <p className="text-sm text-gray-400">Personal Project: MediAI</p>
-                </div>
-             </div>
-          </motion.div>
-        </div>
-      </div>
-
     </div>
   );
 }
