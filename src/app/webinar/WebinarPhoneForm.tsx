@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BellRing, CheckCircle2 } from "lucide-react";
+import { BellRing, CheckCircle2, MessageCircle } from "lucide-react";
 import { useT } from "@/i18n/client";
 import { addWebinarPhone } from "@/app/actions/webinar";
 import { KAKAO_CHANNEL_URL } from "@/lib/webinar";
@@ -50,5 +50,18 @@ export default function WebinarPhoneForm({ id, token, place }: { id: string; tok
       {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
       <p className="mt-2 text-xs text-gray-500">{copy.note}</p>
     </form>
+  );
+}
+
+/** A Korean mobile was given: the notice only arrives if they have added the channel, so say it plainly. */
+export function KakaoChannelNudge() {
+  const { t } = useT();
+  const copy = t.webinar.phoneAsk;
+  return (
+    <div className="rounded-2xl border-2 border-[#FEE500] bg-[#FFFBE0] p-5 text-left">
+      <p className="inline-flex items-center gap-2 font-bold text-gray-900"><MessageCircle className="h-5 w-5 fill-[#191919] text-[#191919]" />{copy.channelTitle}</p>
+      <p className="mt-1.5 text-sm leading-relaxed text-gray-700">{copy.channelBody}</p>
+      <a href={KAKAO_CHANNEL_URL} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex rounded-xl bg-[#FEE500] px-4 py-2.5 text-sm font-bold text-[#191919] hover:brightness-95">{copy.addChannel}</a>
+    </div>
   );
 }

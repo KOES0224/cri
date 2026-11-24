@@ -10,7 +10,7 @@ import { trackEvent } from "@/lib/analytics";
 import { metaTrack } from "@/lib/meta/pixel";
 import { WEBINAR, webinarEndsAt } from "@/lib/webinar";
 import KakaoSignupCard from "./KakaoSignupCard";
-import WebinarPhoneForm from "./WebinarPhoneForm";
+import WebinarPhoneForm, { KakaoChannelNudge } from "./WebinarPhoneForm";
 
 type Form = { name: string; role: "" | "PARENT" | "STUDENT" | "OTHER"; phone: string; email: string; kakaoId: string; question: string; consent: boolean };
 const input = "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-900 outline-none transition-all focus:ring-2 focus:ring-blue-500";
@@ -106,7 +106,8 @@ export default function WebinarClient({ open, live: liveAtLoad = false, user }: 
               <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
               <h2 className="mt-4 text-2xl font-bold text-gray-900">{result.alreadyRegistered ? copy.alreadyTitle : copy.successTitle}</h2>
               <p className="mt-3 text-gray-600">{result.alreadyRegistered ? copy.alreadyBody : copy.successBody}</p>
-              {result.phoneToken && <div className="mt-6"><WebinarPhoneForm id={result.eventId} token={result.phoneToken} place="success" /></div>}
+              {result.kakaoNotices === "ask" && result.phoneToken && <div className="mt-6"><WebinarPhoneForm id={result.eventId} token={result.phoneToken} place="success" /></div>}
+              {result.kakaoNotices === "channel" && <div className="mt-6"><KakaoChannelNudge /></div>}
               <div className="mt-6"><KakaoSignupCard place="success" className="-mx-3 sm:mx-0" /></div>
               {!user && (
                 <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50 p-5 text-left">

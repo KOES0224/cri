@@ -7,7 +7,7 @@
  */
 
 import { COMPANY } from '../company';
-import { WEBINAR } from '../webinar';
+import { WEBINAR, koreanMobile } from '../webinar';
 
 export type SkillRequest = { utterance: string; userKey: string; callbackUrl: string | null; botId: string | null };
 
@@ -292,8 +292,10 @@ export function webinarKakaoReply(input: {
   pageUrl: string | null;
   /** The session has started (10:00–11:00): say "join now" instead of "come five minutes early". */
   started?: boolean;
-  /** Whether this sign-up has a phone number for the KakaoTalk notices; without one the reply asks for it. */
+  /** Whether this sign-up has a Korean mobile number for the KakaoTalk notices; without one the reply asks for it. */
   hasPhone?: boolean;
+  /** Before the friend-group cutoff: KakaoTalk notices are still promised and numbers still asked for. */
+  noticesOpen?: boolean;
 }): string {
   if (!input.open) return `이번 세미나(${input.label})는 끝났어요. 다음 세미나 일정은 정해지는 대로 criglobal.org/ko/webinar 에 올릴게요.`;
   const head = input.already ? `이미 신청되어 있어요. 다시 안내드릴게요.` : `세미나 신청이 접수되었어요. 감사합니다!`;
@@ -305,7 +307,7 @@ export function webinarKakaoReply(input: {
   } else {
     lines.push('', `참여 링크를 지금 바로 보내드리지 못했어요. 잠시 후 ‘세미나 신청’이라고 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요.`);
   }
-  if (!input.started) {
+  if (!input.started && input.noticesOpen) {
     lines.push('', input.hasPhone
       ? '전날 저녁과 당일 아침 알림은 남겨 주신 번호로 카톡 보내드려요. 알림을 받으시려면 이 채팅방 위의 ‘채널 추가’를 눌러 두세요.'
       : '📱 전날 저녁·당일 아침 알림을 카톡으로 받으시려면 휴대폰 번호를 보내 주세요 (예: 010-1234-5678). 알림에만 사용하고, 이 채팅방 위의 ‘채널 추가’도 눌러 두셔야 받으실 수 있어요.');
@@ -315,9 +317,13 @@ export function webinarKakaoReply(input: {
 }
 
 /** Reply when someone sends just their number after signing up on KakaoTalk. */
-export function webinarPhoneSavedReply(label: string): string {
+export function webinarPhoneSavedReply(label: string, noticesOpen: boolean): string {
+  if (!noticesOpen) return `번호를 남겼어요. 이번 세미나 알림 명단은 이미 마감돼서 카톡 알림은 보내드리기 어려워요. 참여 링크는 이 채팅방에 ‘세미나 신청’이라고 보내 주시면 바로 받으실 수 있어요.`;
   return `번호를 남겼어요. ${label} 세미나 전날 저녁과 당일 아침에 카톡으로 알림을 보내드릴게요.\n알림을 받으시려면 이 채팅방 위의 ‘채널 추가’를 눌러 두세요. 번호는 세미나 알림에만 사용해요.`;
 }
+
+/** A number from someone with no KakaoTalk sign-up yet: how to sign up and leave the number in one message. */
+export const PHONE_WITHOUT_SIGNUP_REPLY = '세미나 알림 번호를 남기시려면 ‘세미나 신청 010-1234-5678’처럼 보내 주세요. 신청과 알림 번호가 함께 저장돼요.';
 
 /**
  * A message that is only a phone number ("010-1234-5678", "제 번호는 010-… 입니다", "네 010…"): the answer to the
@@ -326,8 +332,23 @@ export function webinarPhoneSavedReply(label: string): string {
 export function parsePhoneOnly(utterance: string): string | null {
   const match = utterance.normalize('NFC').match(PHONE);
   if (!match) return null;
+  const phone = koreanMobile(match[0]);
+  if (!phone) return null;
   let rest = compact(withoutOwnContact(utterance));
-  for (const pattern of FILLERS) rest = rest.replace(pattern, '');
-  if (!/^(입니다|이에요|예요|이요|요|여기요|여기있어요|여기있습니다|남길게요|남깁니다|드려요|드립니다|알림부탁드려요|알림부탁드립니다|부탁드려요|부탁드립니다|알림받을게요)?$/.test(rest)) return null;
-  return match[0].replace(/\D/g, '').replace(/^820?(1\d{8,9})$/, '0$1');
+  // Anything about the seminar, a request or a problem is not "just a number".
+  if (/세미나|웨비나|설명회|신청|링크|취소|변경|문의|상담|전화|연락|환불|등록|참석|불참|수업|프로그램/.test(rest)) return null;
+  for (let pass = 0; pass < 3; pass++) {
+    const before = rest;
+    // Endings first, so "저장 부탁드립니다" is not read as "저" + "장…".
+    rest = rest
+      .replace(/(으로|로)?(알림)?(보내주세요|보내주시면돼요|부탁해요|부탁드려요|부탁드립니다|남겨요|남길게요|남깁니다|보냅니다|보내요|드려요|드립니다|이거요|저장부탁드립니다|저장해주세요|받을게요|알림받을게요|이번호로알림부탁드려요|이번호로부탁드려요|이번호요|맞아요|입니다|이에요|예요|이요|요|여기요|여기있어요|여기있습니다)$/, '');
+    for (const pattern of FILLERS) rest = rest.replace(pattern, '');
+    rest = rest
+      .replace(/^(네네|넵넵|네넵|알겠습니다|알겠어요|좋아요|좋습니다|맞아요|넵|네)/, '')
+      .replace(/(으로|로)?(알림)?(보내주세요|보내주시면돼요|부탁해요|부탁드려요|부탁드립니다|남겨요|남길게요|남깁니다|보냅니다|보내요|드려요|드립니다|이거요|저장부탁드립니다|저장해주세요|받을게요|알림받을게요|이번호로알림부탁드려요|이번호로부탁드려요|이번호요|맞아요|입니다|이에요|예요|이요|요|여기요|여기있어요|여기있습니다)$/, '');
+    if (rest === before) break;
+  }
+  // What may stay: a short name or family word ("김서연", "서연맘", "학부모", "엄마").
+  if (!/^(이|[가-힣]{2,4}|[가-힣]{1,3}(맘|엄마|아빠|어머니|아버지|학부모)|학부모|학생|엄마|아빠|어머니|아버지)?$/.test(rest)) return null;
+  return phone;
 }

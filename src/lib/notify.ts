@@ -231,18 +231,28 @@ export async function notifyWebinarRegistration(input: { id: string; name: strin
 }
 
 /** Confirmation to the registrant, in their language. The join link is sent separately the day before. */
-export async function sendWebinarConfirmation(input: { to: string; locale: string; /** Set when no phone number was given: where to add one. */ phoneLink?: string | null }) {
+export async function sendWebinarConfirmation(input: {
+  to: string; locale: string;
+  /** "ask": no Korean mobile yet (phoneLink adds one); "channel": a number was given, add the channel; null: past the cutoff. */
+  kakaoNotices?: 'ask' | 'channel' | null;
+  phoneLink?: string | null;
+}) {
   // Fixed wording only: nothing a visitor typed is relayed to an address they chose.
   const ko = input.locale === 'ko';
-  const phoneKo = input.phoneLink
-    ? [``, `카카오톡 알림 받기: 전날 저녁과 당일 아침에 참여 링크를 카톡으로 보내드려요. 휴대폰 번호를 남겨 주세요(알림에만 사용): ${input.phoneLink}`, `그리고 CRI 카카오톡 채널을 추가해 두셔야 받으실 수 있어요: https://pf.kakao.com/_xhdzxln`]
-    : [``, `전날 저녁과 당일 아침에 남겨 주신 번호로 카카오톡 알림을 보내드려요. CRI 카카오톡 채널을 추가해 두셔야 받으실 수 있어요: https://pf.kakao.com/_xhdzxln`];
-  const phoneEn = input.phoneLink
-    ? [``, `KakaoTalk reminders: add a mobile number to get the join link on KakaoTalk the evening before and on the morning (used for reminders only): ${input.phoneLink}`]
-    : [];
+  const channel = 'https://pf.kakao.com/_xhdzxln';
+  const kakaoKo = input.kakaoNotices === 'ask' && input.phoneLink
+    ? [``, `카카오톡 알림 받기: 전날 저녁과 당일 아침에 참여 링크를 카톡으로 보내드려요. 한국 휴대폰 번호를 남겨 주세요(알림에만 사용): ${input.phoneLink}`, `알림을 받으시려면 CRI 카카오톡 채널도 추가해 두셔야 해요: ${channel}`]
+    : input.kakaoNotices === 'channel'
+      ? [``, `전날 저녁과 당일 아침에 남겨 주신 번호로 카카오톡 알림을 보내드려요. CRI 카카오톡 채널을 추가해 두셔야 받으실 수 있어요: ${channel}`]
+      : [];
+  const kakaoEn = input.kakaoNotices === 'ask' && input.phoneLink
+    ? [``, `KakaoTalk reminders: add a Korean mobile number to get the join link on KakaoTalk the evening before and on the morning (used for reminders only): ${input.phoneLink}`]
+    : input.kakaoNotices === 'channel'
+      ? [``, `We also send a KakaoTalk reminder to your number the evening before and on the morning. Add CRI's KakaoTalk channel to receive it: ${channel}`]
+      : [];
   const text = ko
-    ? [`안녕하세요, CRI 무료 온라인 세미나 신청이 접수되었습니다.`, ``, `주제: ${WEBINAR_TOPIC.ko}`, `일시: ${WEBINAR_WHEN.ko}`, `방식: 온라인(Zoom). 참여 링크는 전날 저녁과 시작 30분 전에 이메일로 보내드립니다.`, ...phoneKo, ``, `프로그램 소개: ${SITE_URL}/ko/research`, `문의: support@cri.kr`].join('\n')
-    : [`Hello, your seat for the free CRI online seminar is confirmed.`, ``, `Topic: ${WEBINAR_TOPIC.en}`, `When: ${WEBINAR_WHEN.en}`, `Where: online (Zoom). The join link is emailed to you the evening before and 30 minutes before the start.`, ...phoneEn, ``, `Programs: ${SITE_URL}/research`, `Questions: support@cri.kr`].join('\n');
+    ? [`안녕하세요, CRI 무료 온라인 세미나 신청이 접수되었습니다.`, ``, `주제: ${WEBINAR_TOPIC.ko}`, `일시: ${WEBINAR_WHEN.ko}`, `방식: 온라인(Zoom). 참여 링크는 시작 전에 이 이메일로 보내드립니다.`, ...kakaoKo, ``, `참여 링크를 지금 바로 받으시려면 CRI 카카오톡 채널에 ‘세미나 신청’이라고 보내 주세요: ${channel}/chat`, `프로그램 소개: ${SITE_URL}/ko/research`, `문의: support@cri.kr`].join('\n')
+    : [`Hello, your seat for the free CRI online seminar is confirmed.`, ``, `Topic: ${WEBINAR_TOPIC.en}`, `When: ${WEBINAR_WHEN.en}`, `Where: online (Zoom), in Korean. The join link is emailed to you before the session starts.`, ...kakaoEn, ``, `Programs: ${SITE_URL}/research`, `Questions: support@cri.kr`].join('\n');
   return send({ to: input.to, subject: ko ? `CRI 세미나 신청 확인 · ${WEBINAR_WHEN.ko}` : `Your CRI seminar seat · ${WEBINAR_WHEN.en}`, text, replyTo: ADMISSIONS_INBOX });
 }
 

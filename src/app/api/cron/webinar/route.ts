@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendWebinarPhoneAsk, sendWebinarReminder } from "@/lib/notify";
-import { WEBINAR, sameKstDay, webinarJoinInfo, webinarPhoneAskAt, webinarReminderTimes } from "@/lib/webinar";
+import { WEBINAR, koreanMobile, sameKstDay, webinarJoinInfo, webinarPhoneAskAt, webinarReminderTimes } from "@/lib/webinar";
 import { webinarPhoneLink } from "@/lib/webinar-phone";
 
 /**
@@ -9,6 +9,7 @@ import { webinarPhoneLink } from "@/lib/webinar-phone";
  * - job=phone-ask (daily 10:00 KST): once per person, emails sign-ups that left an email but no phone number, asking
  *   for one so they get the KakaoTalk notices (timing: webinarPhoneAskAt).
  * - job=reminders (19:00 and 09:30 KST): the join link by email the evening before and 30 minutes before the start.
+ * Each schedule has a second run ten minutes later (Vercel does not retry a failed cron run); the keys make it a no-op.
  * Every email carries a Resend idempotency key, so a repeated run inside 24 hours sends nothing twice.
  */
 export const dynamic = "force-dynamic";
@@ -30,9 +31,9 @@ export async function GET(request: Request) {
 
 async function phoneAsk(now: Date) {
   const rows = await prisma.webinarRegistration.findMany({
-    where: { webinarKey: WEBINAR.key, email: { not: null }, OR: [{ phone: null }, { phone: "" }] },
-    select: { id: true, email: true, locale: true, createdAt: true },
-  });
+    where: { webinarKey: WEBINAR.key, email: { not: null } },
+    select: { id: true, email: true, phone: true, locale: true, createdAt: true },
+  }).then((all) => all.filter((r) => !koreanMobile(r.phone))); // overseas or landline numbers can't join a friend group
   let sent = 0, failed = 0;
   for (const row of rows) {
     const at = webinarPhoneAskAt(row.createdAt);

@@ -219,11 +219,18 @@ test('KakaoTalk: a message that is just a number is recognised; a sign-up with a
   assert.equal(parsePhoneOnly('세미나 신청 010-1234-5678'), null);
   assert.equal(parsePhoneOnly('010-1234-5678로 전화 주세요'), null);
   assert.equal(parsePhoneOnly('세미나 주제가 뭐예요?'), null);
+  // natural answers to "send your number"
+  for (const m of ['김서연 010-1234-5678', '010-1234-5678 김서연입니다', '서연맘 010-1234-5678', '학부모 010-1234-5678', '김서연 엄마 010-1234-5678', '네네 010-1234-5678', '넵넵 010-1234-5678', '알겠습니다 010-1234-5678', '010-1234-5678로 보내주세요', '010-1234-5678 이 번호로 알림 부탁드려요', '번호 남겨요 010-1234-5678', '010-1234-5678 저장 부탁드립니다'])
+    assert.equal(parsePhoneOnly(m), '01012345678', m);
+  // not a Korean mobile, or more than a number
+  for (const m of ['+1 213 555 0100', '02-1234-5678', '010-1234-5678 취소할게요', '세미나 010-1234-5678', '010-1234-5678 겨울 프로그램 문의드려요'])
+    assert.equal(parsePhoneOnly(m), null, m);
 });
 
 test('KakaoTalk sign-up reply asks for a number when there is none, and never during the session', async () => {
   const { webinarKakaoReply } = await import('../src/lib/kakao/skill');
-  const base = { open: true, already: false, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', join: { url: 'https://us06web.zoom.us/j/1', passcode: null }, pageUrl: null };
+  const base = { open: true, already: false, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', join: { url: 'https://us06web.zoom.us/j/1', passcode: null }, pageUrl: null, noticesOpen: true };
+  assert.doesNotMatch(webinarKakaoReply({ ...base, noticesOpen: false, hasPhone: false }), /휴대폰 번호/); // list exported: no ask
   assert.match(webinarKakaoReply({ ...base, hasPhone: false }), /휴대폰 번호를 보내 주세요/);
   assert.match(webinarKakaoReply({ ...base, already: true, hasPhone: false }), /휴대폰 번호를 보내 주세요/); // asked again when they come back
   assert.match(webinarKakaoReply({ ...base, hasPhone: true }), /남겨 주신 번호로/);
@@ -240,4 +247,14 @@ test('the add-a-number link is signed per sign-up', async () => {
   assert.equal(webinarPhoneTokenValid('reg_1', token.slice(0, -1) + (token.endsWith('A') ? 'B' : 'A')), false);
   assert.equal(webinarPhoneTokenValid('reg_1', ''), false);
   assert.match(webinarPhoneLink('https://criglobal.org/', 'reg_1'), /^https:\/\/criglobal\.org\/webinar\/phone\?r=reg_1&t=/);
+});
+
+test('KakaoTalk notices stop being promised at the friend-group cutoff', async () => {
+  const { webinarKakaoNoticesOpen } = await import('../src/lib/webinar');
+  const { webinarPhoneSavedReply } = await import('../src/lib/kakao/skill');
+  assert.equal(webinarKakaoNoticesOpen(new Date('2026-12-04T02:59:00Z')), true);  // 11:59 KST on 12/4
+  assert.equal(webinarKakaoNoticesOpen(new Date('2026-12-04T03:00:00Z')), false); // 12:00 KST
+  assert.match(webinarPhoneSavedReply('12월 5일(토) 오전 10시', true), /전날 저녁과 당일 아침/);
+  assert.match(webinarPhoneSavedReply('12월 5일(토) 오전 10시', false), /마감/);
+  assert.doesNotMatch(webinarPhoneSavedReply('12월 5일(토) 오전 10시', false), /보내드릴게요/);
 });

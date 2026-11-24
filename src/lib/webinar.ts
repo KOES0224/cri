@@ -21,6 +21,11 @@ export const WEBINAR = {
    * About two weeks before the seminar is a good default; never ask again after that.
    */
   phoneAskAt: new Date("2026-12-01T10:00:00+09:00"),
+  /**
+   * The owner exports the numbers and uploads the KakaoTalk friend group at or after this moment (the day before);
+   * from then on nobody is promised a KakaoTalk notice or asked for a number for one.
+   */
+  kakaoNoticeCutoff: new Date("2026-12-04T12:00:00+09:00"),
 } as const;
 
 /** Earlier webinars, newest first: the admin list can switch to them and marks people who came back. */
@@ -96,6 +101,11 @@ export function webinarDedupeKey(input: { email?: string | null; phone?: string 
   return null;
 }
 
+
+/** Until the friend-group list is exported: numbers are still collected for the KakaoTalk notices. */
+export function webinarKakaoNoticesOpen(now = new Date()): boolean {
+  return now < WEBINAR.kakaoNoticeCutoff;
+}
 
 /** A Korean mobile number as KakaoTalk friend groups take it (01012345678), or null for anything else. */
 export function koreanMobile(phone: string | null | undefined): string | null {
