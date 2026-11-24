@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { allowRequest } from "@/lib/request-limit";
-import { WEBINAR, webinarDedupeKey, webinarRegistrationOpen } from "@/lib/webinar";
+import { WEBINAR, webinarDedupeKey, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
 import { webinarRegistrationSchema, type WebinarRegistrationInput } from "@/lib/webinar-validation";
 import { notifyWebinarRegistration, sendWebinarConfirmation } from "@/lib/notify";
 import { applicantTypeFromRole, type MetaCustomData } from "@/lib/meta/config";
@@ -12,11 +12,12 @@ import { getLocale } from "@/i18n";
 
 export type WebinarResult =
   | { success: true; alreadyRegistered: boolean; eventId: string; tracking: MetaCustomData }
-  | { success: false; code: string; field?: string };
+  | { success: false; code: string; field?: string; live?: boolean };
 
 /** Saves a sign-up (one per person per webinar), tells admissions, confirms by email when one was given. */
 export async function registerForWebinar(input: WebinarRegistrationInput): Promise<WebinarResult> {
-  if (!webinarRegistrationOpen()) return { success: false, code: "closed" };
+  // Closed: tell the page whether the seminar is on right now, so it shows the KakaoTalk route instead of "over".
+  if (!webinarRegistrationOpen()) return { success: false, code: "closed", live: webinarKakaoOpen() };
   const parsed = webinarRegistrationSchema.safeParse(input);
   if (!parsed.success) { const issue = parsed.error.issues[0]; return { success: false, code: issue?.message || "failed", field: String(issue?.path[0] ?? "form") }; }
   const data = parsed.data;

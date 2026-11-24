@@ -25,6 +25,14 @@ export default function WebinarBanner({ initialVisible }: { initialVisible: bool
     return () => window.clearTimeout(id);
   }, [visible]);
   useEffect(() => {
+    // A tab left open loses the strip when the session ends.
+    if (!visible) return;
+    const ms = WEBINAR.bannerUntil.getTime() - Date.now();
+    if (ms <= 0 || ms >= 2 ** 31 - 1) return;
+    const id = window.setTimeout(() => setVisible(false), ms);
+    return () => window.clearTimeout(id);
+  }, [visible]);
+  useEffect(() => {
     document.documentElement.classList.toggle("cri-banner", visible);
   }, [visible]);
   if (!visible) return null;
