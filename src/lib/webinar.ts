@@ -15,6 +15,12 @@ export const WEBINAR = {
   /** Short label for admin screens and the KakaoTalk reply. */
   label: { ko: "12월 5일(토) 오전 10시", en: "Sat 5 Dec, 10:00 AM KST" },
   topic: { ko: "AI 시대, 논문은 통할까", en: "Does a research paper still count in the AI era?" },
+  /**
+   * People who left no phone number are asked once more, by email, to add one (KakaoTalk notices need a number):
+   * at this moment, or 7 days after they signed up if that comes first; late sign-ups are asked the next morning.
+   * About two weeks before the seminar is a good default; never ask again after that.
+   */
+  phoneAskAt: new Date("2026-12-01T10:00:00+09:00"),
 } as const;
 
 /** Earlier webinars, newest first: the admin list can switch to them and marks people who came back. */
@@ -88,4 +94,42 @@ export function webinarDedupeKey(input: { email?: string | null; phone?: string 
   const kakao = (input.kakaoId || "").trim().toLowerCase().replace(/^@/, "");
   if (kakao) return `kakao:${kakao}`;
   return null;
+}
+
+
+/** A Korean mobile number as KakaoTalk friend groups take it (01012345678), or null for anything else. */
+export function koreanMobile(phone: string | null | undefined): string | null {
+  const digits = (phone || "").replace(/\D/g, "").replace(/^820?(1\d{8,9})$/, "0$1");
+  return /^01[016789]\d{7,8}$/.test(digits) ? digits : null;
+}
+
+const DAY = 24 * 3600_000;
+const KST = 9 * 3600_000;
+
+/** The next 10:00 KST at or after `at`. */
+function nextTenKst(at: Date): Date {
+  const kst = new Date(at.getTime() + KST);
+  const ten = Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate(), 10) - KST;
+  return new Date(ten >= at.getTime() ? ten : ten + DAY);
+}
+
+/**
+ * When to ask someone without a number, once: 7 days after signing up or at phoneAskAt, whichever is first, but at
+ * least a day after signing up; always at 10:00 KST. Null when that would fall in the last 24 hours before the
+ * seminar (the reminders cover that day).
+ */
+export function webinarPhoneAskAt(createdAt: Date): Date | null {
+  const raw = Math.min(createdAt.getTime() + 7 * DAY, Math.max(WEBINAR.phoneAskAt.getTime(), createdAt.getTime() + DAY));
+  const at = nextTenKst(new Date(raw));
+  return at.getTime() <= WEBINAR.startsAt.getTime() - DAY ? at : null;
+}
+
+/** Email reminders with the join link: the evening before (19:00 KST) and 30 minutes before the start. */
+export function webinarReminderTimes(): { dayBefore: Date; soon: Date } {
+  return { dayBefore: new Date(WEBINAR.startsAt.getTime() - 15 * 3600_000), soon: new Date(WEBINAR.startsAt.getTime() - 30 * 60_000) };
+}
+
+/** Same calendar day in Korea. */
+export function sameKstDay(a: Date, b: Date): boolean {
+  return new Date(a.getTime() + KST).toISOString().slice(0, 10) === new Date(b.getTime() + KST).toISOString().slice(0, 10);
 }

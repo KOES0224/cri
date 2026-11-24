@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { allowRequest } from "@/lib/request-limit";
 import { WEBINAR, webinarDedupeKey, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
+import { webinarPhoneLink, webinarPhoneToken, webinarPhoneTokenValid } from "@/lib/webinar-phone";
 import { webinarRegistrationSchema, type WebinarRegistrationInput } from "@/lib/webinar-validation";
 import { notifyWebinarRegistration, sendWebinarConfirmation } from "@/lib/notify";
 import { applicantTypeFromRole, type MetaCustomData } from "@/lib/meta/config";
@@ -11,10 +12,34 @@ import { sendMetaEvent } from "@/lib/meta/capi";
 import { getLocale } from "@/i18n";
 
 export type WebinarResult =
-  | { success: true; alreadyRegistered: boolean; eventId: string; tracking: MetaCustomData }
+  | { success: true; alreadyRegistered: boolean; eventId: string; tracking: MetaCustomData; /** No phone on the sign-up: the page offers to add one with this token. */ phoneToken: string | null }
   | { success: false; code: string; field?: string; live?: boolean };
 
 /** Saves a sign-up (one per person per webinar), tells admissions, confirms by email when one was given. */
+const SITE_URL = (process.env.NEXTAUTH_URL || "https://criglobal.org").replace(/\/$/, "");
+
+export type WebinarPhoneResult = { success: true } | { success: false; code: "phone" | "link" | "rate" | "failed" };
+
+/**
+ * Adds a phone number to one sign-up, from the success screen or the emailed link (a signed token stands in for an
+ * account). Only for the current webinar; an existing number is replaced so a typo can be fixed.
+ */
+export async function addWebinarPhone(input: { id: string; token: string; phone: string }): Promise<WebinarPhoneResult> {
+  const phone = String(input.phone || "").trim().slice(0, 40);
+  if (phone.replace(/\D/g, "").length < 8) return { success: false, code: "phone" };
+  if (!webinarPhoneTokenValid(String(input.id || ""), String(input.token || ""))) return { success: false, code: "link" };
+  try {
+    if (!(await allowRequest("webinar-phone", input.id, 10, 3600))) return { success: false, code: "rate" };
+    const row = await prisma.webinarRegistration.findUnique({ where: { id: input.id }, select: { webinarKey: true } });
+    if (!row || row.webinarKey !== WEBINAR.key) return { success: false, code: "link" };
+    await prisma.webinarRegistration.update({ where: { id: input.id }, data: { phone } });
+    return { success: true };
+  } catch (error) {
+    console.error("webinar phone update failed", error instanceof Error ? error.message : error);
+    return { success: false, code: "failed" };
+  }
+}
+
 export async function registerForWebinar(input: WebinarRegistrationInput): Promise<WebinarResult> {
   // Closed: tell the page whether the seminar is on right now, so it shows the KakaoTalk route instead of "over".
   if (!webinarRegistrationOpen()) return { success: false, code: "closed", live: webinarKakaoOpen() };
@@ -29,8 +54,13 @@ export async function registerForWebinar(input: WebinarRegistrationInput): Promi
     const limiterKey = dedupeKey.replace(/^email:([^+@]+)\+[^@]*@/, "email:$1@");
     if (!(await allowRequest("webinar", limiterKey, 5, 600)) || !(await allowRequest("webinar-all", WEBINAR.key, 300, 3600))) return { success: false, code: "rate" };
     const [session, locale] = await Promise.all([getServerSession(authOptions), getLocale()]);
-    const existing = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { id: true } });
-    if (existing) return { success: true, alreadyRegistered: true, eventId: existing.id, tracking: {} };
+    const existing = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { id: true, phone: true } });
+    if (existing) {
+      // Signing up again with a phone number adds it to the first sign-up (that is how people answer "leave a number").
+      let phone = existing.phone;
+      if (!phone && data.phone) phone = (await prisma.webinarRegistration.update({ where: { id: existing.id }, data: { phone: data.phone }, select: { phone: true } })).phone;
+      return { success: true, alreadyRegistered: true, eventId: existing.id, tracking: {}, phoneToken: phone ? null : webinarPhoneToken(existing.id) };
+    }
     const registration = await prisma.webinarRegistration.create({ data: {
       webinarKey: WEBINAR.key, name: data.name, role: data.role, phone: data.phone || null, email: data.email ? data.email.toLowerCase() : null,
       kakaoId: data.kakaoId || null, question: data.question || null, locale, userId: session?.user?.id || null, dedupeKey,
@@ -38,7 +68,7 @@ export async function registerForWebinar(input: WebinarRegistrationInput): Promi
     // Best effort: the registration is saved whatever happens to the emails or the ad event.
     await Promise.all([
       notifyWebinarRegistration({ ...data, id: registration.id, locale }),
-      data.email ? sendWebinarConfirmation({ to: data.email, locale }) : Promise.resolve(),
+      data.email ? sendWebinarConfirmation({ to: data.email, locale, phoneLink: data.phone ? null : webinarPhoneLink(SITE_URL, registration.id) }) : Promise.resolve(),
     ]).catch((error) => console.error("webinar notifications failed", error instanceof Error ? error.message : error));
     const [firstName, ...rest] = data.name.split(/\s+/);
     const { data: tracking } = await sendMetaEvent({
@@ -46,12 +76,12 @@ export async function registerForWebinar(input: WebinarRegistrationInput): Promi
       person: { email: data.email || null, phone: data.phone || null, firstName, lastName: rest.join(" "), externalId: session?.user?.id },
       data: { content_name: `Webinar ${WEBINAR.key}`, content_category: "webinar", applicant_type: data.role === "OTHER" ? undefined : applicantTypeFromRole(data.role) },
     });
-    return { success: true, alreadyRegistered: false, eventId: registration.id, tracking };
+    return { success: true, alreadyRegistered: false, eventId: registration.id, tracking, phoneToken: data.phone ? null : webinarPhoneToken(registration.id) };
   } catch (error) {
     // A race on the unique key means the person is registered; everything else is a real failure.
     if ((error as { code?: string }).code === "P2002") {
       const existing = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { id: true } }).catch(() => null);
-      if (existing) return { success: true, alreadyRegistered: true, eventId: existing.id, tracking: {} };
+      if (existing) return { success: true, alreadyRegistered: true, eventId: existing.id, tracking: {}, phoneToken: null };
     }
     console.error("webinar registration failed", error instanceof Error ? error.message : error);
     return { success: false, code: "failed" };

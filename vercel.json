@@ -1,4 +1,20 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["hnd1"]
+  "regions": [
+    "hnd1"
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/webinar?job=phone-ask",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/webinar?job=reminders&slot=evening",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/webinar?job=reminders&slot=morning",
+      "schedule": "30 0 * * *"
+    }
+  ]
 }

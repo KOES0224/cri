@@ -292,6 +292,8 @@ export function webinarKakaoReply(input: {
   pageUrl: string | null;
   /** The session has started (10:00–11:00): say "join now" instead of "come five minutes early". */
   started?: boolean;
+  /** Whether this sign-up has a phone number for the KakaoTalk notices; without one the reply asks for it. */
+  hasPhone?: boolean;
 }): string {
   if (!input.open) return `이번 세미나(${input.label})는 끝났어요. 다음 세미나 일정은 정해지는 대로 criglobal.org/ko/webinar 에 올릴게요.`;
   const head = input.already ? `이미 신청되어 있어요. 다시 안내드릴게요.` : `세미나 신청이 접수되었어요. 감사합니다!`;
@@ -303,6 +305,29 @@ export function webinarKakaoReply(input: {
   } else {
     lines.push('', `참여 링크를 지금 바로 보내드리지 못했어요. 잠시 후 ‘세미나 신청’이라고 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요.`);
   }
+  if (!input.started) {
+    lines.push('', input.hasPhone
+      ? '전날 저녁과 당일 아침 알림은 남겨 주신 번호로 카톡 보내드려요. 알림을 받으시려면 이 채팅방 위의 ‘채널 추가’를 눌러 두세요.'
+      : '📱 전날 저녁·당일 아침 알림을 카톡으로 받으시려면 휴대폰 번호를 보내 주세요 (예: 010-1234-5678). 알림에만 사용하고, 이 채팅방 위의 ‘채널 추가’도 눌러 두셔야 받으실 수 있어요.');
+  }
   if (input.pageUrl) lines.push(`자세한 순서: ${input.pageUrl}`);
   return lines.join('\n');
+}
+
+/** Reply when someone sends just their number after signing up on KakaoTalk. */
+export function webinarPhoneSavedReply(label: string): string {
+  return `번호를 남겼어요. ${label} 세미나 전날 저녁과 당일 아침에 카톡으로 알림을 보내드릴게요.\n알림을 받으시려면 이 채팅방 위의 ‘채널 추가’를 눌러 두세요. 번호는 세미나 알림에만 사용해요.`;
+}
+
+/**
+ * A message that is only a phone number ("010-1234-5678", "제 번호는 010-… 입니다", "네 010…"): the answer to the
+ * bot's "send your number" line. Returns the normalised number, or null for anything else.
+ */
+export function parsePhoneOnly(utterance: string): string | null {
+  const match = utterance.normalize('NFC').match(PHONE);
+  if (!match) return null;
+  let rest = compact(withoutOwnContact(utterance));
+  for (const pattern of FILLERS) rest = rest.replace(pattern, '');
+  if (!/^(입니다|이에요|예요|이요|요|여기요|여기있어요|여기있습니다|남길게요|남깁니다|드려요|드립니다|알림부탁드려요|알림부탁드립니다|부탁드려요|부탁드립니다|알림받을게요)?$/.test(rest)) return null;
+  return match[0].replace(/\D/g, '').replace(/^820?(1\d{8,9})$/, '0$1');
 }
