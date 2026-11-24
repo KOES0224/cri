@@ -24,6 +24,9 @@ So a person cannot write in the chat room, and the bot must never say that someo
   02-6203-8999) and admissions got an email with the conversation, so they know what a caller is calling about.
 - No reply may promise an answer, a call back or a message in the chat ("담당자가 연락드릴게요", "전달했어요").
   `tests/kakao-skill.test.ts` checks the fixed replies and the model instructions for this.
+- A seminar decline or change ("세미나 못 갈 것 같아요", "세미나 신청 취소할게요", "이메일 수정 부탁드립니다") is not
+  worth a phone call: the reply says it was passed on (`SEMINAR_CHANGE_REPLY`; true, the handoff email carries it) and
+  gives the number only for those who want to check. Problems getting into the seminar get the phone reply.
 - The bot answers the next message normally again. There is no hold after a handoff (there was a 12-hour one while a
   person could still take the thread over in the admin chat).
 - Phone hours are not stated anywhere, because none have been given. Add them to `HANDOFF_REPLY` and the instructions

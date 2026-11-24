@@ -4,7 +4,7 @@ import { allowRequest } from "@/lib/request-limit";
 import { notifyKakaoHandoff } from "@/lib/notify";
 import { claudeConfigured, draftReply, type BotReply, type BotTurn } from "@/lib/kakao/reply";
 import {
-  FALLBACK_REPLY, HANDOFF_REPLY, RATE_LIMIT_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, parseSkillRequest, parseWebinarSignup, ruleHandoff, secretMatches,
+  FALLBACK_REPLY, HANDOFF_REPLY, RATE_LIMIT_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, handoffReply, parseSkillRequest, parseWebinarSignup, ruleHandoff, secretMatches, withoutOwnContact,
   textResponse, webinarKakaoReply, type WebinarSignupParse,
 } from "@/lib/kakao/skill";
 import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarDayOf, webinarJoinInfo, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
@@ -48,8 +48,9 @@ export async function POST(request: Request) {
 
   // "세미나 신청" (a message that is only a sign-up, see parseWebinarSignup): answered by a fixed rule with the join
   // link, unless the message also touches a person-only topic.
-  const topicReason = ruleHandoff(req.utterance);
   const signup = parseWebinarSignup(req.utterance);
+  // A sign-up that carries the parent's own number ("학부모 연락처 010-…") is not a request for other people's data.
+  const topicReason = ruleHandoff(signup.signup && (signup.phone || signup.email) ? withoutOwnContact(req.utterance) : req.utterance);
   if (signup.signup && (!topicReason || SIGNUP_DESPITE_HANDOFF.has(topicReason))) {
     const { reply, linkMissing } = await webinarSignupReply(req.userKey, signup);
     // Admissions gets an email when the message also asked for a person, or when there is no link to give (WEBINAR_JOIN_URL unset).
@@ -58,10 +59,11 @@ export async function POST(request: Request) {
     return NextResponse.json(textResponse(reply));
   }
 
-  // Decide without the model first: a topic the bot never answers gets the phone number. Only this turn: the next
-  // message is answered normally again, because nobody takes the thread over in the chat room.
+  // Decide without the model first: a topic the bot never answers gets the phone number (a seminar decline or change
+  // is only passed on). Only this turn: the next message is answered normally again, because nobody takes the thread
+  // over in the chat room.
   if (topicReason) {
-    const reply = HANDOFF_REPLY + seminarHint(req.utterance);
+    const reply = handoffReply(topicReason, req.utterance) + seminarHint(req.utterance);
     after(() => finish(req.userKey, { reply, handoff: true, reason: topicReason }));
     return NextResponse.json(textResponse(reply));
   }
@@ -136,7 +138,7 @@ async function answer(history: BotTurn[], utterance: string, budgetMs: number): 
   try {
     const result = await draftReply(history, utterance, budgetMs);
     if (!result.reply) return { reply: HANDOFF_REPLY + seminarHint(utterance), handoff: true, reason: result.reason ?? "no reply" };
-    return result;
+    return result.handoff ? { ...result, reply: result.reply + seminarHint(utterance) } : result;
   } catch (error) {
     console.error("[kakao] reply failed:", error instanceof Error ? error.message : error);
     return { reply: FALLBACK_REPLY + seminarHint(utterance), handoff: true, reason: "bot error or timeout" };
