@@ -4,7 +4,7 @@ import { allowRequest } from "@/lib/request-limit";
 import { notifyKakaoHandoff } from "@/lib/notify";
 import { claudeConfigured, draftReply, type BotReply, type BotTurn } from "@/lib/kakao/reply";
 import {
-  FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, callbackAck, isWebinarSignupMessage, parseSkillRequest, ruleHandoff, secretMatches,
+  FALLBACK_REPLY, HANDOFF_HOLD_HOURS, HANDOFF_REPLY, HOLD_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, isWebinarSignupMessage, parseSkillRequest, ruleHandoff, secretMatches,
   textResponse, webinarKakaoReply,
 } from "@/lib/kakao/skill";
 import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, webinarJoinInfo, webinarKakaoOpen } from "@/lib/webinar";
@@ -49,9 +49,11 @@ export async function POST(request: Request) {
   // "세미나 신청": answered by a fixed rule with the join link, even while a person owns the thread, unless the
   // message also touches a person-only topic ("세미나 신청 취소").
   const topicReason = ruleHandoff(req.utterance);
-  if (!topicReason && isWebinarSignupMessage(req.utterance)) {
-    const reply = await webinarSignupReply(req.userKey);
-    after(() => finish(req.userKey, { reply, handoff: false, reason: "webinar signup" }));
+  if ((!topicReason || SIGNUP_DESPITE_HANDOFF.has(topicReason)) && isWebinarSignupMessage(req.utterance)) {
+    const { reply, linkMissing } = await webinarSignupReply(req.userKey);
+    // A person sees it when the message also asked for one, or when there is no link to give (WEBINAR_JOIN_URL unset).
+    const reason = topicReason ? `webinar signup + ${topicReason}` : linkMissing ? "webinar signup, WEBINAR_JOIN_URL not set" : "webinar signup";
+    after(() => finish(req.userKey, { reply, handoff: Boolean(topicReason) || linkMissing, reason }));
     return NextResponse.json(textResponse(reply));
   }
 
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
 }
 
 /** Records a KakaoTalk sign-up for the current webinar (one per channel user) and returns the reply with the link. */
-async function webinarSignupReply(userKey: string): Promise<string> {
+async function webinarSignupReply(userKey: string): Promise<{ reply: string; linkMissing: boolean }> {
   const open = webinarKakaoOpen();
   let already = false;
   if (open) {
@@ -104,7 +106,10 @@ async function webinarSignupReply(userKey: string): Promise<string> {
       else console.error("[kakao] webinar sign-up failed:", error instanceof Error ? error.message : error);
     }
   }
-  return webinarKakaoReply({ open, already, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, join: webinarJoinInfo(), pageUrl: "https://criglobal.org/ko/webinar" });
+  const join = webinarJoinInfo();
+  if (open && !join) console.error("[kakao] WEBINAR_JOIN_URL is missing or not a zoom.us https link; the seminar keyword cannot give the link");
+  const reply = webinarKakaoReply({ open, already, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, join, pageUrl: "https://criglobal.org/ko/webinar" });
+  return { reply, linkMissing: open && !join };
 }
 
 async function answer(history: BotTurn[], utterance: string, budgetMs: number): Promise<BotReply> {

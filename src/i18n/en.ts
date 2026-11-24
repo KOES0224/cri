@@ -519,7 +519,7 @@ export const en = {
     kakaoTitle: "Sign up on KakaoTalk",
     kakaoBody: "Add CRI's KakaoTalk channel and send “세미나 신청” (seminar sign-up). You are registered at once and get the joining details in the chat.",
     kakaoCta: "Open the KakaoTalk channel",
-    kakaoAfter: "Add CRI's KakaoTalk channel to get a reminder and the join link there too: send “세미나 신청” in the chat.",
+    kakaoAfter: "Add CRI's KakaoTalk channel and send “세미나 신청” to keep the join link in KakaoTalk too.",
     formTitle: "Save your seat",
     name: "Name *",
     role: "I am a *",

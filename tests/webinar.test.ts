@@ -33,8 +33,14 @@ test('the banner and the form switch off by the Korean calendar', () => {
 
 test('KakaoTalk keyword: seminar sign-up variants are caught, plain questions are not', async () => {
   const { isWebinarSignupMessage, ruleHandoff } = await import('../src/lib/kakao/skill');
-  for (const m of ['세미나 신청', '세미나신청', '세미나 신청할게요', '웨비나 신청합니다', '세미나 링크 주세요', '설명회 참가 신청', '세미나 zoom 주소']) assert.equal(isWebinarSignupMessage(m), true, m);
-  for (const m of ['세미나 주제가 뭐예요?', '겨울 프로그램 신청 방법', '안녕하세요']) assert.equal(isWebinarSignupMessage(m), false, m);
+  for (const m of ['세미나 신청', '세미나신청', '세미나 신청할게요', '웨비나 신청합니다', '세미나 링크 주세요', '설명회 참가 신청', '세미나 zoom 주소',
+    '세미나 참석 신청합니다', '세미나 참석할게요', '세미나를 신청하고 싶어요', '세미나에 참가 신청합니다', '세미나 등록할게요', '세미나 입장 링크 주세요', '세미나 신청했어요'])
+    assert.equal(isWebinarSignupMessage(m), true, m);
+  for (const m of ['세미나 주제가 뭐예요?', '겨울 프로그램 신청 방법', '안녕하세요',
+    // questions and stories that merely mention a sign-up go to the model or a person
+    '세미나 신청했는데요, 혹시 겨울 프로그램은 몇 명까지 하나요?', '안녕하세요. 10월 설명회 신청했던 학부모입니다. 겨울 프로그램 지원 마감이 언제인가요?',
+    '세미나 링크가 안 열려요', '세미나 참석 못할 것 같아요', '세미나 신청 변경하고 싶어요'])
+    assert.equal(isWebinarSignupMessage(m), false, m);
   // Cancelling goes to a person first: the route checks ruleHandoff before the keyword.
   assert.ok(ruleHandoff('세미나 신청 취소할게요'));
 });
@@ -68,6 +74,10 @@ test('returning sign-ups are matched on any one contact', async () => {
   const { webinarContactKeys } = await import('../src/lib/webinar');
   assert.deepEqual(webinarContactKeys({ email: 'A@b.co', phone: '010-1234-5678', kakaoId: '' }), ['email:a@b.co', 'phone:01012345678']);
   assert.deepEqual(webinarContactKeys({ dedupeKey: 'kakaobot:bk-1' }), ['kakaobot:bk-1']);
+  assert.deepEqual(webinarContactKeys({ phone: '+82 10-1234-5678' }), ['phone:01012345678']); // autofill vs typed
+  assert.deepEqual(webinarContactKeys({ kakaoId: '없음' }), []);   // placeholder text joins nobody
+  assert.deepEqual(webinarContactKeys({ kakaoId: '-' }), []);
+  assert.deepEqual(webinarContactKeys({ kakaoId: '@MinjunMom' }), ['kakao:minjunmom']);
 });
 
 test('KakaoTalk keeps giving the link until the session ends; the website form closes at the start', async () => {
@@ -76,4 +86,14 @@ test('KakaoTalk keeps giving the link until the session ends; the website form c
   assert.equal(webinarKakaoOpen(new Date('2026-12-05T01:05:00Z')), true);         // ...but the keyword still works
   assert.equal(webinarKakaoOpen(new Date('2026-12-05T01:59:00Z')), true);         // 10:59 KST
   assert.equal(webinarKakaoOpen(new Date('2026-12-05T02:00:00Z')), false);        // 11:00 KST: session over
+});
+
+test('KakaoTalk: a sign-up that also asks for a person still registers; refunds and cancellations do not', async () => {
+  const { SIGNUP_DESPITE_HANDOFF, ruleHandoff, isWebinarSignupMessage } = await import('../src/lib/kakao/skill');
+  const polite = '세미나 신청합니다. 담당자님 감사합니다';
+  assert.equal(isWebinarSignupMessage(polite), true);
+  assert.ok(SIGNUP_DESPITE_HANDOFF.has(ruleHandoff(polite) ?? ''));
+  const cancel = '세미나 신청 취소할게요';
+  assert.equal(isWebinarSignupMessage(cancel), false);
+  assert.ok(ruleHandoff(cancel) && !SIGNUP_DESPITE_HANDOFF.has(ruleHandoff(cancel)!));
 });

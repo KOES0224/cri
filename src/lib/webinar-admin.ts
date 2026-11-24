@@ -13,8 +13,8 @@ export function pickWebinarKey(requested: string | null | undefined): string {
 }
 
 /**
- * Sign-ups for one webinar, each marked with the earlier webinars the same person (same email, phone or Kakao id)
- * also signed up for, and whether the sign-up came from the KakaoTalk channel bot.
+ * Sign-ups for one webinar, each marked with the other webinars the same person (same email, phone or Kakao id)
+ * signed up for, whether one of them came earlier, and whether the sign-up came from the KakaoTalk channel bot.
  */
 export async function webinarRowsWithHistory(key: string) {
   const rows = await prisma.webinarRegistration.findMany({ where: { webinarKey: key }, orderBy: { createdAt: "desc" } });
@@ -29,8 +29,19 @@ export async function webinarRowsWithHistory(key: string) {
   }
   const labels = new Map(webinarOptions().map((w) => [w.key, w.label]));
   return rows.map((r) => {
-    const earlier = new Set<string>();
-    for (const k of webinarContactKeys(r)) for (const w of seen.get(k) ?? []) earlier.add(w);
-    return { ...r, viaKakao: r.dedupeKey.startsWith(KAKAO_BOT_DEDUPE_PREFIX), otherSignups: [...earlier].sort().reverse().map((w) => labels.get(w) ?? w) };
+    const sessions = new Set<string>();
+    for (const k of webinarContactKeys(r)) for (const w of seen.get(k) ?? []) sessions.add(w);
+    const keys = [...sessions].sort().reverse();
+    const viaKakao = r.dedupeKey.startsWith(KAKAO_BOT_DEDUPE_PREFIX);
+    return {
+      ...r,
+      viaKakao,
+      /** Every other session this person signed up for, newest first (keys are ISO dates). */
+      otherSignups: keys.map((w) => labels.get(w) ?? w),
+      /** Signed up for a session that came before this one. */
+      cameBefore: keys.some((w) => w < key),
+      /** A KakaoTalk-channel row carries no contact, so "first time" cannot be known for it. */
+      historyUnknown: viaKakao && !keys.length,
+    };
   });
 }

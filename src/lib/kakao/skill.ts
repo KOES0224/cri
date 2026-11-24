@@ -121,10 +121,24 @@ export function secretMatches(expected: string | undefined, given: string | null
  * "세미나 신청" and close variants: the bot answers these itself (no model call) with the join link and records a
  * sign-up. Questions that only mention the seminar ("세미나 주제가 뭐예요?") still go to the model.
  */
+/** Longer messages carry a question or a story: they go to the model (or a person), never to the canned reply. */
+export const WEBINAR_KEYWORD_MAX_CHARS = 30;
+const WEBINAR_KEYWORD = /(세미나|웨비나|설명회)(을|를|에|에서)?(참가|참여|참석|신청|등록|예약|접수|링크|줌|zoom|주소|입장|접속)/i;
+/** Past sign-ups with a follow-up, problems, not coming, changes: a person or the model should read these. */
+const NOT_A_PLAIN_SIGNUP = /했는데|했던|했었|안돼|안되|안열|안들어|못들어|못가|못할|못해|불참|오류|에러|틀리|취소|안할|변경/;
+
 export function isWebinarSignupMessage(utterance: string): boolean {
   const text = utterance.replace(/\s+/g, '');
-  return /(세미나|웨비나|설명회)(참가|참여)?(신청|링크|줌|zoom|주소)/i.test(text);
+  if (!text || text.length > WEBINAR_KEYWORD_MAX_CHARS) return false;
+  if (NOT_A_PLAIN_SIGNUP.test(text)) return false;
+  return WEBINAR_KEYWORD.test(text);
 }
+
+/**
+ * ruleHandoff reasons that do not contradict a sign-up ("세미나 신청합니다, 담당자님 감사합니다", a parent adding their
+ * own phone number): the person is registered and gets the link, and the turn still goes to a person.
+ */
+export const SIGNUP_DESPITE_HANDOFF = new Set(['asked for a person', 'request for student data']);
 
 export function webinarKakaoReply(input: {
   open: boolean; already: boolean; label: string; topic: string; join: { url: string; passcode: string | null } | null; pageUrl: string;

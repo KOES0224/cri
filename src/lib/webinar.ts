@@ -40,9 +40,17 @@ export const KAKAO_BOT_DEDUPE_PREFIX = "kakaobot:";
 
 /** Normalised contact keys of one person, for spotting someone who also signed up for an earlier webinar. */
 export function webinarContactKeys(r: { email?: string | null; phone?: string | null; kakaoId?: string | null; dedupeKey?: string | null }): string[] {
-  const keys = [webinarDedupeKey({ email: r.email }), webinarDedupeKey({ phone: r.phone }), webinarDedupeKey({ kakaoId: r.kakaoId })];
+  const keys: string[] = [];
+  const email = (r.email || "").trim().toLowerCase();
+  if (email) keys.push(`email:${email}`);
+  // +82 10-1234-5678 (autofill) and 010-1234-5678 are the same Korean mobile number.
+  const digits = (r.phone || "").replace(/\D/g, "").replace(/^820?(1\d{8,9})$/, "0$1");
+  if (digits.length >= 8) keys.push(`phone:${digits}`);
+  // Only values that look like a real KakaoTalk ID: "없음", "-" or "x" typed into the box must not join strangers.
+  const kakao = (r.kakaoId || "").trim().toLowerCase().replace(/^@/, "");
+  if (/^[a-z0-9._-]{4,20}$/.test(kakao)) keys.push(`kakao:${kakao}`);
   if (r.dedupeKey?.startsWith(KAKAO_BOT_DEDUPE_PREFIX)) keys.push(r.dedupeKey);
-  return keys.filter((k): k is string => Boolean(k));
+  return keys;
 }
 
 export function webinarRegistrationOpen(now = new Date()): boolean {
