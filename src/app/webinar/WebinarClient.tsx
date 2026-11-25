@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "@/i18n/link";
-import { CalendarDays, CheckCircle2, Clock, Video } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Gift, MessageCircle, PencilLine, Video } from "lucide-react";
 import { useT } from "@/i18n/client";
 import { registerForWebinar, type WebinarResult } from "@/app/actions/webinar";
 import { webinarErrors } from "@/lib/webinar-validation";
@@ -36,6 +36,8 @@ export default function WebinarClient({ open, live: liveAtLoad = false, noticesO
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, []);
   const [result, setResult] = useState<WebinarResult | null>(null);
+  // One sign-up box, two ways in: KakaoTalk (the default: a few taps on a phone) or the form.
+  const [tab, setTab] = useState<"kakao" | "form">("kakao");
   const [notice, setNotice] = useState("");
   const errorText = (code: string | undefined) => (code ? (copy.errors as Record<string, string>)[code] || code : "");
 
@@ -68,32 +70,34 @@ export default function WebinarClient({ open, live: liveAtLoad = false, noticesO
 
   const registerHref = `/auth/register?role=${form.role === "STUDENT" ? "STUDENT" : "PARENT"}${form.email ? `&email=${encodeURIComponent(form.email)}` : ""}`;
 
-  return (
-    <div className="min-h-screen bg-[#FAFAFA] pb-24 pt-32">
-      <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
-        <div>
-          <p className="mb-4 text-xs font-bold uppercase tracking-widest text-blue-700">{copy.eyebrow}</p>
-          <h1 className="text-4xl font-black tracking-tight text-gray-900 md:text-5xl">{copy.title}</h1>
-          <p className="mt-5 inline-flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
-            <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />{copy.when}</span>
-          </p>
-          <p className="mt-3 text-sm font-medium text-gray-500">{copy.audience}</p>
-          {!closed && <div className="mt-6"><KakaoSignupCard place="page" /></div>}
-          <p className="mt-6 text-lg leading-relaxed text-gray-600">{copy.intro}</p>
-          <p className="mt-5 border-l-4 border-blue-700 pl-4 text-lg font-bold leading-relaxed text-gray-900">{copy.conclusion}</p>
-          <h2 className="mt-10 text-xl font-black text-gray-900">{copy.agendaTitle}</h2>
-          <ol className="mt-4 space-y-3">
-            {copy.agenda.map((item, i) => (
-              <li key={item} className="flex gap-3 text-gray-700"><span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-bold text-white">{i + 1}</span><span>{item}</span></li>
-            ))}
-          </ol>
-          <p className="mt-8 inline-flex items-start gap-2 text-sm text-gray-500"><Video className="mt-0.5 h-4 w-4 shrink-0" />{copy.joinNote}</p>
-        </div>
+  const facts = [
+    { icon: CalendarDays, text: copy.facts.date },
+    { icon: Clock, text: copy.facts.length },
+    { icon: Video, text: copy.facts.place },
+    { icon: Gift, text: copy.facts.fee },
+  ];
+  const tabClass = (on: boolean) => `flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-bold transition ${on ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"}`;
 
-        {/* While the seminar is on, this column holds the KakaoTalk route: on phones it moves above the description. */}
-        <div className={`rounded-[2rem] border border-gray-100 bg-white p-6 shadow-[0_20px_40px_rgb(0,0,0,0.04)] sm:p-10 ${closed && live ? "order-first lg:order-none" : ""}`}>
+  return (
+    <div className="min-h-screen bg-[#FAFAFA] pb-24 pt-28 sm:pt-32">
+      {/* Title, then the sign-up box, then the details: on phones in that order; on wide screens the box is the right column. */}
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-10">
+        <header className="lg:col-start-1 lg:row-start-1">
+          <p className="mb-3 text-xs font-bold uppercase tracking-widest text-blue-700">{copy.eyebrow}</p>
+          <h1 className="text-[2rem] font-black leading-tight tracking-tight text-gray-900 sm:text-4xl md:text-5xl">{copy.title}</h1>
+          <ul className="mt-5 flex flex-wrap gap-2">
+            {facts.map(({ icon: Icon, text }) => (
+              <li key={text} className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-800">
+                <Icon className="h-4 w-4 text-blue-700" aria-hidden />{text}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-sm text-gray-500">{copy.audience}</p>
+        </header>
+
+        <div className="rounded-[2rem] border border-gray-100 bg-white p-5 shadow-[0_20px_40px_rgb(0,0,0,0.05)] sm:p-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
           {closed && live ? (
-            <KakaoSignupCard place="live" className="-mx-3 sm:mx-0" />
+            <KakaoSignupCard place="live" className="-mx-1 sm:mx-0" />
           ) : closed ? (
             <div className="py-10 text-center">
               <Clock className="mx-auto h-10 w-10 text-gray-300" />
@@ -123,8 +127,20 @@ export default function WebinarClient({ open, live: liveAtLoad = false, noticesO
               {user && <Link href="/research" className="mt-8 inline-flex rounded-xl bg-gray-900 px-6 py-3 text-sm font-bold text-white">{copy.browsePrograms}</Link>}
             </div>
           ) : (
-            <form onSubmit={submit} aria-busy={status === "sending"} noValidate className="space-y-5">
-              <h2 className="text-2xl font-bold text-gray-900">{copy.formTitle}</h2>
+            <div>
+              <h2 className="text-2xl font-black text-gray-900">{copy.formTitle}</h2>
+              <div role="tablist" aria-label={copy.formTitle} className="mt-4 flex gap-1 rounded-2xl bg-gray-100 p-1">
+                <button type="button" role="tab" id="tab-kakao" aria-controls="panel-kakao" aria-selected={tab === "kakao"} onClick={() => setTab("kakao")} className={tabClass(tab === "kakao")}>
+                  <MessageCircle className="h-4 w-4" aria-hidden />{copy.tabKakao}
+                </button>
+                <button type="button" role="tab" id="tab-form" aria-controls="panel-form" aria-selected={tab === "form"} onClick={() => setTab("form")} className={tabClass(tab === "form")}>
+                  <PencilLine className="h-4 w-4" aria-hidden />{copy.tabForm}
+                </button>
+              </div>
+              <div role="tabpanel" id="panel-kakao" aria-labelledby="tab-kakao" hidden={tab !== "kakao"} className="mt-6">
+                <KakaoSignupCard place="page" />
+              </div>
+            <form role="tabpanel" id="panel-form" aria-labelledby="tab-form" hidden={tab !== "form"} onSubmit={submit} aria-busy={status === "sending"} noValidate className="mt-6 space-y-5">
               {notice && <div role="alert" className="rounded-xl bg-red-50 p-4 text-sm font-medium text-red-700">{notice}</div>}
               <div>
                 <label htmlFor="webinar-name" className="mb-2 block text-sm font-bold text-gray-700">{copy.name}</label>
@@ -143,11 +159,11 @@ export default function WebinarClient({ open, live: liveAtLoad = false, noticesO
                 {errors.role && <p className="mt-1 text-sm text-red-700">{errorText(errors.role)}</p>}
               </fieldset>
               <div className={`rounded-2xl border p-4 ${errors.contact ? "border-red-300 bg-red-50/40" : "border-gray-200"}`}>
-                <p className="mb-3 text-sm text-gray-600">{noticesOpen ? copy.contactHint : copy.contactHintPlain}</p>
-                <div className="grid gap-3 sm:grid-cols-3">
+                <p className="mb-3 text-sm text-gray-600">{copy.contactHint}</p>
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="webinar-phone" className="mb-1 block text-xs font-bold text-gray-600">{noticesOpen ? copy.phone : copy.phonePlain}</label>
-                    <input id="webinar-phone" type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} maxLength={40} className={input} aria-invalid={Boolean(errors.phone)} />
+                    <label htmlFor="webinar-phone" className="mb-1 block text-xs font-bold text-gray-600">{copy.phone}</label>
+                    <input id="webinar-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="010-1234-5678" value={form.phone} onChange={(e) => set("phone", e.target.value)} maxLength={40} className={input} aria-invalid={Boolean(errors.phone)} aria-describedby={noticesOpen ? "webinar-phone-note" : undefined} />
                     {errors.phone && <p className="mt-1 text-xs text-red-700">{errorText(errors.phone)}</p>}
                   </div>
                   <div>
@@ -155,12 +171,8 @@ export default function WebinarClient({ open, live: liveAtLoad = false, noticesO
                     <input id="webinar-email" type="email" autoComplete="email" value={form.email} onChange={(e) => set("email", e.target.value)} maxLength={254} className={input} aria-invalid={Boolean(errors.email)} />
                     {errors.email && <p className="mt-1 text-xs text-red-700">{errorText(errors.email)}</p>}
                   </div>
-                  <div>
-                    <label htmlFor="webinar-kakao" className="mb-1 block text-xs font-bold text-gray-600">{copy.kakao}</label>
-                    <input id="webinar-kakao" value={form.kakaoId} onChange={(e) => set("kakaoId", e.target.value)} maxLength={60} className={input} aria-invalid={Boolean(errors.kakaoId)} />
-                    {errors.kakaoId && <p className="mt-1 text-xs text-red-700">{errorText(errors.kakaoId)}</p>}
-                  </div>
                 </div>
+                {noticesOpen && <p id="webinar-phone-note" className="mt-2 text-xs text-gray-500">{copy.phoneNote}</p>}
                 {errors.contact && <p className="mt-2 text-sm font-medium text-red-700">{errorText(errors.contact)}</p>}
               </div>
               <div>
@@ -176,9 +188,22 @@ export default function WebinarClient({ open, live: liveAtLoad = false, noticesO
               <button type="submit" disabled={status === "sending"} className="w-full rounded-xl bg-black py-4 font-bold text-white shadow-md transition-all hover:bg-gray-900 disabled:opacity-70">
                 {status === "sending" ? copy.submitting : copy.submit}
               </button>
+              <p className="text-center text-xs text-gray-500">{copy.joinNote}</p>
             </form>
+            </div>
           )}
         </div>
+        <div className="lg:col-start-1 lg:row-start-2">
+          <p className="text-lg leading-relaxed text-gray-600">{copy.intro}</p>
+          <p className="mt-5 border-l-4 border-blue-700 pl-4 text-lg font-bold leading-relaxed text-gray-900">{copy.conclusion}</p>
+          <h2 className="mt-10 text-xl font-black text-gray-900">{copy.agendaTitle}</h2>
+          <ol className="mt-4 space-y-3">
+            {copy.agenda.map((item, i) => (
+              <li key={item} className="flex gap-3 text-gray-700"><span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-bold text-white">{i + 1}</span><span>{item}</span></li>
+            ))}
+          </ol>
+        </div>
+
       </div>
     </div>
   );
