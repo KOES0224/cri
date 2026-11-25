@@ -254,7 +254,7 @@ export async function sendWebinarConfirmation(input: {
       ? [``, `We also send a KakaoTalk reminder to your number the evening before and on the morning. Add CRI's KakaoTalk channel to receive it: ${channel}`]
       : [];
   const text = ko
-    ? [`안녕하세요, CRI 무료 온라인 세미나 신청이 접수되었습니다.`, ``, `주제: ${WEBINAR_TOPIC.ko}`, `일시: ${WEBINAR_WHEN.ko}`, `방식: 온라인(Zoom). 참여 링크는 시작 전에 이 이메일로 보내드립니다.`, ...kakaoKo, ``, `참여 링크를 지금 바로 받으시려면 CRI 카카오톡 채널에 ‘세미나 신청’이라고 보내 주세요: ${KAKAO_CHANNEL_CHAT_URL}`, `프로그램 소개: ${SITE_URL}/ko/research`, `문의: support@cri.kr`].join('\n')
+    ? [`안녕하세요, CRI 무료 온라인 세미나 신청이 접수되었습니다.`, ``, `주제: ${WEBINAR_TOPIC.ko}`, `일시: ${WEBINAR_WHEN.ko}`, `방식: 온라인(Zoom). 참여 링크는 시작 전에 이 이메일로 보내드립니다.`, ...kakaoKo, ``, `참여 링크를 카카오톡으로도 받으시려면 CRI 채널에 ‘세미나 신청’이라고 보내고 안내대로 이름·휴대폰 번호를 보낸 뒤 채널을 추가해 주세요: ${KAKAO_CHANNEL_CHAT_URL}`, `프로그램 소개: ${SITE_URL}/ko/research`, `문의: support@cri.kr`].join('\n')
     : [`Hello, your seat for the free CRI online seminar is confirmed.`, ``, `Topic: ${WEBINAR_TOPIC.en}`, `When: ${WEBINAR_WHEN.en}`, `Where: online (Zoom), in Korean. The join link is emailed to you before the session starts.`, ...kakaoEn, ``, `Programs: ${SITE_URL}/research`, `Questions: support@cri.kr`].join('\n');
   return send({ to: input.to, subject: ko ? `CRI 세미나 신청 확인 · ${WEBINAR_WHEN.ko}` : `Your CRI seminar seat · ${WEBINAR_WHEN.en}`, text, replyTo: ADMISSIONS_INBOX });
 }

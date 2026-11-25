@@ -44,10 +44,29 @@ to a friend group, such as the seminar reminders, reach friends only. So:
   missing otherwise, and always from Open Builder's test panel). `parseSkillRequest` turns it into `friend`.
 - Seminar replies to a sender without it end with a text card whose "채널 추가하기" button opens
   `KAKAO_CHANNEL_ADD_URL` (`https://pf.kakao.com/_xhdzxln/friend`, KakaoTalk's own add screen on a phone). Open Builder
-  has no add-channel action, so it is a web link. Not shown during the live session (`webinarChannelCard`).
+  has no add-channel action, so it is a web link (`webinarChannelCard`).
 - Those turns are logged with ", add-channel button shown" in the reason at /dashboard/kakao: the KakaoTalk sign-ups
   that were not channel friends yet. Adds themselves show in the partner centre under 인사이트 → 친구 → 친구추가경로.
 - The website and the emails link to the same add address instead of the channel home.
+
+## Seminar sign-up: name, number and channel add before the link
+
+Since 2026-11-25 (owner's decision) the bot gives the Zoom link only to a sign-up that has a **name**, a **Korean mobile
+number** and a sender who has **added the channel**. Kakao passes the bot only an anonymous key (botUserKey), never a
+name or number, and chats with the bot do not show in the partner centre, so before this nobody could tell who had
+signed up in the chat. The steps, all fixed rules without the model (`webinarSignupTurn` in the route):
+
+1. "세미나 신청" creates the `WebinarRegistration` row (name `KAKAO_NO_NAME` = "카카오톡 채널" until a real one comes) and
+   asks for name and number in one line ("홍길동 010-1234-5678"), with what they are used for (`KAKAO_CONTACT_USE`).
+2. A message that is only a number, with or without a name (`parseContactOnly`), fills the row. A message that is
+   only a name (`parseNameOnly`) is read as one only right after the bot asked for a name and while the row has none.
+   "세미나 신청 홍길동 010-…" does it all at once (`parseWebinarSignup` returns the name).
+3. Name and number there but no `isFriend`: "마지막 단계" + the add button; after adding, "세미나 신청" again.
+4. All three: the link (and, before the friend-group cutoff, the promise of the KakaoTalk notices).
+
+The log reason at /dashboard/kakao says where each person stopped ("waiting for name and number", "waiting for
+channel add", "link sent"). Open Builder's test panel never sends `isFriend`, so the link step can only be tested
+from a real phone. `tests/kakao-signup.integration.ts` runs the whole conversation against a local database.
 
 ## Code
 
@@ -69,7 +88,7 @@ to a friend group, such as the seminar reminders, reach friends only. So:
 | `KAKAO_SKILL_SECRET` | Any long random string. Open Builder sends it as the `x-cri-kakao-secret` header; requests without it get 401. |
 | `KAKAO_BOT_ID` | Optional. The Open Builder bot id; other bots are refused. |
 | `KAKAO_HANDOFF_EMAIL` | Optional. Where handoffs go; defaults to `ADMISSIONS_NOTIFY_EMAIL` / support@cri.kr. |
-| `WEBINAR_JOIN_URL` | Zoom join link (https, zoom.us) for the current webinar in `src/lib/webinar.ts`. A short "세미나 신청" message registers the channel user and gets this link back until the session ends. Unset or invalid: the bot says it could not send the link (send the keyword again later, or call the office) and admissions gets an email. Kept out of the repo because the repo is public. |
+| `WEBINAR_JOIN_URL` | Zoom join link (https, zoom.us) for the current webinar in `src/lib/webinar.ts`. A short "세미나 신청" message registers the channel user; the link goes back once the sign-up has a name, a number and the channel add, until the session ends. Unset or invalid: the bot says it could not send the link (send the keyword again later, or call the office) and admissions gets an email. Kept out of the repo because the repo is public. |
 | `WEBINAR_JOIN_PASSCODE` | Optional. Shown under the link for people who type the meeting ID. |
 
 ## Open Builder setup (owner, once)

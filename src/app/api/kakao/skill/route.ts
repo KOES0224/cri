@@ -4,8 +4,8 @@ import { allowRequest } from "@/lib/request-limit";
 import { notifyKakaoHandoff } from "@/lib/notify";
 import { claudeConfigured, draftReply, type BotReply, type BotTurn } from "@/lib/kakao/reply";
 import {
-  FALLBACK_REPLY, HANDOFF_REPLY, RATE_LIMIT_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, handoffReply, parsePhoneOnly, parseSkillRequest, phoneWithoutSignupReply, parseWebinarSignup, ruleHandoff, secretMatches, withoutOwnContact,
-  textResponse, webinarChannelCard, webinarKakaoReply, webinarPhoneSavedReply, type TextCard, type WebinarSignupParse,
+  FALLBACK_REPLY, HANDOFF_REPLY, KAKAO_NO_NAME, RATE_LIMIT_REPLY, SIGNUP_DESPITE_HANDOFF, callbackAck, handoffReply, kakaoHasName, kakaoSignupComplete, parseContactOnly, parseNameOnly,
+  parseSkillRequest, phoneWithoutSignupReply, parseWebinarSignup, ruleHandoff, secretMatches, withoutOwnContact, textResponse, webinarChannelCard, webinarKakaoReply, type TextCard,
 } from "@/lib/kakao/skill";
 import { KAKAO_BOT_DEDUPE_PREFIX, WEBINAR, koreanMobile, webinarDayOf, webinarJoinInfo, webinarKakaoNoticesOpen, webinarKakaoOpen, webinarRegistrationOpen } from "@/lib/webinar";
 
@@ -46,30 +46,43 @@ export async function POST(request: Request) {
   const history: BotTurn[] = recent.reverse().map(m => ({ role: m.role === "assistant" ? "assistant" : "user", text: m.text }));
   await prisma.kakaoChatMessage.create({ data: { userKey: req.userKey, role: "user", text: req.utterance } });
 
-  // "세미나 신청" (a message that is only a sign-up, see parseWebinarSignup): answered by a fixed rule with the join
-  // link, unless the message also touches a person-only topic.
-  // Just a phone number, from someone who signed up here: the answer to "send your number" — saved for the notices.
-  const phoneOnly = webinarKakaoOpen() ? parsePhoneOnly(req.utterance) : null;
+  // The seminar sign-up runs on fixed rules, no model: "세미나 신청" registers the sender, then the bot collects a name
+  // and a Korean mobile number and checks the channel add; the Zoom link goes out only when all three are there.
+  // A message that is only a number (maybe with a name): the answer to "send your name and number".
+  const contactOnly = webinarKakaoOpen() ? parseContactOnly(req.utterance) : null;
   // The sender's own number and its label ("학부모 연락처") are not a request for other people's data.
-  const phoneTopic = phoneOnly ? ruleHandoff(withoutOwnContact(req.utterance)) : null;
-  if (phoneOnly && (!phoneTopic || SIGNUP_DESPITE_HANDOFF.has(phoneTopic))) {
-    const saved = await saveKakaoSignupPhone(req.userKey, phoneOnly);
-    const noticesOpen = webinarKakaoNoticesOpen();
+  const phoneTopic = contactOnly ? ruleHandoff(withoutOwnContact(req.utterance)) : null;
+  if (contactOnly && (!phoneTopic || SIGNUP_DESPITE_HANDOFF.has(phoneTopic))) {
+    const turn = await webinarSignupTurn(req.userKey, req.friend, contactOnly, false);
     // No KakaoTalk sign-up yet: say how to send both at once instead of letting the model guess.
-    const reply = saved ? webinarPhoneSavedReply(WEBINAR.label.ko, noticesOpen, req.friend) : phoneWithoutSignupReply(noticesOpen);
-    const card = saved ? webinarChannelCard({ friend: req.friend, started: webinarKakaoOpen() && !webinarRegistrationOpen(), noticesOpen }) : null;
-    after(() => finish(req.userKey, { reply, handoff: Boolean(phoneTopic), reason: withCardNote(saved ? "webinar phone saved" : "phone without a sign-up", card) }));
+    const reply = turn?.reply ?? phoneWithoutSignupReply();
+    const card = turn?.card ?? null;
+    const reason = turn ? `webinar contact saved, ${turn.stage}` : "phone without a sign-up";
+    after(() => finish(req.userKey, { reply, handoff: Boolean(phoneTopic) || Boolean(turn?.linkMissing), reason: withCardNote(reason, card) }));
     return NextResponse.json(textResponse(reply, [], card ? [card] : []));
+  }
+
+  // Just a name, right after the bot asked for one from a sign-up that has none yet.
+  const nameOnly = webinarKakaoOpen() && askedForName(history) ? parseNameOnly(req.utterance) : null;
+  if (nameOnly && (await kakaoSignupNeedsName(req.userKey))) {
+    const turn = await webinarSignupTurn(req.userKey, req.friend, { name: nameOnly }, false);
+    if (turn) {
+      after(() => finish(req.userKey, { reply: turn.reply, handoff: turn.linkMissing, reason: withCardNote(`webinar name saved, ${turn.stage}`, turn.card) }));
+      return NextResponse.json(textResponse(turn.reply, [], turn.card ? [turn.card] : []));
+    }
   }
 
   const signup = parseWebinarSignup(req.utterance);
   // A sign-up that carries the parent's own number ("학부모 연락처 010-…") is not a request for other people's data.
   const topicReason = ruleHandoff(signup.signup && (signup.phone || signup.email) ? withoutOwnContact(req.utterance) : req.utterance);
   if (signup.signup && (!topicReason || SIGNUP_DESPITE_HANDOFF.has(topicReason))) {
-    const { reply, linkMissing, card } = await webinarSignupReply(req.userKey, signup, req.friend);
+    const turn = await webinarSignupTurn(req.userKey, req.friend, signup, true);
+    const reply = turn?.reply ?? FALLBACK_REPLY;
+    const card = turn?.card ?? null;
     // Admissions gets an email when the message also asked for a person, or when there is no link to give (WEBINAR_JOIN_URL unset).
-    const reason = topicReason ? `webinar signup + ${topicReason}` : linkMissing ? "webinar signup, WEBINAR_JOIN_URL not set" : "webinar signup";
-    after(() => finish(req.userKey, { reply, handoff: Boolean(topicReason) || linkMissing, reason: withCardNote(reason, card) }));
+    const base = turn ? `webinar signup, ${turn.stage}` : "webinar signup failed";
+    const reason = topicReason ? `${base} + ${topicReason}` : turn?.linkMissing ? `${base}, WEBINAR_JOIN_URL not set` : base;
+    after(() => finish(req.userKey, { reply, handoff: Boolean(topicReason) || Boolean(turn?.linkMissing) || !turn, reason: withCardNote(reason, card) }));
     return NextResponse.json(textResponse(reply, [], card ? [card] : []));
   }
 
@@ -125,59 +138,82 @@ function withCardNote(reason: string, card: TextCard | null): string {
   return card ? `${reason}, add-channel button shown` : reason;
 }
 
-/**
- * Records a KakaoTalk sign-up for the current webinar (one per channel user, with the phone or email the message
- * carried) and returns the reply with the link.
- */
-/** Puts a phone number on this channel user's sign-up for the current webinar; false when they have none. */
-async function saveKakaoSignupPhone(userKey: string, phone: string): Promise<boolean> {
+/** The bot's last message asked for a name (see webinarKakaoReply). */
+function askedForName(history: BotTurn[]): boolean {
+  const last = [...history].reverse().find(t => t.role === "assistant");
+  return Boolean(last && /이름/.test(last.text) && /보내 주세요/.test(last.text));
+}
+
+function kakaoDedupeKey(userKey: string): string {
+  return `${KAKAO_BOT_DEDUPE_PREFIX}${userKey}`;
+}
+
+async function kakaoSignupNeedsName(userKey: string): Promise<boolean> {
   try {
-    const dedupeKey = `${KAKAO_BOT_DEDUPE_PREFIX}${userKey}`;
-    const row = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { id: true } });
-    if (!row) return false;
-    await prisma.webinarRegistration.update({ where: { id: row.id }, data: { phone } });
-    return true;
-  } catch (error) {
-    console.error("[kakao] saving the phone number failed:", error instanceof Error ? error.message : error);
+    const row = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey: kakaoDedupeKey(userKey) } }, select: { name: true } });
+    return Boolean(row) && !kakaoHasName(row?.name);
+  } catch {
     return false;
   }
 }
 
-async function webinarSignupReply(userKey: string, contact: WebinarSignupParse, friend: boolean): Promise<{ reply: string; linkMissing: boolean; card: TextCard | null }> {
+type KakaoContact = { name?: string | null; phone?: string | null; email?: string | null };
+type SignupTurn = { reply: string; card: TextCard | null; linkMissing: boolean; stage: string };
+
+/**
+ * One step of a KakaoTalk seminar sign-up: records the sign-up (one row per channel user, `create` only for the
+ * keyword itself), stores the name, number or email the message carried, and replies with what is still missing or,
+ * once name, Korean mobile and channel add are all there, the join link. Null: no sign-up to add to (a number sent
+ * before "세미나 신청") or the database failed.
+ */
+async function webinarSignupTurn(userKey: string, friend: boolean, contact: KakaoContact, create: boolean): Promise<SignupTurn | null> {
   const open = webinarKakaoOpen();
-  let already = false;
-  let hasPhone = Boolean(koreanMobile(contact.phone));
-  if (open) {
-    const dedupeKey = `${KAKAO_BOT_DEDUPE_PREFIX}${userKey}`;
-    try {
-      const existing = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { id: true, phone: true, email: true } });
-      already = Boolean(existing);
-      hasPhone = Boolean(koreanMobile(contact.phone) || koreanMobile(existing?.phone));
-      if (!existing) {
-        await prisma.webinarRegistration.create({ data: { webinarKey: WEBINAR.key, name: "카카오톡 채널", locale: "ko", dedupeKey, phone: contact.phone, email: contact.email } });
-      } else {
-        // The row belongs to this KakaoTalk user, so a new Korean mobile in their message replaces the stored one
-        // (a corrected typo); an email only fills a gap.
-        const newMobile = koreanMobile(contact.phone);
-        const phone = newMobile && newMobile !== koreanMobile(existing.phone) ? newMobile : existing.phone;
-        const email = existing.email ?? contact.email;
-        if (phone !== existing.phone || email !== existing.email) await prisma.webinarRegistration.update({ where: { id: existing.id }, data: { phone, email } });
-        hasPhone = Boolean(koreanMobile(phone));
-      }
-    } catch (error) {
-      // A double tap races on the unique key; anything else is logged and the person still gets the link.
-      if ((error as { code?: string }).code === "P2002") already = true;
-      else console.error("[kakao] webinar sign-up failed:", error instanceof Error ? error.message : error);
-    }
-  }
-  const join = webinarJoinInfo();
-  if (open && !join) console.error("[kakao] WEBINAR_JOIN_URL is missing or not a zoom.us https link; the seminar keyword cannot give the link");
   const formOpen = webinarRegistrationOpen();
-  const pageUrl = formOpen ? "https://criglobal.org/ko/webinar" : null;
   const started = open && !formOpen;
-  const noticesOpen = webinarKakaoNoticesOpen();
-  const reply = webinarKakaoReply({ open, already, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, join, pageUrl, started, hasPhone, noticesOpen, friend });
-  return { reply, linkMissing: open && !join, card: webinarChannelCard({ friend, started, noticesOpen }) };
+  const base = { open, label: WEBINAR.label.ko, topic: WEBINAR.topic.ko, pageUrl: formOpen ? "https://criglobal.org/ko/webinar" : null, started, noticesOpen: webinarKakaoNoticesOpen() };
+  if (!open) return { reply: webinarKakaoReply({ ...base, step: "again", join: null, hasName: false, hasPhone: false, friend }), card: null, linkMissing: false, stage: "closed" };
+
+  const dedupeKey = kakaoDedupeKey(userKey);
+  const name = contact.name?.trim() || null;
+  const mobile = koreanMobile(contact.phone);
+  let row: { name: string; phone: string | null } | null = null;
+  let step: "first" | "again" | "saved" = "again";
+  try {
+    const existing = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { id: true, name: true, phone: true, email: true } });
+    if (!existing) {
+      if (!create) return null;
+      try {
+        row = await prisma.webinarRegistration.create({ data: { webinarKey: WEBINAR.key, name: name ?? KAKAO_NO_NAME, locale: "ko", dedupeKey, phone: mobile ?? contact.phone ?? null, email: contact.email ?? null }, select: { name: true, phone: true } });
+        step = name || mobile ? "saved" : "first";
+      } catch (error) {
+        // A double tap races on the unique key: the other request made the row.
+        if ((error as { code?: string }).code !== "P2002") throw error;
+        row = await prisma.webinarRegistration.findUnique({ where: { webinarKey_dedupeKey: { webinarKey: WEBINAR.key, dedupeKey } }, select: { name: true, phone: true } });
+      }
+    } else {
+      // The row belongs to this KakaoTalk user, so a new name or Korean mobile replaces the stored one (a corrected
+      // typo); an email only fills a gap.
+      const data: { name?: string; phone?: string; email?: string } = {};
+      if (name && name !== existing.name) data.name = name;
+      if (mobile && mobile !== koreanMobile(existing.phone)) data.phone = mobile;
+      if (!existing.email && contact.email) data.email = contact.email;
+      if (Object.keys(data).length) await prisma.webinarRegistration.update({ where: { id: existing.id }, data });
+      row = { name: data.name ?? existing.name, phone: data.phone ?? existing.phone };
+      step = name || mobile ? "saved" : "again";
+    }
+  } catch (error) {
+    console.error("[kakao] webinar sign-up failed:", error instanceof Error ? error.message : error);
+    return null;
+  }
+  if (!row) return null;
+
+  const state = { hasName: kakaoHasName(row.name), hasPhone: Boolean(koreanMobile(row.phone)), friend };
+  const complete = kakaoSignupComplete(state);
+  const join = complete ? webinarJoinInfo() : null;
+  if (complete && !join) console.error("[kakao] WEBINAR_JOIN_URL is missing or not a zoom.us https link; the seminar keyword cannot give the link");
+  const reply = webinarKakaoReply({ ...base, ...state, step, join });
+  const stage = complete ? "link sent" : !state.hasName || !state.hasPhone ? `waiting for ${[!state.hasName && "name", !state.hasPhone && "number"].filter(Boolean).join(" and ")}` : "waiting for channel add";
+  return { reply, card: webinarChannelCard({ friend, open }), linkMissing: complete && !join, stage };
 }
 
 async function answer(history: BotTurn[], utterance: string, budgetMs: number): Promise<BotReply> {

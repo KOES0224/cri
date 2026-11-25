@@ -7,7 +7,7 @@
  */
 
 import { COMPANY } from '../company';
-import { KAKAO_CHANNEL_ADD_URL, WEBINAR, koreanMobile } from '../webinar';
+import { KAKAO_CHANNEL_ADD_URL, WEBINAR, WEBINAR_KAKAO_KEYWORD, koreanMobile } from '../webinar';
 
 /**
  * `friend`: Kakao sends properties.isFriend = true only when the sender has added the channel; for everyone else the
@@ -203,7 +203,7 @@ export function secretMatches(expected: string | undefined, given: string | null
  * number or email. Anything left over (a question, a story, not coming, a change, a problem getting in, another topic,
  * a question about other people) goes to the model or a person instead.
  */
-export type WebinarSignupParse = { signup: boolean; phone: string | null; email: string | null };
+export type WebinarSignupParse = { signup: boolean; phone: string | null; email: string | null; name: string | null };
 
 const PHONE = /(?:\+?82[\s.-]?)?0?1[016789][\s.-]?\d{3,4}[\s.-]?\d{4}/;
 const EMAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
@@ -260,17 +260,55 @@ function compact(text: string): string {
     .replace(/[\s.,!?~…·:;'"“”‘’()[\]{}<>\-_/*+=|\\^]+/g, '');
 }
 
+const NAME_BEFORE_CONTACT = /(^|\s)((?!신청|등록|예약|접수|참석|참가|참여|링크|주소|연락처|번호|전화|휴대폰|핸드폰|이메일|메일|학부모|부모님|엄마|아빠|어머니|아버지)[가-힣]{2,4})\s*[,/:]?\s*$/;
+/** Family words and roles: they say who is writing, not what the person is called. */
+const NOT_A_NAME = /^(학부모|학생|엄마|아빠|어머니|아버지|부모님|부모|저희|우리|제가|저는|담당자|선생님|네네|넵넵|감사|고마|안녕|알겠|좋아|좋습|확인|신청|세미나|웨비나|설명회|링크|언제|어디|궁금|그래|맞아|맞습|아니|몰라|모르|취소|추가|채널|완료|했어|했습|됐어|됐습|여기|이거|번호|이름|카톡|오늘|내일|지금)/;
+
+/**
+ * A person's name as people type it next to their number: 2–4 Hangul letters, a trailing 학생/학부모/맘/님 dropped
+ * ("서연맘" → "서연"). Null for anything that is not clearly a name.
+ */
+export function kakaoName(raw: string): string | null {
+  const text = raw.normalize('NFC').replace(/\s+/g, '').replace(/(학생|학부모|어머니|아버지|엄마|아빠|맘|님)$/, '');
+  // Endings of a verb or a request ("할게요", "보냅니다") are never a name.
+  if (!/^[가-힣]{2,4}$/.test(text) || NOT_A_NAME.test(text) || /(요|다|까|죠|게|께|래|줘|해|함)$/.test(text)) return null;
+  return text;
+}
+
+/**
+ * A message that is only a name ("김서연", "김서연입니다", "이름은 김서연이에요"), the answer to "send your name".
+ * The route only reads it this way right after the bot asked for a name.
+ */
+export function parseNameOnly(utterance: string): string | null {
+  const text = utterance.normalize('NFC').trim();
+  if (!text || text.length > 30 || /[\d?？@]/.test(text)) return null;
+  let rest = compact(text);
+  for (let pass = 0; pass < 3; pass++) {
+    const before = rest;
+    for (const pattern of FILLERS) rest = rest.replace(pattern, '');
+    rest = rest
+      .replace(/^(네|넵|예|저는|제이름은|이름은|이름|참석자는|참석자|신청자는|신청자)/, '')
+      .replace(/(입니다|이에요|예요|이요|요|임|이고요|이고)$/, '');
+    if (rest === before) break;
+  }
+  return kakaoName(rest);
+}
+
 export function parseWebinarSignup(utterance: string): WebinarSignupParse {
   let text = utterance.normalize('NFC');
   const phoneMatch = text.match(PHONE);
   const emailMatch = text.match(EMAIL);
   const phone = phoneMatch ? phoneMatch[0].replace(/\D/g, '').replace(/^820?(1\d{8,9})$/, '0$1') : null;
   const email = emailMatch ? emailMatch[0].toLowerCase() : null;
+  let name: string | null = null;
   for (const match of [emailMatch, phoneMatch]) {
     if (!match) continue;
     // A short name right before the number ("김서연 010-…") belongs to the contact, not to the message.
     const at = text.indexOf(match[0]);
-    const before = text.slice(0, at).replace(/(^|\s)(?!신청|등록|예약|접수|참석|참가|참여|링크|주소|연락처|번호|전화|휴대폰|핸드폰|이메일|메일|학부모|부모님|엄마|아빠|어머니|아버지)[가-힣]{2,3}\s*[,/:]?\s*$/, '$1');
+    const before = text.slice(0, at).replace(NAME_BEFORE_CONTACT, (whole, lead: string, found: string) => {
+      name ??= kakaoName(found);
+      return lead;
+    });
     text = `${before} ${text.slice(at + match[0].length)}`;
   }
   text = text.replace(DATE_TIME, ' ');
@@ -289,7 +327,7 @@ export function parseWebinarSignup(utterance: string): WebinarSignupParse {
     && (asksLink || !new RegExp(`(${LINK_QUESTION_ENDINGS})$`).test(rest))
     // "참석했어요" is about a past session; a head count with 했어요 is about other people.
     && !/(참석|참여|참가)(했어요|했습니다)$/.test(rest) && !/(\d+명|한명|두명)[^]*(했어요|했습니다)$/.test(rest);
-  return { signup, phone: signup ? phone : null, email: signup ? email : null };
+  return { signup, phone: signup ? phone : null, email: signup ? email : null, name: signup ? name : null };
 }
 
 /** The message without the sender's own phone number or email and the words that label it, for the handoff rules. */
@@ -309,69 +347,87 @@ export function isWebinarSignupMessage(utterance: string): boolean {
  */
 export const SIGNUP_DESPITE_HANDOFF = new Set(['asked for a person']);
 
-export function webinarKakaoReply(input: {
-  open: boolean; already: boolean; label: string; topic: string; join: { url: string; passcode: string | null } | null;
+/** What the bot still needs before it hands out the join link. */
+export type KakaoSignupState = { hasName: boolean; hasPhone: boolean; friend: boolean };
+
+/** The sign-up row's name before the person has sent one (rows made before 2026-11-25 all have it). */
+export const KAKAO_NO_NAME = '카카오톡 채널';
+
+/** A stored name counts once it is a real one, not the placeholder. */
+export function kakaoHasName(name: string | null | undefined): boolean {
+  const n = (name || '').trim();
+  return n.length > 0 && n !== KAKAO_NO_NAME;
+}
+
+/** Nothing more to collect: name, Korean mobile and channel friend. Only then does the join link go out. */
+export function kakaoSignupComplete(state: KakaoSignupState): boolean {
+  return state.hasName && state.hasPhone && state.friend;
+}
+
+export const KAKAO_CONTACT_USE = '보내 주신 이름과 번호는 세미나 안내와 알림에만 사용해요.';
+
+/**
+ * Every KakaoTalk seminar reply. The join link goes out only once the sign-up has a name, a Korean mobile number and
+ * the sender has added the channel (owner's decision 2026-11-25: nobody gets the link anonymously). Until then the
+ * reply asks for what is missing, one step at a time; the add button itself is the card from webinarChannelCard.
+ */
+export function webinarKakaoReply(input: KakaoSignupState & {
+  open: boolean;
+  /** first: a new sign-up; again: they had signed up before; saved: they just sent a name or number. */
+  step: 'first' | 'again' | 'saved';
+  label: string; topic: string; join: { url: string; passcode: string | null } | null;
   /** The website page, linked only while its form is open (after the start it shows the closed panel). */
   pageUrl: string | null;
   /** The session has started (10:00–11:00): say "join now" instead of "come five minutes early". */
   started?: boolean;
-  /** Whether this sign-up has a Korean mobile number for the KakaoTalk notices; without one the reply asks for it. */
-  hasPhone?: boolean;
-  /** Before the friend-group cutoff: KakaoTalk notices are still promised and numbers still asked for. */
+  /** Before the friend-group cutoff: the evening-before and morning-of KakaoTalk notices are still promised. */
   noticesOpen?: boolean;
-  /** The sender has added the channel. Otherwise the reply points to the add button that follows it (webinarChannelCard). */
-  friend?: boolean;
 }): string {
   if (!input.open) return `이번 세미나(${input.label})는 끝났어요. 다음 세미나 일정은 정해지는 대로 criglobal.org/ko/webinar 에 올릴게요.`;
-  const head = input.already ? `이미 신청되어 있어요. 다시 안내드릴게요.` : `세미나 신청이 접수되었어요. 감사합니다!`;
-  const lines = [head, '', `주제: ${input.topic}`, `일시: ${input.label} (한국 시간), 약 60분`, `방식: 온라인 Zoom`];
+  const about = ['', `주제: ${input.topic}`, `일시: ${input.label} (한국 시간), 약 60분`, `방식: 온라인 Zoom`];
+  const lines: string[] = [];
+  if (!input.hasName || !input.hasPhone) {
+    lines.push(input.step === 'saved' ? '받았어요. 감사합니다!' : input.step === 'again' ? '이미 신청되어 있어요.' : '세미나 신청을 받았어요. 감사합니다!');
+    if (input.step === 'first') lines.push(...about);
+    const ask = !input.hasName && !input.hasPhone
+      ? ['참여 링크를 보내드리기 전에, 참석하실 분 이름과 휴대폰 번호를 한 줄로 보내 주세요.', '예: 홍길동 010-1234-5678']
+      : !input.hasName
+        ? ['참석하실 분 이름도 보내 주세요.', '예: 홍길동']
+        : ['휴대폰 번호도 보내 주세요.', '예: 010-1234-5678'];
+    lines.push('', ...ask, KAKAO_CONTACT_USE);
+    if (!input.friend) lines.push('', `그리고 아래 ‘${CHANNEL_ADD_LABEL}’로 CRI 채널을 추가해 주세요. 참여 링크는 채널을 추가한 분께 보내드려요.`);
+    return lines.join('\n');
+  }
+  if (!input.friend) {
+    lines.push(input.step === 'saved' ? '이름과 번호를 받았어요. 감사합니다!' : input.step === 'again' ? '이미 신청되어 있어요.' : '세미나 신청을 받았어요. 감사합니다!');
+    lines.push('', `마지막 단계예요. 아래 ‘${CHANNEL_ADD_LABEL}’를 눌러 CRI 채널을 추가한 뒤, 이 대화방에 ‘${WEBINAR_KAKAO_KEYWORD}’이라고 다시 보내 주세요. 참여 링크를 바로 보내드려요.`);
+    return lines.join('\n');
+  }
+  lines.push(input.step === 'first' ? '세미나 신청이 접수되었어요. 감사합니다!' : input.step === 'saved' ? '신청이 끝났어요. 감사합니다!' : '이미 신청되어 있어요. 다시 안내드릴게요.', ...about);
   if (input.join) {
     lines.push('', `참여 링크: ${input.join.url}`);
     if (input.join.passcode) lines.push(`암호: ${input.join.passcode}`);
     lines.push('', input.started ? '지금 진행 중이에요. 위 링크로 바로 들어오세요.' : '링크는 이 대화방에 남아 있으니 당일 여기서 바로 들어오시면 돼요. 시작 5분 전 입장을 권해요.');
   } else {
-    lines.push('', `참여 링크를 지금 바로 보내드리지 못했어요. 잠시 후 ‘세미나 신청’이라고 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요.`);
+    lines.push('', `참여 링크를 지금 바로 보내드리지 못했어요. 잠시 후 ‘${WEBINAR_KAKAO_KEYWORD}’이라고 다시 보내 주시거나, 급하시면 CRI 공식 번호 ${CONTACT_PHONE}로 전화 주세요.`);
   }
-  if (!input.started && input.noticesOpen) {
-    if (input.hasPhone) {
-      lines.push('', input.friend
-        ? '전날 저녁과 당일 아침 알림은 남겨 주신 번호로 카톡 보내드려요.'
-        : `전날 저녁과 당일 아침 알림은 남겨 주신 번호로 카톡 보내드려요. CRI 채널을 추가한 분께만 가니, 아래 ‘${CHANNEL_ADD_LABEL}’를 눌러 주세요.`);
-    } else {
-      lines.push('', input.friend
-        ? '📱 전날 저녁·당일 아침 알림을 카톡으로 받으시려면 휴대폰 번호를 보내 주세요 (예: 010-1234-5678). 번호는 알림에만 사용해요.'
-        : `📱 전날 저녁·당일 아침 알림을 카톡으로 받으시려면 휴대폰 번호를 보내 주시고 (예: 010-1234-5678), 아래 ‘${CHANNEL_ADD_LABEL}’로 CRI 채널도 추가해 주세요. 번호는 알림에만 사용해요.`);
-    }
-  }
+  if (!input.started && input.noticesOpen) lines.push('', '전날 저녁과 당일 아침에는 남겨 주신 번호로 카톡 알림도 보내드려요.');
   if (input.pageUrl) lines.push(`자세한 순서: ${input.pageUrl}`);
   return lines.join('\n');
 }
 
 /**
- * The add-channel button under a seminar reply, for a sender who has not added the channel: the KakaoTalk notices
- * reach channel friends only, and after the list closes (or the seminar is over) the channel is where the next one is
- * announced. Not while the session is on: then the only job is getting in.
+ * The add-channel button under a seminar reply, for a sender who has not added the channel: the join link and the
+ * KakaoTalk notices go to channel friends only.
  */
-export function webinarChannelCard(input: { friend: boolean; started: boolean; noticesOpen: boolean }): TextCard | null {
-  if (input.friend || input.started) return null;
-  return channelAddCard(input.noticesOpen
-    ? '세미나 전날 저녁·당일 아침 카톡 알림은 CRI 채널을 추가한 분께만 보내드려요.'
-    : '채널을 추가하시면 앞으로 열리는 세미나 소식을 카카오톡으로 받아 보실 수 있어요.');
+export function webinarChannelCard(input: { friend: boolean; open: boolean }): TextCard | null {
+  if (input.friend || !input.open) return null;
+  return channelAddCard(`참여 링크는 CRI 채널을 추가한 분께 보내드려요. 추가한 뒤 이 대화방에 ‘${WEBINAR_KAKAO_KEYWORD}’이라고 다시 보내 주세요.`);
 }
 
-/** Reply when someone sends just their number after signing up on KakaoTalk. */
-export function webinarPhoneSavedReply(label: string, noticesOpen: boolean, friend = false): string {
-  if (!noticesOpen) return `번호를 남겼어요. 이번 세미나 알림 명단은 이미 마감돼서 카톡 알림은 보내드리기 어려워요. 참여 링크는 이 채팅방에 ‘세미나 신청’이라고 보내 주시면 바로 받으실 수 있어요.`;
-  return friend
-    ? `번호를 남겼어요. ${label} 세미나 전날 저녁과 당일 아침에 카톡으로 알림을 보내드릴게요. 번호는 세미나 알림에만 사용해요.`
-    : `번호를 남겼어요. ${label} 세미나 전날 저녁과 당일 아침에 카톡으로 알림을 보내드릴게요.\n알림은 CRI 채널을 추가한 분께만 가니, 아래 ‘${CHANNEL_ADD_LABEL}’도 눌러 주세요. 번호는 세미나 알림에만 사용해요.`;
-}
-
-/** A number from someone with no KakaoTalk sign-up yet: how to sign up and leave the number in one message. */
-export function phoneWithoutSignupReply(noticesOpen: boolean): string {
-  return noticesOpen
-    ? '세미나 알림 번호를 남기시려면 ‘세미나 신청 010-1234-5678’처럼 보내 주세요. 신청과 알림 번호가 함께 저장돼요.'
-    : '이번 세미나 알림 명단은 마감됐어요. 참여 링크는 이 채팅방에 ‘세미나 신청’이라고 보내 주시면 바로 받으실 수 있어요.';
+/** A name or number from someone with no KakaoTalk sign-up yet: how to sign up and send both in one message. */
+export function phoneWithoutSignupReply(): string {
+  return `세미나 신청은 ‘${WEBINAR_KAKAO_KEYWORD} 홍길동 010-1234-5678’처럼 이름과 휴대폰 번호를 함께 보내 주시면 한 번에 돼요.`;
 }
 
 /**
@@ -379,6 +435,11 @@ export function phoneWithoutSignupReply(noticesOpen: boolean): string {
  * bot's "send your number" line. Returns the normalised number, or null for anything else.
  */
 export function parsePhoneOnly(utterance: string): string | null {
+  return parseContactOnly(utterance)?.phone ?? null;
+}
+
+/** A message that is only a number, maybe with a name ("김서연 010-1234-5678"): both, normalised. */
+export function parseContactOnly(utterance: string): { phone: string; name: string | null } | null {
   const match = utterance.normalize('NFC').match(PHONE);
   if (!match) return null;
   const phone = koreanMobile(match[0]);
@@ -403,5 +464,5 @@ export function parsePhoneOnly(utterance: string): string | null {
   }
   // What may stay: a short name or family word ("김서연", "서연맘", "학부모", "엄마").
   if (!/^(이|[가-힣]{2,4}|[가-힣]{1,4}(학생)?(맘|엄마|아빠|어머니|아버지|학부모)?|학부모|학생|엄마|아빠|어머니|아버지)?$/.test(rest)) return null;
-  return phone;
+  return { phone, name: rest ? kakaoName(rest) : null };
 }

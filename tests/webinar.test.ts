@@ -106,27 +106,28 @@ test('KakaoTalk keyword: only a message that is just a sign-up gets the canned r
 
 test('KakaoTalk keyword keeps the sender\'s own contact and hands "담당자님" sign-ups to a person too', async () => {
   const { parseWebinarSignup, ruleHandoff, SIGNUP_DESPITE_HANDOFF } = await import('../src/lib/kakao/skill');
-  assert.deepEqual(parseWebinarSignup('세미나 신청합니다 010-1234-5678'), { signup: true, phone: '01012345678', email: null });
-  assert.deepEqual(parseWebinarSignup('세미나 신청합니다. 제 번호는 010-1234-5678입니다'), { signup: true, phone: '01012345678', email: null });
-  assert.deepEqual(parseWebinarSignup('세미나 신청합니다 +82 10-1234-5678'), { signup: true, phone: '01012345678', email: null });
-  assert.deepEqual(parseWebinarSignup('세미나 신청 abc123@naver.com'), { signup: true, phone: null, email: 'abc123@naver.com' });
-  assert.deepEqual(parseWebinarSignup('세미나 주제가 뭐예요? 010-1234-5678'), { signup: false, phone: null, email: null });
+  assert.deepEqual(parseWebinarSignup('세미나 신청합니다 010-1234-5678'), { signup: true, phone: '01012345678', email: null, name: null });
+  assert.deepEqual(parseWebinarSignup('세미나 신청합니다. 제 번호는 010-1234-5678입니다'), { signup: true, phone: '01012345678', email: null, name: null });
+  assert.deepEqual(parseWebinarSignup('세미나 신청합니다 +82 10-1234-5678'), { signup: true, phone: '01012345678', email: null, name: null });
+  assert.deepEqual(parseWebinarSignup('세미나 신청 abc123@naver.com'), { signup: true, phone: null, email: 'abc123@naver.com', name: null });
+  assert.deepEqual(parseWebinarSignup('세미나 주제가 뭐예요? 010-1234-5678'), { signup: false, phone: null, email: null, name: null });
   const polite = '세미나 신청합니다. 담당자님 감사합니다';
   assert.equal(parseWebinarSignup(polite).signup, true);
   assert.ok(SIGNUP_DESPITE_HANDOFF.has(ruleHandoff(polite) ?? ''));
   assert.equal(SIGNUP_DESPITE_HANDOFF.has('request for student data'), false);
 });
 
-test('KakaoTalk webinar reply: link and passcode when set, the office phone otherwise, closed after the start', async () => {
+test('KakaoTalk webinar reply: link and passcode once complete, the office phone without a link, closed after the end', async () => {
   const { webinarKakaoReply } = await import('../src/lib/kakao/skill');
-  const base = { open: true, already: false, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', pageUrl: 'https://criglobal.org/ko/webinar' };
+  const done = { hasName: true, hasPhone: true, friend: true };
+  const base = { ...done, open: true, step: 'first' as const, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', pageUrl: 'https://criglobal.org/ko/webinar' };
   const withLink = webinarKakaoReply({ ...base, join: { url: 'https://us06web.zoom.us/j/123', passcode: '000000' } });
   assert.match(withLink, /접수/); assert.match(withLink, /zoom\.us\/j\/123/); assert.match(withLink, /암호: 000000/);
   assert.doesNotMatch(withLink, /이 채널로 한 번 더/); // reminders come from the scheduled channel message and email, not this chat
   const noLink = webinarKakaoReply({ ...base, join: null });
   // No link to give: nobody can send it into the chat room later (1:1 chat is off), so try again or call.
   assert.doesNotMatch(noLink, /zoom/); assert.match(noLink, /02-6203-8999/); assert.doesNotMatch(noLink, /담당자가|보내드릴게요/);
-  assert.match(webinarKakaoReply({ ...base, already: true, join: null }), /이미 신청/);
+  assert.match(webinarKakaoReply({ ...base, step: 'again', join: null }), /이미 신청/);
   assert.match(webinarKakaoReply({ ...base, open: false, join: null }), /끝났어요/);
   assert.match(withLink, /자세한 순서: https:\/\/criglobal\.org\/ko\/webinar/);
   assert.match(webinarKakaoReply({ ...base, started: true, join: { url: 'https://us06web.zoom.us/j/1', passcode: null } }), /지금 진행 중이에요/);
@@ -227,50 +228,56 @@ test('KakaoTalk: a message that is just a number is recognised; a sign-up with a
     assert.equal(parsePhoneOnly(m), null, m);
 });
 
-test('KakaoTalk sign-up reply asks for a number when there is none, and never during the session', async () => {
-  const { webinarKakaoReply } = await import('../src/lib/kakao/skill');
-  const base = { open: true, already: false, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', join: { url: 'https://us06web.zoom.us/j/1', passcode: null }, pageUrl: null, noticesOpen: true };
-  assert.doesNotMatch(webinarKakaoReply({ ...base, noticesOpen: false, hasPhone: false }), /휴대폰 번호/); // list exported: no ask
-  assert.match(webinarKakaoReply({ ...base, hasPhone: false }), /휴대폰 번호를 보내 주/);
-  assert.match(webinarKakaoReply({ ...base, hasPhone: false, friend: true }), /휴대폰 번호를 보내 주세요/);
-  assert.match(webinarKakaoReply({ ...base, already: true, hasPhone: false }), /휴대폰 번호를 보내 주/); // asked again when they come back
-  assert.match(webinarKakaoReply({ ...base, hasPhone: true }), /남겨 주신 번호로/);
-  assert.doesNotMatch(webinarKakaoReply({ ...base, started: true, hasPhone: false }), /휴대폰 번호/);
-  assert.ok(webinarKakaoReply({ ...base, hasPhone: false }).length < 1000);
+test('KakaoTalk: no join link until the sign-up has a name, a number and the channel add', async () => {
+  const { webinarKakaoReply, webinarChannelCard, kakaoSignupComplete, textResponse } = await import('../src/lib/kakao/skill');
+  const join = { url: 'https://us06web.zoom.us/j/1', passcode: '000000' };
+  const base = { open: true, label: '12월 5일(토) 오전 10시', topic: 'AI 시대, 논문은 통할까', join, pageUrl: null, noticesOpen: true };
+  const steps = ['first', 'again', 'saved'] as const;
+  for (const step of steps) for (const started of [true, false]) for (const hasName of [true, false]) for (const hasPhone of [true, false]) for (const friend of [true, false]) {
+    const state = { hasName, hasPhone, friend };
+    const at = JSON.stringify({ step, started, ...state });
+    // The route only passes a join link for a complete sign-up; a reply must never show one otherwise even if given.
+    const reply = webinarKakaoReply({ ...base, ...state, step, started, join: kakaoSignupComplete(state) ? join : null });
+    const card = webinarChannelCard({ friend, open: true });
+    if (kakaoSignupComplete(state)) assert.match(reply, /zoom\.us/, at);
+    else assert.doesNotMatch(reply, /zoom\.us|암호/, at);
+    if (!hasName && !hasPhone) assert.match(reply, /이름과 휴대폰 번호를 한 줄로/, at);
+    else if (!hasName) assert.match(reply, /이름도 보내 주세요/, at);
+    else if (!hasPhone) assert.match(reply, /휴대폰 번호도 보내 주세요/, at);
+    if (!hasName || !hasPhone) assert.match(reply, /세미나 안내와 알림에만 사용/, at); // what the data is for, every time it is asked
+    if (!friend) { assert.match(reply, /아래 ‘채널 추가하기’/, at); assert.ok(card, at); } else assert.equal(card, null, at);
+    assert.doesNotMatch(reply, /채팅방 위/, at); // Kakao documents no add bar at the top of the chat room
+    assert.ok(reply.length < 1000, at);
+    assert.equal(textResponse(reply, [], card ? [card] : []).template.outputs.length, card ? 2 : 1, at);
+  }
+  // Complete but not a friend: one last step, then the keyword again.
+  assert.match(webinarKakaoReply({ ...base, hasName: true, hasPhone: true, friend: false, step: 'saved', join: null }), /마지막 단계[\s\S]*‘세미나 신청’이라고 다시/);
+  assert.match(webinarChannelCard({ friend: false, open: true })!.textCard.description!, /채널을 추가한 분께/);
+  assert.equal(webinarChannelCard({ friend: false, open: false }), null);
+  // Notices are promised only before the friend-group cutoff and never during the session.
+  const done = { ...base, hasName: true, hasPhone: true, friend: true, step: 'saved' as const };
+  assert.match(webinarKakaoReply(done), /카톡 알림도/);
+  assert.doesNotMatch(webinarKakaoReply({ ...done, noticesOpen: false }), /카톡 알림/);
+  assert.doesNotMatch(webinarKakaoReply({ ...done, started: true }), /카톡 알림/);
 });
 
-test('KakaoTalk seminar replies: senders who have not added the channel get the add button, friends do not', async () => {
-  const { webinarKakaoReply, webinarChannelCard, webinarPhoneSavedReply, textResponse } = await import('../src/lib/kakao/skill');
-  const label = '12월 5일(토) 오전 10시';
-  const base = { open: true, already: false, label, topic: 'AI 시대, 논문은 통할까', join: { url: 'https://us06web.zoom.us/j/1', passcode: '000000' }, pageUrl: 'https://criglobal.org/ko/webinar' };
-  for (const hasPhone of [true, false]) {
-    const stranger = webinarKakaoReply({ ...base, noticesOpen: true, hasPhone, friend: false });
-    assert.match(stranger, /아래 ‘채널 추가하기’/);
-    assert.doesNotMatch(webinarKakaoReply({ ...base, noticesOpen: true, hasPhone, friend: true }), /채널 추가/);
-  }
-  // Kakao documents no add bar at the top of the chat room, so no reply points there any more.
-  for (const friend of [true, false]) for (const hasPhone of [true, false])
-    assert.doesNotMatch(webinarKakaoReply({ ...base, noticesOpen: true, hasPhone, friend }), /채팅방 위/);
-  assert.doesNotMatch(webinarPhoneSavedReply(label, true, false) + webinarPhoneSavedReply(label, true, true), /채팅방 위/);
-
-  // Whenever a reply says "below", the card is there: every combination of the reply's inputs.
-  for (const open of [true, false]) for (const started of [true, false]) for (const noticesOpen of [true, false])
-    for (const hasPhone of [true, false]) for (const friend of [true, false]) {
-      if (started && !open) continue;
-      const reply = webinarKakaoReply({ ...base, open, started, noticesOpen, hasPhone, friend });
-      const card = webinarChannelCard({ friend, started, noticesOpen });
-      if (/아래 ‘채널 추가하기’/.test(reply)) assert.ok(card, `card missing: ${JSON.stringify({ open, started, noticesOpen, hasPhone, friend })}`);
-      if (friend || started) assert.equal(card, null);
-      // The reply and its card fit in Kakao's three outputs.
-      assert.equal(textResponse(reply, [], card ? [card] : []).template.outputs.length, card ? 2 : 1);
-    }
-  assert.match(webinarChannelCard({ friend: false, started: false, noticesOpen: true })!.textCard.description!, /알림/);
-  assert.match(webinarChannelCard({ friend: false, started: false, noticesOpen: false })!.textCard.description!, /앞으로 열리는 세미나/);
-
-  // A number sent on its own: the same rule.
-  assert.match(webinarPhoneSavedReply(label, true, false), /아래 ‘채널 추가하기’/);
-  assert.doesNotMatch(webinarPhoneSavedReply(label, true, true), /채널 추가/);
-  assert.match(webinarPhoneSavedReply(label, true, true), /전날 저녁과 당일 아침/);
+test('KakaoTalk: names sent with or without the number', async () => {
+  const { parseContactOnly, parseNameOnly, parseWebinarSignup, kakaoHasName, KAKAO_NO_NAME } = await import('../src/lib/kakao/skill');
+  assert.deepEqual(parseContactOnly('홍길동 010-1234-5678'), { phone: '01012345678', name: '홍길동' });
+  assert.deepEqual(parseContactOnly('남궁민수 01012345678'), { phone: '01012345678', name: '남궁민수' });
+  assert.deepEqual(parseContactOnly('고1 김서연 010-1234-5678'), { phone: '01012345678', name: '김서연' });
+  assert.deepEqual(parseContactOnly('김서연 학생 010-1234-5678'), { phone: '01012345678', name: '김서연' });
+  for (const m of ['010-1234-5678', '학부모 연락처 010-1234-5678', '네 010-1234-5678', '엄마 010-1234-5678'])
+    assert.equal(parseContactOnly(m)?.name, null, m);
+  assert.deepEqual(parseWebinarSignup('세미나 신청 홍길동 010-1234-5678'), { signup: true, phone: '01012345678', email: null, name: '홍길동' });
+  assert.equal(parseWebinarSignup('세미나 신청').name, null);
+  assert.equal(parseWebinarSignup('세미나 신청할게요 010-1234-5678').name, null);
+  for (const [m, name] of [['김서연', '김서연'], ['김서연입니다', '김서연'], ['이름은 김서연이에요', '김서연'], ['네 김서연이요', '김서연'], ['박서아', '박서아']] as const)
+    assert.equal(parseNameOnly(m), name, m);
+  for (const m of ['감사합니다', '알겠어요', '네', '궁금해요', '추가했어요', '채널 추가했습니다', '언제 해요?', '세미나 신청', '할게요', '김서연 010-1234-5678', 'ㅇㅇ'])
+    assert.equal(parseNameOnly(m), null, m);
+  assert.equal(kakaoHasName(KAKAO_NO_NAME), false);
+  assert.equal(kakaoHasName('홍길동'), true);
 });
 
 test('the add-a-number link is signed per sign-up', async () => {
@@ -286,12 +293,8 @@ test('the add-a-number link is signed per sign-up', async () => {
 
 test('KakaoTalk notices stop being promised at the friend-group cutoff', async () => {
   const { webinarKakaoNoticesOpen } = await import('../src/lib/webinar');
-  const { webinarPhoneSavedReply } = await import('../src/lib/kakao/skill');
   assert.equal(webinarKakaoNoticesOpen(new Date('2026-12-04T02:59:00Z')), true);  // 11:59 KST on 12/4
   assert.equal(webinarKakaoNoticesOpen(new Date('2026-12-04T03:00:00Z')), false); // 12:00 KST
-  assert.match(webinarPhoneSavedReply('12월 5일(토) 오전 10시', true), /전날 저녁과 당일 아침/);
-  assert.match(webinarPhoneSavedReply('12월 5일(토) 오전 10시', false), /마감/);
-  assert.doesNotMatch(webinarPhoneSavedReply('12월 5일(토) 오전 10시', false), /보내드릴게요/);
 });
 
 test('number replies: opt-outs, questions and other people\'s numbers are not saved; names with a grade are', async () => {
@@ -306,8 +309,7 @@ test('number replies: opt-outs, questions and other people\'s numbers are not sa
   assert.equal(ruleHandoff(withoutOwnContact('학부모 연락처 010-1234-5678')), null);
   assert.equal(koreanMobile('010-123-5678'), null); // 010 has 11 digits
   assert.equal(koreanMobile('011-234-5678'), '0112345678');
-  assert.match(phoneWithoutSignupReply(false), /마감/);
-  assert.match(phoneWithoutSignupReply(true), /세미나 신청 010-1234-5678/);
+  assert.match(phoneWithoutSignupReply(), /세미나 신청 홍길동 010-1234-5678/);
   const t = performance.now();
   parsePhoneOnly('제' + ' '.repeat(1485) + '010-1234-5678');
   assert.ok(performance.now() - t < 50, 'parsePhoneOnly on a long run of spaces');
